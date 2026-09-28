@@ -1,0 +1,686 @@
+{
+ "observacao": "Biblioteca de objetos do motor RIEP (protótipo v9 do Dr. Emerson). O termo mais longo reconhecido define a natureza; verbos de obra e marcadores de custeio podem prevalecer.",
+ "areas": [
+  {
+   "nome": "Saúde",
+   "orgaos": [
+    "13",
+    "20"
+   ],
+   "unidadePadrao": "13.01",
+   "ordem": 1
+  },
+  {
+   "nome": "Educação",
+   "orgaos": [
+    "11",
+    "19"
+   ],
+   "unidadePadrao": "11.01",
+   "ordem": 2
+  },
+  {
+   "nome": "Cultura",
+   "orgaos": [
+    "23"
+   ],
+   "unidadePadrao": "23.01",
+   "ordem": 3
+  },
+  {
+   "nome": "Esporte",
+   "orgaos": [
+    "12"
+   ],
+   "unidadePadrao": "12.01",
+   "ordem": 4
+  },
+  {
+   "nome": "Urbanismo",
+   "orgaos": [
+    "07",
+    "08",
+    "09",
+    "16"
+   ],
+   "unidadePadrao": "08.01",
+   "ordem": 5
+  },
+  {
+   "nome": "Estradas",
+   "orgaos": [
+    "08",
+    "16"
+   ],
+   "unidadePadrao": "08.01",
+   "ordem": 6
+  },
+  {
+   "nome": "Assistência social",
+   "orgaos": [
+    "14"
+   ],
+   "unidadePadrao": "14.01",
+   "ordem": 7
+  },
+  {
+   "nome": "Segurança",
+   "orgaos": [
+    "15"
+   ],
+   "unidadePadrao": "15.01",
+   "ordem": 8
+  },
+  {
+   "nome": "Geral",
+   "orgaos": [],
+   "unidadePadrao": null,
+   "ordem": 9
+  }
+ ],
+ "objetos": [
+  {
+   "rotulo": "Ambulância",
+   "termos": [
+    "ambulancia",
+    "uti movel",
+    "veiculo de remocao",
+    "unidade movel"
+   ],
+   "natureza": "CAPITAL",
+   "elemento": "52",
+   "divisibilidade": "INDIVISIVEL",
+   "subfuncao": "302",
+   "estrito": true,
+   "explicacao": "veículo de remoção · bem permanente",
+   "area": "Saúde",
+   "ordem": 1
+  },
+  {
+   "rotulo": "Equipamento hospitalar",
+   "termos": [
+    "ultrassom",
+    "raio-x",
+    "raio x",
+    "tomografo",
+    "equipamento hospitalar",
+    "monitor multiparametrico",
+    "respirador",
+    "desfibrilador"
+   ],
+   "natureza": "CAPITAL",
+   "elemento": "52",
+   "divisibilidade": "INDIVISIVEL",
+   "subfuncao": "302",
+   "estrito": true,
+   "explicacao": "bem permanente",
+   "area": "Saúde",
+   "ordem": 2
+  },
+  {
+   "rotulo": "Equipamento odontológico",
+   "termos": [
+    "cadeira odontologica",
+    "equipamento odontologico",
+    "autoclave",
+    "consultorio odontologico"
+   ],
+   "natureza": "CAPITAL",
+   "elemento": "52",
+   "divisibilidade": "INDIVISIVEL",
+   "subfuncao": "301",
+   "estrito": true,
+   "explicacao": "bem permanente",
+   "area": "Saúde",
+   "ordem": 3
+  },
+  {
+   "rotulo": "Medicamentos",
+   "termos": [
+    "medicamento",
+    "remedio",
+    "farmacia basica",
+    "insumo farmaceutico"
+   ],
+   "natureza": "CUSTEIO",
+   "elemento": "30",
+   "divisibilidade": "DIVISIVEL",
+   "subfuncao": "303",
+   "estrito": true,
+   "explicacao": "material de consumo",
+   "area": "Saúde",
+   "ordem": 4
+  },
+  {
+   "rotulo": "Material hospitalar",
+   "termos": [
+    "material hospitalar",
+    "insumo hospitalar",
+    "material ambulatorial",
+    "material medico"
+   ],
+   "natureza": "CUSTEIO",
+   "elemento": "30",
+   "divisibilidade": "DIVISIVEL",
+   "subfuncao": "301",
+   "estrito": true,
+   "explicacao": "material de consumo",
+   "area": "Saúde",
+   "ordem": 5
+  },
+  {
+   "rotulo": "Serviços de saúde",
+   "termos": [
+    "exame",
+    "consulta medica",
+    "plantao",
+    "procedimento ambulatorial",
+    "servico medico",
+    "leito",
+    "leito hospitalar",
+    "internacao",
+    "atendimento hospitalar",
+    "cirurgia"
+   ],
+   "natureza": "CUSTEIO",
+   "elemento": "39",
+   "divisibilidade": "DIVISIVEL",
+   "subfuncao": "302",
+   "estrito": true,
+   "explicacao": "serviço de terceiros",
+   "area": "Saúde",
+   "ordem": 6
+  },
+  {
+   "rotulo": "Obra em unidade de saúde",
+   "termos": [
+    "ubs",
+    "unidade de saude",
+    "posto de saude",
+    "centro de saude"
+   ],
+   "natureza": "CAPITAL",
+   "elemento": "51",
+   "divisibilidade": "INDIVISIVEL",
+   "subfuncao": "301",
+   "estrito": true,
+   "explicacao": "obra",
+   "area": "Saúde",
+   "ordem": 7
+  },
+  {
+   "rotulo": "Ônibus escolar",
+   "termos": [
+    "onibus escolar",
+    "transporte escolar"
+   ],
+   "natureza": "CAPITAL",
+   "elemento": "52",
+   "divisibilidade": "INDIVISIVEL",
+   "subfuncao": "361",
+   "estrito": true,
+   "explicacao": "bem permanente",
+   "area": "Educação",
+   "ordem": 8
+  },
+  {
+   "rotulo": "Equipamento de informática",
+   "termos": [
+    "computador",
+    "notebook",
+    "tablet",
+    "laboratorio de informatica",
+    "microcomputador"
+   ],
+   "natureza": "CAPITAL",
+   "elemento": "52",
+   "divisibilidade": "INDIVISIVEL",
+   "subfuncao": null,
+   "estrito": false,
+   "explicacao": "bem permanente",
+   "area": "Educação",
+   "ordem": 9
+  },
+  {
+   "rotulo": "Mobiliário",
+   "termos": [
+    "mobiliario",
+    "carteira escolar",
+    "mesa",
+    "armario",
+    "cadeira"
+   ],
+   "natureza": "CAPITAL",
+   "elemento": "52",
+   "divisibilidade": "INDIVISIVEL",
+   "subfuncao": null,
+   "estrito": false,
+   "explicacao": "bem permanente",
+   "area": "Educação",
+   "ordem": 10
+  },
+  {
+   "rotulo": "Climatização",
+   "termos": [
+    "ar-condicionado",
+    "ar condicionado",
+    "climatizacao",
+    "split"
+   ],
+   "natureza": "CAPITAL",
+   "elemento": "52",
+   "divisibilidade": "INDIVISIVEL",
+   "subfuncao": null,
+   "estrito": false,
+   "explicacao": "bem permanente",
+   "area": "Educação",
+   "ordem": 11
+  },
+  {
+   "rotulo": "Playground",
+   "termos": [
+    "playground",
+    "parquinho",
+    "brinquedo"
+   ],
+   "natureza": "CAPITAL",
+   "elemento": "52",
+   "divisibilidade": "INDIVISIVEL",
+   "subfuncao": null,
+   "estrito": false,
+   "explicacao": "bem permanente",
+   "area": "Educação",
+   "ordem": 12
+  },
+  {
+   "rotulo": "Material escolar",
+   "termos": [
+    "material escolar",
+    "kit escolar",
+    "material didatico",
+    "material pedagogico"
+   ],
+   "natureza": "CUSTEIO",
+   "elemento": "30",
+   "divisibilidade": "DIVISIVEL",
+   "subfuncao": "361",
+   "estrito": true,
+   "explicacao": "material de consumo",
+   "area": "Educação",
+   "ordem": 13
+  },
+  {
+   "rotulo": "Alimentação escolar",
+   "termos": [
+    "merenda",
+    "alimentacao escolar",
+    "genero alimenticio",
+    "alimento"
+   ],
+   "natureza": "CUSTEIO",
+   "elemento": "30",
+   "divisibilidade": "DIVISIVEL",
+   "subfuncao": "306",
+   "estrito": true,
+   "explicacao": "material de consumo",
+   "area": "Educação",
+   "ordem": 14
+  },
+  {
+   "rotulo": "Tecnologia da informação",
+   "termos": [
+    "software",
+    "sistema",
+    "licenca",
+    "plataforma digital"
+   ],
+   "natureza": "CUSTEIO",
+   "elemento": "40",
+   "divisibilidade": "INDIVISIVEL",
+   "subfuncao": null,
+   "estrito": false,
+   "explicacao": "serviço de TIC",
+   "area": "Educação",
+   "ordem": 15
+  },
+  {
+   "rotulo": "Creche ou pré-escola",
+   "termos": [
+    "creche",
+    "cei",
+    "centro de educacao infantil",
+    "pre-escola",
+    "educacao infantil",
+    "bercario"
+   ],
+   "natureza": "CAPITAL",
+   "elemento": "51",
+   "divisibilidade": "INDIVISIVEL",
+   "subfuncao": "365",
+   "estrito": true,
+   "explicacao": "obra",
+   "area": "Educação",
+   "ordem": 16
+  },
+  {
+   "rotulo": "Obra escolar",
+   "termos": [
+    "escola",
+    "emeb",
+    "quadra escolar",
+    "cobertura de patio",
+    "ensino fundamental"
+   ],
+   "natureza": "CAPITAL",
+   "elemento": "51",
+   "divisibilidade": "INDIVISIVEL",
+   "subfuncao": "361",
+   "estrito": true,
+   "explicacao": "obra",
+   "area": "Educação",
+   "ordem": 17
+  },
+  {
+   "rotulo": "Oficinas e formação artística",
+   "termos": [
+    "oficina",
+    "formacao artistica",
+    "aula de musica",
+    "ateliê",
+    "atelie",
+    "coral",
+    "danca",
+    "teatro"
+   ],
+   "natureza": "CUSTEIO",
+   "elemento": "43",
+   "divisibilidade": "DIVISIVEL",
+   "subfuncao": "392",
+   "estrito": true,
+   "explicacao": "serviço continuado",
+   "area": "Cultura",
+   "ordem": 18
+  },
+  {
+   "rotulo": "Curso ou capacitação",
+   "termos": [
+    "curso",
+    "capacitacao",
+    "treinamento",
+    "qualificacao profissional",
+    "formacao continuada",
+    "inclusao digital"
+   ],
+   "natureza": "CUSTEIO",
+   "elemento": "39",
+   "divisibilidade": "DIVISIVEL",
+   "subfuncao": null,
+   "estrito": false,
+   "explicacao": "serviço",
+   "area": null,
+   "ordem": 19
+  },
+  {
+   "rotulo": "Evento cultural",
+   "termos": [
+    "festival",
+    "evento cultural",
+    "show",
+    "apresentacao artistica",
+    "festa"
+   ],
+   "natureza": "CUSTEIO",
+   "elemento": "43",
+   "divisibilidade": "DIVISIVEL",
+   "subfuncao": "392",
+   "estrito": true,
+   "explicacao": "serviço",
+   "area": "Cultura",
+   "ordem": 20
+  },
+  {
+   "rotulo": "Instrumentos musicais",
+   "termos": [
+    "instrumento musical",
+    "banda",
+    "fanfarra"
+   ],
+   "natureza": "CAPITAL",
+   "elemento": "52",
+   "divisibilidade": "INDIVISIVEL",
+   "subfuncao": "392",
+   "estrito": true,
+   "explicacao": "bem permanente",
+   "area": "Cultura",
+   "ordem": 21
+  },
+  {
+   "rotulo": "Obra em equipamento cultural",
+   "termos": [
+    "biblioteca",
+    "casa de cultura",
+    "museu",
+    "teatro"
+   ],
+   "natureza": "CAPITAL",
+   "elemento": "51",
+   "divisibilidade": "INDIVISIVEL",
+   "subfuncao": "391",
+   "estrito": true,
+   "explicacao": "obra",
+   "area": "Cultura",
+   "ordem": 22
+  },
+  {
+   "rotulo": "Material esportivo",
+   "termos": [
+    "material esportivo",
+    "bola",
+    "uniforme esportivo"
+   ],
+   "natureza": "CUSTEIO",
+   "elemento": "30",
+   "divisibilidade": "DIVISIVEL",
+   "subfuncao": "812",
+   "estrito": true,
+   "explicacao": "material de consumo",
+   "area": "Esporte",
+   "ordem": 23
+  },
+  {
+   "rotulo": "Academia ao ar livre",
+   "termos": [
+    "academia ao ar livre",
+    "ati",
+    "equipamento de ginastica"
+   ],
+   "natureza": "CAPITAL",
+   "elemento": "52",
+   "divisibilidade": "INDIVISIVEL",
+   "subfuncao": "812",
+   "estrito": true,
+   "explicacao": "bem permanente",
+   "area": "Esporte",
+   "ordem": 24
+  },
+  {
+   "rotulo": "Obra esportiva",
+   "termos": [
+    "pista de skate",
+    "skate",
+    "quadra",
+    "ginasio",
+    "campo de futebol",
+    "pista de caminhada"
+   ],
+   "natureza": "CAPITAL",
+   "elemento": "51",
+   "divisibilidade": "INDIVISIVEL",
+   "subfuncao": "812",
+   "estrito": true,
+   "explicacao": "obra",
+   "area": "Esporte",
+   "ordem": 25
+  },
+  {
+   "rotulo": "Obra urbana",
+   "termos": [
+    "pavimentacao",
+    "recapeamento",
+    "asfalto",
+    "calcada",
+    "praca",
+    "drenagem",
+    "galeria"
+   ],
+   "natureza": "CAPITAL",
+   "elemento": "51",
+   "divisibilidade": "DIVISIVEL",
+   "subfuncao": "451",
+   "estrito": true,
+   "explicacao": "obra",
+   "area": "Urbanismo",
+   "ordem": 26
+  },
+  {
+   "rotulo": "Iluminação pública",
+   "termos": [
+    "iluminacao publica",
+    "led",
+    "luminaria"
+   ],
+   "natureza": "CAPITAL",
+   "elemento": "52",
+   "divisibilidade": "DIVISIVEL",
+   "subfuncao": "452",
+   "estrito": true,
+   "explicacao": "bem permanente",
+   "area": "Urbanismo",
+   "ordem": 27
+  },
+  {
+   "rotulo": "Videomonitoramento",
+   "termos": [
+    "camera",
+    "videomonitoramento",
+    "cftv",
+    "monitoramento"
+   ],
+   "natureza": "CAPITAL",
+   "elemento": "52",
+   "divisibilidade": "INDIVISIVEL",
+   "subfuncao": "181",
+   "estrito": true,
+   "explicacao": "bem permanente",
+   "area": "Segurança",
+   "ordem": 28
+  },
+  {
+   "rotulo": "Máquina rodoviária",
+   "termos": [
+    "trator",
+    "motoniveladora",
+    "patrol",
+    "retroescavadeira",
+    "pa carregadeira",
+    "maquina rodoviaria",
+    "implemento agricola"
+   ],
+   "natureza": "CAPITAL",
+   "elemento": "52",
+   "divisibilidade": "INDIVISIVEL",
+   "subfuncao": "782",
+   "estrito": true,
+   "explicacao": "bem permanente",
+   "area": "Estradas",
+   "ordem": 29
+  },
+  {
+   "rotulo": "Obra em estrada rural",
+   "termos": [
+    "estrada rural",
+    "estrada vicinal",
+    "cascalhamento",
+    "ponte",
+    "bueiro"
+   ],
+   "natureza": "CAPITAL",
+   "elemento": "51",
+   "divisibilidade": "DIVISIVEL",
+   "subfuncao": "782",
+   "estrito": true,
+   "explicacao": "obra",
+   "area": "Estradas",
+   "ordem": 30
+  },
+  {
+   "rotulo": "Serviço socioassistencial",
+   "termos": [
+    "abrigo",
+    "ilpi",
+    "lar de idosos",
+    "acolhimento",
+    "centro de convivencia",
+    "servico socioassistencial"
+   ],
+   "natureza": "CUSTEIO",
+   "elemento": "43",
+   "divisibilidade": "DIVISIVEL",
+   "subfuncao": "244",
+   "estrito": true,
+   "explicacao": "serviço continuado",
+   "area": "Assistência social",
+   "ordem": 31
+  },
+  {
+   "rotulo": "Manutenção de CRAS/CREAS",
+   "termos": [
+    "cras",
+    "creas"
+   ],
+   "natureza": "CUSTEIO",
+   "elemento": "30",
+   "divisibilidade": "DIVISIVEL",
+   "subfuncao": "244",
+   "estrito": true,
+   "explicacao": "material de consumo",
+   "area": "Assistência social",
+   "ordem": 32
+  },
+  {
+   "rotulo": "Veículo",
+   "termos": [
+    "veiculo",
+    "carro",
+    "van",
+    "micro-onibus",
+    "utilitario",
+    "caminhonete"
+   ],
+   "natureza": "CAPITAL",
+   "elemento": "52",
+   "divisibilidade": "INDIVISIVEL",
+   "subfuncao": null,
+   "estrito": false,
+   "explicacao": "bem permanente",
+   "area": "Geral",
+   "ordem": 33
+  },
+  {
+   "rotulo": "Combustível",
+   "termos": [
+    "combustivel",
+    "diesel",
+    "gasolina"
+   ],
+   "natureza": "CUSTEIO",
+   "elemento": "30",
+   "divisibilidade": "DIVISIVEL",
+   "subfuncao": null,
+   "estrito": false,
+   "explicacao": "material de consumo",
+   "area": "Geral",
+   "ordem": 34
+  }
+ ]
+}

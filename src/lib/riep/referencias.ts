@@ -1,0 +1,113 @@
+import { interpretar } from "./interpretar";
+import type { ObjetoBiblioteca, TipoReferencia } from "./tipos";
+
+// Tipos de referência de preço. A identificação exigida muda com o tipo — é
+// isso que torna a origem conferível por terceiro.
+export const TIPOS_REFERENCIA: Record<TipoReferencia, { nome: string; campos: [string, string][] }> = {
+  ATA: {
+    nome: "Ata de registro de preços vigente",
+    campos: [["num", "Número da ata"], ["gerenciador", "Órgão gerenciador"], ["item", "Item da ata"], ["vigencia", "Vigência"]],
+  },
+  CONTRATACAO_MUNICIPIO: {
+    nome: "Contratação anterior do próprio Município",
+    campos: [["num", "Nº do processo ou contrato"], ["assinatura", "Data de assinatura"]],
+  },
+  CONTRATACAO_OUTRO_ORGAO: {
+    nome: "Contratação de outro órgão público",
+    campos: [["num", "Nº do processo ou contrato"], ["ente", "Ente contratante"], ["assinatura", "Data de assinatura"]],
+  },
+  PAINEL: {
+    nome: "Painel ou banco oficial de preços",
+    campos: [["consulta", "Identificação da consulta"], ["recorte", "Recorte aplicado"], ["amostra", "Nº de contratações na amostra"]],
+  },
+  BANCO_PRECOS_SAUDE: {
+    nome: "Banco de Preços em Saúde",
+    campos: [["consulta", "Identificação da consulta"], ["recorte", "Recorte aplicado"], ["amostra", "Nº de contratações na amostra"]],
+  },
+  TABELA_OFICIAL: {
+    nome: "Tabela oficial de custos (SINAPI, SICRO, estadual)",
+    campos: [["sistema", "Sistema"], ["composicao", "Código da composição"], ["databse", "Data-base"], ["deson", "Com ou sem desoneração"]],
+  },
+  COTACAO: {
+    nome: "Orçamento ou cotação de fornecedor",
+    campos: [["razao", "Razão social"], ["cnpj", "CNPJ"], ["validade", "Validade da proposta"]],
+  },
+  NOTA_FISCAL: {
+    nome: "Nota fiscal",
+    campos: [["num", "Número"], ["serie", "Série"], ["emitente", "Emitente"], ["cnpj", "CNPJ"]],
+  },
+  TERMO_PARCERIA: {
+    nome: "Termo de fomento ou colaboração anterior",
+    campos: [["num", "Nº do termo"], ["entidade", "Entidade"], ["vigencia", "Vigência"]],
+  },
+  ESTIMATIVA: {
+    nome: "Estimativa técnica justificada",
+    campos: [["metodologia", "Metodologia empregada"], ["justificativa", "Justificativa escrita"]],
+  },
+};
+
+export type ReferenciaPreco = {
+  codigo: string;
+  tipo: TipoReferencia;
+  campos: Record<string, string>;
+  emissor: string;
+  // ISO (aaaa-mm-dd) quando a fonte informa data exata.
+  data: string | null;
+  // Como a fonte informa o período, quando não há data exata.
+  dataTexto: string | null;
+  unidade: string;
+  valor: number;
+  objeto: string;
+  porte: string;
+  link: string;
+  observacao: string;
+  procedencia: "INFORMADA" | "CONFERIDA";
+  aprovadoPor: string | null;
+  aprovadoEm: string | null;
+  origemExterna: string | null;
+  consultadoEm: string | null;
+};
+
+// "R2 · Ata de registro de preços vigente Ata SRP 014/2025"
+export function rotuloReferencia(r: Pick<ReferenciaPreco, "codigo" | "tipo" | "campos">): string {
+  const t = TIPOS_REFERENCIA[r.tipo];
+  const chave = r.campos.num || r.campos.composicao || r.campos.consulta || r.campos.razao || "";
+  return `${r.codigo} · ${t.nome.split(" (")[0]}${chave ? " " + chave : ""}`;
+}
+
+// Registro completo: os campos comuns e os próprios do tipo.
+export function referenciaCompleta(r: ReferenciaPreco): boolean {
+  const t = TIPOS_REFERENCIA[r.tipo];
+  if (!t) return false;
+  if (!r.emissor || !(r.data || r.dataTexto) || !r.objeto || !r.unidade || !(r.valor > 0)) return false;
+  return t.campos.every(([k]) => !!r.campos[k]?.trim());
+}
+
+// O objeto da referência se relaciona ao item da linha? Silêncio da biblioteca
+// não gera achado.
+export function referenciaCombina(
+  r: Pick<ReferenciaPreco, "objeto"> | null,
+  item: string,
+  biblioteca: ObjetoBiblioteca[]
+): boolean {
+  if (!r || !item) return true;
+  const a = interpretar(r.objeto, biblioteca);
+  const b = interpretar(item, biblioteca);
+  if (!a || !b || a.confianca === "inferido" || b.confianca === "inferido") return true;
+  return a.rotulo === b.rotulo;
+}
+
+// Referência anterior ao prazo de validade: alerta, não bloqueio.
+export function referenciaAntiga(dataIso: string | null, meses: number, hoje = new Date()): boolean {
+  if (!dataIso) return false;
+  const d = new Date(dataIso);
+  if (Number.isNaN(d.getTime())) return false;
+  const limite = new Date(hoje);
+  limite.setMonth(limite.getMonth() - meses);
+  return d < limite;
+}
+
+export function proximoCodigoReferencia(refs: Pick<ReferenciaPreco, "codigo">[]): string {
+  const maior = refs.reduce((n, r) => Math.max(n, Number(r.codigo.replace(/\D/g, "")) || 0), 0);
+  return `R${maior + 1}`;
+}

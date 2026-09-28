@@ -40,26 +40,34 @@ Atenção ao contrário disso: uma migração destrutiva (apagar coluna, apagar
 tabela) chega à produção no mesmo push, sem revisão de ninguém. Migração que
 remove dado precisa ser combinada com o responsável antes.
 
-## Não há banco de dados nesta máquina
+## Ambiente local
 
-O ambiente local completo pede Docker e um Postgres, e **isso não está montado
-aqui**. Portanto:
+O banco de desenvolvimento é um Postgres 17 em Docker (`docker-compose.yml`,
+container `emendas-v2-db`, porta 5440). Para subir tudo do zero:
 
-- **Não sugira** `npm run dev`, `npm run seed`, `npx prisma migrate dev` contra
-  um banco local, nem `docker compose up`. Vai falhar por falta de conexão.
-- **Não tente** rodar a suíte end-to-end (`npm run test:e2e`): ela levanta um
-  banco de teste próprio e um build de produção.
+```
+npm run db:up         # sobe o Postgres local
+npx prisma migrate deploy
+npm run seed          # carrega Mogi Guaçu (LOA 2026, PPA, destinos, emendas)
+PORT=3100 npm run dev
+```
 
-O que **funciona sem banco** e deve ser usado para conferir o trabalho:
+As contas do seed são `*@emendas360.local`; a senha vem de `SEED_SENHA` no
+`.env` (ou é gerada e mostrada uma vez). `npm run db:senha -- email` redefine.
+
+Antes de dar push, rode:
 
 ```
 npx tsc --noEmit      # erros de tipo
-npx eslint .          # padrão de código
-npx vitest run        # testes de regra de negócio (puros, sem banco)
+npx eslint src prisma # padrão de código
+npx vitest run        # regras de negócio (puras, sem banco)
 ```
 
-Rode os três antes de dar push. Se algum reclamar, conserte antes de publicar —
-o que vai para a `main` vai para a produção.
+Se algum reclamar, conserte antes de publicar — o que vai para a `main` vai
+para a produção.
+
+**Atenção ao banco:** `prisma migrate reset` apaga tudo. Nunca rode contra um
+banco que não seja o local.
 
 ## O que nunca entra no repositório
 
@@ -74,19 +82,21 @@ continuar assim.
 
 ## Onde ficam as regras do domínio
 
-Antes de mexer na lógica de emendas, leia:
+O motor RIEP (`src/lib/riep/`) concentra as regras das emendas impositivas:
+reconhecimento do objeto, classificação contra a LOA, cota em duas parcelas
+(saúde pelo IC-CO 1002), modelos de plano de trabalho, referências de preço e a
+validação da etapa 3. É puro — sem banco e sem DOM — e roda igual no navegador
+e no servidor; o servidor refaz a classificação ao gravar.
 
-- `src/lib/finalidade.ts` — o que cada dotação aceita: quem recebe define a
-  modalidade de aplicação, para que serve define o grupo e o elemento, e emenda
-  impositiva só entra em despesa discricionária.
-- `src/lib/plano-modelo.ts` — qual dos quatro modelos de plano de trabalho vale.
-- `src/lib/validation/motor.ts` — a pré-checagem item a item da emenda.
+Os parâmetros do município (cota, % da saúde, códigos AUDESP, áreas de
+aplicação, biblioteca de objetos) ficam no banco e se editam em Configurações.
+Nada de Mogi Guaçu no código: os dados reais entram por `prisma/seed/` a partir
+de `prisma/dados/mogi-guacu/`.
 
-Os três são regra pura, sem banco, e têm teste em `src/lib/__tests__/`. Mudou a
-regra, atualize o teste no mesmo commit.
+Mudou a regra, atualize o teste no mesmo commit (`src/lib/riep/__tests__/`).
 
 ## Documentação do sistema
 
-`docs/better/` descreve domínio, modelo de dados, telas, perfis e o caminho de
-publicação. `docs/contas-demo.md` lista as contas de demonstração para entrar no
-sistema publicado.
+`docs/better/` descreve a versão anterior do sistema (antes da reescrita v2) e
+serve só como referência histórica. O modelo de dados atual está comentado em
+`prisma/schema.prisma`.

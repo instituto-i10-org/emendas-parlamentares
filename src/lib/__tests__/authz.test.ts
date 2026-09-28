@@ -18,8 +18,7 @@ import {
   type Permissao,
   type Perfil,
 } from "../authz";
-import { modulosVisiveis, NAVEGACAO } from "@/config/navegacao";
-import { vistaInicial, vistasVisiveis } from "@/config/vistas360";
+import { navegacaoVisivel } from "@/config/navegacao";
 
 // ============================================================================
 // Suíte de autorização por PERFIL (PROMPT 12). Reproduz os 5 perfis base e
@@ -94,8 +93,6 @@ describe("conta sem perfil", () => {
     expect(alcancaPoder(SEM_PERFIL, "TRANSVERSAL")).toBe(false);
     expect(podeCriarEmenda(SEM_PERFIL)).toBe(false);
     expect(podeAcessar(SEM_PERFIL, { poder: "TRANSVERSAL" })).toBe(false);
-    expect(modulosVisiveis(SEM_PERFIL)).toHaveLength(0);
-    expect(vistasVisiveis(SEM_PERFIL)).toHaveLength(0);
   });
 });
 
@@ -129,7 +126,6 @@ describe("Administrador Geral", () => {
     expect(alcancaPoder(A.adminGeral, Poder.EXECUTIVO)).toBe(true);
     expect(podeCriarEmenda(A.adminGeral)).toBe(true);
     expect(podeTramitar(A.adminGeral)).toBe(true);
-    expect(modulosVisiveis(A.adminGeral)).toHaveLength(NAVEGACAO.length);
   });
 
   it("é o único que gere perfis", () => {
@@ -152,34 +148,10 @@ describe("Vereador (gabinete)", () => {
   it("não vê a lista de todas as emendas e não tramita", () => {
     expect(podeVerTodasEmendas(A.vereador)).toBe(false);
     expect(podeTramitar(A.vereador)).toBe(false);
-    const vistas = vistasVisiveis(A.vereador).map((v) => v.id);
-    expect(vistas).not.toContain("analise");
-    const ferramentas = NAVEGACAO.flatMap((m) => m.ferramentas).map((f) => f.id);
-    expect(ferramentas).toContain("leg-emendas-todas");
-    const mod = NAVEGACAO.find((m) => m.id === "leg-emendas")!;
-    const todas = mod.ferramentas.find((f) => f.id === "leg-emendas-todas")!;
-    expect(podeAcessar(A.vereador, { poder: mod.poder, permissoes: todas.permissoes })).toBe(false);
   });
 
-  it("enxerga os itens de consulta do seu Poder", () => {
-    const vistas = vistasVisiveis(A.vereador).map((v) => v.id);
-    expect(vistas).toContain("vereador360");
-    expect(vistas).toContain("placar");
-  });
 
-  it("não vê 'Painel' no menu — a rota o devolveria ao Vereador 360", () => {
-    // Item de menu que empurra para outro lugar é ruído: ele clicaria em
-    // "Painel", chegaria em "Vereador 360" e concluiria que o sistema errou.
-    const vistas = vistasVisiveis(A.vereador).map((v) => v.id);
-    expect(vistas).not.toContain("painel");
-  });
 
-  it("cai no Vereador 360 após o login", () => {
-    expect(vistaInicial(A.vereador)).toBe("/vereador360");
-    expect(vistaInicial(A.comissao)).toBe("/painel");
-    expect(vistaInicial(A.presidente)).toBe("/painel");
-    expect(vistaInicial(A.executivo)).toBe("/painel");
-  });
 
   it("não administra configurações nem exercícios", () => {
     expect(temPermissao(A.vereador, "administrarConfiguracoes")).toBe(false);
@@ -200,8 +172,6 @@ describe("Comissão de Finanças e Orçamento", () => {
 
   it("não administra configurações", () => {
     expect(temPermissao(A.comissao, "administrarConfiguracoes")).toBe(false);
-    const vistas = vistasVisiveis(A.comissao).map((v) => v.id);
-    expect(vistas).not.toContain("pitch");
   });
 });
 
@@ -216,9 +186,6 @@ describe("Presidente da Câmara", () => {
 
   it("não opera o planejamento do Executivo", () => {
     expect(podeGerirPlanejamento(A.presidente)).toBe(false);
-    const modulos = modulosVisiveis(A.presidente).map((m) => m.id);
-    expect(modulos).not.toContain("exec-planejamento");
-    expect(modulos).toContain("config");
   });
 });
 
@@ -236,15 +203,6 @@ describe("Poder Executivo", () => {
     expect(podeVerTodasEmendas(A.executivo)).toBe(false);
   });
 
-  it("fica bloqueado nos módulos do Legislativo", () => {
-    const modulos = modulosVisiveis(A.executivo).map((m) => m.id);
-    expect(modulos).not.toContain("leg-emendas");
-    expect(modulos).not.toContain("leg-tramitacao");
-    expect(modulos).toContain("exec-planejamento");
-    const vistas = vistasVisiveis(A.executivo).map((v) => v.id);
-    expect(vistas).not.toContain("vereador360");
-    expect(vistas).not.toContain("analise");
-  });
 
   it("não analisa viabilidade sem a permissão, ainda que seja do Executivo", () => {
     const semViab = ator(
@@ -261,47 +219,13 @@ describe("perfil de consulta (sem permissões)", () => {
     expect(ehConsulta(A.comissao)).toBe(false);
     expect(ehConsulta(A.adminGeral)).toBe(false);
 
-    const vistas = vistasVisiveis(A.consultaLeg).map((v) => v.id);
-    expect(vistas).toContain("painel");
-    expect(vistas).toContain("placar");
-    expect(vistas).not.toContain("analise");
 
-    const modulos = modulosVisiveis(A.consultaLeg).map((m) => m.id);
-    expect(modulos).toContain("leg-tramitacao");
-    expect(modulos).not.toContain("config");
   });
 
   it("não executa nada", () => {
     expect(podeCriarEmenda(A.consultaLeg)).toBe(false);
     expect(podeTramitar(A.consultaLeg)).toBe(false);
     expect(podeGerirEmenda(A.consultaLeg, { autorUsuarioId: "x" })).toBe(false);
-  });
-});
-
-describe("atalhos de configuração no menu lateral", () => {
-  const ids = (a: Ator) => vistasVisiveis(a).map((v) => v.id);
-
-  it("o Administrador Geral vê Usuários, Perfis e Configurações", () => {
-    expect(ids(A.adminGeral)).toEqual(
-      expect.arrayContaining(["usuarios", "perfis", "configuracoes"])
-    );
-  });
-
-  it("quem administra configurações vê Usuários, mas não Perfis", () => {
-    // Compor perfis é ato exclusivo do Administrador Geral: administrar
-    // configurações abre o cadastro de gente, não a fábrica de perfis.
-    for (const a of [A.presidente, A.executivo]) {
-      expect(ids(a)).toEqual(expect.arrayContaining(["usuarios", "configuracoes"]));
-      expect(ids(a)).not.toContain("perfis");
-    }
-  });
-
-  it("quem não administra configurações não vê nenhum dos três", () => {
-    for (const a of [A.vereador, A.comissao, A.consultaLeg, SEM_PERFIL]) {
-      expect(ids(a)).not.toContain("usuarios");
-      expect(ids(a)).not.toContain("perfis");
-      expect(ids(a)).not.toContain("configuracoes");
-    }
   });
 });
 
@@ -337,45 +261,25 @@ describe("salvaguardas de atribuição de perfil", () => {
 });
 
 // ============================================================================
-// Menu lateral: a casa do perfil vem primeiro, e nada nele leva a lugar nenhum.
+// Menu lateral: cada perfil vê só o que alcança.
 // ============================================================================
-describe("ordem e composição do menu lateral", () => {
-  const perfis = [A.vereador, A.comissao, A.presidente, A.executivo, A.adminGeral];
+describe("menu lateral", () => {
+  const ids = (a: Ator) => navegacaoVisivel(a).flatMap((g) => g.itens.map((i) => i.id));
 
-  it("a vista inicial é sempre o PRIMEIRO item do menu", () => {
-    // Sem isto, o gabinete aterrissa no Vereador 360 e vê "Painel" no topo —
-    // duas ideias de "onde eu estou" na mesma tela.
-    for (const a of perfis) {
-      const vistas = vistasVisiveis(a);
-      expect(vistas[0]?.href).toBe(vistaInicial(a));
-    }
+  it("conta sem perfil não vê nada", () => {
+    expect(ids(SEM_PERFIL)).toEqual([]);
   });
 
-  it("nenhum item do menu redireciona para outro item", () => {
-    for (const a of perfis) {
-      const vistas = vistasVisiveis(a);
-      // "Painel" redireciona quem não aterrissa nele; só pode estar no menu de
-      // quem aterrissa.
-      const temPainel = vistas.some((v) => v.id === "painel");
-      expect(temPainel).toBe(vistaInicial(a) === "/painel");
-    }
+  it("quem apresenta emenda vê Nova emenda; os demais não", () => {
+    expect(ids(A.vereador)).toContain("nova");
+    expect(ids(A.presidente)).toContain("nova");
+    expect(ids(A.comissao)).not.toContain("nova");
+    expect(ids(A.executivo)).not.toContain("nova");
   });
 
-  it("'Ferramentas' saiu do menu — virou seção na tela inicial", () => {
-    for (const a of perfis) {
-      expect(vistasVisiveis(a).map((v) => v.id)).not.toContain("ferramentas");
-    }
-  });
-
-  it("os atalhos da tela inicial não repetem rota do menu lateral", () => {
-    // A comparação é por ROTA, sem query: /config e /config?aba=usuarios são o
-    // mesmo destino, e mostrar os dois na mesma tela cria dúvida em vez de
-    // atalho.
-    const semQuery = (h: string) => h.split("?")[0];
-    for (const a of perfis) {
-      const noMenu = new Set(vistasVisiveis(a).map((v) => semQuery(v.href)));
-      const atalhos = modulosVisiveis(a).filter((m) => !noMenu.has(semQuery(m.href)));
-      for (const at of atalhos) expect(noMenu.has(semQuery(at.href))).toBe(false);
+  it("a lista de emendas é de consulta para todos os perfis", () => {
+    for (const a of [A.vereador, A.comissao, A.presidente, A.executivo, A.consultaLeg, A.adminGeral]) {
+      expect(ids(a)).toContain("emendas");
     }
   });
 });

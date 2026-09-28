@@ -1,15 +1,21 @@
-// Sistema de Gestão de Emendas Parlamentares — modelo de domínio.
-// Orçamento público municipal brasileiro (PPA/LDO/LOA), separado por Poder.
+// Emendas360 — modelo de domínio (v2).
 //
-// Princípios estruturais (PROMPT 1):
-//  - Toda classificação orçamentária é por FK — NUNCA string solta para
-//    programa, ação, órgão, unidade, natureza ou fonte.
-//  - IDs cuid, createdAt/updatedAt e índices adequados.
-//  - Auth.js (User/Account/Session/VerificationToken) em inglês por exigência do
-//    adapter; domínio em português. FKs para o usuário usam `usuarioId`.
+// Emendas parlamentares impositivas sobre o orçamento municipal (PPA/LDO/LOA),
+// com o fluxo de três etapas desenhado no protótipo RIEP: descrever a emenda,
+// montar o plano de trabalho e validar antes de submeter.
 //
-// Prisma 7 usa driver adapters: a URL de conexão vem do prisma.config.ts (CLI /
-// migrations, via DIRECT_URL) e de src/lib/prisma.ts (runtime, via DATABASE_URL).
+// Princípios:
+//  - Nada do município no código. Cota, percentuais, códigos AUDESP, áreas de
+//    aplicação e a biblioteca de objetos vivem no banco e são carregados por
+//    seed ou pela tela de configuração. Um deploy atende um município.
+//  - Classificação orçamentária por FK. A dotação guarda também o código de
+//    exibição e a ficha, que é como as pessoas a citam.
+//  - Valores monetários em Decimal(18,2); quantidades em Decimal(18,4).
+//  - Auth.js (User/Account/Session/VerificationToken) em inglês por exigência
+//    do adapter; o restante do domínio em português.
+//
+// Prisma 7 usa driver adapters: a URL vem do prisma.config.ts (CLI) e de
+// src/lib/prisma.ts (runtime).
 
 generator client {
   provider = "prisma-client"
@@ -24,49 +30,27 @@ datasource db {
 // ENUMS
 // ============================================================================
 
-// Poder da separação institucional.
 enum Poder {
   LEGISLATIVO
   EXECUTIVO
 }
 
-// Resultado da análise de viabilidade técnica feita pelo Executivo.
-// Registro informativo: não altera a emenda nem trava a tramitação.
-enum ResultadoViabilidade {
-  VIAVEL
-  VIAVEL_COM_RESSALVA
-  INVIAVEL
-}
-
-// Etapas da despesa pública brasileira (Lei 4.320/1964, arts. 58 a 65).
-// Vocabulário padrão para que uma futura integração com o sistema financeiro
-// do município encontre os campos já prontos.
-enum EtapaExecucao {
-  EMPENHO
-  LIQUIDACAO
-  PAGAMENTO
-}
-
-// Situação do exercício orçamentário (motor exige exercício ABERTO).
 enum StatusExercicio {
   ABERTO
   ENCERRADO
 }
 
-// Instrumentos de planejamento fiscal.
 enum TipoInstrumento {
   PPA
   LDO
   LOA
 }
 
-// Espécie do instrumento: projeto de lei (base das emendas) ou lei aprovada.
 enum EspecieInstrumento {
   PROJETO_LEI
   LEI_APROVADA
 }
 
-// Ciclo de vida do instrumento (PROJETO_LEI → ... → VIGENTE).
 enum StatusInstrumento {
   EM_ELABORACAO
   ENVIADO
@@ -77,83 +61,159 @@ enum StatusInstrumento {
   ENCERRADO
 }
 
-// Tipo de ação orçamentária (classificação funcional-programática).
 enum TipoAcao {
   PROJETO
   ATIVIDADE
   OPERACAO_ESPECIAL
 }
 
-// Documentos normativos de referência.
 enum TipoNorma {
   LOM
   REGIMENTO_INTERNO
+  LEI
+  PORTARIA
+  COMUNICADO
   OUTRO
 }
 
-// Escopo de um parâmetro de validação.
-enum EscopoParametro {
-  GERAL
-  EXERCICIO
+// Como a reserva mínima da saúde é conferida (definido na LDO): no conjunto das
+// emendas do autor (GLOBAL) ou em cada emenda (INDIVIDUAL).
+enum AfericaoSaude {
+  GLOBAL
+  INDIVIDUAL
 }
 
-// Modo de aplicação de um parâmetro: impede (BLOQUEANTE) ou apenas avisa.
-enum ModoValidacao {
-  BLOQUEANTE
-  ALERTA
+// Quem executa a despesa. Define a modalidade de aplicação: 90 na direta, 50
+// na indireta (transferência a instituição privada sem fins lucrativos).
+enum FormaExecucao {
+  DIRETA
+  INDIRETA
 }
 
-// Natureza do beneficiário final da emenda (rastreabilidade ponta a ponta —
-// exigência STF/TCE; ver docs/analise-regulatoria-gaps.md).
-// Categorias pedidas pelo jurídico do cliente. Não é rótulo: a categoria define
-// o RITO. Terceiro setor exige plano de trabalho completo (justificativa,
-// objetivo, declaração e planilha); administração direta e indireta exigem só a
-// justificativa.
-enum TipoBeneficiario {
-  ADMINISTRACAO_DIRETA
-  ADMINISTRACAO_INDIRETA
-  TERCEIRO_SETOR
+enum NaturezaObjeto {
+  CUSTEIO
+  CAPITAL
 }
 
-// Qual dos quatro formulários oficiais de plano de trabalho vale para a emenda.
-// Não é escolha do autor: sai da natureza da despesa da dotação e da categoria
-// do beneficiário. A regra vive em `src/lib/plano-modelo.ts`.
+// Divisível: a quantidade é proporcional ao valor. Indivisível: quem recebe o
+// bem é a unidade inteira, e o alcance vem da população de referência.
+enum Divisibilidade {
+  DIVISIVEL
+  INDIVISIVEL
+}
+
+// Parcela da cota que a emenda consome. Decidida pelo IC-CO da dotação
+// (1002 = ações e serviços públicos de saúde), nunca por escolha do autor.
+enum ParcelaCota {
+  SAUDE
+  DEMAIS
+}
+
+// Origem do cadastro de um destino.
+enum OrigemDestino {
+  BASE_OFICIAL // CNES, Censo Escolar, SUAS, Receita Federal
+  CADASTRO // incluído por um usuário do sistema
+}
+
+// Resultado da classificação da etapa 1.
+enum SituacaoClassificacao {
+  OK // dotação encontrada ou escolhida
+  VALIDAR // mais de uma candidata, objeto não reconhecido ou sem aderência
+  OBICE // nenhuma dotação comporta o objeto
+  CONFLITO // objeto de área estrita num destino de outra área
+  INDETERMINADO // não foi possível reconhecer o que a emenda entrega
+}
+
+// Quem definiu a dotação.
+enum EscolhaDotacao {
+  SISTEMA
+  PROPONENTE
+  ANALISE_TECNICA
+}
+
+// Os quatro formulários oficiais de plano de trabalho. Não é escolha do autor:
+// sai da dotação (modalidade, grupo e elemento).
 enum ModeloPlanoTrabalho {
-  CUSTEIO // Modelo I   — despesa corrente executada pelo Município
-  OBRAS // Modelo II  — obras e serviços de engenharia
-  TERCEIRO_SETOR // Modelo III — repasse a entidade sem fins lucrativos
-  EQUIPAMENTOS // Modelo IV  — bem permanente
+  CUSTEIO // Modelo I
+  OBRAS // Modelo II
+  TERCEIRO_SETOR // Modelo III
+  EQUIPAMENTOS // Modelo IV
 }
 
-// Tipo de emenda parlamentar.
-enum TipoEmenda {
-  ACRESCIMO
-  ANULACAO
-  REMANEJAMENTO
-  IMPOSITIVA
+// Instrumento pretendido no terceiro setor. É ele que define o elemento de
+// despesa (41, 42 ou 43), e por isso não é deduzido pelo motor.
+enum InstrumentoParceria {
+  PARCERIA_MROSC // Lei 13.019/2014 — fomento ou colaboração
+  CONTRIBUICAO_LEI // contribuição instituída por lei
+  OUTRO
 }
 
-// Ciclo de vida da emenda.
+// O ato do Executivo que encerra a meta, na execução.
+enum EventoComprovacao {
+  PATRIMONIO
+  ALMOXARIFADO
+  LIQUIDACAO
+  RECEBIMENTO_DEFINITIVO
+  RECEBIMENTO_ETAPA
+  PRESTACAO_CONTAS
+  PRESTACAO_CONTAS_DOACAO
+}
+
+enum TipoReferenciaPreco {
+  ATA
+  CONTRATACAO_MUNICIPIO
+  CONTRATACAO_OUTRO_ORGAO
+  PAINEL
+  BANCO_PRECOS_SAUDE
+  TABELA_OFICIAL
+  COTACAO
+  NOTA_FISCAL
+  TERMO_PARCERIA
+  ESTIMATIVA
+}
+
+// Informada: registrada pelo proponente. Conferida: resultado de pesquisa de
+// preço aprovado por alguém que declarou ter conferido a fonte.
+enum ProcedenciaReferencia {
+  INFORMADA
+  CONFERIDA
+}
+
 enum StatusEmenda {
   RASCUNHO
-  EM_VALIDACAO
-  VALIDA
-  INVALIDA
   SUBMETIDA
-  EM_TRAMITACAO
   APROVADA
   REJEITADA
 }
 
-// Resultado consolidado de uma execução de validação.
-enum ResultadoValidacao {
-  VALIDA
-  INVALIDA
+enum ResultadoViabilidade {
+  VIAVEL
+  VIAVEL_COM_RESSALVA
+  INVIAVEL
+}
+
+// Etapas da despesa pública (Lei 4.320/1964, arts. 58 a 65).
+enum EtapaExecucao {
+  EMPENHO
+  LIQUIDACAO
+  PAGAMENTO
 }
 
 // ============================================================================
-// PLANEJAMENTO — contexto anual e classificação orçamentária (tudo por FK)
+// MUNICÍPIO E EXERCÍCIO
 // ============================================================================
+
+// O município atendido por este deploy. Uma única linha.
+model Municipio {
+  id             String   @id @default(cuid())
+  nome           String
+  uf             String
+  codigoIbge     String?
+  nomeCamara     String?
+  nomePrefeitura String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
 
 // Exercício orçamentário (ano). Contexto de dados de toda a aplicação.
 model Exercicio {
@@ -163,23 +223,98 @@ model Exercicio {
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
 
-  // Classificação e demais entidades vinculadas ao exercício.
-  orgaos       Orgao[]
-  unidades     UnidadeOrcamentaria[]
-  funcoes      Funcao[]
-  subfuncoes   Subfuncao[]
-  programas    Programa[]
-  acoes        Acao[]
-  naturezas    NaturezaDespesa[]
-  fontes       FonteRecurso[]
-  prioridades  PrioridadeLDO[]
-  instrumentos InstrumentoPlanejamento[]
-  dotacoes     Dotacao[]
-  emendas      Emenda[]
-  parametros   ParametroValidacao[]
+  configuracao      ConfiguracaoExercicio?
+  prazos            PrazoExercicio[]
+  orgaos            Orgao[]
+  unidades          UnidadeOrcamentaria[]
+  funcoes           Funcao[]
+  subfuncoes        Subfuncao[]
+  programas         Programa[]
+  acoes             Acao[]
+  naturezas         NaturezaDespesa[]
+  fontes            FonteRecurso[]
+  instrumentos      InstrumentoPlanejamento[]
+  dotacoes          Dotacao[]
+  metasAcao         MetaAcao[]
+  emendas           Emenda[]
+  emendasImportadas EmendaImportada[]
+  contador          ContadorEmenda?
 }
 
-// Órgão orçamentário.
+// Parâmetros das emendas impositivas no exercício. Campo nulo significa
+// "não parametrizado": o sistema mostra a pendência e não presume valor.
+model ConfiguracaoExercicio {
+  id          String @id @default(cuid())
+  exercicioId String @unique
+
+  // --- cota individual -------------------------------------------------------
+  cotaIndividual   Decimal? @db.Decimal(18, 2)
+  percentualRcl    Decimal? @db.Decimal(7, 4)
+  rclBase          Decimal? @db.Decimal(18, 2)
+  rclAnoBase       Int?
+  rclObservacao    String?
+  numeroVereadores Int?
+  // A conta por extenso, para quem precisar conferir de onde veio a cota.
+  memoriaCota      String?
+
+  // --- reserva da saúde ------------------------------------------------------
+  percentualSaude Decimal       @default(50) @db.Decimal(5, 2)
+  afericaoSaude   AfericaoSaude @default(GLOBAL)
+  observacaoSaude String?
+
+  // --- tolerâncias do motor --------------------------------------------------
+  // Divergência aceita entre o valor pretendido e o definitivo (só alerta).
+  toleranciaValorPct      Decimal @default(10) @db.Decimal(5, 2)
+  // Referência de preço mais antiga que isto acende alerta.
+  validadeReferenciaMeses Int     @default(12)
+  // Linha da memória de cálculo abaixo deste percentual do total é acessória.
+  percentualAcessorio     Decimal @default(20) @db.Decimal(5, 2)
+
+  // --- identificadores AUDESP (camada C) ------------------------------------
+  // As tabelas do AUDESP são revistas a cada ano: nada disto é fixo no código.
+  fonteAudesp        String?
+  fonteAudespNome    String?
+  codigoAplicacao    String?
+  formatoVariacao    Int     @default(4)
+  variacaoOcupaFonte Boolean @default(false)
+  icEpVigente        Boolean @default(false)
+  icEpCodigo         String?
+
+  // --- alcance das emendas ---------------------------------------------------
+  // Órgãos cujo orçamento não recebe emenda (ex.: a própria Câmara e os
+  // encargos gerais do município). Códigos de órgão ("01", "17").
+  orgaosForaDasEmendas String[] @default([])
+
+  // --- contexto --------------------------------------------------------------
+  // Como a base aparece para quem elabora ("LOA 2026 (Lei 6.246/2025)").
+  rotuloBase     String?
+  // Fim do protocolo de emendas; depois disso não se submete.
+  prazoProtocolo DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  exercicio Exercicio @relation(fields: [exercicioId], references: [id], onDelete: Cascade)
+}
+
+// Prazos do calendário das emendas (LOA, LDO, AUDESP). Informativos.
+model PrazoExercicio {
+  id          String   @id @default(cuid())
+  exercicioId String
+  descricao   String
+  data        DateTime
+  url         String?
+  createdAt   DateTime @default(now())
+
+  exercicio Exercicio @relation(fields: [exercicioId], references: [id], onDelete: Cascade)
+
+  @@index([exercicioId, data])
+}
+
+// ============================================================================
+// CLASSIFICAÇÃO ORÇAMENTÁRIA (por exercício)
+// ============================================================================
+
 model Orgao {
   id          String   @id @default(cuid())
   codigo      String
@@ -193,10 +328,9 @@ model Orgao {
   dotacoes  Dotacao[]
 
   @@unique([exercicioId, codigo])
-  @@index([exercicioId])
 }
 
-// Unidade Orçamentária (pertence a um Órgão).
+// Unidade orçamentária. `codigo` é o código completo ("13.01").
 model UnidadeOrcamentaria {
   id          String   @id @default(cuid())
   codigo      String
@@ -206,16 +340,15 @@ model UnidadeOrcamentaria {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  orgao     Orgao     @relation(fields: [orgaoId], references: [id], onDelete: Cascade)
-  exercicio Exercicio @relation(fields: [exercicioId], references: [id], onDelete: Cascade)
+  orgao     Orgao      @relation(fields: [orgaoId], references: [id], onDelete: Cascade)
+  exercicio Exercicio  @relation(fields: [exercicioId], references: [id], onDelete: Cascade)
   dotacoes  Dotacao[]
+  metas     MetaAcao[]
 
-  @@unique([exercicioId, orgaoId, codigo])
+  @@unique([exercicioId, codigo])
   @@index([orgaoId])
-  @@index([exercicioId])
 }
 
-// Função (classificação funcional).
 model Funcao {
   id          String   @id @default(cuid())
   codigo      String
@@ -229,10 +362,8 @@ model Funcao {
   dotacoes   Dotacao[]
 
   @@unique([exercicioId, codigo])
-  @@index([exercicioId])
 }
 
-// Subfunção (pertence a uma Função).
 model Subfuncao {
   id          String   @id @default(cuid())
   codigo      String
@@ -248,33 +379,26 @@ model Subfuncao {
 
   @@unique([exercicioId, funcaoId, codigo])
   @@index([funcaoId])
-  @@index([exercicioId])
 }
 
-// Programa (classificação programática; deve constar no PPA do exercício).
 model Programa {
   id          String   @id @default(cuid())
   codigo      String
   nome        String
-  // Consta do PPA vigente? É a base da checagem PROGRAMA_NO_PPA (LOM art. 140
-  // §1º, I). Não dá para derivar isso de dotações: PPA não tem dotação — tem
-  // programas, ações e metas plurianuais. Preenchido a partir do Anexo II do
-  // PPA (ver docs/better/dados/ppa-2026-2029-programas.json).
+  // Consta do PPA vigente? (LOM art. 140 §1º, I).
   constaNoPPA Boolean  @default(false)
   exercicioId String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  exercicio   Exercicio       @relation(fields: [exercicioId], references: [id], onDelete: Cascade)
-  acoes       Acao[]
-  dotacoes    Dotacao[]
-  prioridades PrioridadeLDO[]
+  exercicio Exercicio  @relation(fields: [exercicioId], references: [id], onDelete: Cascade)
+  acoes     Acao[]
+  dotacoes  Dotacao[]
+  metas     MetaAcao[]
 
   @@unique([exercicioId, codigo])
-  @@index([exercicioId])
 }
 
-// Ação (pertence a um Programa; projeto/atividade/operação especial).
 model Acao {
   id          String   @id @default(cuid())
   codigo      String
@@ -285,27 +409,22 @@ model Acao {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  programa    Programa        @relation(fields: [programaId], references: [id], onDelete: Cascade)
-  exercicio   Exercicio       @relation(fields: [exercicioId], references: [id], onDelete: Cascade)
-  dotacoes    Dotacao[]
-  prioridades PrioridadeLDO[]
+  programa  Programa   @relation(fields: [programaId], references: [id], onDelete: Cascade)
+  exercicio Exercicio  @relation(fields: [exercicioId], references: [id], onDelete: Cascade)
+  dotacoes  Dotacao[]
+  metas     MetaAcao[]
 
   @@unique([exercicioId, programaId, codigo])
   @@index([programaId])
-  @@index([exercicioId])
 }
 
-// Natureza da Despesa (categoria econômica → grupo → modalidade → elemento).
-// Os componentes são atributos da própria entidade; a referência a ela é por FK.
+// Natureza da despesa ("4.4.90.52"): categoria, grupo, modalidade e elemento.
 model NaturezaDespesa {
   id                  String   @id @default(cuid())
   codigo              String
   categoriaEconomica  String
   grupo               String
   modalidadeAplicacao String
-  // `elemento` guarda o CÓDIGO do elemento ("30", "11"); `nome` guarda o rótulo
-  // por extenso ("Material de Consumo"). Sem o nome, o vereador só via o código
-  // na hora de escolher a dotação — apontamento do jurídico do cliente.
   elemento            String
   nome                String?
   exercicioId         String
@@ -316,10 +435,10 @@ model NaturezaDespesa {
   dotacoes  Dotacao[]
 
   @@unique([exercicioId, codigo])
-  @@index([exercicioId])
 }
 
-// Fonte de Recurso.
+// Fonte de recurso da dotação. No QDD de Mogi Guaçu é o par fonte/aplicação do
+// TCE-SP ("01.1100000"); a correspondência com a fonte STN fica no nome.
 model FonteRecurso {
   id          String   @id @default(cuid())
   codigo      String
@@ -332,34 +451,13 @@ model FonteRecurso {
   dotacoes  Dotacao[]
 
   @@unique([exercicioId, codigo])
-  @@index([exercicioId])
-}
-
-// Prioridade/meta da LDO (usada na checagem ADERENCIA_LDO do motor).
-model PrioridadeLDO {
-  id          String   @id @default(cuid())
-  descricao   String
-  programaId  String
-  acaoId      String?
-  exercicioId String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  programa  Programa  @relation(fields: [programaId], references: [id], onDelete: Cascade)
-  acao      Acao?     @relation(fields: [acaoId], references: [id], onDelete: SetNull)
-  exercicio Exercicio @relation(fields: [exercicioId], references: [id], onDelete: Cascade)
-
-  @@index([programaId])
-  @@index([acaoId])
-  @@index([exercicioId])
 }
 
 // ============================================================================
-// INSTRUMENTOS DE PLANEJAMENTO — base das emendas e acompanhamento
+// INSTRUMENTOS E DOTAÇÕES
 // ============================================================================
 
-// InstrumentoPlanejamento: o PROJETO_LEI serve de base às emendas; a LEI_APROVADA
-// liga-se ao PL de origem (instrumentoOrigemId) para acompanhamento.
+// PROJETO_LEI é a base das emendas; LEI_APROVADA liga-se ao PL de origem.
 model InstrumentoPlanejamento {
   id                  String             @id @default(cuid())
   tipo                TipoInstrumento
@@ -377,25 +475,22 @@ model InstrumentoPlanejamento {
   updatedAt           DateTime           @updatedAt
 
   exercicio         Exercicio                 @relation(fields: [exercicioId], references: [id], onDelete: Cascade)
-  // Auto-relação: LEI_APROVADA (origem) ← PROJETO_LEI.
   instrumentoOrigem InstrumentoPlanejamento?  @relation("InstrumentoOrigem", fields: [instrumentoOrigemId], references: [id])
   derivados         InstrumentoPlanejamento[] @relation("InstrumentoOrigem")
+  dotacoes          Dotacao[]
 
-  // A base estruturada de dotações é vinculada a UM instrumento.
-  dotacoes Dotacao[]
-  // Emendas apresentadas sobre este instrumento (quando é o PROJETO_LEI base).
-  emendas  Emenda[]
-
-  @@index([exercicioId])
-  @@index([instrumentoOrigemId])
   @@index([exercicioId, especie, status])
 }
 
-// Dotação orçamentária: classificação completa por FK, vinculada a um instrumento.
+// Linha do orçamento sobre a qual a emenda incide.
 model Dotacao {
   id                    String   @id @default(cuid())
   instrumentoId         String
   exercicioId           String
+  // Como a dotação é citada: o número da ação e, quando a ação se repete, o
+  // elemento e a ficha ("2048.43").
+  codigo                String
+  ficha                 String?
   orgaoId               String
   unidadeOrcamentariaId String
   funcaoId              String
@@ -404,8 +499,12 @@ model Dotacao {
   acaoId                String
   naturezaDespesaId     String
   fonteRecursoId        String
-  valorInicial          Decimal  @db.Decimal(18, 2)
-  valorAtual            Decimal  @db.Decimal(18, 2)
+  // Valor autorizado na lei. A execução não está disponível: nada aqui é saldo.
+  valorAutorizado       Decimal  @db.Decimal(18, 2)
+  // Página do anexo de onde a linha foi lida (conferência do OCR).
+  paginaFonte           Int?
+  // Posição da linha no anexo. O motor desempata candidatas por ela.
+  ordem                 Int      @default(0)
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
 
@@ -420,180 +519,375 @@ model Dotacao {
   naturezaDespesa     NaturezaDespesa         @relation(fields: [naturezaDespesaId], references: [id])
   fonteRecurso        FonteRecurso            @relation(fields: [fonteRecursoId], references: [id])
 
-  // Emendas que referenciam esta dotação (alvo, origem e destino de remanejamento).
-  emendas        Emenda[] @relation("EmendaDotacao")
-  emendasOrigem  Emenda[] @relation("EmendaDotacaoOrigem")
-  emendasDestino Emenda[] @relation("EmendaDotacaoDestino")
+  emendas Emenda[]
 
-  // Índice único da classificação completa por instrumento.
-  @@unique([instrumentoId, orgaoId, unidadeOrcamentariaId, funcaoId, subfuncaoId, programaId, acaoId, naturezaDespesaId, fonteRecursoId])
-  @@index([instrumentoId])
+  @@unique([instrumentoId, codigo])
   @@index([exercicioId])
-  @@index([programaId])
-  @@index([acaoId])
+  @@index([unidadeOrcamentariaId])
+}
+
+// Meta física da ação nas peças de planejamento (PPA e LDO). É referência de
+// redação e de unidade para o plano de trabalho, nunca de quantidade: a emenda
+// entrega uma fração da meta do programa.
+model MetaAcao {
+  id                     String   @id @default(cuid())
+  exercicioId            String
+  unidadeId              String
+  programaId             String
+  acaoId                 String
+  produto                String
+  unidadeMedida          String?
+  publicoAlvo            String?
+  quantidadePpa          Decimal? @db.Decimal(18, 4)
+  quantidadeExercicio    Decimal? @db.Decimal(18, 4)
+  beneficiariosExercicio Decimal? @db.Decimal(18, 4)
+  notaLdo                String?
+  paginaFonte            Int?
+  createdAt              DateTime @default(now())
+
+  exercicio Exercicio           @relation(fields: [exercicioId], references: [id], onDelete: Cascade)
+  unidade   UnidadeOrcamentaria @relation(fields: [unidadeId], references: [id], onDelete: Cascade)
+  programa  Programa            @relation(fields: [programaId], references: [id], onDelete: Cascade)
+  acao      Acao                @relation(fields: [acaoId], references: [id], onDelete: Cascade)
+
+  @@unique([unidadeId, programaId, acaoId])
+  @@index([exercicioId])
 }
 
 // ============================================================================
-// DOCUMENTOS NORMATIVOS E PARÂMETROS DE VALIDAÇÃO
+// NORMAS
 // ============================================================================
 
-// Documento normativo (LOM, Regimento Interno, outros) — repositório consultável.
+// Base legal consultável (LOM, LOA, LDO, comunicados do TCE).
 model DocumentoNormativo {
   id           String    @id @default(cuid())
   tipo         TipoNorma
   titulo       String
   numero       String?
-  arquivoUrl   String
+  artigo       String?
+  trecho       String?
+  url          String?
   dataVigencia DateTime?
   ativo        Boolean   @default(true)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
-  // Parâmetros que citam este documento como fundamento jurídico.
-  parametros ParametroValidacao[]
+  @@index([tipo, ativo])
+}
 
-  @@index([tipo])
+// ============================================================================
+// MOTOR DE CLASSIFICAÇÃO — catálogos do município
+// ============================================================================
+
+// Área de aplicação e os órgãos orçamentários que a atendem. É o que permite
+// dizer que "ambulância" não cabe numa escola.
+model AreaAplicacao {
+  id            String   @id @default(cuid())
+  nome          String   @unique
+  // Códigos dos órgãos da área ("13", "20").
+  orgaos        String[]
+  // Unidade que responde pela área quando o destino não tem vínculo fixo.
+  unidadePadrao String?
+  ordem         Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  objetos ObjetoBiblioteca[]
+}
+
+// Biblioteca de objetos: o vocabulário que o motor reconhece.
+model ObjetoBiblioteca {
+  id             String         @id @default(cuid())
+  rotulo         String
+  termos         String[]
+  natureza       NaturezaObjeto
+  elemento       String
+  divisibilidade Divisibilidade
+  subfuncao      String?
+  // Estrito: o objeto só cabe na sua própria área (ambulância é Saúde).
+  estrito        Boolean        @default(false)
+  explicacao     String
+  areaId         String?
+  ordem          Int            @default(0)
+  ativo          Boolean        @default(true)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  area AreaAplicacao? @relation(fields: [areaId], references: [id], onDelete: SetNull)
+
   @@index([ativo])
 }
 
-// Parâmetro de validação (regra geral ou por exercício). Ex.: teto por autor,
-// percentual impositivo, exigência de aderência à LDO. Pode citar um fundamento.
-model ParametroValidacao {
-  id                  String          @id @default(cuid())
-  escopo              EscopoParametro @default(GERAL)
-  exercicioId         String?
-  chave               String
-  valor               String
-  modo                ModoValidacao?
-  fundamentoNormaId   String?
-  fundamentoDescricao String?
-  createdAt           DateTime        @default(now())
-  updatedAt           DateTime        @updatedAt
+// ============================================================================
+// DESTINOS (beneficiários)
+// ============================================================================
 
-  exercicio       Exercicio?          @relation(fields: [exercicioId], references: [id], onDelete: Cascade)
-  fundamentoNorma DocumentoNormativo? @relation(fields: [fundamentoNormaId], references: [id], onDelete: SetNull)
+// Para onde vai a emenda: órgão ou equipamento público (execução direta) ou
+// entidade do terceiro setor (execução indireta). Atravessa exercícios, por
+// isso a unidade é guardada pelo código, não por FK.
+model Destino {
+  id                   String        @id @default(cuid())
+  nome                 String
+  nomeOficial          String?
+  execucao             FormaExecucao
+  // Direta: a unidade orçamentária a que o equipamento está vinculado.
+  unidadeCodigo        String?
+  // Indireta: sugestão da secretaria repassadora (o objeto decide).
+  unidadeRepasseCodigo String?
+  endereco             String
+  cnpj                 String?
+  cnes                 String?
+  inep                 String?
+  populacaoReferencia  Int?
+  fontePopulacao       String?
+  dataPopulacao        String?
+  responsavelNome      String?
+  responsavelCargo     String?
+  telefone             String?
+  email                String?
+  // Documento de habilitação pendente (arts. 33-39 da Lei 13.019/2014).
+  pendenciaHabilitacao String?
+  fonteUrl             String?
+  origem               OrigemDestino @default(CADASTRO)
+  ativo                Boolean       @default(true)
+  criadoPorId          String?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
 
-  @@unique([exercicioId, chave])
-  @@index([escopo])
-  @@index([exercicioId])
+  criadoPor User?    @relation(fields: [criadoPorId], references: [id], onDelete: SetNull)
+  emendas   Emenda[]
+
+  @@unique([execucao, nome])
+  @@index([ativo])
 }
 
 // ============================================================================
-// EMENDAS PARLAMENTARES
+// EMENDAS
 // ============================================================================
 
-// Beneficiário final da emenda (órgão público ou entidade). Entidade global —
-// a mesma instituição atravessa exercícios. CNPJ opcional (órgãos públicos).
-model Beneficiario {
-  id         String           @id @default(cuid())
-  nome       String
-  tipo       TipoBeneficiario @default(ADMINISTRACAO_DIRETA)
-  cnpj       String?
-  observacao String?
-
-  // Quem responde pelo destino e assina o plano de trabalho. Fica no CADASTRO,
-  // não na emenda: o representante legal é o mesmo em toda emenda destinada
-  // àquela entidade, e pedi-lo de novo a cada emenda seria redigitar o que o
-  // sistema já sabe. É por este e-mail que sai o link de preenchimento no
-  // Modelo III.
-  responsavelNome  String?
-  responsavelCargo String?
-  responsavelEmail String?
-
-  createdAt  DateTime         @default(now())
-  updatedAt  DateTime         @updatedAt
-
-  emendas Emenda[]
-
-  @@unique([nome])
-  @@index([tipo])
-}
-
-// Autor da emenda (vereador). Vínculo opcional a um usuário do sistema (1:1).
+// Autor (vereador). Pode existir sem usuário: as emendas importadas têm autor
+// real que ainda não acessa o sistema.
 model Autor {
   id        String   @id @default(cuid())
   nome      String
-  cargo     String
+  partido   String?
+  cargo     String   @default("Vereador")
   usuarioId String?  @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  usuario User?    @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
-  emendas Emenda[]
+  usuario           User?             @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
+  emendas           Emenda[]
+  emendasImportadas EmendaImportada[]
 
-  @@index([usuarioId])
+  @@unique([nome])
 }
 
-// Emenda: apresentada sobre o PROJETO_LEI base, referencia uma Dotacao existente.
-// `objeto` é o campo narrativo livre (além de justificativa).
+// Numeração das emendas por exercício. O número é atribuído na submissão, em
+// transação, a partir daqui — nunca por contagem.
+model ContadorEmenda {
+  id          String @id @default(cuid())
+  exercicioId String @unique
+  ultimo      Int    @default(0)
+
+  exercicio Exercicio @relation(fields: [exercicioId], references: [id], onDelete: Cascade)
+}
+
 model Emenda {
-  id                String       @id @default(cuid())
-  numero            String
-  exercicioId       String
-  instrumentoBaseId String
-  autorId           String
-  dotacaoId         String
-  tipo              TipoEmenda
-  objeto            String
-  justificativa     String
-  valor             Decimal      @db.Decimal(18, 2)
-  status            StatusEmenda @default(RASCUNHO)
-  // Beneficiário final (rastreabilidade ponta a ponta — STF/TCE).
-  beneficiarioId    String?
-  // Para REMANEJAMENTO: origem e destino.
-  dotacaoOrigemId   String?
-  dotacaoDestinoId  String?
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
+  id          String       @id @default(cuid())
+  exercicioId String
+  autorId     String
+  status      StatusEmenda @default(RASCUNHO)
+  // Atribuído na submissão.
+  numero      Int?
+  // Controle de concorrência: cada gravação incrementa.
+  revisao     Int          @default(1)
 
-  exercicio       Exercicio               @relation(fields: [exercicioId], references: [id], onDelete: Cascade)
-  instrumentoBase InstrumentoPlanejamento @relation(fields: [instrumentoBaseId], references: [id])
-  autor           Autor                   @relation(fields: [autorId], references: [id])
-  beneficiario    Beneficiario?           @relation(fields: [beneficiarioId], references: [id], onDelete: SetNull)
-  dotacao         Dotacao                 @relation("EmendaDotacao", fields: [dotacaoId], references: [id])
-  dotacaoOrigem   Dotacao?                @relation("EmendaDotacaoOrigem", fields: [dotacaoOrigemId], references: [id])
-  dotacaoDestino  Dotacao?                @relation("EmendaDotacaoDestino", fields: [dotacaoDestinoId], references: [id])
-  validacoes      ValidacaoEmenda[]
-  planoTrabalho   PlanoTrabalho?
-  pareceres       ParecerViabilidade[]
-  andamentos      AndamentoExecucao[]
+  // --- etapa 1: descrever ----------------------------------------------------
+  execucao        FormaExecucao @default(DIRETA)
+  destinoId       String?
+  objeto          String        @default("")
+  quantidade      String?
+  // Estimativa de planejamento. O valor da emenda sai da memória de cálculo.
+  valorPretendido Decimal?      @db.Decimal(18, 2)
+  endereco        String        @default("")
 
-  // Regra estrutural: dotacaoId e instrumentoBaseId obrigatórios e do mesmo
-  // exercício (coerência de exercício é reforçada no motor/API — PROMPT 5/6).
+  // --- classificação ---------------------------------------------------------
+  situacao       SituacaoClassificacao?
+  dotacaoId      String?
+  escolhaDotacao EscolhaDotacao?
+  // Fotografia do resultado do motor (objeto reconhecido, natureza, motivo):
+  // é o que explica, depois, por que a dotação é esta.
+  classificacao  Json?
+  parcela        ParcelaCota?
+  modelo         ModeloPlanoTrabalho?
+
+  // --- etapa 2: plano de trabalho -------------------------------------------
+  agenteExecutor    String               @default("")
+  justificativa     String               @default("")
+  metaFinalistica   String               @default("")
+  etapas            String               @default("")
+  etapasEditadas    Boolean              @default(false)
+  // Respostas do quadro de viabilidade ("II-0": "Sim").
+  quadroViabilidade Json                 @default("{}")
+  instrumento       InstrumentoParceria?
+  instrumentoOutro  String               @default("")
+  elementoOsc       String?
+  evento            EventoComprovacao?
+  metodoMeta        String?
+  metaSugerida      Decimal?             @db.Decimal(18, 4)
+  // Soma da memória de cálculo — o valor definitivo.
+  valor             Decimal              @default(0) @db.Decimal(18, 2)
+
+  // --- etapa 3 ---------------------------------------------------------------
+  declaracaoVinculo Boolean   @default(false)
+  submetidaEm       DateTime?
+
+  // --- tramitação (Comissão) -------------------------------------------------
+  parecerTramitacao String?
+  tramitadaEm       DateTime?
+  tramitadaPorId    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  exercicio    Exercicio            @relation(fields: [exercicioId], references: [id], onDelete: Cascade)
+  autor        Autor                @relation(fields: [autorId], references: [id])
+  tramitadaPor User?                @relation("EmendaTramitada", fields: [tramitadaPorId], references: [id], onDelete: SetNull)
+  destino      Destino?             @relation(fields: [destinoId], references: [id], onDelete: SetNull)
+  dotacao      Dotacao?             @relation(fields: [dotacaoId], references: [id], onDelete: SetNull)
+  metas        MetaEmenda[]
+  referencias  ReferenciaPreco[]
+  itens        ItemEmenda[]
+  parcelas     ParcelaDesembolso[]
+  validacoes   ValidacaoEmenda[]
+  pareceres    ParecerViabilidade[]
+  andamentos   AndamentoExecucao[]
+
   @@unique([exercicioId, numero])
-  @@index([exercicioId])
-  @@index([instrumentoBaseId])
+  @@index([exercicioId, status])
   @@index([autorId])
   @@index([dotacaoId])
-  @@index([status])
-  @@index([beneficiarioId])
+  @@index([destinoId])
 }
 
-// Registro de uma execução do motor de validação sobre uma emenda.
-model ValidacaoEmenda {
-  id          String             @id @default(cuid())
-  emendaId    String
-  resultado   ResultadoValidacao
-  executadaEm DateTime           @default(now())
-  itens       Json
+// Meta física: quem será atendido e quanto será entregue.
+model MetaEmenda {
+  id            String  @id @default(cuid())
+  emendaId      String
+  ordem         Int
+  beneficiarios String
+  unidade       String
+  quantidade    Decimal @db.Decimal(18, 4)
 
   emenda Emenda @relation(fields: [emendaId], references: [id], onDelete: Cascade)
 
   @@index([emendaId])
-  @@index([executadaEm])
+}
+
+// Referência de preço registrada na emenda. Cada linha da memória de cálculo
+// aponta para uma; é este cadastro que vira o quadro de origem dos preços.
+model ReferenciaPreco {
+  id            String                @id @default(cuid())
+  emendaId      String
+  // "R1", "R2"… — o rótulo que aparece na memória de cálculo.
+  codigo        String
+  tipo          TipoReferenciaPreco
+  // Campos próprios do tipo (número da ata, composição SINAPI, CNPJ…).
+  campos        Json                  @default("{}")
+  emissor       String
+  data          DateTime?
+  // Período como a fonte informa, quando não há data exata.
+  dataTexto     String?
+  unidade       String
+  valor         Decimal               @db.Decimal(18, 2)
+  objeto        String
+  porte         String?
+  link          String?
+  observacao    String?
+  procedencia   ProcedenciaReferencia @default(INFORMADA)
+  aprovadoPor   String?
+  aprovadoEm    DateTime?
+  origemExterna String?
+  consultadoEm  DateTime?
+
+  emenda Emenda       @relation(fields: [emendaId], references: [id], onDelete: Cascade)
+  itens  ItemEmenda[]
+
+  @@unique([emendaId, codigo])
+}
+
+// Linha da memória de cálculo. O total é derivado (quantidade × unitário).
+model ItemEmenda {
+  id            String  @id @default(cuid())
+  emendaId      String
+  ordem         Int
+  descricao     String
+  quantidade    Decimal @db.Decimal(18, 4)
+  valorUnitario Decimal @db.Decimal(18, 2)
+  referenciaId  String?
+
+  emenda     Emenda           @relation(fields: [emendaId], references: [id], onDelete: Cascade)
+  referencia ReferenciaPreco? @relation(fields: [referenciaId], references: [id], onDelete: SetNull)
+
+  @@index([emendaId])
+}
+
+// Parcela do cronograma de desembolso previsto. As datas são da execução.
+model ParcelaDesembolso {
+  id       String  @id @default(cuid())
+  emendaId String
+  ordem    Int
+  valor    Decimal @db.Decimal(18, 2)
+
+  emenda Emenda @relation(fields: [emendaId], references: [id], onDelete: Cascade)
+
+  @@index([emendaId])
+}
+
+// Resultado da validação no momento da submissão (o que o autor viu).
+model ValidacaoEmenda {
+  id          String   @id @default(cuid())
+  emendaId    String
+  bloqueios   Int
+  alertas     Int
+  itens       Json
+  executadaEm DateTime @default(now())
+
+  emenda Emenda @relation(fields: [emendaId], references: [id], onDelete: Cascade)
+
+  @@index([emendaId])
+}
+
+// Emendas apresentadas fora do sistema (ex.: as 351 emendas ao PL da LOA 2026,
+// lidas por OCR). Contam para a cota do autor. Sem área identificada, dividem-se
+// entre saúde e demais pela meação legal.
+model EmendaImportada {
+  id              String       @id @default(cuid())
+  exercicioId     String
+  autorId         String
+  numero          Int
+  descricao       String
+  valor           Decimal      @db.Decimal(18, 2)
+  parcela         ParcelaCota?
+  saudeHeuristica Boolean      @default(false)
+  observacao      String?
+  fonte           String?
+  createdAt       DateTime     @default(now())
+
+  exercicio Exercicio @relation(fields: [exercicioId], references: [id], onDelete: Cascade)
+  autor     Autor     @relation(fields: [autorId], references: [id], onDelete: Cascade)
+
+  @@unique([exercicioId, numero])
+  @@index([autorId])
 }
 
 // ============================================================================
-// PARTICIPAÇÃO DO EXECUTIVO — viabilidade técnica e execução orçamentária
+// PARTICIPAÇÃO DO EXECUTIVO
 // ============================================================================
 
-// Parecer de viabilidade técnica do Executivo sobre uma emenda.
-//
-// INFORMATIVO, NÃO BLOQUEANTE: registra a manifestação sem alterar a emenda e
-// sem travar a tramitação — a Comissão decide vendo o parecer, não presa a ele.
-// Disponível da submissão em diante, o que o faz servir aos dois momentos: como
-// subsídio à Comissão antes da votação e como impedimento técnico depois de
-// aprovada (CF art. 166 §11). O histórico é preservado: vale o mais recente.
+// Parecer de viabilidade técnica. Informativo: não altera a emenda nem trava a
+// tramitação. Vale o mais recente.
 model ParecerViabilidade {
   id            String               @id @default(cuid())
   emendaId      String
@@ -605,16 +899,10 @@ model ParecerViabilidade {
   emenda  Emenda @relation(fields: [emendaId], references: [id], onDelete: Cascade)
   usuario User?  @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
 
-  @@index([emendaId])
-  @@index([criadoEm])
+  @@index([emendaId, criadoEm])
 }
 
-// Andamento da execução orçamentária de uma emenda, lançado pelo Executivo.
-//
-// Uma linha por etapa da despesa (empenho, liquidação, pagamento), com data,
-// valor e número do documento. Lançamento manual nesta versão; os campos seguem
-// o vocabulário da Lei 4.320/1964 para que uma integração futura com o sistema
-// financeiro do município substitua a digitação sem trocar o modelo.
+// Andamento da execução orçamentária, lançado pelo Executivo.
 model AndamentoExecucao {
   id              String        @id @default(cuid())
   emendaId        String
@@ -630,32 +918,20 @@ model AndamentoExecucao {
   usuario User?  @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
 
   @@index([emendaId])
-  @@index([etapa])
-  @@index([data])
 }
 
 // ============================================================================
-// ACESSO E AUDITORIA — Auth.js (modelos técnicos em inglês) + AuditLog
+// ACESSO E AUDITORIA
 // ============================================================================
 
-// Usuário do sistema. Modelo `User` por exigência do @auth/prisma-adapter.
-// Campos de domínio: poder, role, passwordHash (credenciais — PROMPT 9) e o
-// vínculo opcional a Autor (back-relation do 1:1).
-// Perfil de acesso — substitui o enum fixo de papéis (PROMPT 12). O Administrador
-// Geral compõe perfis novos pela interface, sem alteração de código: o perfil é
-// a combinação de um Poder de atuação com as permissões atômicas abaixo.
-//
-// `poder` nulo = transversal (atravessa os dois Poderes).
-// `perfilDoSistema` marca os 5 perfis base, que não podem ser excluídos.
-// `adminGeral` ignora todas as verificações — é o único que gere perfis.
+// Perfil de acesso: um Poder de atuação combinado com permissões atômicas.
+// `poder` nulo = transversal. `adminGeral` passa por tudo.
 model PerfilAcesso {
   id        String  @id @default(cuid())
   nome      String  @unique
   descricao String?
   poder     Poder?
 
-  // Permissões atômicas. Um perfil sem nenhuma delas é perfil de consulta:
-  // enxerga painéis e relatórios do seu Poder, sem botões de ação.
   apresentarEmendas        Boolean @default(false)
   gerirTodasEmendas        Boolean @default(false)
   tramitarEmendas          Boolean @default(false)
@@ -672,8 +948,6 @@ model PerfilAcesso {
   updatedAt DateTime @updatedAt
 
   usuarios User[]
-
-  @@index([poder])
 }
 
 model User {
@@ -683,25 +957,23 @@ model User {
   emailVerified DateTime?
   image         String?
   passwordHash  String?
-  poder         Poder?
-  // Sem perfil o usuário NÃO acessa o sistema: é devolvido ao login com aviso.
   perfilId      String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  perfil     PerfilAcesso?        @relation(fields: [perfilId], references: [id], onDelete: SetNull)
-  accounts   Account[]
-  sessions   Session[]
-  autor      Autor?
-  auditLogs  AuditLog[]
-  pareceres  ParecerViabilidade[]
-  andamentos AndamentoExecucao[]
+  perfil            PerfilAcesso?        @relation(fields: [perfilId], references: [id], onDelete: SetNull)
+  accounts          Account[]
+  sessions          Session[]
+  autor             Autor?
+  auditLogs         AuditLog[]
+  pareceres         ParecerViabilidade[]
+  andamentos        AndamentoExecucao[]
+  destinos          Destino[]
+  emendasTramitadas Emenda[]             @relation("EmendaTramitada")
 
   @@index([perfilId])
-  @@index([poder])
 }
 
-// Auth.js — conta de provedor externo (OAuth) ligada ao usuário.
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -722,7 +994,6 @@ model Account {
   @@index([userId])
 }
 
-// Auth.js — sessão persistida.
 model Session {
   id           String   @id @default(cuid())
   sessionToken String   @unique
@@ -734,7 +1005,6 @@ model Session {
   @@index([userId])
 }
 
-// Auth.js — token de verificação (magic links / e-mail).
 model VerificationToken {
   identifier String
   token      String
@@ -759,140 +1029,4 @@ model AuditLog {
   @@index([usuarioId])
   @@index([entidade, entidadeId])
   @@index([criadoEm])
-}
-
-// ============================================================================
-// Plano de trabalho SIMPLIFICADO.
-//
-// Não é o plano de trabalho do MROSC (Lei 13.019/2014). Aquele — com metas no
-// formato Audesp, matriz de indicadores, memória de cálculo de RH, rateio e
-// cronograma de desembolso — é elaborado depois, na execução orçamentária,
-// quando o município for de fato repassar o recurso à entidade.
-//
-// O que entra aqui, na apresentação da emenda, é o mínimo que o jurídico do
-// cliente definiu:
-//   · terceiro setor → justificativa + objetivo + declaração + planilha
-//   · administração direta e indireta → só a justificativa
-// ============================================================================
-
-model PlanoTrabalho {
-  id       String @id @default(cuid())
-  emendaId String @unique
-
-  // O modelo é GRAVADO, não só derivado na leitura: trocar a dotação troca o
-  // formulário, e é preciso saber sob qual rito o que está aqui foi preenchido.
-  modelo ModeloPlanoTrabalho?
-
-  // --- terceiro setor: quem recebe o repasse -------------------------------
-  // Só o Modelo III preenche. O CNPJ não é FK para Beneficiario de propósito:
-  // aqui é o que a ENTIDADE declarou de si, e divergir do cadastro é um dado,
-  // não um erro a ser silenciado.
-  entidadeRazaoSocial String?
-  entidadeCnpj        String?
-  // Mínimo de 1 ano para receber repasse — art. 33, V, "a", da Lei 13.019/2014.
-  entidadeAnos        Int?
-  orgaoRepassador     String?
-
-  // --- link de preenchimento pela entidade ---------------------------------
-  // Existe só no Modelo III: nos demais quem executa é o Município e o autor
-  // preenche na própria tela.
-  token         String?   @unique
-  tokenExpiraEm DateTime?
-  preenchidoPor String?
-  preenchidoEm  DateTime?
-
-  // --- declarações obrigatórias da OSC (Modelo III) ------------------------
-  declIdentificacao    Boolean @default(false)
-  declConstituicao     Boolean @default(false)
-  declAdimplencia      Boolean @default(false)
-  declParentesco       Boolean @default(false)
-  declSancoes          Boolean @default(false)
-  declFichaLimpa       Boolean @default(false)
-  declResponsabilidade Boolean @default(false)
-
-  // --- assinatura eletrônica simples ---------------------------------------
-  // Lei 14.063/2020, art. 4º, I: identificar o signatário e associar a
-  // assinatura ao documento. A identificação são os campos abaixo; a
-  // associação é o hash.
-  assinanteNome    String?
-  assinanteCpf     String?
-  assinanteCargo   String?
-  assinanteEmail   String?
-  assinadoEm       DateTime?
-  assinaturaIp     String?
-  assinaturaAgente String?
-  // SHA-256 do conteúdo assinado. É ele que amarra a assinatura AO QUE se
-  // assinou: editado o plano, o hash deixa de conferir e a assinatura cai.
-  assinaturaHash   String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  emenda   Emenda                 @relation(fields: [emendaId], references: [id], onDelete: Cascade)
-  metas    MetaPlanoTrabalho[]
-  itens    ItemPlanoTrabalho[]
-  parcelas ParcelaPlanoTrabalho[]
-
-  @@index([token])
-}
-
-// Meta física: o que será entregue, em número, e como se comprova. Exigida nos
-// quatro modelos — sem quantidade e sem forma de comprovação a linha não serve
-// para prestar contas.
-model MetaPlanoTrabalho {
-  id            String  @id @default(cuid())
-  planoId       String
-  ordem         Int     @default(0)
-  beneficiarios String
-  unidade       String
-  metaFisica    Decimal @db.Decimal(18, 4)
-  comprovacao   String
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  plano PlanoTrabalho @relation(fields: [planoId], references: [id], onDelete: Cascade)
-
-  @@index([planoId])
-}
-
-// Parcela do cronograma de desembolso PREVISTO. Só ordem e valor: prever o mês
-// na apresentação da emenda seria precisão fingida — a data se define na
-// execução orçamentária.
-model ParcelaPlanoTrabalho {
-  id      String  @id @default(cuid())
-  planoId String
-  ordem   Int     @default(0)
-  valor   Decimal @db.Decimal(18, 2)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  plano PlanoTrabalho @relation(fields: [planoId], references: [id], onDelete: Cascade)
-
-  @@index([planoId])
-}
-
-// Linha da MEMÓRIA DE CÁLCULO. O total é derivado (meta física × unitário) —
-// guardar o produto seria abrir espaço para os dois discordarem.
-//
-// Fala o mesmo vocabulário das metas (`beneficiarios`, `metaFisica`) porque é a
-// mesma entrega, agora precificada: cada linha daqui corresponde a uma de lá.
-model ItemPlanoTrabalho {
-  id            String  @id @default(cuid())
-  planoId       String
-  ordem         Int     @default(0)
-  beneficiarios String
-  metaFisica    Decimal @db.Decimal(18, 4)
-  valorUnitario Decimal @db.Decimal(18, 2)
-  // De onde veio o preço: ata de registro, banco de preços, SINAPI/CPOS, PNCP
-  // ou orçamento de fornecedor. É o que o Executivo mais devolve quando falta.
-  origemPreco   String  @default("")
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  plano PlanoTrabalho @relation(fields: [planoId], references: [id], onDelete: Cascade)
-
-  @@index([planoId])
 }

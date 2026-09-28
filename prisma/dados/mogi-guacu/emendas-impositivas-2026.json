@@ -1,0 +1,2952 @@
+{
+ "fonte": {
+  "name": "Câmara Municipal de Mogi Guaçu — PL 275/2025, documento acessório \"Emenda Impositiva – Nº 01 a 351\"",
+  "url": "https://sistema.camaramogiguacu.sp.gov.br/consultas/materia/materia_mostrar_proc?cod_materia=182537",
+  "authors": "https://sistema.camaramogiguacu.sp.gov.br/consultas/materia/materias_legislativas_json?tip_id_basica=33&ano_ident_basica=2025"
+ },
+ "metodo": "OCR (tesseract, por) das 351 páginas escaneadas; autor pela API de dados abertos da Câmara. Valor = soma dos itens quando confere com o total ou com a redução da reserva de contingência; 6 documentos têm divergência interna, registrada em \"check\". A marcação de saúde é heurística (palavras do destino) e serve só para triagem.",
+ "situacao": "Emendas apresentadas em 24/10/2025 ao projeto da LOA. Leis de 2026 remanejaram parte delas; o valor vigente de cada emenda pode ter mudado.",
+ "porVereador": [
+  {
+   "name": "Adriano Luciano Rodrigues - MDB",
+   "count": 33,
+   "totalCents": 77301478
+  },
+  {
+   "name": "Alexandro de Araújo - PL",
+   "count": 34,
+   "totalCents": 77301478
+  },
+  {
+   "name": "Amarai de Oliveira Gomes - UNIÃO BRASIL",
+   "count": 21,
+   "totalCents": 77301478
+  },
+  {
+   "name": "Angela Maria de Farias - PRD",
+   "count": 28,
+   "totalCents": 77301478
+  },
+  {
+   "name": "Benedito Augusto da Silva - Repub",
+   "count": 21,
+   "totalCents": 77301478
+  },
+  {
+   "name": "Elias dos Santos - Repub",
+   "count": 17,
+   "totalCents": 77301478
+  },
+  {
+   "name": "Eliete de Souza Borges - PSD",
+   "count": 27,
+   "totalCents": 77301478
+  },
+  {
+   "name": "Guilherme de Sousa Campos - PSD",
+   "count": 30,
+   "totalCents": 77301479
+  },
+  {
+   "name": "Jéferson Luís da Silva - PP",
+   "count": 23,
+   "totalCents": 77301478
+  },
+  {
+   "name": "Luís Zanco Neto - MDB",
+   "count": 25,
+   "totalCents": 77301478
+  },
+  {
+   "name": "Marçal Georges Damião - PSDB",
+   "count": 30,
+   "totalCents": 77301478
+  },
+  {
+   "name": "Natalino Antonio da Silva - PSDB",
+   "count": 24,
+   "totalCents": 77301478
+  },
+  {
+   "name": "Paulo Henrique Pereira - PP",
+   "count": 38,
+   "totalCents": 77301478
+  }
+ ],
+ "emendas": [
+  {
+   "number": 1,
+   "author": "Adriano Luciano Rodrigues - MDB",
+   "destination": "Repasse de verba à Secretaria Municipal de Segurança Pública, sendo: | | Custeio do Canil da Guarda Civil Municipal R$ 10.000,00 (dez mil reais) ll | Aquisição de uniformes da Guarda Mirim | R$ 10.000,00 (dez mil reais)",
+   "value": 20000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 2,
+   "author": "Adriano Luciano Rodrigues - MDB",
+   "destination": "Repasse de verba ao Fundo Municipal de Segurança Pública (FUMSEG), para custeio da Diária Especial de Atividade Complementar (DEAC) da Guarda Civil MUNICIDAL: oó aa S aa RE o e a dd aaA aa Todod a o do ds Gi a een SSSA C",
+   "value": 50000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 3,
+   "author": "Adriano Luciano Rodrigues - MDB",
+   "destination": "Repasse de verba à Secretaria Municipal de Educação, para aquisição de equipamentos/aparelho deSOMmM:::3:2: f ssl ss Seso c iados aa ta Ac ose SEc to sa d TSc a draastttoit R$ 5.000,00 (cinco mil reais).",
+   "value": 5000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 4,
+   "author": "Adriano Luciano Rodrigues - MDB",
+   "destination": "Repasse de verba ao Centro de Ação e Recuperação Social (CARS), localizado no Jardim Fantinato, para atender demanda de Custeio.......issccsciiii o R$ 5.000,00 (cinco mil reais).",
+   "value": 5000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 5,
+   "author": "Adriano Luciano Rodrigues - MDB",
+   "destination": "Repasse de verba à Associação Espírita Vinha de Jesus, para atender demanda de custéio da: GEI :Lar Menino:JesUS 1108cA R$ 50.000,00 (cinquenta mil reais).",
+   "value": 50000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 6,
+   "author": "Adriano Luciano Rodrigues - MDB",
+   "destination": "Repasse de verba para a Associação de Pais e Mestres (APM) da CEI Padre Longino Vastbinder, para aquisição de brinquedos para as crianças ........llllllloo R$ 5.000,00 (cinco mil reais).",
+   "value": 5000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 7,
+   "author": "Adriano Luciano Rodrigues - MDB",
+   "destination": "Repasse de verba para a Associação de Pais e Mestres (APM) da EMEF Coronel Joaquim Leite de Souza, para atender demanda de custeio.......iicic o R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 8,
+   "author": "Adriano Luciano Rodrigues - MDB",
+   "destination": "Repasse de verba à Associação de Pais e Mestres — APM da EMEF Padre Estevo Fernando Laurindo, para aquisição de mobiliário R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 9,
+   "author": "Adriano Luciano Rodrigues - MDB",
+   "destination": "Repasse de verba para a Associação de Pais e Mestres (APM) da EMEF Profa. Iná Aparecida de Oliveira Marconi, para atender demanda de Custeio.......iccco R$ 15.000,00 (quinze mil reais).",
+   "value": 15000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 10,
+   "author": "Adriano Luciano Rodrigues - MDB",
+   "destination": "Repasse de verba para a Associação de Pais e Mestres (APM) da EMEF Antonio Giovani Lanzi, para atender demanda de CUusteio.......ll çs R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 11,
+   "author": "Adriano Luciano Rodrigues - MDB",
+   "destination": "Repasse de verba para a Associação de Pais e Mestres (APM) da EMEF Adirce Cenedeze Caveanha, para atender demanda de CUusteio......lccc o R$ 30.000,00 (trinta mil reais).",
+   "value": 30000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 12,
+   "author": "Adriano Luciano Rodrigues - MDB",
+   "destination": "Repasse de verba para a Associação de Pais e Mestres (APM) da EMEI Prof.º Izete Gonçalves Mamede, para aquisição de brinquedos para as crianças.....iiccccc R$ 5.000,00 (cinco mil reais).",
+   "value": 5000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 13,
+   "author": "Adriano Luciano Rodrigues - MDB",
+   "destination": "Repasse de verba à Corporação Musical Marcos Vedovello, sendo: | | Atendimento da demanda de custeio R$ 20.000,00 (vinte mil reais) 1l | Atendimento da demanda de custeio do Show | R$ 10.000,00 (dez mil reais) Elas por E",
+   "value": 30000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 14,
+   "author": "Adriano Luciano Rodrigues - MDB",
+   "destination": "Repasse de verba à Secretaria Municipal de Esporte e Lazer, sendo: | | Atendimento da demanda de custeio R$ 10.000,00 (dez mil reais) ll | Aquisição de materiais esportivos para Tênis | R$ 10.000,00 (dez mil reais) de Me",
+   "value": 20000.0,
+   "healthHeuristic": false,
+   "check": {
+    "items": [
+     10000.0,
+     10000.0
+    ],
+    "total": [
+     10000.0
+    ],
+    "reduction": [
+     20000.0
+    ]
+   }
+  },
+  {
+   "number": 15,
+   "author": "Adriano Luciano Rodrigues - MDB",
+   "destination": "Repasse de verba à Secretaria Municipal de Obras e Mobilidade, sendo: | | Manutenção de Veículos e Maquinários R$ 21.000,00 (vinte e um mil reais) 1l | Revitalização da Mina d'água localizada no | R$ 20.000,00 (vinte mil",
+   "value": 71000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 16,
+   "author": "Adriano Luciano Rodrigues - MDB",
+   "destination": "Repasse de verba à Associação Jesus Chama-te — Projeto Adolescente Sim “PAS”, para “atendér 'demanda “dé: custelossà:uasesessade een R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 17,
+   "author": "Adriano Luciano Rodrigues - MDB",
+   "destination": "Repasse de verba ao Fundo Especial de Bombeiros (FEBOM), para aquisição de equipamentos! stsssatica tthc ee derdeais aa eesdodades tAN SEA NSTA R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 18,
+   "author": "Adriano Luciano Rodrigues - MDB",
+   "destination": "Repasse de verba à Secretaria Municipal de Bem-Estar e Defesa Animal, para atender:demánda; de:Custéio\" su sdc sd ts d :d te EE A AA BEA tádo d R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 19,
+   "author": "Adriano Luciano Rodrigues - MDB",
+   "destination": "Repasse de verba à Secretaria de Serviços Municipais - SSM, para aquisição de caçamba: para lUXo: TUral: uccsssesesss SA SS ds ee teA C ES Si dA BTAA SS R$ 15.000,00 (quinze mil reais).",
+   "value": 15000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 20,
+   "author": "Adriano Luciano Rodrigues - MDB",
+   "destination": "Repasse de verba à “Associação Exército de Cristo Primeira Companhia Valentes de David Defesa Civil\", para atender demanda de CUusteio.......iiii o R$ 5.000,00 (cinco mil reais).",
+   "value": 5000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 21,
+   "author": "Adriano Luciano Rodrigues - MDB",
+   "destination": "Repasse de verba ao Instituto de Ação Social Enéas Tognini, sendo: | | | Atendimento da demanda de custeio para o | R$ 40.000,00 (quarenta mil reais) serviço de Fisioterapia do Centro Dia do Idoso I 1l | Atendimento da d",
+   "value": 80000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 22,
+   "author": "Adriano Luciano Rodrigues - MDB",
+   "destination": "Repasse de verba à Irmandade da Santa Casa de Misericórdia de Mogi Guaçu, para atender demanda de custeio R$ 40.000,00 (quarenta mil reais). I",
+   "value": 40000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 23,
+   "author": "Adriano Luciano Rodrigues - MDB",
+   "destination": "Repasse de verba à Associação de Apoio ao Portador de Lesão Medular - POLEM, para: atender demaáridã dé” GuSteiO:...du2loeatdlest sa cbA dd i aTada aaa sd deaiatradiate! R$ 50.000,00 (cinquenta mil reais).",
+   "value": 50000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 24,
+   "author": "Adriano Luciano Rodrigues - MDB",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, destinado ao Centro de Atendimento à Mulher — CAM, sendo: | | Aquisição de mobiliário R$ 20.000,00 (vinte mil reais) |l | Aquisição de instrumentos cirúrgicos R$ 10.000,0",
+   "value": 30000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 25,
+   "author": "Adriano Luciano Rodrigues - MDB",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para aquisição de materiais didático para os pacientes do Centro de Atenção ao Transtorno do Espectro Autista (CATEA): Dr: -José: MúnizJÓniOr setasdessos id d tf aER NAl",
+   "value": 20000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 26,
+   "author": "Adriano Luciano Rodrigues - MDB",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para aquisição de equipamentos da USF do Fantinato .;c sc ddA R$ 20.000,00 (vinte mil reais).",
+   "value": 20000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 27,
+   "author": "Adriano Luciano Rodrigues - MDB",
+   "destination": "Repasse de verba à Associação de Paiíis e Amigos dos Excepcionais de Mogi Guaçu — APAE, para aquisição de equipamentos de monitoramento para ações de saúde .... R$ 20.000,00 (vinte mil reais).",
+   "value": 20000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 28,
+   "author": "Adriano Luciano Rodrigues - MDB",
+   "destination": "Repasse de verba ao “Lar da Terceira Idade Padre Longino (Unidade |), para atendimento às ações de saúde (CUSteiOo)........iiis ee R$ 15.000,00 (quinze mil reais).",
+   "value": 15000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 29,
+   "author": "Adriano Luciano Rodrigues - MDB",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para o Centro de Especialidades Odontológicas - CEO adquirir kits acadêmicos destinados às Unidades de Saúde........ R$ 30.000,00 (trinta mil reais).",
+   "value": 30000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 30,
+   "author": "Adriano Luciano Rodrigues - MDB",
+   "destination": "Repasse de verba ao Hospital Municipal “Dr. Tabajara Ramos”. para complementação de valor para aquisição de ventiladores mecânicos destinados ao Setorde FISLOCTeraPIid:: sn sN a taa AAc a md aadeat o tee MRa dN GRAEDADSS",
+   "value": 20000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 31,
+   "author": "Adriano Luciano Rodrigues - MDB",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para aquisição de equipamentos para o Serviço de Atendimento Móvel de Urgência (SAMUÚU) .............. R$ 20.000,00 (vinte mil reais).",
+   "value": 20000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 32,
+   "author": "Adriano Luciano Rodrigues - MDB",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para atender demanda de clstéio das'cirurgias de:Artroscopia;deJOelhO s sucrivasoastioiosisano alA R$ 25.000,00 (vinte e cinco mil reais).",
+   "value": 25000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 33,
+   "author": "Adriano Luciano Rodrigues - MDB",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para aquisição de equipamentos destinados à USF do Jardim Santa Terezinha.............llllllllclllllloo R$ 17.015,00 (dezessete mil e quinze reais).",
+   "value": 17014.78,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 34,
+   "author": "Alexandro de Araújo - PL",
+   "destination": "Repasse de verba à Associação Ágape, para atender demanda de custeio R$ 30.000,00 (trinta mil reais).",
+   "value": 30000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 35,
+   "author": "Alexandro de Araújo - PL",
+   "destination": "Repasse de verba à Secretaria Municipal de Agricultura, Abastecimento e Meio Ambiente - SAAMA, para aquisição de equipamentos ......iicc o R$ 50.000,00 (cinquenta mil reais).",
+   "value": 50000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 36,
+   "author": "Alexandro de Araújo - PL",
+   "destination": "Repasse de verba à Associação de Pais e Mestres — APM da CEI Ruy Bueno, localizada no Jardim Pansani, para atender demanda de Custeio .......iisclico R$ 15.000,00 (quinze mil reais).",
+   "value": 15000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 37,
+   "author": "Alexandro de Araújo - PL",
+   "destination": "Repasse de verba para o Instituto Carlos Nunes, para atender demanda de custeio R$ 15.000,00 (quinze mil reais).",
+   "value": 15000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 38,
+   "author": "Alexandro de Araújo - PL",
+   "destination": "Repasse de verba à Secretaria Municipal de Segurança Pública, para aquisição de EQUIPameênto\". - ee d g e SSA DA ee aaa SSNA a NeSaa: LeosS deiis a sureNa A DNDN AeAES R$ 13.000,00 (treze mil reais).",
+   "value": 13000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 39,
+   "author": "Alexandro de Araújo - PL",
+   "destination": "R$ 00.000,00 (... reais).",
+   "value": 0.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 40,
+   "author": "Alexandro de Araújo - PL",
+   "destination": "Repasse de verba à Secretaria Municipal de Obras e Mobilidade — SOM, para construção de estacionamento em área verde localizada no Jardim Guaçu Mirim IIl, para atender a UBS, CEI e Igreja localizadas nas imediações .....",
+   "value": 24000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 41,
+   "author": "Alexandro de Araújo - PL",
+   "destination": "Repasse de verba à Secretaria Municipal de Esportes e Lazer, para manutenção do campo de bocha localizado no Centro Esportivo Pres. Juscelino K. Oliveira, localizado no Jardim Santo Antônio (CERESC) R$ 20.000,00 (vinte m",
+   "value": 20000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 42,
+   "author": "Alexandro de Araújo - PL",
+   "destination": "Repasse de verba à Secretaria Municipal de Esportes e Lazer, para reforma da piscina do Centro Esportivo Waldemar:FOrrar iii o NA dsA aaa uiÃoS R$ 25.000,00 (vinte e cinco mil reais).",
+   "value": 25000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 43,
+   "author": "Alexandro de Araújo - PL",
+   "destination": "Repasse de verba à Secretaria Municipal de Esportes e Lazer, para manutenção do vestiário (pintura e instalação de chuveiros) no Centro Esportivo Prefeito Nelson de Paula Bueno ÉSA - Y MRA SEA E S A RAA A AAAA AA AAAA AA",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 44,
+   "author": "Alexandro de Araújo - PL",
+   "destination": "Repasse de verba à Secretaria Municipal de Esportes e Lazer, para aquisição de uma cabine de. comunicação MÓVEI sssuussras ds sdA SNSA du dsc decasvr a advLassão R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 45,
+   "author": "Alexandro de Araújo - PL",
+   "destination": "Repasse de verba à Secretaria Municipal de Esportes e Lazer, para manutenção da quadra poliesportiva, pintura e instalação de chuveiros no Centro Esportivo Alcides Macena Maria (Pelezão) R$ 15.000,00 (quinze mil reais).",
+   "value": 15000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 46,
+   "author": "Alexandro de Araújo - PL",
+   "destination": "Repasse de verba à Secretaria Municipal de Esportes e Lazer, para construção de poços artesianos nas seguintes localidades: Centro Esportivo Alcides Macena Maria (PELEZÃO), Centro Esportivo Antonio Campano(CAMPANO), Cent",
+   "value": 30000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 47,
+   "author": "Alexandro de Araújo - PL",
+   "destination": "Repasse de verba à Secretaria Municipal de Esportes e Lazer para atender demanda. de::custêio. usskesnesdsA SA aa Ri teA e MM ee fA R$ 84.507,39 (oitenta e quatro mil, quinhentos e sete reais e trinta e nove centavos).",
+   "value": 84507.39,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 48,
+   "author": "Alexandro de Araújo - PL",
+   "destination": "Repasse de verba à “Associação Exército de Cristo Primeira Companhia Valentes de David Defesa Civil”, para atender demanda de custeio R$ 5.000,00 (cinco mil reais).",
+   "value": 5000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 49,
+   "author": "Alexandro de Araújo - PL",
+   "destination": "Repasse de verba à Subprefeitura do Distrito de Martinho Prado Júnior, para construção de banheiro e cozinha de alvenaria no espaço cidadão denominado Maristela Dias Peixoto, localizado na área de lazer “Paulo Henrique Q",
+   "value": 40000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 50,
+   "author": "Alexandro de Araújo - PL",
+   "destination": "Repasse de verba à Associação de Apoio ao Portador de Lesão Medular - POLEM, pára atendér demanda de::eústelOnic..sta o a eAcA A a cede SN dredaadaatEa R$ 20.000,00 (vinte mil reais).",
+   "value": 20000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 51,
+   "author": "Alexandro de Araújo - PL",
+   "destination": "Repasse de verba à Associação Ágape, para atender demanda de custeio da área ê SANdE-- e cc tN ee sa tiA : Fadacê u aas RBA SA or o re Tbdtant sd ee sL dico sdA Gas t de a Duno du aaa HEES R$ 30.000,00 (trinta mil reais)",
+   "value": 30000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 52,
+   "author": "Alexandro de Araújo - PL",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para aquisição de 01 No Break UPS Gate Universal (1.200 VA A 3.200 VA), 01 arquivo prontuário deslizante, 03 computadores e 01 aparelho de ar condicionado para a USF Mart",
+   "value": 29000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 53,
+   "author": "Alexandro de Araújo - PL",
+   "destination": "Repasse de verba ao Hospital Municipal “Dr. Tabajara Ramos”. para complementação de valor para aquisição de ventiladores mecânicos destinados ao setor de Fisioterapia R$ 18.000,00 (dezoito mil reais).",
+   "value": 18000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 54,
+   "author": "Alexandro de Araújo - PL",
+   "destination": "Repasse de verba Irmandade da Santa Casa de Misericórdia de Mogi Guaçu, para atender demanda: dê: euUstelOsr s dos ANA pA S n to a raNBadas fae to eo A coenta DN dids R$ 50.000,00 (cinquenta mil reais).",
+   "value": 50000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 55,
+   "author": "Alexandro de Araújo - PL",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para atender demanda de custeio do Centro de Atenção ao Transtorno do Espectro Autista (CATEA) Dr. José Muniz Júnior R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 56,
+   "author": "Alexandro de Araújo - PL",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para atender demanda de custeio das cirurgias de Artroscopia de joelhoO ......ci0icniceee R$ 25.000,00 (vinte e cinco mil reais). *",
+   "value": 25000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 57,
+   "author": "Alexandro de Araújo - PL",
+   "destination": "Repasse de verba à Associação de Pais e Amigos dos Excepcionais de Mogi Guaçu — APAE, para atendimento as ações de saúde (aquisição de aparelhos de ar condicionado) R$ 20.000,00 (vinte mil reais).",
+   "value": 20000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 58,
+   "author": "Alexandro de Araújo - PL",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para aquisição de aparelhos de eletrocardiograma destinados a todas as Unidades de Saúde do Município ............ R$ 36.000,00 (trinta e seis mil reais).",
+   "value": 36000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 59,
+   "author": "Alexandro de Araújo - PL",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para aquisição de tanquinho semiautomático elétrico para as unidades de saúde .c R$ 6.000,00 (seis mil reais).",
+   "value": 6000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 60,
+   "author": "Alexandro de Araújo - PL",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para atender demanda de custeio da UBS Zona Sul “Dr. Waldomiro Girard Jacob” ..c R$ 15.000,00 (quinze mil reais).",
+   "value": 15000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 61,
+   "author": "Alexandro de Araújo - PL",
+   "destination": "Repasse de verba à Secretaria Municipal da Saúde, para atender demanda de custeio da USF Rosa Cruz “Antonio de Pádua Barbosa\" ...c R$ 15.000,00 (quinze mil reais).",
+   "value": 15000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 62,
+   "author": "Alexandro de Araújo - PL",
+   "destination": "Repasse de verba à Secretaria Municipal da Saúde, para atender demanda de custeio da USF Santa Terezinha “Dr. José LanZi” .c R$ 20.000,00 (vinte mil reais).",
+   "value": 20000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 63,
+   "author": "Alexandro de Araújo - PL",
+   "destination": "Repasse de verba à Secretaria Municipal da Saúde, para atender demanda de custeio da USF Santa Cecília, localizado no Jardim Canaã ll ..c R$ 20.000,00 (vinte mil reais).",
+   "value": 20000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 64,
+   "author": "Alexandro de Araújo - PL",
+   "destination": "Repasse de verba à Secretaria Municipal da Saúde, para atender demanda de custeio da USF Jardim Fantinato Le .c R$ 20.000,00 (vinte mil reais).",
+   "value": 20000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 65,
+   "author": "Alexandro de Araújo - PL",
+   "destination": "Repasse de verba à Secretaria Municipal da Saúde, para atender demanda de custeio da USF Jardim Chaparral el .c R$ 20.000,00 (vinte mil reais).",
+   "value": 20000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 66,
+   "author": "Alexandro de Araújo - PL",
+   "destination": "Repasse de verba à Secretaria Municipal da Saúde, para atender demanda de Custeloxda -USF: Zanibont' NM sa ddA tee SBE Boa aa SMn a aaa EÓ EA een ANAc do ds R$ 15.000,00 (quinze mil reais).",
+   "value": 15000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 67,
+   "author": "Alexandro de Araújo - PL",
+   "destination": "Repasse de verba ao “Lar da Terceira Idade Padre Longino (Unidade |), para atendimento às ações de saúde:(CUSteio): . 1:ic0ialasesi idc daadd du s dsasaci fA Cosdassnos tee ibdaasas R$ 17.507,39 (dezessete mil, quinhento",
+   "value": 17507.39,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 68,
+   "author": "Amarai de Oliveira Gomes - UNIÃO BRASIL",
+   "destination": "Repasse de verba ao CASMOÇU - Centro de Ação Social de Mogi Guaçu, para manutenção do prédio que abriga “CEI Mário Magri” (Exemplo: substituição do piso da recepção, da sala de reuniões, cozinha entre outras).......llli",
+   "value": 32000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 69,
+   "author": "Amarai de Oliveira Gomes - UNIÃO BRASIL",
+   "destination": "Implantação de playground em local estratégico do Jardim Bertioga R$ 22.000,00 (vinte e dois mil reais).",
+   "value": 22000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 70,
+   "author": "Amarai de Oliveira Gomes - UNIÃO BRASIL",
+   "destination": "Repasse de verba à Subprefeitura do Distrito de Martinho Prado Júnior, sendo: | | construção de um barracão de estrutura | R$ 78.507,39 (setenta e oito mil, metálica no espaço cidadão denominado quinhentos e sete reais e",
+   "value": 86507.39,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 71,
+   "author": "Amarai de Oliveira Gomes - UNIÃO BRASIL",
+   "destination": "Repasse de verba à Secretaria Municipal de Cultura, para atender demanda de custeio: da FETEG-e ; SECULT= a ta E ado o ds NEola d taa dnA SDA TNA CE TA NME SNE NSSAdSS R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 72,
+   "author": "Amarai de Oliveira Gomes - UNIÃO BRASIL",
+   "destination": "Repasse de verba à Associação Comunitária Martinho Prado Júnior, para atender demanda de custeio R$ 40.000,00 (quarenta mil reais).",
+   "value": 40000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 73,
+   "author": "Amarai de Oliveira Gomes - UNIÃO BRASIL",
+   "destination": "Repasse de verba à Associação de Pais e Mestres — APM da E. E. Geraldo Sorg, sendo: | | Substituição de Padrão elétrico e fiação R$ 30.000,00 (trinta mil reais) ll | Aquisição de aparelhos de ar condicionado R$ 40.000,00",
+   "value": 70000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 74,
+   "author": "Amarai de Oliveira Gomes - UNIÃO BRASIL",
+   "destination": "Repasse de verba à Secretaria de Serviços Municipais — SSM, para aquisição de caçambas de:entulho poliguindastê: .. 14m ds ta pón aaan R$ 40.000,00 (quarenta mil reais).",
+   "value": 40000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 75,
+   "author": "Amarai de Oliveira Gomes - UNIÃO BRASIL",
+   "destination": "Repasse de verba à Secretaria de Comunicação, para aluguel de equipamentos e compra de insumos para a festa do Dia das Crianças realizada no Distrito de Martinho Prado Júnior (Exemplo: Aluguel de som, carreta furacão, fu",
+   "value": 20000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 76,
+   "author": "Amarai de Oliveira Gomes - UNIÃO BRASIL",
+   "destination": "Repasse de verba à Associação Mãos que Acolhem, para atender demanda de custeio R$ 26.000,00 (vinte e seis mil reais).",
+   "value": 26000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 77,
+   "author": "Amarai de Oliveira Gomes - UNIÃO BRASIL",
+   "destination": "Repasse de verba à “Associação Exército de Cristo Primeira Companhia Valentes de David Defesa Civil”, para atender demanda de CUusteio.......iicccnos R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 78,
+   "author": "Amarai de Oliveira Gomes - UNIÃO BRASIL",
+   "destination": "Manutenção do prédio que abriga o Centro de Convivência Social Comunitário - Unidade: MartinhoPraâdo: JÚDIOE: o ansccsato idc aa dd Md NCAOS SiA TSS ERcAD R$ 30.000,00 (trinta mil reais).",
+   "value": 30000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 79,
+   "author": "Amarai de Oliveira Gomes - UNIÃO BRASIL",
+   "destination": "Repasse de verba à Associação de Apoio ao Portador de Lesão Medular - POLEM, para'atênder:demanda: de!CUSTeiD:usss s en ee A VE d onAOaAS ES AlOLeLScEsa d saIAÃs R$ 30.000,00 (trinta mil reais).",
+   "value": 30000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 80,
+   "author": "Amarai de Oliveira Gomes - UNIÃO BRASIL",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para manutenção e Pintura externa do prédio que abriga a USF Martinho Prado Júnior R$ 29.000,00 (vinte e nove mil reais)",
+   "value": 29000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 81,
+   "author": "Amarai de Oliveira Gomes - UNIÃO BRASIL",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde para aquisição de 01 veículo para atender o Programa Melhor em Casa.......iiscsii s R$ 100.000,00 (cem mil reais).",
+   "value": 100000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 82,
+   "author": "Amarai de Oliveira Gomes - UNIÃO BRASIL",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde para aquisição de equipamentos para a Unidade Básica de Saúde — UBS “Dr. Osvaldo Rangel Cardoso”, localizada no Jardim Nossa Senhora das Graças. (Exemplo: Aquisição de 05",
+   "value": 20000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 83,
+   "author": "Amarai de Oliveira Gomes - UNIÃO BRASIL",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde para aquisição de equipamentos para a USF Zaniboni Il. (Exemplo: Aquisição de 05 gabinetes planejados para pias, 01 mesa planejada para consultório, 01 armário planejado p",
+   "value": 40507.39,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 84,
+   "author": "Amarai de Oliveira Gomes - UNIÃO BRASIL",
+   "destination": "Repasse de verba ao Hospital Municipal “Dr. Tabajara Ramos”. para complementação de valor para aquisição de ventiladores mecânicos destinados ao setor de Fisioterapia R$ 18.000,00 (dezoito mil reais).",
+   "value": 18000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 85,
+   "author": "Amarai de Oliveira Gomes - UNIÃO BRASIL",
+   "destination": "Repasse de verba ao Hospital Municipal “Dr. Tabajara Ramos”. para instalação de aparelhos de ar condicionados de 24.000 BTUS nos leitos de internação..................... R$ 54.000,00 (cinquenta e quatro mil reais).",
+   "value": 54000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 86,
+   "author": "Amarai de Oliveira Gomes - UNIÃO BRASIL",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para atender o Serviço de Atendimento Móvel de Urgência (SAMU), sendo: | | Manutenção do prédio. (exemplo: pintura do | R$ 20.000,00 (vinte mil reais) prédio, manutenção",
+   "value": 40000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 87,
+   "author": "Amarai de Oliveira Gomes - UNIÃO BRASIL",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para o Centro de Especialidades Odontológicas - CEO adquirir kits acadêmicos (Exemplo: micromotor, contra ângulo, peça de mão, caneta de alta rotação, ultra som odontológ",
+   "value": 30000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 88,
+   "author": "Amarai de Oliveira Gomes - UNIÃO BRASIL",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para realização de cirurgias de aNioscopia;de: JOGINO: ::: castesct aa s A ta aaaA uA o rdudada a a e aaa o o Soes d ua o S o odt id ta R$ 25.000,00 (vinte e cinco mil re",
+   "value": 25000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 89,
+   "author": "Angela Maria de Farias - PRD",
+   "destination": "Repasse de verba para a Secretaria Municipal de Comunicação, para atender demanda de custeio R$ 20.000,00 (vinte mil reais).",
+   "value": 20000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 90,
+   "author": "Angela Maria de Farias - PRD",
+   "destination": "Repasse de verba à Associação Protetora de Animais de Mogi Guaçu Anjos de Focinhos, para atender demanda de CUSteiO......lllicciccc s R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 91,
+   "author": "Angela Maria de Farias - PRD",
+   "destination": "Repasse de verba para a Associação de Pais e Mestres (APM) da EMEF Profa. Claudina de Oliveira Ramos, para atender demanda de custeio.......iiclicooo R$ 41.507,39 (quarenta e um mil, quinhentos e sete reais e trinta e no",
+   "value": 41507.39,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 92,
+   "author": "Angela Maria de Farias - PRD",
+   "destination": "Repasse de verba ao Centro de Ação e Recuperação Social (CARS), para atender demandá:de: CustelO:.cadedede aaac ee aEer eAA LSA ESNESIA SBN I Stes c deda tsa lintes taa Mdstact a áddad R$ 5.000,00 (cinco mil reais).",
+   "value": 5000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 93,
+   "author": "Angela Maria de Farias - PRD",
+   "destination": "Repasse de verba à Associação Espírita Vinha de Jesus, para atender demanda de custeio, reforma ou manutenção da CEI Lar Menino Jesus ...c R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 94,
+   "author": "Angela Maria de Farias - PRD",
+   "destination": "Repasse de verba para à Secretaria de Serviços Municipais - SSM, para manutenção da frota ofícial, bem como em ações de limpeza urbana e apoio à infraestrutura da Pasta, nos termos no OFÍCIO Nº 48/2025/SSM ......iicicc R",
+   "value": 200000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 95,
+   "author": "Angela Maria de Farias - PRD",
+   "destination": "Repasse de verba à Secretaria Municipal de Agricultura, Abastecimento e Meio Ambiente — SAAMA, para atender demanda de CUusteio......iicciccos R$ 5.000,00 (cinco mil reais).",
+   "value": 5000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 96,
+   "author": "Angela Maria de Farias - PRD",
+   "destination": "Repasse de verba à Secretaria Municipal de Obras e Mobilidade - SOM, para atender demanda: -de “CUuStelOue. an td ee rieddes dd a nor raAtado R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 97,
+   "author": "Angela Maria de Farias - PRD",
+   "destination": "Repasse de verba à Secretaria Municipal de Tecnologia e Inovação, para atender demanda de custeio R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 98,
+   "author": "Angela Maria de Farias - PRD",
+   "destination": "Repasse de verba à Secretaria Municipal do Bem-Estar e Defesa Animal, para atender-demanda;de: CusteiO: ... te RE AAAA SA AE d das deva ds eec ode edua id R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 99,
+   "author": "Angela Maria de Farias - PRD",
+   "destination": "Repasse de verba à Secretaria Municipal de Turismo, para atender demanda de custeio R$ 15.000,00 (quinze mil reais).",
+   "value": 15000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 100,
+   "author": "Angela Maria de Farias - PRD",
+   "destination": "Repasse de verba à Secretaria Municipal de Esportes e Lazer, para atender demanda de custeio R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 101,
+   "author": "Angela Maria de Farias - PRD",
+   "destination": "Repasse de verba à Secretaria Municipal de Segurança Pública, para atender demanda de custeio da Guarda Civil Municipal. R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 102,
+   "author": "Angela Maria de Farias - PRD",
+   "destination": "Repasse de verba à Associação Mãos que Acolhem, para atender demanda de custeio R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 103,
+   "author": "Angela Maria de Farias - PRD",
+   "destination": "Repasse de verba à Secretaria de Assistência Social, sendo: | | Atendimento das demandas de custeio da | R$ 10.000,00 (dez mil reais) Pasta ll | Atendimento das demandas de custeio do | R$ 10.000,00 (dez mil reais) Fundo",
+   "value": 20000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 104,
+   "author": "Angela Maria de Farias - PRD",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para aquisição de equipamentos para a UBS “Maria Nazaré Silva”, localizada na Chácara Alvorada R$ 63.507,39 (sessenta e três mil, quinhentos e sete reais e trinta e nove",
+   "value": 63507.39,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 105,
+   "author": "Angela Maria de Farias - PRD",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para aquisição de equipamentos para a UBS “Basílio Fantinato”, localizada no Jardim Ypê |l R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 106,
+   "author": "Angela Maria de Farias - PRD",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para aquisição de equipamentos para a USF Alto dos YDês ...c R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 107,
+   "author": "Angela Maria de Farias - PRD",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para aquisição de equipamentos para a UBS Centro Oeste “Dr. Osvaldo Rangel Cardoso” ............. R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 108,
+   "author": "Angela Maria de Farias - PRD",
+   "destination": "Repasse de verba à Irmandade da Santa Casa de Misericórdia de Mogi Guaçu, para atender demanda de custeio R$ 80.000,00 (oitenta mil reais).",
+   "value": 80000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 109,
+   "author": "Angela Maria de Farias - PRD",
+   "destination": "Repasse de verba à Secretaria Municipal da Saúde, para manutenção preventiva e corretiva dos veículos que atendem a Secretaria Municipal de Saúde, tais como ambulância, automóveis e demais veículos utilizados no transpor",
+   "value": 100000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 110,
+   "author": "Angela Maria de Farias - PRD",
+   "destination": "Repasse de verba à Associação de Pais e Amigos dos Excepcionais de Mogi Guaçu — APAE, para atendimento as ações de saúde. (CUsteio) ......isiieeço: R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 111,
+   "author": "Angela Maria de Farias - PRD",
+   "destination": "Repasse de verba ao “Lar da Terceira Idade Padre Longino (Unidade |), para atendimento às ações;de saúde:(CUSteiO).::::1110a dd dS oIcIes dd p Saate sa desesÃbA Becasbeé R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 112,
+   "author": "Angela Maria de Farias - PRD",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para atender demanda de custeio do Centro de Atenção ao Transtorno do Espectro Autista (CATEA) Dr. José IMUNIZOJUNIOL: aa EA sE dd un dd e e a dadaee du a een o aaaA en d",
+   "value": 15000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 113,
+   "author": "Angela Maria de Farias - PRD",
+   "destination": "Repasse de verba ao CAPS |J — Centro de Atenção Psicossocial (Infanto Juvenil), para;atendêr demanda! de:CUSteio ddnA ee E N EA R$ 15.000,00 (quinze mil reais).",
+   "value": 15000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 114,
+   "author": "Angela Maria de Farias - PRD",
+   "destination": "Repasse de verba à Associação de Apoio ao Portador de Lesão Medular - POLEM, para arténder demanda\"de CUSteiOs.!.15 suiN BA A dnA to e ME NS R$ 20.000,00 (vinte mil reais).",
+   "value": 20000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 115,
+   "author": "Angela Maria de Farias - PRD",
+   "destination": "Repasse de verba ao Hospital Municipal “Dr. Tabajara Ramos”. para complementação de valor para aquisição de ventiladores mecânicos destinados ao setor'de FISIOterapia!. suA d a f f a TSN dedda d R$ 18.000,00 (dezoito mil",
+   "value": 18000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 116,
+   "author": "Angela Maria de Farias - PRD",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para atender demanda de custeio das cirurgias de Artroscopia de joelho .......issosnnnnenee. R$ 25.000,00 (vinte e cinco mil reais).",
+   "value": 25000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 117,
+   "author": "Benedito Augusto da Silva - Repub",
+   "destination": "Repasse de verba para a Associação de Pais e Mestres (APM) da EMEB UBIRAJARA RAMOS, para instalação de grade e alarme de segurança........lllll R$ 70.000,00 (setenta mil reais).",
+   "value": 70000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 118,
+   "author": "Benedito Augusto da Silva - Repub",
+   "destination": "Repasse de verba à Secretaria Municipal de Obras e Mobilidade, para aquisição de tinta para pintura de solo R$ 15.000,00 (quinze mil reais).",
+   "value": 15000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 119,
+   "author": "Benedito Augusto da Silva - Repub",
+   "destination": "Repasse de verba para à Secretaria de Serviços Municipais - SSM, para manutenção da frota oficial, bem como em ações de limpeza urbana e apoio à infraestrutura da Pasta, nos termos no OFÍCIO Nº 49/2025/SSM ......iccccano",
+   "value": 100000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 120,
+   "author": "Benedito Augusto da Silva - Repub",
+   "destination": "Repasse de verba à Secretaria Municipal de Esportes e Lazer, sendo: | | Manutenção do Centro Esportivo | R$ 21.000,00 (vinte e um mil reais) “Waldemar Ferrari” ll | Implantação Mult-Estação Flex (equipamento | R$ 20.000,",
+   "value": 41000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 121,
+   "author": "Benedito Augusto da Silva - Repub",
+   "destination": "Repasse de verba ao Fundo Especial de Bombeiros (FEBOM), para atender demandade: CUSteiO: s ee aaa dd N ES EE EEA RA E S Cndsts audNeaT> R$ 15.000,00 (quinze mil reais).",
+   "value": 15000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 122,
+   "author": "Benedito Augusto da Silva - Repub",
+   "destination": "Repasse de verba ao Instituto de Ação Social Enéas Tognini para atender demanda d& “CUSTeIO:: eA aa e Fs DAA sEA dS M ta a p ec aa BE D SSCa a deo SSA S S dadiot R$ 70.507,39 (setenta mil, quinhentos e sete reais e trint",
+   "value": 70507.39,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 123,
+   "author": "Benedito Augusto da Silva - Repub",
+   "destination": "Repasse de verba à Associação Espírita Vinha de Jesus, para atender demanda de custeio:da CEI Lar Menino: Jesus : uismoasusssn NNA SAA diasSses eA R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 124,
+   "author": "Benedito Augusto da Silva - Repub",
+   "destination": "Repasse de verba à Secretaria de Assistência Social, para atender demanda de custeio R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 125,
+   "author": "Benedito Augusto da Silva - Repub",
+   "destination": "Repasse de verba ao Centro de Ação e Recuperação Social (CARS), para atender demanda:de CUuSTeIO:Lc:1:cntesese e eec S e o o d sa TSAA A anene a Eatas. R$ 5.000,00 (cinco mil reais).",
+   "value": 5000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 126,
+   "author": "Benedito Augusto da Silva - Repub",
+   "destination": "Repasse de verba ao CASMOÇU - Centro de Ação Social de Mogi Guaçu, para atender:demanda:de “eusteéio:.: m:mA u a KR S ds ddA d nl daa tee eatda ds R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 127,
+   "author": "Benedito Augusto da Silva - Repub",
+   "destination": "Repasse de verba à Associação Mãos que Acolhem, para atender demanda de CUSIOIO , sd e addots taa i sd d dd sdc Ru adaa ta CAse desade Bes frs SRA tuBas taa staddes R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 128,
+   "author": "Benedito Augusto da Silva - Repub",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para atender demanda de custeio das cirurgias de Artroscopia de joelho R$ 24.507,39 (vinte e quatro mil, quinhentos e sete reais e trinta e nove centavos).",
+   "value": 24507.39,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 129,
+   "author": "Benedito Augusto da Silva - Repub",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para atender demanda de custeio da USF Santa Terezinha “Dr. José LanZi\" ...c R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 130,
+   "author": "Benedito Augusto da Silva - Repub",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para atender demanda de custeio da USF Guaçuano R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 131,
+   "author": "Benedito Augusto da Silva - Repub",
+   "destination": "Repasse de verba ao Hospital Municipal “Dr. Tabajara Ramos”, para atender demanda:;deeustelo . s.2stru eec e dd dd tderdAa dÉ ee dd te ENA e on idtoadeas R$ 52.000,00 (cinquenta e dois mil reais).",
+   "value": 52000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 132,
+   "author": "Benedito Augusto da Silva - Repub",
+   "destination": "Repasse de verba ao CAPS — Centro de Atenção Psicossocial (Jardim Novo), para atendeér :demanda::de=\"CuStelo: suiN e e aa sd E des d deas R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 133,
+   "author": "Benedito Augusto da Silva - Repub",
+   "destination": "Repasse de verba à APAE — Associação de Pais e Amigos dos Excepcionais de Mogi Guaçu, para atendimento as ações de saúde (CUSteio)......isiiooo R$ 15.000,00 (quinze mil reais).",
+   "value": 15000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 134,
+   "author": "Benedito Augusto da Silva - Repub",
+   "destination": "Repasse de verba à Secretaria Municipal da Saúde, para manutenção preventiva e corretiva dos veículos que atendem a Secretaria Municipal de Saúde, tais como ambulância, automóveis e demais veículos utilizados no transpor",
+   "value": 200000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 135,
+   "author": "Benedito Augusto da Silva - Repub",
+   "destination": "Repasse de verba ao Instituto de Ação Social Enéas Tognini para aquisição de equipamentos:para fIsio(erapia: :sn S du aaa R$ 70.000,00 (setenta mil reais).",
+   "value": 70000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 136,
+   "author": "Benedito Augusto da Silva - Repub",
+   "destination": "Repasse de verba à Associação de Apoio ao Portador de Lesão Medular - POLEM, para:atender demanda de:CustêiO: s; a6 id aa dd e a des aa tidas cdeEES b dNA dA Ab ANch R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 137,
+   "author": "Benedito Augusto da Silva - Repub",
+   "destination": "Repasse de verba ao Hospital Municipal “Dr. Tabajara Ramos”. para complementação de valor para aquisição de ventiladores mecânicos destinados ao setor de Fisioterapia R$ 15.000,00 (quinze mil reais).",
+   "value": 15000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 138,
+   "author": "Elias dos Santos - Repub",
+   "destination": "Repasse de verba para à Secretaria de Serviços Municipais - SSM, para manutenção da frota oficial, em como em ações de limpeza urbana e apoio à infraestrutura da Pasta, nos termos no OFÍCIO Nº 50/2025/SSM ......cccccoo R",
+   "value": 30000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 139,
+   "author": "Elias dos Santos - Repub",
+   "destination": "Repasse de verba à Associação Mãos que Acolhem, para atender demanda de CUSTelO: / sacA ds sa da e aaa aa TSSA TA cas aa e a e T DONS SA DsO a ir aa e e sa cntae sa b Ca SA SAA GA EAA R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 140,
+   "author": "Elias dos Santos - Repub",
+   "destination": "Repasse de verba à Secretaria Municipal de Segurança Pública, para atender demanda: deseustelo! .ssssntisies aa te sa S AA on ES AA t SSA DdE bA R$ 15.000,00 (quinze mil reais).",
+   "value": 15000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 141,
+   "author": "Elias dos Santos - Repub",
+   "destination": "Repasse de verba à Associação de Pais e Mestres (APM) da EMEB “Prof.º Marina Ap. Rogério Paschoalotti”, para atender demanda de custeio ...l R$ 20.000,00 (vinte mil reais).",
+   "value": 20000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 142,
+   "author": "Elias dos Santos - Repub",
+   "destination": "Repasse de verba à Associação Ágape, para atender demanda de custeio R$ 250.000,00 (duzentos e cinquenta mil reais).",
+   "value": 250000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 143,
+   "author": "Elias dos Santos - Repub",
+   "destination": "Repasse de verba à Secretaria Municipal de Assistência Social, para atender demanda-deé: CUSteiO:: ss sa Ri SV SEA ee S dida ds tAN e tiN SG a dadeEs R$ 26.507,39 (vinte e seis mil, duzentos e sete reais e trinta e nove",
+   "value": 26507.39,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 144,
+   "author": "Elias dos Santos - Repub",
+   "destination": "Repasse de verba à Secretaria Municipal de Esportes e Lazer, para manutenção do Centro Esportivo. Waldemar: : Perran! Laosdasoss aaA d R/n aa bn R$ 20.000,00 (vinte mil reais).",
+   "value": 20000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 145,
+   "author": "Elias dos Santos - Repub",
+   "destination": "Repasse de verba ao Fundo Especial de Bombeiros (FEBOM), para atender demanda de:oustelOus. fnA A o AAAA ES N vIdre A dd ta e uda U aa aa A vaEs R$ 15.000,00 (quinze mil reais).",
+   "value": 15000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 146,
+   "author": "Elias dos Santos - Repub",
+   "destination": "Repasse de verba à Irmandade da Santa Casa de Misericórdia de Mogi Guaçu, para atendeér demanda:de: CUSteiO Juuentescidio a a Ac ss e daea aa ta VaSCS ds Gs ESA Sua SS DiCeteaadads R$ 50.000,00 (cinquenta mil reais).",
+   "value": 50000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 147,
+   "author": "Elias dos Santos - Repub",
+   "destination": "Repasse de verba à Associação de Apoio ao Portador de Lesão Medular - POLEM, pára /atêénder demanda:-dê Gusteios ec anA e o e ddA d o RNEA R$ 30.000,00 (trinta mil reais).",
+   "value": 30000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 148,
+   "author": "Elias dos Santos - Repub",
+   "destination": "Repasse de verba à Associação de Paiíis e Amigos dos Excepcionais de Mogi Guaçu — APAE, para atendimento as ações de saúde (CUSteio) ........iieo R$ 30.000,00 (trinta mil reais).",
+   "value": 30000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 149,
+   "author": "Elias dos Santos - Repub",
+   "destination": "Repasse de verba Hospital Municipal “Dr. Tabajara Ramos”, sendo: | | Atendimento das demandas de custeio R$ 50.000,00 (cinquenta mil reais) |l | complementação de valor para aquisição de | R$ 50.000,00 (cinquenta mil rea",
+   "value": 100000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 150,
+   "author": "Elias dos Santos - Repub",
+   "destination": "Repasse de verba à Secretaria Municipal da Saúde, para manutenção preventiva e corretiva dos veículos que atendem a Secretaria Municipal de Saúde, tais como ambulância, automóveis e demais veículos utilizados no transpor",
+   "value": 100000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 151,
+   "author": "Elias dos Santos - Repub",
+   "destination": "Repasse de verba ao CAPS |J — Centro de Atenção Psicossocial (Infanto Juvenil), pára -atender demaânda dê: CiStéIB: & s2m Rbó A aa tssdaddo sd rdEa taa R$ 15.000,00 (quinze mil reais).",
+   "value": 15000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 152,
+   "author": "Elias dos Santos - Repub",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para atender demanda de custeio das cirurgias de Artroscopia de joelho ......idsiicic R$ 30.000,00 (trinta mil reais).",
+   "value": 30000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 153,
+   "author": "Elias dos Santos - Repub",
+   "destination": "Repasse de verba ao “Lar da Terceira Idade Padre Longino (Unidade |), para atendimento às ações de saúde (CUSteio).........iciscic : R$ 15.000,00 (quinze mil reais).",
+   "value": 15000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 154,
+   "author": "Elias dos Santos - Repub",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para atender demanda de custeio do Serviço de Atendimento Móvel de Urgência (SAMUÚ) ...l R$ 16.507,39 (dezesseis mil, quinhentos e sete reais e trinta e nove centavos).",
+   "value": 16507.39,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 155,
+   "author": "Eliete de Souza Borges - PSD",
+   "destination": "Repasse de verba ao CASMOÇU — Centro de Ação Social de Mogi Guaçu, para atender demanda da “CEI Marilene Ferreira M. Franco ..s R$ 20.000,00 (vinte mil reais).",
+   "value": 20000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 156,
+   "author": "Eliete de Souza Borges - PSD",
+   "destination": "Repasse de verba ao CASMOÇU — Centro de Ação Social de Mogi Guaçu, para atender demanda da “CEI Therezinha Peres\" .c R$ 20.000,00 (vinte mil reais).",
+   "value": 20000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 157,
+   "author": "Eliete de Souza Borges - PSD",
+   "destination": "Repasse de verba à Associação Mais Vida, para atender demanda de custeio R$ 40.000,00 (quarenta mil reais).",
+   "value": 40000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 158,
+   "author": "Eliete de Souza Borges - PSD",
+   "destination": "Repasse de verba à “Associação Exército de Cristo Primeira Companhia Valentes de David Defesa Civil”, para atender demanda de CUusteio......iicccccc s R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 159,
+   "author": "Eliete de Souza Borges - PSD",
+   "destination": "Repasse de verba à Secretaria Municipal do Bem-Estar e Defesa Animal, para atender demanda de custeio R$ 20.000,00 (vinte mil reais).",
+   "value": 20000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 160,
+   "author": "Eliete de Souza Borges - PSD",
+   "destination": "Repasse de verba à Secretaria Municipal de Tecnologia e Inovação, para atender demanda de custeio R$ 40.000,00 (quarenta mil reais).",
+   "value": 40000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 161,
+   "author": "Eliete de Souza Borges - PSD",
+   "destination": "Repasse de verba ao Fundo Especial de Bombeiros (FEBOM), para aquisição de equipamentos R$ 15.000,00 (quinze mil reais).",
+   "value": 15000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 162,
+   "author": "Eliete de Souza Borges - PSD",
+   "destination": "Repasse de verba à Secretaria Municipal de Segurança Pública, para aquisição de equipamentos para a Guarda Civil Municipal. Lc R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 163,
+   "author": "Eliete de Souza Borges - PSD",
+   "destination": "Repasse de verba à Associação Mãos que Acolhem, para atender demanda de custeio R$ 30.000,00 (trinta mil reais).",
+   "value": 30000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 164,
+   "author": "Eliete de Souza Borges - PSD",
+   "destination": "Repasse de verba para à Secretaria de Serviços Municipais - SSM, para manutenção da frota oficial, tem como em ações de limpeza urbana e apoio à infraestrutura da Pasta, nos termos no OFÍCIO Nº 51/2025/SSM ...c R$ 30.000",
+   "value": 30000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 165,
+   "author": "Eliete de Souza Borges - PSD",
+   "destination": "Repasse de verba para à Secretaria Municipal de Assistência Social, para atender demanda de custeio R$ 40.000,00 (quarenta mil reais).",
+   "value": 40000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 166,
+   "author": "Eliete de Souza Borges - PSD",
+   "destination": "Repasse de verba para à Secretaria Municipal de Cultura, para atender demanda de custeio R$ 30.000,00 (trinta mil reais).",
+   "value": 30000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 167,
+   "author": "Eliete de Souza Borges - PSD",
+   "destination": "Repasse de verba à Associação de Pais e Mestres — APM da EMEF Santa Terezinha |l — CAIC, para atender demanda de custeio R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 168,
+   "author": "Eliete de Souza Borges - PSD",
+   "destination": "Repasse de verba ao Centro de Ação e Recuperação Social (CARS), para atender demanda de GusStélO::s:ossshano ss da dd D oLS o a A ANA SE a R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 169,
+   "author": "Eliete de Souza Borges - PSD",
+   "destination": "Repasse de verba à Secretaria Municipal de Agricultura, Abastecimento e Meio Ambiente — SAAMA, para atender demanda de custeio R$ 30.000,00 (trinta mil reais).",
+   "value": 30000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 170,
+   "author": "Eliete de Souza Borges - PSD",
+   "destination": "Repasse de verba à Secretaria Municipal de Esportes e Lazer, sendo: | | Atendimento das demandas de custeio da /R$ /11.507,39 (onze mi Pasta quinhentos e sete reais e trinta e nove centavos) ll | Atendimento das demandas",
+   "value": 21507.39,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 171,
+   "author": "Eliete de Souza Borges - PSD",
+   "destination": "Repasse de verba à Associação Jesus Chama-te — Projeto Adolescente Sim “*PAS”, para;:atendeér dêemanda: de: EUStelo! vufreoa dd ee dLcA R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 172,
+   "author": "Eliete de Souza Borges - PSD",
+   "destination": "Repasse de verba ao Hospital Municipal “Dr. Tabajara Ramos”, para atender deimanda--de; JCUStéio. eel s tdrADo S e o LS A Bi AN oA A ES Rb d a ÃE R$ 116.507,39 (cento e dezesseis mil, quinhentos e sete reais e trinta e n",
+   "value": 116507.39,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 173,
+   "author": "Eliete de Souza Borges - PSD",
+   "destination": "Repasse de verba à Associação de Pais e Amigos dos Excepcionais de Mogi Guaçu — APAE, para atendimento as ações de saúde (CUSteiO)........tiii o R$ 55.000,00 (cinquenta e cinco mil reais).",
+   "value": 55000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 174,
+   "author": "Eliete de Souza Borges - PSD",
+   "destination": "Repasse de verba à Irmandade da Santa Casa de Misericórdia de Mogi Guaçu, para atender «demandá-de CUStelO s:: :dn e a AA AA aA L te ee UTA ARÁR EE R$ 50.000,00 (cinquenta mil reais).",
+   "value": 50000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 175,
+   "author": "Eliete de Souza Borges - PSD",
+   "destination": "Repasse de verba ao CAPS |J — Centro de Atenção Psicossocial (Infanto Juvenil), paraatendér: demanda de “CUsStelo Ls cdissesosadrsted ddA dAA R$ 20.000,00 (vinte mil reais).",
+   "value": 20000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 176,
+   "author": "Eliete de Souza Borges - PSD",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para atender demanda de custeio do Centro de Atenção ao Transtorno do Espectro Autista (CATEA) Dr. José MUNIZ JUNIOT: ts csetesssstasE d N SA SNA TNSN ARCMaNSaS tA DSbrB",
+   "value": 20000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 177,
+   "author": "Eliete de Souza Borges - PSD",
+   "destination": "Repasse de verba ao “Lar da Terceira Idade Padre Longino (Unidade |), para átêndimento às ações de:saúde (CUstelo) sum id sd tdd iic R$ 20.000,00 (vinte mil reais).",
+   "value": 20000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 178,
+   "author": "Eliete de Souza Borges - PSD",
+   "destination": "Repasse de verba ao Hospital Municipal “Dr. Tabajara Ramos”. para complementação de valor para aquisição de ventiladores mecânicos destinados ao SetoOrde:FISIOLSrapIidic: sd vA iNE ANA oA dd aA A Eg taa eecA desadtsaha R",
+   "value": 60000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 179,
+   "author": "Eliete de Souza Borges - PSD",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para atender demanda de custeio das cirurgias de Artroscopia de joelho ......iic s R$ 25.000,00 (vinte e cinco mil reais).",
+   "value": 25000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 180,
+   "author": "Eliete de Souza Borges - PSD",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para investimentos da USF Jardim:Ghaparral 18 su i aaa aa s e a ds R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 181,
+   "author": "Eliete de Souza Borges - PSD",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para investimentos da USF Santa Cecniass f ds en e aa d A SS a ee EEA Ra a M a aaA adetadados R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 182,
+   "author": "Guilherme de Sousa Campos - PSD",
+   "destination": "Repasse de verba à Associação Espírita Vinha de Jesus, para atender demanda de custeio da CEI Lar Menino Jesus ...l R$ 100.000,00 (cem mil reais).",
+   "value": 100000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 183,
+   "author": "Guilherme de Sousa Campos - PSD",
+   "destination": "Repasse de verba ao CASMOÇU — Centro de Ação Social de Mogi Guaçu, para atender demanda da “CEI Marilene Ferreira Mamede Franco” ...l R$ 30.000,00 (trinta mil reais).",
+   "value": 30000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 184,
+   "author": "Guilherme de Sousa Campos - PSD",
+   "destination": "Repasse de verba à Associação Jesus Chama-te — Projeto Adolescente Sim \"PAS\" para-atender-dêmanda de: GuSteiOosssseba e dsA aaA stdast: R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 185,
+   "author": "Guilherme de Sousa Campos - PSD",
+   "destination": "Repasse de verba à Associação de Pais e Mestres — APM da EMEF Antonio Giovani Lanzi, para aquisição de caixa d'água ..c R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 186,
+   "author": "Guilherme de Sousa Campos - PSD",
+   "destination": "Repasse de verba para à Secretaria de Serviços Municipais - SSM, para manutenção da frota oficial, bem como em ações de limpeza urbana e apoio à infraestrutura da Pasta, nos termos no OFÍCIO Nº 52/2025/SSM ...c R$ 20.000",
+   "value": 20000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 187,
+   "author": "Guilherme de Sousa Campos - PSD",
+   "destination": "Repasse de verba à Secretaria Municipal de Segurança Pública, para atender demanda de custeio da Guarda Civil MUniCipal ...c çs R$ 15.000,00 (quinze mil reais).",
+   "value": 15000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 188,
+   "author": "Guilherme de Sousa Campos - PSD",
+   "destination": "Repasse de verba à Secretaria Municipal de Esportes e Lazer, para atender demanda:dêe Custelo :: id aódosssass c ic te sses brtacaBitatosa TebDs doco ss de e ta a RoS sA A sa dBTAc aS R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 189,
+   "author": "Guilherme de Sousa Campos - PSD",
+   "destination": "Repasse de verba à Corporação Musical “Marcos Vedovello”, para atender demanda de custeio R$ 20.000,00 (vinte mil reais).",
+   "value": 20000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 190,
+   "author": "Guilherme de Sousa Campos - PSD",
+   "destination": "Repasse de verba ao Fundo Especial de Bombeiros (FEBOM), para atender demanda de custeio R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 191,
+   "author": "Guilherme de Sousa Campos - PSD",
+   "destination": "Repasse de verba à Associação Mãos que Acolhem, para atender demanda de CUSLSIO: thc ee Eb ca S Mc abeosb aa eeA LSAA RN dS R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 192,
+   "author": "Guilherme de Sousa Campos - PSD",
+   "destination": "Repasse de verba à Associação de Pais e Mestres — APM da CEI Ruy Bueno, localizada no Jardim Pansani, para atender demanda de Custeio .......lccccooo R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 193,
+   "author": "Guilherme de Sousa Campos - PSD",
+   "destination": "Repasse de verba à Associação de Pais e Mestres — APM da EMEF Prof. Antonio Carnevalle Filho, para atender demanda de CUusteio ......llccccce R$ 15.000,00 (quinze mil reais).",
+   "value": 15000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 194,
+   "author": "Guilherme de Sousa Campos - PSD",
+   "destination": "Repasse de verba à Associação Ágape, para atender demanda de custeio R$ 30.000,00 (trinta mil reais).",
+   "value": 30000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 195,
+   "author": "Guilherme de Sousa Campos - PSD",
+   "destination": "Repasse de verba para o Instituto Carlos Nunes, para atender demanda de custeio R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 196,
+   "author": "Guilherme de Sousa Campos - PSD",
+   "destination": "Repasse de verba para a Secretaria Municipal de Comunicação, para atender demanda:deeusteiO.. :::c e s DAA a dRR ic oa M aa RE taaa AA a so tndvo Ten taaa R$ 30.000,00 (trinta mil reais).",
+   "value": 30000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 197,
+   "author": "Guilherme de Sousa Campos - PSD",
+   "destination": "Repasse de verba à Secretaria de Esportes e Lazer, sendo: | |Manutenção do telhado da quadra|R$10.000,00 (dez milreais) poliesportiva do Centro Esportivo Pres. Juscelino K. Oliveira - CERESC ll | Aquisição de bebedouro p",
+   "value": 15000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 198,
+   "author": "Guilherme de Sousa Campos - PSD",
+   "destination": "Repasse de verba à Associação Comunitária Mundo Melhor, para atender demanda: de:Custelo s2:tafoicoto S Ac EA AAA dc o eA a c SnnE a taaçts R$ 23.507,39 (vinte e três mil, quinhentos e sete reais e trinta e nove centavos",
+   "value": 23507.39,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 199,
+   "author": "Guilherme de Sousa Campos - PSD",
+   "destination": "Repasse de verba ao CASMOÇU - Centro de Ação Social de Mogi Guaçu, para atender demanda de custeio da CEI Hanne Saad Nouml.......liccccooo R$ 18.000,00 (dezoito mil reais).",
+   "value": 18000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 200,
+   "author": "Guilherme de Sousa Campos - PSD",
+   "destination": "Repasse de verba à Associação de Apoio ao Portador de Lesão Medular - POLEM, para ;atender demanda de -CustelO:s1:2bcnds tdd sa SA SNS dies R$ 50.000,00 (cinquenta mil reais).",
+   "value": 50000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 201,
+   "author": "Guilherme de Sousa Campos - PSD",
+   "destination": "Repasse de verba à Associação CALVI — Casa de Apoio Longa Vida, para atender demanda:-des CUstéioa. on eA ee eA SA A E S DA a ds edoaE t Seues R$ 50.000,00 (cinquenta mil reais).",
+   "value": 50000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 202,
+   "author": "Guilherme de Sousa Campos - PSD",
+   "destination": "Repasse de verba ao “Lar da Terceira Idade Padre Longino (Unidade |), para atendimento às;ações:de:saúde:-(CusteloO) : sssucitodssetidadaóasa d eh R$ 80.000,00 (oitenta mil reais).",
+   "value": 80000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 203,
+   "author": "Guilherme de Sousa Campos - PSD",
+   "destination": "Repasse de verba ao Hospital Municipal “Dr. Tabajara Ramos”. para complementação de valor para aquisição de ventiladores mecânicos destinados ao setor-de FISIOCerapia mss ee a fA Rc AAA UAA o TNS EAONCAS FECRCdAS EA R$ 1",
+   "value": 18000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 204,
+   "author": "Guilherme de Sousa Campos - PSD",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, destinada à UBS Guaçu Mirim “Neusa Thomann Caveanha”, para manutenção da calçada e alambrado ................ R$ 30.000,00 (trinta mil reais).",
+   "value": 30000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 205,
+   "author": "Guilherme de Sousa Campos - PSD",
+   "destination": "Repasse de verba à Associação de Pais e Amigos dos Excepcionais de Mogi Guaçu — APAE, para atendimento as ações de saúde (aquisição de ar condicionado) ....... R$ 20.000,00 (vinte mil reais).",
+   "value": 20000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 206,
+   "author": "Guilherme de Sousa Campos - PSD",
+   "destination": "Repasse de verba à Irmandade da Santa Casa de Misericórdia de Mogi Guaçu, para-atender demanda:de eustelo.. tuf-auntetts el o bl ee sa aaaA é R$ 50.000,00 (cinquenta mil reais).",
+   "value": 50000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 207,
+   "author": "Guilherme de Sousa Campos - PSD",
+   "destination": "Repasse de verba à Associação Mulher Unimed - AMU, para atender demanda de custeio R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 208,
+   "author": "Guilherme de Sousa Campos - PSD",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para aquisição de equipamentos para a UBS “Basílio Fantinato”, localizada no Jardim Ypê ll ............. R$ 15.335,80 (quinze mil, trezentos e trinta e cinco reais e oite",
+   "value": 15335.8,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 209,
+   "author": "Guilherme de Sousa Campos - PSD",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para aquisição de equipamentos para a USF Santa Terezinha “Dr. José LanzZi\" ..c R$ 15.335,80 (quinze mil, trezentos e trinta e cinco reais e oitenta centavos).",
+   "value": 15335.8,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 210,
+   "author": "Guilherme de Sousa Campos - PSD",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para aquisição de equipamentos para a UBS Zona Sul “Dr. Waldomiro Girard Jacob” ...l R$ 15.335,80 (quinze mil, trezentos e trinta e cinco reais e oitenta centavos).",
+   "value": 15335.8,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 211,
+   "author": "Guilherme de Sousa Campos - PSD",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, sendo: | | Atendimento da demanda de custeio das | R$ 25.000,00 (vinte e cinco mil cirurgias de Artroscopia de joelho reais) ll | Atendimento das demandas de custeio da |",
+   "value": 32500.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 212,
+   "author": "Jéferson Luís da Silva - PP",
+   "destination": "Repasse de verba ao CASMOÇU — Centro de Ação Social de Mogi Guaçu, para atender a “CEI Clotilde Miachon Bueno”, sendo: | | Módulo para transporte interno com 8 lugares |[ R$ 14.900,00 (quatorze mil e para os alunos novec",
+   "value": 24900.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 213,
+   "author": "Jéferson Luís da Silva - PP",
+   "destination": "Repasse de verba ao CASMOÇU, para atender a CEI Padre Longino Vastbinder, no Jardim Santa Terezinha, sendo: | | Módulo para transporte interno com 8 lugares |[ R$ 14.900,00 (quatorze mil e para os alunos novecentos reais",
+   "value": 24900.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 214,
+   "author": "Jéferson Luís da Silva - PP",
+   "destination": "Repasse de verba ao CASMOÇU, para atender a CEI Therezinha Perez, sendo: | | Módulo para transporte interno com 8 lugares | RE 14.900,00 (quatorze mil e para os alunos novecentos reais) |l | Implantação de playground R$",
+   "value": 52300.0,
+   "healthHeuristic": false,
+   "check": {
+    "items": [
+     14900.0,
+     37400.0
+    ],
+    "total": [
+     52300.0
+    ],
+    "reduction": [
+     24900.0
+    ]
+   }
+  },
+  {
+   "number": 215,
+   "author": "Jéferson Luís da Silva - PP",
+   "destination": "Repasse de verba ao CASMOÇU, para atender a CEI Mário Magri, sendo: | | Módulo para transporte interno com 8 lugares |[ R$ 14.900,00 (quatorze mil e para os alunos novecentos reais) 1l | Substituição das calhas R$ 10.000",
+   "value": 24900.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 216,
+   "author": "Jéferson Luís da Silva - PP",
+   "destination": "Repasse de verba à Associação Espírita Vinha de Jesus, para aquisição de 03 Módulos para transporte interno com 8 lugares para os alunos da CEI Lar Menino Jesus R$ 44.700,00 (quarenta e quatro mil e setecentos reais).",
+   "value": 44700.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 217,
+   "author": "Jéferson Luís da Silva - PP",
+   "destination": "Repasse de verba à Associação Jesus Chama-te — Projeto Adolescente Sim “PAS”, para atender déêmandã” dêCUStelOn.nvadaricaausiohimia aa sNS NLAA R$ 15.000,00 (quinze mil reais).",
+   "value": 15000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 218,
+   "author": "Jéferson Luís da Silva - PP",
+   "destination": "Repasse de verba à Secretaria Municipal de Bem-Estar e Defesa Animal, para atender demanda: dê: CustelO :G: suatdaa si ii astas s os te ss esaseidodt Bi ts tsa nideast R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 219,
+   "author": "Jéferson Luís da Silva - PP",
+   "destination": "Repasse de verba para a Associação de Pais e Mestres (APM) da EMEF Coronel Joaquim Leite de Souza, para aquisição de instrumentos musicais para a fanfarra .. R$ 20.000,00 (vinte mil reais).",
+   "value": 20000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 220,
+   "author": "Jéferson Luís da Silva - PP",
+   "destination": "Repasse de verba para a Secretaria Municipal de Segurança Pública, para aquisição de equipamentos para o canil da Guarda Civil Municipal.....cccccccccoo R$ 15.000,00 (quinze mil reais).",
+   "value": 15000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 221,
+   "author": "Jéferson Luís da Silva - PP",
+   "destination": "Repasse de verba à Associação Ágape, para manutenção do prédio localizado no Jardim Ypê |ll R$ 20.000,00 (vinte mil reais).",
+   "value": 20000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 222,
+   "author": "Jéferson Luís da Silva - PP",
+   "destination": "Repasse de verba ao Instituto de Ação Social Enéas Tognini para atender o Centro Dia do Idoso, sendo: | | Aquisição de poltronas e mobiliário R$ 20.000,00 (vinte mil reais) 1l | Pintura e manutenção do prédio R$ 15.000,0",
+   "value": 35000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 223,
+   "author": "Jéferson Luís da Silva - PP",
+   "destination": "I - Repasse de verba ao Centro de Ação e Recuperação Social (CARS), para atender I demanda de custeio R$ 20.000,00 (vinte mil reais).",
+   "value": 20000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 224,
+   "author": "Jéferson Luís da Silva - PP",
+   "destination": "Repasse de verba à Secretaria Municipal de Obras e Mobilidade — SOM, para melhorias da área verde localizada defronte a Paróquia Santa Edwiges .................. R$ 30.000,00 (trinta mil reais).",
+   "value": 30000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 225,
+   "author": "Jéferson Luís da Silva - PP",
+   "destination": "Repasse de verba à Associação Mulher Unimed - AMU, para atender demanda dS PUSTCIO pn ss d RA ES a eendoa a s ds ES U mee tee t dasadeeccsa d R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 226,
+   "author": "Jéferson Luís da Silva - PP",
+   "destination": "Repasse de verba à Associação Mãos que Acolhem, para atender demanda de [o18 3 (2][0 RNE RRA SSS RÇÃ AAA SNAA E S AEN a RMA TEAA CAR ANA PEA AN AAA R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 227,
+   "author": "Jéferson Luís da Silva - PP",
+   "destination": "Repasse de verba à Associação de Pais e Mestres — APM da EMEF Profº Maria Diva Franco de Oliveira, para manutenção do telhadoO.......iscccico R$ 29.807,39 (vinte e nove mil, oitocentos e sete reais e trinta e nove centav",
+   "value": 29807.39,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 228,
+   "author": "Jéferson Luís da Silva - PP",
+   "destination": "Repasse de verba à APAE — Associação de Pais e Amigos dos Excepcionais de Mogi Guaçu, para pintura e manutenção do prédio da saúde ......iios R$ 80.000,00 (oitenta mil reais).",
+   "value": 80000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 229,
+   "author": "Jéferson Luís da Silva - PP",
+   "destination": "Repasse de verba à Associação de Apoio ao Portador de Lesão Medular - POLEM, para atender demanda. dê. CUSteiO:sssscasta sdA dAS o d aal SA idada R$ 30.000,00 (trinta mil reais).",
+   "value": 30000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 230,
+   "author": "Jéferson Luís da Silva - PP",
+   "destination": "Repasse de verba à Irmandade da Santa Casa de Misericórdia de Mogi Guaçu, para atender demanda de CUSteIiO.....iisisiciiiierss o R$ 70.000,00 (setenta mil reais).",
+   "value": 70000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 231,
+   "author": "Jéferson Luís da Silva - PP",
+   "destination": "Repasse de verba ao Hospital Municipal “Dr. Tabajara Ramos”. para complementação de valor para aquisição de ventiladores mecânicos destinados ao selorde;FISIOferapia ::c RSA ENAA STAA : ec d aa o dR aDaS R$ 30.000,00 (tr",
+   "value": 30000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 232,
+   "author": "Jéferson Luís da Silva - PP",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para realização de cirurgias de artroscópia de: [08]NOn, d ss tidA a aaa S t a ee Iea eAA d aa ds d Ees EGVAA EVCTSTS R$ 25.000,00 (vinte e cinco mil reais).",
+   "value": 25000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 233,
+   "author": "Jéferson Luís da Silva - PP",
+   "destination": "Repasse de verba ao Hospital Municipal “Dr. Tabajara Ramos”. para implantação de aparelhos de ar condicionado no 3º andar (internação) ...h R$ 101.507,39 (cento e um mil, quinhentos e sete reais e trinta e nove centavos)",
+   "value": 101507.39,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 234,
+   "author": "Jéferson Luís da Silva - PP",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para atender demanda no Tatamento;.com:EguUoterapia ss i ee a e tA dide ta aa ee aa o N Nta aA R$ 50.000,00 (cinquenta mil reais).",
+   "value": 50000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 235,
+   "author": "Luís Zanco Neto - MDB",
+   "destination": "Repasse de verba à Associação de Pais e Mestres — APM da EMEF Antonio Giovani Lanzi, para manutenção da quadra poliesportiva......iisccciii R$ 66.000,00 (sessenta e seis mil reais).",
+   "value": 66000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 236,
+   "author": "Luís Zanco Neto - MDB",
+   "destination": "Repasse de verba à Associação de Pais e Mestres — APM da EMEF Profa. Rita de Cássia Gomes da Silva Cola, para atender demanda de Custeio ......llliiiiooo R$ 12.000,00 (doze mil reais).",
+   "value": 12000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 237,
+   "author": "Luís Zanco Neto - MDB",
+   "destination": "Repasse de verba à Fundação Educacional Guaçuana — FEG, para atender demanda: deCUStéiO: ssm to ed d SEA A AEN a SEA LAA taraddeAs R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 238,
+   "author": "Luís Zanco Neto - MDB",
+   "destination": "Repasse de verba à Corporação Musical “Marcos Vedovello”, para atender demarida: de: “CUsStelO. .c sNEE eA dS MdA CRa SNAA SE SNT tE Cs si dãs R$ 25.000,00 (vinte e cinco mil reais).",
+   "value": 25000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 239,
+   "author": "Luís Zanco Neto - MDB",
+   "destination": "Repasse de verba à Secretaria Municipal de Obras e Mobilidade para construção de redutores de velocidade (lombadas), sendo uma na Avenida Washington Luiz, nº 4688 6:0utrá ha: Rua:dos: Operariosnº 106 cais ccn daa taa AA",
+   "value": 6000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 240,
+   "author": "Luís Zanco Neto - MDB",
+   "destination": "Repasse de verba à “Associação Exército de Cristo Primeira Companhia Valentes de David Defesa Civil”, para atender demanda de CUusteio.......icicc nn R$ 5.000,00 (cinco mil reais).",
+   "value": 5000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 241,
+   "author": "Luís Zanco Neto - MDB",
+   "destination": "Repasse de verba à Associação Jesus Chama-te — Projeto Adolescente Sim “PAS”, para atender demanda de CUSteio......icc o R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 242,
+   "author": "Luís Zanco Neto - MDB",
+   "destination": "Repasse de verba à Secretaria Municipal de Agricultura, Abastecimento e Meio Ambiente - SAAMA, para atender demanda de Custeio ........liieee s R$ 25.000,00 (vinte e cinco mil reais).",
+   "value": 25000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 243,
+   "author": "Luís Zanco Neto - MDB",
+   "destination": "Repasse de verba para à Secretaria de Serviços Municipais - SSM, para manutenção da frota oficial, bem como em ações de limpeza urbana e apoio à infraestrutura da Pasta, nos termos no OFÍCIO Nº 54/2025/SSM ...c R$ 50.000",
+   "value": 50000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 244,
+   "author": "Luís Zanco Neto - MDB",
+   "destination": "Repasse de verba à Associação de Pais e Mestres — APM da EMEF Profa. Maria Júlia Bueno, para atender demanda de custeio ...c R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 245,
+   "author": "Luís Zanco Neto - MDB",
+   "destination": "Repasse de verba para o Instituto Carlos Nunes, para atender demanda de custeio R$ 5.000,00 (cinco mil reais).",
+   "value": 5000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 246,
+   "author": "Luís Zanco Neto - MDB",
+   "destination": "Repasse de verba ao Fundo Especial de Bombeiros (FEBOM), para atender demanda:de CuUStelO: t: senedses o eoNvE d VIARs SA dc sd ES d eA SS ds R$ 15.000,00 (quinze mil reais).",
+   "value": 15000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 247,
+   "author": "Luís Zanco Neto - MDB",
+   "destination": "Repasse de verba à Secretaria Municipal de Obras e Mobilidade — SOM, para melhorias da área verde localizada defronte a Paróquia Santa Edwiges ...l R$ 25.000,00 (vinte e cinco mil reais).",
+   "value": 25000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 248,
+   "author": "Luís Zanco Neto - MDB",
+   "destination": "Repasse de verba à Associação Espírita Vinha de Jesus, para atender demanda de custeio, reforma ou manutenção da CEI Lar Menino Jesus ........llclloo R$ 12.000,00 (doze mil reais).",
+   "value": 12000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 249,
+   "author": "Luís Zanco Neto - MDB",
+   "destination": "Repasse de verba à Secretaria Municipal de Cultura, sendo Atendimento das demandas de custeio da FETEG | R$ 10.000,00 (dez mil) Atendimento das demandas de custeio da EMIA R$ 15.000,00 (quinze mil reais) TOTAL R$ 25.000,",
+   "value": 25000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 250,
+   "author": "Luís Zanco Neto - MDB",
+   "destination": "Repasse de verba ao Centro de Aprendizagem Metódica Profissionalizante - CAMP, sendo: | | Atendimento de custeio da área de|R$55.507,39 (cinquentae cinco mil, Odontologia quinhentos e sete reais e trinta e nove centavos)",
+   "value": 105507.39,
+   "healthHeuristic": true,
+   "check": {
+    "items": [
+     55507.39,
+     50000.0
+    ],
+    "total": [
+     105507.39
+    ],
+    "reduction": [
+     30000.0
+    ]
+   }
+  },
+  {
+   "number": 251,
+   "author": "Luís Zanco Neto - MDB",
+   "destination": "Repasse de verba à Irmandade da Santa Casa de Misericórdia de Mogi Guaçu, para atendeér-demanda dé Custelo.: su stia&atdea a ds t sa dA: R$ 35.000,00 (trinta e cinco mil reais).",
+   "value": 35000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 252,
+   "author": "Luís Zanco Neto - MDB",
+   "destination": "Repasse de verba ao “Lar da Terceira Idade Padre Longino (Unidade |), para atendimento às ações de saúde (CUSteIO) ...:.::icissiintacaraesfaeiumess tsa tss tBSa aa peluss e drd tsa SAA As R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 253,
+   "author": "Luís Zanco Neto - MDB",
+   "destination": "Repasse de verba à Associação Comunidade Caminho para a Paz (Casa da Acolhida), sendo: | | Atendimento das demandas de médico clínico | R$ 141.507,39 (cento e quarenta e um mil, quinhentos e sete reais e trinta e nove ce",
+   "value": 191507.39,
+   "healthHeuristic": true,
+   "check": {
+    "items": [
+     141507.39,
+     50000.0
+    ],
+    "total": [
+     141507.39
+    ],
+    "reduction": [
+     191507.39
+    ]
+   }
+  },
+  {
+   "number": 254,
+   "author": "Luís Zanco Neto - MDB",
+   "destination": "Repasse de verba à APAE — Associação de Pais e Amigos dos Excepcionais de Mogi Guaçu, para atendimento as ações de saúde (CUusteio) ........ioo R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 255,
+   "author": "Luís Zanco Neto - MDB",
+   "destination": "Repasse de verba à Secretaria Municipal da Saúde, para manutenção preventiva e corretiva dos veículos que atendem a Secretaria Municipal de Saúde, tais como ambulância, automóveis e demais veículos utilizados no transpor",
+   "value": 50000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 256,
+   "author": "Luís Zanco Neto - MDB",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para atender demanda de Custeio das cirurgias de Artroscopia de joelho. :e sac cn dsn dsA SiA tds R$ 20.000,00 (vinte mil reais).",
+   "value": 20000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 257,
+   "author": "Luís Zanco Neto - MDB",
+   "destination": "Repasse de verba ao CAPS 1J — Centro de Atenção Psicossocial (Infanto Juvenil), pára atenderdêmanda: dé: CusStêlo: sun aaa A ada N re ta dd tee deresdida aa ie R$ 20.000,00 (vinte mil reais).",
+   "value": 20000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 258,
+   "author": "Luís Zanco Neto - MDB",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para atender demanda de custeio do Centro de Especialidades Odontológicas - CEO.......iinoo R$ 15.000,00 (quinze mil reais).",
+   "value": 15000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 259,
+   "author": "Luís Zanco Neto - MDB",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para atender demanda de custeio da Vigilância Epidemiológica ...l R$ 15.000,00 (quinze mil reais).",
+   "value": 15000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 260,
+   "author": "Marçal Georges Damião - PSDB",
+   "destination": "Repasse de verba à Secretaria Municipal de Agricultura, Abastecimento e Meio Ambiente - SAAMA, sendo: | | Revitalização da Avenida Londrina R$ 65.000,00 (sessenta e cinco mil reais) |l | Atender demanda de custeio R$ 20.",
+   "value": 85000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 261,
+   "author": "Marçal Georges Damião - PSDB",
+   "destination": "Repasse de verba à Secretaria Municipal de Obras e Mobilidade - SOM, para revitálização: :«dã Avênida. \"EGNQrNhassso.ssisssessie eelh dd ah R$ 20.000,00 (vinte mil reais).",
+   "value": 20000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 262,
+   "author": "Marçal Georges Damião - PSDB",
+   "destination": "Repasse de verba à Secretaria Municipal de Administração, para manutenção dos elevadoresdo” .Paço: : MENicipaliss&csees sa B aaaA cobbaç SS R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 263,
+   "author": "Marçal Georges Damião - PSDB",
+   "destination": "Repasse de verba à Secretaria Municipal de Tecnologia e Inovação para complementação de valor para aquisição de veículo Oficial......iic o R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 264,
+   "author": "Marçal Georges Damião - PSDB",
+   "destination": "Repasse de verba à Secretaria Municipal de Segurança Pública, para atender demanda de custeio R$ 20.000,00 (vinte mil reais).",
+   "value": 20000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 265,
+   "author": "Marçal Georges Damião - PSDB",
+   "destination": "Repasse de verba ao CASMOÇU - Centro de Ação Social de Mogi Guaçu, para atender demnanda dê Ccusteio.. en aa aa eA SA LNEN SS EOLIEO A SIEARAA MNAA EAA AAAA R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 266,
+   "author": "Marçal Georges Damião - PSDB",
+   "destination": "Repasse de verba ao Instituto Carlos Nunes, para atender demanda de (91DT2S(=3 T0 REEA EE ES CERIN RAA AAA A AAAA AAAA AAA AA ANA AAAA TNTA AA AAA E AA AAAA R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 267,
+   "author": "Marçal Georges Damião - PSDB",
+   "destination": "Repasse de verba à Associação Jesus Chama-te, para atender demanda de (o3 B É) () (9 NET NEN AAA ANA VEA AAAA SNEAA EAA AAAA AA SAA AAA EAREANA 2E AADAANESIA R$ 15.000,00 (quinze mil reais).",
+   "value": 15000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 268,
+   "author": "Marçal Georges Damião - PSDB",
+   "destination": "Repasse de verba à Associação de Pais e Mestres — APM da EMEI Adriana Missio, localizada no Jardim Nossa Senhora das Grassas, para atender demanda de custeio.. R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 269,
+   "author": "Marçal Georges Damião - PSDB",
+   "destination": "Repasse de verba ao Fundo Especial de Bombeiros (FEBOM), para atender demanda de custeio R$ 15.000,00 (quinze mil reais).",
+   "value": 15000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 270,
+   "author": "Marçal Georges Damião - PSDB",
+   "destination": "Repasse de verba à Corporação Musical “Marcos Vedovello”, para atender demanda de custeio R$ 25.000,00 (vinte e cinco mil reais).",
+   "value": 25000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 271,
+   "author": "Marçal Georges Damião - PSDB",
+   "destination": "Repasse de verba à Secretaria de Obras e Mobilidade - SOM, para manutenção de IMaQUINAS Sueetoseseseosse sa S MSA AAA AAA EM EO A tal SA AA MEN A dNS dd msE aaa R$ 15.000,00 (quinze mil reais).",
+   "value": 15000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 272,
+   "author": "Marçal Georges Damião - PSDB",
+   "destination": "Repasse de verba à Associação Espírita Vinha de Jesus, para atender demanda de- SeUsStelO: Gn ta sd dAA MR ASS SAA o AN d TE f AadaSsa RN Saa a aaa ESA R$ 15.000,00 (quinze mil reais).",
+   "value": 15000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 273,
+   "author": "Marçal Georges Damião - PSDB",
+   "destination": "Repasse de verba à Secretaria de Assistência Social, para atender demanda de Co1U E=] () [ e EN DAA RNEA AAA N RRA LA TE A AAA ANA AA AAA AAA AAA SA R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 274,
+   "author": "Marçal Georges Damião - PSDB",
+   "destination": "Repasse de verba à Associação de Pais e Mestres — APM da EMEI Prof. José Maria Rangel, para atender demanda de CusteiO.......iicccic çs R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 275,
+   "author": "Marçal Georges Damião - PSDB",
+   "destination": "Repasse de verba à Associação de Pais e Mestres — APM da CEI “Maestro Geraldo Vedovello”, para atender demanda de CUsteio.......lliccc R$ 15.000,00 (quinze mil reais).",
+   "value": 15000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 276,
+   "author": "Marçal Georges Damião - PSDB",
+   "destination": "Repasse de verba à Associação de Pais e Mestres — APM da EMEF Profº Cleonice Aparecida da C. Kilburn Thiele, para construção de cobertura entre o prédio da escola É asquadra: poltesportiva:. s 2522A e SR a SE SE S RL AG",
+   "value": 30000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 277,
+   "author": "Marçal Georges Damião - PSDB",
+   "destination": "Repasse de verba à Associação de Pais e Mestres — APM da EMEF “Profº Emília Vedovello Pedroso”, para atender demanda de CUsteio.......licc s R$ 30.000,00 (trinta mil reais).",
+   "value": 30000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 278,
+   "author": "Marçal Georges Damião - PSDB",
+   "destination": "Repasse de verba ao “Cantinho dos Guerreiros\" — Centro de Proteção e Defesa dos Animais, para atender demanda de CUSteiO......licccc o R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 279,
+   "author": "Marçal Georges Damião - PSDB",
+   "destination": "Repasse de verba à Associação Mulher Unimed - AMU, para atender demanda ( [=N 6) [i (o] [ 0 RSA PE E EEA TAA SAA AÇA A ANANER a RNEA AAES o ETA AA RENA PORA AAA MAA R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 280,
+   "author": "Marçal Georges Damião - PSDB",
+   "destination": "Repasse de verba à Associação Mãos que Acolhem, para atender demanda de GLIS(SIO:, an ic ts A oriada ds anA du AEN AAC NSS R$ 11.507,39 (onze mil, quinhentos e sete reais e trinta e nove centavos).",
+   "value": 11507.39,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 281,
+   "author": "Marçal Georges Damião - PSDB",
+   "destination": "Repasse de verba à Associação de Pais e Amigos dos Excepcionais de Mogi Guaçu — APAE, para atendimento as ações de saúde (CUSteio).......iisiice R$ 80.000,00 (oitenta mil reais).",
+   "value": 80000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 282,
+   "author": "Marçal Georges Damião - PSDB",
+   "destination": "Repasse de verba ao Centro de Ação e Recuperação Social (CARS), para atender demanda:de: eUSstelo fn sac TA EA GE RAA sa d aa o p aa A to AcA SARE S R$ 20.000,00 (vinte mil reais).",
+   "value": 20000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 283,
+   "author": "Marçal Georges Damião - PSDB",
+   "destination": "Repasse de verba ao Hospital Municipal “Dr. Tabajara Ramos”, para atender demanda de capital do Setor de Fisioterapia ...l R$ 20.000,00 (vinte mil reais).",
+   "value": 20000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 284,
+   "author": "Marçal Georges Damião - PSDB",
+   "destination": "Repasse de verba à Associação de Apoio ao Portador de Lesão Medular - POLEM, para: atender -dêmanda: deê: \"CUSTeIO, . «setisiae v dS bo aivas á dn shdace: CaaiaSs aa aa ee dS dvb a oedhaendt R$ 20.000,00 (vinte mil reais",
+   "value": 20000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 285,
+   "author": "Marçal Georges Damião - PSDB",
+   "destination": "Repasse de verba ao CAPS |J — Centro de Atenção Psicossocial (Infanto Juvenil), para-atender demanda de CusteiO;, ss iciaves aaa ds ic acA R$ 20.000,00 (vinte mil reais).",
+   "value": 20000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 286,
+   "author": "Marçal Georges Damião - PSDB",
+   "destination": "Repasse de verba à I|rmandade da Santa Casa de Misericórdia de Mogi Guaçu, para atender-demanda:de: CUStelO:: s.1ficaçde id MdA d a dcA NN Atoiodae on tAAA EaLs R$ 35.000,00 (trinta e cinco mil reais).",
+   "value": 35000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 287,
+   "author": "Marçal Georges Damião - PSDB",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para atender demanda de custeio das cirurgias de Artróscopia dê joelhO ..sóc dd ddA Ril R$ 25.000,00 (vinte e cinco mil reais).",
+   "value": 25000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 288,
+   "author": "Marçal Georges Damião - PSDB",
+   "destination": "Repasse de verba à Secretaria Municipal da Saúde, para manutenção preventiva e corretiva dos veículos que atendem a Secretaria Municipal de Saúde, tais como ambulância, automóveis e demais veículos utilizados no transpor",
+   "value": 150000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 289,
+   "author": "Marçal Georges Damião - PSDB",
+   "destination": "Repasse de verba ao “Lar da Terceira Idade Padre Longino (Unidade |), para atendimento às ações de saúde (CUSteiO) ::5sistasssdandess ds rbess sa coatadasorresdad enh asaS aa ss ac acbess dRts R$ 16.507,39 (dezesseis mil",
+   "value": 16507.39,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 290,
+   "author": "Natalino Antonio da Silva - PSDB",
+   "destination": "Manutenção do prédio que abriga a EMEF “Profº Emília Vedovello Pedroso” R$ 30.000,00 (trinta mil reais).",
+   "value": 30000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 291,
+   "author": "Natalino Antonio da Silva - PSDB",
+   "destination": "Repasse de verba à Associação de Pais e Mestres — APM da EMEF Prof. Cleonice Aparecida Cruz, localizada no Jardim Ypê |, para aquisição de carteiras para sala de Sala “Ulysses Guimarães”, 24 de outubro de 2025. R$ 60.000",
+   "value": 60000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 292,
+   "author": "Natalino Antonio da Silva - PSDB",
+   "destination": "Repasse de verba à Associação de Pais e Mestres — APM da EMEI Gilberto Bueno, localizada no Jardim Esplanada, para aquisição de mesas e cadeiras .........llllllloo R$ 15.000,00 (quinze mil reais).",
+   "value": 15000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 293,
+   "author": "Natalino Antonio da Silva - PSDB",
+   "destination": "Repasse de verba à Associação de Pais e Mestres — APM da CEI Leonor Mendes de Barros, localizada no Jardim Esplanada, para aquisição de mesas e cadeiras para [015] 01 Ie A AA A A EAA S MT AN NS AA NNNA AN ANA ANA AAA ANA",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 294,
+   "author": "Natalino Antonio da Silva - PSDB",
+   "destination": "Repasse de verba à Secretaria de Obras e Mobilidade, para implantação de calçada e iluminação na Praça do Jardim São Pedro, delimitada pela Rua Belmiro de Garlie-Rua Valéria: Eraneo AIVES s tee A fateutde A A e o dn a aa",
+   "value": 110000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 295,
+   "author": "Natalino Antonio da Silva - PSDB",
+   "destination": "Implantação de playground na área pública existente na Rua Jair de Lima, próximo ao número 299, no Jardim Monte LÍbano .......lisescsiiiie R$ 35.000,00 (trinta e cinco mil reais).",
+   "value": 35000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 296,
+   "author": "Natalino Antonio da Silva - PSDB",
+   "destination": "Repasse de verba à Corporação Musical “Marcos Vedovello”, para atender demandade: CoSteloOR sA A AN SE oc ee AA SAA S n E bnA SA e IOTAAS aRdEsS R R$ 5.000,00 (cinco mil reais).",
+   "value": 5000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 297,
+   "author": "Natalino Antonio da Silva - PSDB",
+   "destination": "Repasse de verba à Associação Jesus Chama-te, para atender demanda de CUSTCIO! sexalast aa a cca tee taa dead i id SE A R aaa A SuT A STA A taa AA i AAA o aaA S R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 298,
+   "author": "Natalino Antonio da Silva - PSDB",
+   "destination": "Repasse de verba à Associação Mãos que Acolhem, para atender demanda de CoTE Eo) ( (o JMSA A N AA NA NDNA SNEA AAAA AAAA QRAA AA AAAA AAA A R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 299,
+   "author": "Natalino Antonio da Silva - PSDB",
+   "destination": "Repasse de verba para a Secretaria Municipal de Esportes e Lazer, para atender demanda de custeio R$ 10.000,00 (dez mil reais). Sala “Ulysses Guimarães”, 24 de outubro de 2025.",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 300,
+   "author": "Natalino Antonio da Silva - PSDB",
+   "destination": "Repasse de verba à Secretaria Municipal de Segurança Pública, para aquisição de mMmunição para-a Giuarda: Civil MUnicipal sin sdl eAh teA R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 301,
+   "author": "Natalino Antonio da Silva - PSDB",
+   "destination": "Repasse de verba à Associação Espírita Vinha de Jesus, para atender demanda dS “CUSTIGIO! Ls TNE SE dd ee ddo a d MR EMA NMA (A SEA OtE aaA am NAcA SM aaaA EANA EEA R$ 41.507,39 (quarenta e um mil, quinhentos e sete reai",
+   "value": 41507.39,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 302,
+   "author": "Natalino Antonio da Silva - PSDB",
+   "destination": "Repasse de verba à Associação de Pais e Mestres (APM) da EMEF Prefeito Waldomiro Calmazini, para implantação de uma sala sensorial.....ciiicciiio R$ 30.000,00 (trinta mil reais).",
+   "value": 30000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 303,
+   "author": "Natalino Antonio da Silva - PSDB",
+   "destination": "Repasse de verba à Associação de Pais e Mestres (APM) da EMEF Anira Franco de Campos, para atender demanda de CUusteio .....icic s R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 304,
+   "author": "Natalino Antonio da Silva - PSDB",
+   "destination": "Repasse de verba ao Hospital Municipal “Dr. Tabajara Ramos”, para atender demanda de custeio das cirurgias oftalmológicas de catarata ...l R$ 40.000,00 (quarenta mil reais).",
+   "value": 40000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 305,
+   "author": "Natalino Antonio da Silva - PSDB",
+   "destination": "Repasse de verba ao Hospital Municipal “Dr. Tabajara Ramos”. para complementação de valor para aquisição de ventiladores mecânicos destinados ao setór de: FISIOterapia ss sd a tN E S QNSNA s e TNS vaa ders aaaA dRAA S va",
+   "value": 77000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 306,
+   "author": "Natalino Antonio da Silva - PSDB",
+   "destination": "Repasse de verba à Associação de Apoio ao Portador de Lesão Medular - POLEM, para-atender-demanda;dê CuUsStelOs:..castuges een dT o ee dNAc RE dRAS NNE R$ 10.000,00 (dez mil reais). Sala “Ulysses Guimarães”, 24 de outubr",
+   "value": 10000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 307,
+   "author": "Natalino Antonio da Silva - PSDB",
+   "destination": "Repasse de verba à Secretaria Municipal da Saúde, para manutenção preventiva e corretiva dos veículos que atendem a Secretaria Municipal de Saúde, tais como ambulância, automóveis e demais veículos utilizados no transpor",
+   "value": 100000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 308,
+   "author": "Natalino Antonio da Silva - PSDB",
+   "destination": "Repasse de verba à Secretaria Municipal da Saúde, para aquisição de equipamentos (ar condicionado, computadores, mesas, etc.) para a USF “Arlindo Cerruti”, localizada no Jardim Boa Vista R$ 50.000,00 (cinquenta mil reais",
+   "value": 50000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 309,
+   "author": "Natalino Antonio da Silva - PSDB",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para realização de cirurgias de arroscópia-de: JOCINO: tsp en sac sal a ds ee raScscanido sS dh dta e to aaa ee Dacs aSADÉBIGe R$ 25.000,00 (vinte e cinco mil reais).",
+   "value": 25000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 310,
+   "author": "Natalino Antonio da Silva - PSDB",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para aquisição de equipamentos (05 computadores) para o Centro de Atendimento à Mulher — CAM. R$ 20.000,00 (vinte mil reais).",
+   "value": 20000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 311,
+   "author": "Natalino Antonio da Silva - PSDB",
+   "destination": "Repasse de verba à Irmandade da Santa Casa de Misericórdia de Mogi Guaçu, para atender demanda.de' custelo: .. taaa RiA td eel aRL R$ 40.000,00 (quarenta mil reais).",
+   "value": 40000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 312,
+   "author": "Natalino Antonio da Silva - PSDB",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para demandas da “Farmácia de Todos”, sendo: | | Aquisição de ar condicionado R$ 6.000,00 (seis mil reais) ll | Materiais de escritório, limpeza e café R$ 8.507,39 (oito",
+   "value": 14507.39,
+   "healthHeuristic": true,
+   "check": {
+    "items": [
+     6000.0,
+     8507.39
+    ],
+    "total": [
+     14507.39
+    ],
+    "reduction": [
+     6000.0
+    ]
+   }
+  },
+  {
+   "number": 313,
+   "author": "Natalino Antonio da Silva - PSDB",
+   "destination": "Repasse de verba à CEAPE — Centro de Apoio Pedagógico Especializado. para atender demanda; :dê: CUStelO: tsi Rn ddc e SAA e aaA dadoiavE: grentas R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 314,
+   "author": "Paulo Henrique Pereira - PP",
+   "destination": "Repasse de verba à Associação de Pais e Mestres — APM da EMEF Profº Cleonice Aparecida da C. Kilburn Thiele, para construção de cobertura entre o prédio da escola é a “quadra poliesportiVa .s snessedla aa En S Teesdo aa",
+   "value": 30000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 315,
+   "author": "Paulo Henrique Pereira - PP",
+   "destination": "Repasse de verba à Associação Espirita Vinha de Jesus, para construção de cobertura (caminho de chuva) na entrada do prédio que abriga a CEI Professora Nánci-Simóni: Erânco sul dAnA idA R$ 25.000,00 (vinte e cinco mil re",
+   "value": 25000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 316,
+   "author": "Paulo Henrique Pereira - PP",
+   "destination": "Repasse de verba à Secretaria Municipal de Esportes e Lazer, para aquisição de uma cabine:de: CoOmunicação MOVEl s ssnó n MST Vetasas mhasa te t adese Serestae tL oreea.e d Mlha R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 317,
+   "author": "Paulo Henrique Pereira - PP",
+   "destination": "Repasse de verba à Secretaria Municipal de Esportes e Lazer, para reforma da piscina do Centro Esportivo Waldemar Ferrari cccc R$ 25.000,00 (vinte e cinco mil reais).",
+   "value": 25000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 318,
+   "author": "Paulo Henrique Pereira - PP",
+   "destination": "Repasse de verba à Secretaria Municipal de Esportes e Lazer, para construção de poços artesianos nas seguintes localidades: Centro Esportivo Alcides Macena Maria, Centro Esportivo Antonio Campano, Centro Esportivo José A",
+   "value": 30000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 319,
+   "author": "Paulo Henrique Pereira - PP",
+   "destination": "Repasse de verba à Associação Mulher Unimed - AMU, para atender demanda (o ( H8T0] E () o SPESIONA A AA AAAA ES A A AA SNEA SNAA AA NA AAAA AAAA R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 320,
+   "author": "Paulo Henrique Pereira - PP",
+   "destination": "Repasse de verba à Associação CALVI — Casa de Apoio Longa Vida, para atender demanda: de =CUStelO s a sd sd diseudi toiee du tee ddA Ste Dis s eas a sdrbe s sraeebndeScadãs R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 321,
+   "author": "Paulo Henrique Pereira - PP",
+   "destination": "Repasse de verba à Associação de Pais e Mestres — APM da EMEF Professor Antonio Carnevalle Filho, para aquisição de computadores para a sala de informática .............. R$ 35.000,00 (trinta e cinco mil reais).",
+   "value": 35000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 322,
+   "author": "Paulo Henrique Pereira - PP",
+   "destination": "Repasse de verba à Secretaria Municipal de Turismo, para atender demanda de custeio ... R$ 15.000,00 (quinze mil reais).",
+   "value": 15000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 323,
+   "author": "Paulo Henrique Pereira - PP",
+   "destination": "Repasse de verba à Associação de Pais e Mestres — APM da EMEF Anira Franco de Campos, para atender demanda de CUusteio ...c R$ 5.000,00 (cinco mil reais).",
+   "value": 5000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 324,
+   "author": "Paulo Henrique Pereira - PP",
+   "destination": "Repasse de verba à Associação de Pais e Mestres — APM da EMEF “Prof.º Isaura Ana de Freitas Campos”, para atender demanda de Custeio .....icccc a R$ 5.000,00 (cinco mil reais).",
+   "value": 5000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 325,
+   "author": "Paulo Henrique Pereira - PP",
+   "destination": "Repasse de verba para à Secretaria de Serviços Municipais - SSM, para manutenção da frota oficial, bem como em ações de limpeza urbana e apoio à infraestrutura da Pasta, nos termos no OFÍCIO Nº 57/2025/SSM ......icco R$",
+   "value": 40000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 326,
+   "author": "Paulo Henrique Pereira - PP",
+   "destination": "Repasse de verba à Associação de Pais e Mestres — APM da EMEF “Antonio Giovani Lanzi”, para atender demanda de CUusteio ...c R$ 15.000,00 (quinze mil reais).",
+   "value": 15000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 327,
+   "author": "Paulo Henrique Pereira - PP",
+   "destination": "Repasse de verba à Associação de Pais e Mestres — APM da EMEF “João Bueno Júnior”, para atender demanda de CUusteio ....iissscliiiireseas R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 328,
+   "author": "Paulo Henrique Pereira - PP",
+   "destination": "Repasse de verba à Secretaria de Comunicação, para atender demanda de custeio R$ 15.000,00 (quinze mil reais).",
+   "value": 15000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 329,
+   "author": "Paulo Henrique Pereira - PP",
+   "destination": "Repasse de verba à Secretaria de Comunicação, para atender demanda de custeio R$ 10.000,00 (dez mil reais).",
+   "value": 10000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 330,
+   "author": "Paulo Henrique Pereira - PP",
+   "destination": "Repasse de verba à Secretaria Municipal de Esportes e Lazer, para implantação de playground no Parque Linear do Córrego dos Macacos ... R$ 25.000,00 (vinte e cinco mil reais).",
+   "value": 25000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 331,
+   "author": "Paulo Henrique Pereira - PP",
+   "destination": "Repasse de verba à Associação de Pais e Mestres — APM da EMEI Prefeito Altino Martini, para/atêendêr-dêmanda;decustéio ss&n a sS a sA AA N A aa R$ 15.000,00 (quinze mil reais).",
+   "value": 15000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 332,
+   "author": "Paulo Henrique Pereira - PP",
+   "destination": "Repasse de verba para a Associação Amigos do Futsal, para atender demanda de CUSTOCIO! nn aaa Ls L aaa Sadoda EnA SR aa 1A LVA A DS TSSA AR N RESNA een dd R$ 30.000,00 (trinta mil reais).",
+   "value": 30000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 333,
+   "author": "Paulo Henrique Pereira - PP",
+   "destination": "Repasse de verba para o Instituto Carlos Nunes, para atender demanda de custeio R$ 6.507,39 (seis mil, quinhentos e sete reais e trinta e nove centavos).",
+   "value": 6507.39,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 334,
+   "author": "Paulo Henrique Pereira - PP",
+   "destination": "Repasse de verba à Secretaria Municipal de Esportes e Lazer, para demanda de custeio e aquisição de materiais esportivos para projetos SOCIAiS ......iioo R$ 20.000,00 (vinte mil reais).",
+   "value": 20000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 335,
+   "author": "Paulo Henrique Pereira - PP",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para atender demanda de custeio do Centro de Atenção ao Transtorno do Espectro Autista (CATEA) Dr. José MúNIZ JUNIOR B SA erado v dd aa ds i dd ee ac dder des doaadis Con",
+   "value": 20000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 336,
+   "author": "Paulo Henrique Pereira - PP",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, destinada à UBS Guaçu Mirim “Neusa Thomann Caveanha”, sendo: | | Melhorias no calçamento e alambrado R$ 24.000,00 (vinte e quatro mil reais) 1l | Atendimento das demandas",
+   "value": 39000.0,
+   "healthHeuristic": true,
+   "check": {
+    "items": [
+     24000.0,
+     15000.0
+    ],
+    "total": [
+     39000.0
+    ],
+    "reduction": [
+     24000.0
+    ]
+   }
+  },
+  {
+   "number": 337,
+   "author": "Paulo Henrique Pereira - PP",
+   "destination": "Repasse de verba ao “Lar da Terceira Idade Padre Longino (Unidade |), para atendimento às ações de saúde (CUSteio).......iissccn o R$ 20.000,00 (vinte mil reais).",
+   "value": 20000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 338,
+   "author": "Paulo Henrique Pereira - PP",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para atender demanda de custeio da UBS Zona Sul “Dr. Waldomiro Girard Jacob” ...c R$ 15.000,00 (quinze mil reais).",
+   "value": 15000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 339,
+   "author": "Paulo Henrique Pereira - PP",
+   "destination": "Repasse de verba à Secretaria Municipal da Saúde, para manutenção preventiva e corretiva dos veículos que atendem a Secretaria Municipal de Saúde, tais como ambulância, automóveis e demais veículos utilizados no transpor",
+   "value": 96507.39,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 340,
+   "author": "Paulo Henrique Pereira - PP",
+   "destination": "Repasse de verba à Secretaria Municipal da Saúde, para aquisição de ar condicionado para a USF Rosa Cruz “Antonio de Pádua Barbosa” ...l R$ 15.000,00 (quinze mil reais).",
+   "value": 15000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 341,
+   "author": "Paulo Henrique Pereira - PP",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para atender demanda de custeio. da: USF: Santa CeCllià .= sulA d a ddes dd ta te ee SA fesATas TSNEAA R$ 15.000,00 (quinze mil reais).",
+   "value": 15000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 342,
+   "author": "Paulo Henrique Pereira - PP",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para atender demanda de Ccustêeio da: USF Santa Terezinha: ::c dnsd dd d a en ddiaiA a nddad: R$ 15.000,00 (quinze mil reais).",
+   "value": 15000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 343,
+   "author": "Paulo Henrique Pereira - PP",
+   "destination": "Repasse de verba à Associação de Paiís e Amigos dos Excepcionais de Mogi Guaçu — APAE, para atendimento as ações de saúde (aquisição de ar condicionado)............ R$ 20.000,00 (vinte mil reais).",
+   "value": 20000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 344,
+   "author": "Paulo Henrique Pereira - PP",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para atender demanda de GCusteio dás cirurgias;de Artroscopiadê JOGINO: aa sstacunasdõr ee aaaados bl dodradatraeA: R$ 24.000,00 (vinte e quatro mil reais).",
+   "value": 24000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 345,
+   "author": "Paulo Henrique Pereira - PP",
+   "destination": "Repasse de verba ao CAPS |J — Centro de Atenção Psicossocial (Infanto Juvenil), para aquisição: de “MobIliáfrio:s:210/e dd e dA dd eaes ii tds eel R$ 20.000,00 (vinte mil reais).",
+   "value": 20000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 346,
+   "author": "Paulo Henrique Pereira - PP",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para aquisição de um aparelho de eletrocardiograma para a USF Parque dos Eucaliptos “Antonio Carlos Mota” ...... R$ 9.000,00 (nove mil reais).",
+   "value": 9000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 347,
+   "author": "Paulo Henrique Pereira - PP",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para aquisição de um aparelho de eletrocardiograma para a UBS Zona Sul “Dr. Waldomiro Girard Jacob” ......... R$ 9.000,00 (nove mil reais).",
+   "value": 9000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 348,
+   "author": "Paulo Henrique Pereira - PP",
+   "destination": "Repasse de verba à Secretaria Municipal de Saúde, para aquisição de tanquinho semiautomático elétrico para as unidades de saúde ..có R$ 6.000,00 (seis mil reais).",
+   "value": 6000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 349,
+   "author": "Paulo Henrique Pereira - PP",
+   "destination": "Repasse de verba ao Hospital Municipal “Dr. Tabajara Ramos”. para complementação de valor para aquisição de ventiladores mecânicos destinados ao Setor: de:FISIOterapia sicó s A SA SA d ss rdeoe e R$ 18.000,00 (dezoito mi",
+   "value": 18000.0,
+   "healthHeuristic": true,
+   "check": null
+  },
+  {
+   "number": 350,
+   "author": "Paulo Henrique Pereira - PP",
+   "destination": "Repasse de verba à Associação Ágape, para atender demanda de custeio R$ 25.000,00 (vinte e cinco mil reais).",
+   "value": 25000.0,
+   "healthHeuristic": false,
+   "check": null
+  },
+  {
+   "number": 351,
+   "author": "Paulo Henrique Pereira - PP",
+   "destination": "Repasse de verba à Irmandade da Santa Casa de Misericórdia de Mogi Guaçu, para.atender- demanda dê Gustelo ss suA ina ee a taaa DN aa MAA AN R$ 20.000,00 (vinte mil reais).",
+   "value": 20000.0,
+   "healthHeuristic": true,
+   "check": null
+  }
+ ]
+}

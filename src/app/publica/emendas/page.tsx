@@ -1,208 +1,119 @@
+import type { Metadata } from "next";
 import Link from "next/link";
-import { LogoEmendas360 } from "@/components/logo-emendas360";
-import { SecTitle } from "@/components/e360/sec-title";
-import { Card360 } from "@/components/e360/card360";
-import { Tag360, tomDoStatus } from "@/components/e360/tag360";
-import { Banner } from "@/components/e360/banner";
-import {
-  listarEmendasPublicas,
-  opcoesFiltrosPublicos,
-} from "@/lib/queries-publicas";
-import { ROTULO_STATUS_EMENDA } from "@/lib/rotulos";
-import { brl } from "@/lib/queries-360";
-import { Search } from "lucide-react";
+import { Cartao, TabelaDados } from "@/components/app/pagina";
+import { Selo } from "@/components/emenda/ui";
+import { Button } from "@/components/ui/button";
+import { STATUS_EMENDA } from "@/lib/emendas/rotulos";
+import { getAnoAtivo } from "@/lib/exercicio";
+import { prisma } from "@/lib/prisma";
+import { BRL, norm } from "@/lib/riep";
 
-// Portal público de emendas: busca e filtros em meio eletrônico — a
-// "transparência ativa" exigida pelo STF (ADPF 854) e cobrada pelo TCE-SP.
-export default async function PortalEmendasPage({
-  searchParams,
-}: {
-  searchParams: Promise<{
-    ano?: string;
-    autor?: string;
-    status?: string;
-    q?: string;
-    pagina?: string;
-  }>;
-}) {
-  const sp = await searchParams;
-  const filtros = {
-    ano: sp.ano ? Number(sp.ano) : null,
-    autorId: sp.autor,
-    status: sp.status,
-    q: sp.q?.trim() || undefined,
-    pagina: sp.pagina ? Number(sp.pagina) : 1,
-  };
-  const [{ total, pagina, paginas, emendas }, opcoes] = await Promise.all([
-    listarEmendasPublicas(filtros),
-    opcoesFiltrosPublicos(),
+export const metadata: Metadata = { title: "Emendas — portal público" };
+
+const POR_PAGINA = 25;
+
+type Linha = { chave: string; numero: number | null; autor: string; objeto: string; destino: string; valor: number; situacao: string; href: string | null };
+
+// Todas as emendas do exercício já apresentadas: as do sistema (nunca
+// rascunho) e as apresentadas fora dele.
+export default async function EmendasPublicasPage({ searchParams }: { searchParams: Promise<{ q?: string; autor?: string; pagina?: string }> }) {
+  const { q = "", autor = "", pagina = "1" } = await searchParams;
+  const ano = await getAnoAtivo();
+  const [sistema, importadas, autores] = await Promise.all([
+    prisma.emenda.findMany({ where: { exercicio: { ano: ano ?? -1 }, status: { not: "RASCUNHO" } }, include: { autor: true, destino: true } }),
+    prisma.emendaImportada.findMany({ where: { exercicio: { ano: ano ?? -1 } }, include: { autor: true } }),
+    prisma.autor.findMany({ orderBy: { nome: "asc" }, where: { OR: [{ emendas: { some: { status: { not: "RASCUNHO" } } } }, { emendasImportadas: { some: {} } }] } }),
   ]);
-
-  const qs = (over: Record<string, string | number | undefined>) => {
-    const p = new URLSearchParams();
-    const merged = { ano: sp.ano, autor: sp.autor, status: sp.status, q: sp.q, ...over };
-    for (const [k, v] of Object.entries(merged)) {
-      if (v != null && String(v).length > 0) p.set(k, String(v));
-    }
-    const s = p.toString();
-    return s ? `?${s}` : "";
-  };
-
-  const controle =
-    "h-9 rounded-[10px] bg-secondary px-3 text-[13px] font-medium outline-none focus:ring-2 focus:ring-ring/40";
+  const todas: (Linha & { autorId: string })[] = [
+    ...sistema.map((e) => ({
+      chave: e.id,
+      autorId: e.autorId,
+      numero: e.numero,
+      autor: e.autor.nome,
+      objeto: e.objeto,
+      destino: e.destino?.nome ?? "—",
+      valor: e.valor.toNumber(),
+      situacao: e.status,
+      href: `/publica/emendas/${e.id}`,
+    })),
+    ...importadas.map((i) => ({
+      chave: i.id,
+      autorId: i.autorId,
+      numero: i.numero,
+      autor: i.autor.nome,
+      objeto: i.descricao,
+      destino: "—",
+      valor: i.valor.toNumber(),
+      situacao: "IMPORTADA",
+      href: null,
+    })),
+  ].sort((a, b) => (a.numero ?? 1e9) - (b.numero ?? 1e9));
+  const t = norm(q.trim());
+  const filtradas = todas.filter((l) => (!autor || l.autorId === autor) && (!t || norm(`${l.objeto} ${l.destino} ${l.autor} ${l.numero}`).includes(t)));
+  const paginas = Math.max(1, Math.ceil(filtradas.length / POR_PAGINA));
+  const p = Math.min(paginas, Math.max(1, Number(pagina) || 1));
+  const visiveis = filtradas.slice((p - 1) * POR_PAGINA, p * POR_PAGINA);
+  const link = (n: number) => `/publica/emendas?${new URLSearchParams({ ...(q ? { q } : {}), ...(autor ? { autor } : {}), pagina: String(n) })}`;
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="grad-dark text-white">
-        <div className="flex h-14 min-w-0 items-center gap-3 px-4 sm:px-5 lg:px-7">
-          <Link href="/publica" className="min-w-0 shrink">
-            <LogoEmendas360 />
-          </Link>
-          <Link
-            href="/login"
-            className="ml-auto shrink-0 whitespace-nowrap rounded-[10px] bg-white/10 px-3 py-2 text-xs font-bold text-white transition-colors hover:bg-white/20 sm:px-4"
-          >
-            Entrar
-          </Link>
-        </div>
-      </header>
-
-      <main className="w-full flex-1 px-5 pb-14 pt-6 lg:px-7">
-        <Banner tom="ok" icone={Search}>
-          <b>Consulta pública de emendas</b> — todas as emendas parlamentares,
-          com autor, valor, beneficiário e situação. Busque e filtre à vontade.
-        </Banner>
-
-        <SecTitle
-          titulo="Emendas parlamentares — consulta pública"
-          nota={`${total} emenda(s) encontrada(s)`}
-        />
-
-        {/* Filtros — GET simples: funciona sem JavaScript */}
-        <form className="mb-4 flex flex-wrap items-center gap-2" method="GET">
-          <input
-            type="search"
-            name="q"
-            defaultValue={sp.q ?? ""}
-            placeholder="Buscar por objeto, beneficiário ou autor…"
-            className={`${controle} min-w-60 flex-1`}
-          />
-          <select name="ano" defaultValue={sp.ano ?? ""} className={`${controle} campo-select pl-3 pr-9`}>
-            <option value="">Todos os exercícios</option>
-            {opcoes.exercicios.map((e) => (
-              <option key={e.ano} value={e.ano}>{e.ano}</option>
-            ))}
-          </select>
-          <select name="autor" defaultValue={sp.autor ?? ""} className={`${controle} campo-select pl-3 pr-9`}>
-            <option value="">Todos os autores</option>
-            {opcoes.autores.map((a) => (
-              <option key={a.id} value={a.id}>{a.nome}</option>
-            ))}
-          </select>
-          <select name="status" defaultValue={sp.status ?? ""} className={`${controle} campo-select pl-3 pr-9`}>
-            <option value="">Todas as situações</option>
-            {opcoes.statusPublicos.map((s) => (
-              <option key={s} value={s}>{ROTULO_STATUS_EMENDA[s] ?? s}</option>
-            ))}
-          </select>
-          <button
-            type="submit"
-            className="h-9 rounded-[10px] bg-primary px-4 text-[12.5px] font-bold text-white transition-colors hover:bg-[var(--primary-600)]"
-          >
-            Filtrar
-          </button>
-          {sp.q || sp.ano || sp.autor || sp.status ? (
-            <Link href="/publica/emendas" className="text-xs font-bold text-brand-cyan hover:underline">
-              limpar
-            </Link>
-          ) : null}
-        </form>
-
-        <Card360>
-          <div className="min-w-0 overflow-x-auto">
-            <table className="w-full min-w-[720px] border-collapse text-[13px]">
-              <thead>
-                <tr>
-                  {["Nº/Ano", "Autor", "Objeto", "Beneficiário", "Valor", "Situação"].map((h) => (
-                    <th
-                      key={h}
-                      className="border-b-2 border-border px-2.5 py-2 text-left text-[11px] font-bold uppercase tracking-wider text-muted-foreground"
-                    >
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {emendas.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-2.5 py-8 text-center text-muted-foreground">
-                      Nenhuma emenda encontrada com esses filtros.
-                    </td>
-                  </tr>
+    <div className="grid gap-5">
+      <h1 className="text-2xl font-extrabold tracking-[-0.02em]">Emendas do exercício {ano}</h1>
+      <form className="flex flex-wrap gap-2" action="/publica/emendas">
+        <input name="q" defaultValue={q} className="campo h-11 min-w-[240px] flex-1 px-3.5" placeholder="Buscar por objeto, destino, vereador ou número" />
+        <select name="autor" defaultValue={autor} className="campo campo-select h-11 max-w-[300px] pr-9 pl-3.5" aria-label="Vereador">
+          <option value="">Todos os vereadores</option>
+          {autores.map((a) => (
+            <option key={a.id} value={a.id}>
+              {a.nome}
+            </option>
+          ))}
+        </select>
+        <Button type="submit">Filtrar</Button>
+      </form>
+      <Cartao titulo={`${filtradas.length} emenda(s)`}>
+        <TabelaDados
+          vazio="Nenhuma emenda encontrada."
+          colunas={[{ titulo: "Nº" }, { titulo: "Vereador", className: "max-md:hidden" }, { titulo: "Objeto" }, { titulo: "Valor", className: "text-right" }, { titulo: "Situação" }]}
+          linhas={visiveis.map((l) => ({
+            chave: l.chave,
+            celulas: [
+              <b key="n" className="tnum">{l.numero ?? "—"}</b>,
+              <span key="a" className="max-md:hidden">{l.autor}</span>,
+              <div key="o" className="max-w-xl">
+                {l.href ? (
+                  <Link href={l.href} className="font-semibold hover:underline">
+                    {l.objeto}
+                  </Link>
                 ) : (
-                  emendas.map((e) => (
-                    <tr key={e.id}>
-                      <td className="border-b border-border px-2.5 py-2 whitespace-nowrap font-bold">
-                        <Link
-                          href={`/publica/emendas/${e.id}`}
-                          className="hover:text-brand-cyan hover:underline"
-                        >
-                          {e.numero}/{e.ano} ›
-                        </Link>
-                      </td>
-                      <td className="border-b border-border px-2.5 py-2 whitespace-nowrap">{e.autor}</td>
-                      <td className="max-w-80 border-b border-border px-2.5 py-2">
-                        <span className="line-clamp-2">{e.objeto}</span>
-                      </td>
-                      <td className="border-b border-border px-2.5 py-2">
-                        {e.beneficiario ?? <span className="text-muted-foreground">—</span>}
-                      </td>
-                      <td className="border-b border-border px-2.5 py-2 whitespace-nowrap font-semibold tabular-nums">
-                        {brl(e.valor)}
-                      </td>
-                      <td className="border-b border-border px-2.5 py-2">
-                        <Tag360 tom={tomDoStatus(e.status)}>
-                          {ROTULO_STATUS_EMENDA[e.status] ?? e.status}
-                        </Tag360>
-                      </td>
-                    </tr>
-                  ))
+                  <span className="line-clamp-3">{l.objeto}</span>
                 )}
-              </tbody>
-            </table>
+                {l.destino !== "—" ? <span className="block text-xs text-muted-foreground">{l.destino}</span> : null}
+              </div>,
+              <b key="v" className="whitespace-nowrap tnum">{BRL(l.valor)}</b>,
+              <Selo key="s" tipo={l.situacao === "IMPORTADA" ? "neutro" : STATUS_EMENDA[l.situacao].tipo}>
+                {l.situacao === "IMPORTADA" ? "apresentada" : STATUS_EMENDA[l.situacao].rotulo}
+              </Selo>,
+            ],
+          }))}
+        />
+        {paginas > 1 ? (
+          <div className="mt-4 flex items-center gap-2 text-sm">
+            {p > 1 ? (
+              <Button variant="ghost" size="sm" asChild>
+                <Link href={link(p - 1)}>Anterior</Link>
+              </Button>
+            ) : null}
+            <span className="text-muted-foreground">
+              Página {p} de {paginas}
+            </span>
+            {p < paginas ? (
+              <Button variant="ghost" size="sm" asChild>
+                <Link href={link(p + 1)}>Próxima</Link>
+              </Button>
+            ) : null}
           </div>
-          {paginas > 1 ? (
-            <div className="mt-3 flex items-center justify-end gap-3 text-[11.5px] font-semibold text-muted-foreground">
-              {pagina > 1 ? (
-                <Link
-                  className="text-accent-foreground hover:underline"
-                  href={qs({ pagina: pagina - 1 })}
-                >
-                  ← anterior
-                </Link>
-              ) : null}
-              <span>
-                página {pagina} de {paginas}
-              </span>
-              {pagina < paginas ? (
-                <Link
-                  className="text-accent-foreground hover:underline"
-                  href={qs({ pagina: pagina + 1 })}
-                >
-                  próxima →
-                </Link>
-              ) : null}
-            </div>
-          ) : null}
-        </Card360>
-
-        <p className="mt-4 text-[13px] text-muted-foreground">
-          Veja também: <Link href="/publica" className="font-bold text-brand-cyan hover:underline">panorama geral</Link>
-          {" · "}
-          <Link href="/publica/manual" className="font-bold text-brand-cyan hover:underline">manual das emendas impositivas</Link>
-        </p>
-      </main>
+        ) : null}
+      </Cartao>
     </div>
   );
 }

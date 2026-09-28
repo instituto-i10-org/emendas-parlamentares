@@ -1,118 +1,81 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { LogoEmendas360 } from "@/components/logo-emendas360";
-import { SecTitle } from "@/components/e360/sec-title";
-import { Card360, Eyebrow } from "@/components/e360/card360";
-import { Tag360, tomDoStatus } from "@/components/e360/tag360";
-import { getEmendaPublica } from "@/lib/queries-publicas";
-import {
-  ROTULO_STATUS_EMENDA,
-  ROTULO_TIPO_BENEFICIARIO,
-  ROTULO_TIPO_EMENDA,
-  ROTULO_TIPO_INSTRUMENTO,
-} from "@/lib/rotulos";
-import { brl } from "@/lib/queries-360";
+import { Cartao } from "@/components/app/pagina";
+import { Selo } from "@/components/emenda/ui";
+import { somasExecucao } from "@/lib/emendas/execucao";
+import { STATUS_EMENDA } from "@/lib/emendas/rotulos";
+import { prisma } from "@/lib/prisma";
+import { BRL, MODELOS } from "@/lib/riep";
 
-// Página pública da emenda: autor, objeto, valor, beneficiário, situação e
-// justificativa — o que o cidadão deve conseguir ver de cada emenda (STF/TCE).
-export default async function EmendaPublicaPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export const metadata: Metadata = { title: "Emenda — portal público" };
+
+// Ficha pública da emenda. Rascunhos não existem para o portal.
+export default async function EmendaPublicaPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const e = await getEmendaPublica(id);
+  const e = await prisma.emenda.findFirst({
+    where: { id, status: { not: "RASCUNHO" } },
+    include: {
+      autor: true,
+      destino: true,
+      exercicio: true,
+      dotacao: { include: { acao: true, programa: true, unidadeOrcamentaria: true, naturezaDespesa: true } },
+      metas: { orderBy: { ordem: "asc" } },
+      andamentos: true,
+    },
+  });
   if (!e) notFound();
-
-  const dataBr = (d: Date) => new Date(d).toLocaleDateString("pt-BR");
-  const linhas: [string, React.ReactNode][] = [
-    ["Autor", `${e.autor.nome} — ${e.autor.cargo}`],
-    [
-      "Beneficiário final",
-      e.beneficiario ? (
-        <>
-          {e.beneficiario.nome}{" "}
-          <Tag360 tom={e.beneficiario.tipo === "TERCEIRO_SETOR" ? "roxo" : "info"}>
-            {ROTULO_TIPO_BENEFICIARIO[e.beneficiario.tipo] ?? e.beneficiario.tipo}
-          </Tag360>
-          {e.beneficiario.cnpj ? ` · CNPJ ${e.beneficiario.cnpj}` : ""}
-        </>
-      ) : (
-        "—"
-      ),
-    ],
-    ["Valor", <b key="v">{brl(Number(e.valor))}</b>],
-    ["Tipo", ROTULO_TIPO_EMENDA[e.tipo] ?? e.tipo],
-    [
-      "Instrumento base",
-      `${ROTULO_TIPO_INSTRUMENTO[e.instrumentoBase.tipo]} — ${e.instrumentoBase.numero} · exercício ${e.exercicio.ano}`,
-    ],
-    ["Órgão da dotação", `${e.dotacao.orgao.codigo} — ${e.dotacao.orgao.nome}`],
-    ["Função", `${e.dotacao.funcao.codigo} — ${e.dotacao.funcao.nome}`],
-    ["Programa", `${e.dotacao.programa.codigo} — ${e.dotacao.programa.nome}`],
-    ["Apresentada em", dataBr(e.createdAt)],
-    ["Última movimentação", dataBr(e.updatedAt)],
-  ];
-
+  const exec = somasExecucao(e.andamentos.map((a) => ({ etapa: a.etapa, valor: a.valor.toNumber() })));
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="grad-dark text-white">
-        <div className="flex h-14 min-w-0 items-center gap-3 px-4 sm:px-5 lg:px-7">
-          <Link href="/publica" className="min-w-0 shrink">
-            <LogoEmendas360 />
-          </Link>
-          <Link
-            href="/publica/emendas"
-            className="ml-auto shrink-0 whitespace-nowrap rounded-[10px] bg-white/10 px-3 py-2 text-xs font-bold text-white transition-colors hover:bg-white/20 sm:px-4"
-          >
-            <span className="sm:hidden" aria-hidden>←</span>
-            <span className="hidden sm:inline">← Todas as emendas</span>
-            <span className="sr-only sm:hidden">Todas as emendas</span>
-          </Link>
+    <div className="grid gap-5">
+      <Link href="/publica/emendas" className="text-sm font-semibold text-muted-foreground hover:underline">
+        ← Todas as emendas
+      </Link>
+      <Cartao>
+        <div className="mb-2 flex flex-wrap items-center gap-2">
+          <Selo tipo={STATUS_EMENDA[e.status].tipo}>{STATUS_EMENDA[e.status].rotulo}</Selo>
+          {e.modelo ? <Selo>{MODELOS[e.modelo].titulo}</Selo> : null}
         </div>
-      </header>
-
-      <main className="mx-auto w-full max-w-[900px] flex-1 px-5 pb-16 pt-6">
-        <SecTitle
-          titulo={`Emenda nº ${e.numero}/${e.exercicio.ano}`}
-        />
-        <div className="mb-4 flex flex-wrap gap-2">
-          <Tag360 tom={tomDoStatus(e.status)}>
-            {ROTULO_STATUS_EMENDA[e.status] ?? e.status}
-          </Tag360>
-          {e.validacoes[0] ? (
-            <Tag360 tom={e.validacoes[0].resultado === "VALIDA" ? "ok" : "warn"}>
-              conferência formal: {e.validacoes[0].resultado === "VALIDA" ? "conforme" : "com pendências"}
-            </Tag360>
-          ) : null}
-        </div>
-
-        <Card360>
-          <Eyebrow>Objeto</Eyebrow>
-          <p className="text-[15px] font-semibold">{e.objeto}</p>
-          <div className="mt-4 min-w-0 overflow-x-auto">
-            <table className="w-full border-collapse text-[13.5px]">
-              <tbody>
-                {linhas.map(([k, v]) => (
-                  <tr key={k}>
-                    <td className="w-52 border-b border-border px-2.5 py-2 text-muted-foreground">
-                      {k}
-                    </td>
-                    <td className="border-b border-border px-2.5 py-2">{v}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card360>
-
-        <Card360 className="mt-4">
-          <Eyebrow>Justificativa</Eyebrow>
-          <p className="text-[13.5px] leading-relaxed text-muted-foreground">
-            {e.justificativa}
-          </p>
-        </Card360>
-      </main>
+        <h1 className="text-xl font-extrabold">
+          Emenda nº {e.numero}/{e.exercicio.ano}
+        </h1>
+        <p className="mt-2 text-md">{e.objeto}</p>
+        <dl className="mt-5 grid grid-cols-[minmax(150px,auto)_1fr] gap-x-4 gap-y-2 text-sm max-sm:grid-cols-1">
+          <dt className="text-muted-foreground">Vereador</dt>
+          <dd>{e.autor.nome}{e.autor.partido ? ` — ${e.autor.partido}` : ""}</dd>
+          <dt className="text-muted-foreground">Destino</dt>
+          <dd>{e.destino?.nome ?? "—"}</dd>
+          <dt className="text-muted-foreground">Local</dt>
+          <dd>{e.endereco || "—"}</dd>
+          <dt className="text-muted-foreground">Valor</dt>
+          <dd className="font-bold">{BRL(e.valor.toNumber())}</dd>
+          <dt className="text-muted-foreground">Área</dt>
+          <dd>{e.parcela === "SAUDE" ? "Saúde" : e.parcela === "DEMAIS" ? "Demais áreas" : "—"}</dd>
+          <dt className="text-muted-foreground">Dotação</dt>
+          <dd>
+            {e.dotacao
+              ? `${e.dotacao.unidadeOrcamentaria.nome} · ${e.dotacao.programa.nome} · ${e.dotacao.acao.nome} (${e.dotacao.naturezaDespesa.codigo})`
+              : "a definir pela análise técnica"}
+          </dd>
+          <dt className="text-muted-foreground">Justificativa</dt>
+          <dd className="whitespace-pre-line">{e.justificativa || "—"}</dd>
+          <dt className="text-muted-foreground">Meta</dt>
+          <dd>
+            {e.metaFinalistica || "—"}
+            {e.metas.map((m) => (
+              <span key={m.id} className="block text-xs text-muted-foreground">
+                {m.quantidade.toNumber().toLocaleString("pt-BR")} {m.unidade} — {m.beneficiarios}
+              </span>
+            ))}
+          </dd>
+          <dt className="text-muted-foreground">Execução</dt>
+          <dd>
+            Empenhado {BRL(exec.empenhado)} · liquidado {BRL(exec.liquidado)} · pago <b>{BRL(exec.pago)}</b>
+          </dd>
+          <dt className="text-muted-foreground">Apresentada em</dt>
+          <dd>{e.submetidaEm?.toLocaleDateString("pt-BR") ?? "—"}</dd>
+        </dl>
+      </Cartao>
     </div>
   );
 }

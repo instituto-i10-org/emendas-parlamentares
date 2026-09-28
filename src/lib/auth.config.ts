@@ -10,22 +10,14 @@ export const authConfig = {
   providers: [],
   callbacks: {
     authorized({ auth, request }) {
-      // Fora de produção não bloqueia (dev usa a sessão-cookie temporária).
-      if (process.env.NODE_ENV !== "production") return true;
       const { pathname } = request.nextUrl;
-      // /publica/* é o portal do cidadão: consulta sem login (transparência
-      // ativa — STF/TCE), incluindo a lista de emendas e o manual. A raiz
-      // também é pública — é ela que leva o visitante ao portal.
-      // /plano-trabalho/<token> é a porta da entidade beneficiária, que não tem
-      // conta no sistema: o token no endereço é a credencial, conferido (e com
-      // validade) na própria ação. Sem esta exceção, o link enviado à entidade
-      // cairia na tela de login.
+      // "/" é a landing e /publica/* o portal do cidadão: consulta sem login
+      // (transparência ativa — STF/TCE). Todo o resto exige sessão.
       if (
         pathname === "/" ||
         pathname === "/login" ||
         pathname === "/publica" ||
         pathname.startsWith("/publica/") ||
-        pathname.startsWith("/plano-trabalho/") ||
         pathname.startsWith("/api/auth")
       )
         return true;

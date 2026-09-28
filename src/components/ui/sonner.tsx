@@ -1,49 +1,23 @@
 "use client"
 
-import { useTheme } from "next-themes"
 import { Toaster as Sonner, type ToasterProps } from "sonner"
-import { CircleCheckIcon, InfoIcon, TriangleAlertIcon, OctagonXIcon, Loader2Icon } from "lucide-react"
 
-const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme()
-
-  return (
-    <Sonner
-      theme={theme as ToasterProps["theme"]}
-      className="toaster group"
-      icons={{
-        success: (
-          <CircleCheckIcon className="size-4" />
-        ),
-        info: (
-          <InfoIcon className="size-4" />
-        ),
-        warning: (
-          <TriangleAlertIcon className="size-4" />
-        ),
-        error: (
-          <OctagonXIcon className="size-4" />
-        ),
-        loading: (
-          <Loader2Icon className="size-4 animate-spin" />
-        ),
-      }}
-      style={
-        {
-          "--normal-bg": "var(--popover)",
-          "--normal-text": "var(--popover-foreground)",
-          "--normal-border": "var(--border)",
-          "--border-radius": "var(--radius)",
-        } as React.CSSProperties
-      }
-      toastOptions={{
-        classNames: {
-          toast: "cn-toast",
-        },
-      }}
-      {...props}
-    />
-  )
-}
+// Aviso curto, navy, centralizado no rodapé — como no protótipo.
+const Toaster = (props: ToasterProps) => (
+  <Sonner
+    theme="light"
+    position="bottom-center"
+    duration={2600}
+    toastOptions={{
+      unstyled: true,
+      classNames: {
+        toast:
+          "flex max-w-[520px] items-center gap-2 rounded-field bg-navy px-4 py-3 text-sm font-bold text-white shadow-modal",
+        error: "!bg-bad-ink",
+      },
+    }}
+    {...props}
+  />
+)
 
 export { Toaster }

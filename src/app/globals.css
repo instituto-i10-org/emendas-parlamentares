@@ -2,239 +2,164 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *));
+/* ============================================================
+   Emendas360 — "Direção A · cards suaves" (aprovada em 28/09/2026).
+
+   Superfícies sem borda sobre um fundo azulado, sombras baixas, campos
+   preenchidos que ganham contorno ciano no foco, controles em pílula.
+   Navy é a marca; ciano marca foco e seleção; verde, âmbar e vermelho
+   são estados (conforme · exige atenção · impede seguir).
+   ============================================================ */
 
 @theme inline {
+  --font-sans: var(--font-jakarta);
+  --font-heading: var(--font-jakarta);
+
+  /* marca */
+  --color-navy: var(--navy);
+  --color-navy-deep: var(--navy-deep);
+  --color-navy-soft: var(--navy-soft);
+  --color-cyan: var(--cyan);
+  --color-on-navy: var(--on-navy);
+
+  /* superfícies e texto */
+  --color-page: var(--page);
+  --color-surface: var(--surface);
+  --color-soft: var(--soft);
+  --color-field: var(--field);
+  --color-field-hover: var(--field-hover);
+  --color-hover: var(--hover);
+  --color-line: var(--line);
+  --color-line-2: var(--line-2);
+  --color-line-3: var(--line-3);
+  --color-hair: var(--hair);
+  --color-ink: var(--ink);
+  --color-label: var(--label);
+  --color-placeholder: var(--placeholder);
+  --color-info-bg: var(--info-bg);
+
+  /* estados */
+  --color-ok: var(--green);
+  --color-ok-ink: var(--green-ink);
+  --color-ok-bg: var(--green-bg);
+  --color-warn: var(--amber);
+  --color-warn-bg: var(--amber-bg);
+  --color-warn-line: var(--amber-line);
+  --color-bad: var(--red);
+  --color-bad-ink: var(--red-ink);
+  --color-bad-bg: var(--red-bg);
+  --color-bad-line: var(--red-line);
+
+  /* tokens do shadcn, mapeados para a mesma paleta */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-jakarta);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-jakarta);
-  --font-serif: var(--font-source-serif);
-  --color-brand-navy: var(--brand-navy);
-  --color-brand-deep: var(--brand-deep);
-  --color-brand-cyan: var(--brand-cyan);
-  --color-brand-mint: var(--brand-mint);
-  --color-brand-amber: var(--brand-amber);
-  --color-brand-green: var(--brand-green);
-  --color-brand-purple: var(--brand-purple);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
-  /* Sombra única dos cards (referência HRMate): quase invisível de perto,
-     descolando o card do fundo bege por baixo. Substitui as bordas/anéis. */
-  --shadow-card: var(--elev-card);
-  --shadow-card-hover: var(--elev-card-hover);
-  --shadow-topbar: var(--elev-topbar);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* forma */
+  --radius-field: 12px;
+  --radius-box: 14px;
+  --radius-card: 20px;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 14px;
+  --radius-2xl: 20px;
+  --shadow-card: 0 1px 2px rgba(10, 36, 99, 0.06), 0 12px 32px rgba(10, 36, 99, 0.06);
+  --shadow-pop: 0 1px 3px rgba(10, 36, 99, 0.12);
+  --shadow-modal: 0 24px 64px rgba(6, 24, 64, 0.28);
+  --shadow-side: 0 10px 30px rgba(10, 36, 99, 0.15);
+
+  /* escala tipográfica (11,5 · 13 · 16 · 22 · 24) */
+  --text-2xs: 11px;
+  --text-xs: 11.5px;
+  --text-sm: 13px;
+  --text-base: 13px;
+  --text-md: 15px;
+  --text-lg: 16px;
+  --text-xl: 22px;
+  --text-2xl: 24px;
 }
 
-/* ============================================================
-   Identidade visual "Emendas 360" — paleta original do projeto
-   (navy institucional, cyan/mint de destaque, fundo azulado claro),
-   aplicada sobre a ESTRUTURA visual da referência
-   `ui-test/hrmate-reference`: cantos generosos, sombra baixa no lugar
-   de bordas, chips, blocos lavados e micro-tipografia.
-   ============================================================ */
 :root {
-  /* --- marca --- */
-  --brand-navy: #0a2463;
-  --brand-deep: #061840;
-  --brand-cyan: #00b4d8;
-  --brand-mint: #00e5a0;
-  --brand-amber: #f5a524;
-  --brand-green: #00b278;
-  /* Tons SÓLIDOS de estado (bolinha do farol, traço dos gráficos).
-     Mesmos matizes da paleta acima, na versão cheia — profundos, não neon. */
-  --estado-ok: #2e7d52;
-  --estado-atencao: #b07d12;
-  --estado-bloqueio: #a72830;
-  --brand-purple: #7c5cfc;
+  --navy: #0a2463;
+  --navy-deep: #061840;
+  --navy-soft: #16357f;
+  --cyan: #00b4d8;
+  --on-navy: #9fb4d8;
 
-  /* --- escala navy, para superfícies e traços --- */
-  --navy-700: #0f2f7a;
-  --navy-300: #8ca0c4;
-  --navy-200: #c3cee4;
+  --page: #eef2f8;
+  --surface: #ffffff;
+  --soft: #f5f7fb;
+  --field: #f3f6fa;
+  --field-hover: #edf1f7;
+  --hover: #e2e8f2;
+  --line: #e3e9f2;
+  --line-2: #c2d3ee;
+  --line-3: #d8e2f0;
+  --hair: #e4e9f1;
+  --ink: #0a2463;
+  --label: #3b4a6b;
+  --placeholder: #6b7a99;
+  --info-bg: #f0fbfe;
 
-  /* --- pares superfície/texto dos estados ---
-     Verde/âmbar/vermelho, porque a convenção já está na cabeça de quem usa e
-     brigar com ela só custa leitura. O que muda é a TONALIDADE: nada de pastel
-     lavado — superfície de baixa saturação e tinta profunda, feitio de
-     documento impresso, não de marca-texto.
+  --green: #00e5a0;
+  --green-ink: #046b4d;
+  --green-bg: #e4fbf3;
+  --amber: #b4700a;
+  --amber-bg: #fdf3e2;
+  --amber-line: #f0d7a8;
+  --red: #e5484d;
+  --red-ink: #a31d22;
+  --red-bg: #fdecec;
+  --red-line: #f6c9c9;
 
-       ok    → conforme          · sálvia + verde-floresta
-       info  → contexto          · azul da marca
-       warn  → exige decisão     · areia + ocre
-       bad   → impede seguir     · argila + tijolo
-       roxo  → recorte institucional */
-  --surf-ok: #e7f0e9;
-  --on-ok: #15603c;
-  --surf-info: #e4f7fc;
-  --on-info: #0779a8;
-  --surf-warn: #f7edd9;
-  --on-warn: #8a5a0b;
-  --surf-bad: #f8e3e3;
-  --on-bad: #9c1f24;
-  --surf-roxo: #eeeafe;
-  --on-roxo: #5a45c4;
-
-  /* superfície do hero e dos painéis de apoio */
-  --hero-tint: #e4f7fc;
-
-  --background: #f4f7fb;
-  --foreground: #0a2463;
-  --card: #ffffff;
-  --card-foreground: #0a2463;
-  --popover: #ffffff;
-  --popover-foreground: #0a2463;
-  --primary: #0a2463;
+  --background: var(--page);
+  --foreground: var(--ink);
+  --card: var(--surface);
+  --card-foreground: var(--ink);
+  --popover: var(--surface);
+  --popover-foreground: var(--ink);
+  --primary: var(--navy);
   --primary-foreground: #ffffff;
-  --primary-600: #061840;
-  --secondary: #eff4fb;
-  --secondary-foreground: #0a2463;
-  --muted: #eff4fb;
+  --secondary: var(--page);
+  --secondary-foreground: var(--ink);
+  --muted: var(--soft);
   --muted-foreground: #5a6b8c;
-  --accent: #e4f7fc;
-  --accent-foreground: #0779a8;
-  --destructive: #e5484d;
-  --border: #e3e9f2;
-  --input: #d8e2f0;
-  --ring: #00b4d8;
-  --chart-1: #0a2463;
-  --chart-2: #00b4d8;
-  --chart-3: #00e5a0;
-  --chart-4: #f5a524;
-  --chart-5: #7c5cfc;
-  --radius: 0.8125rem; /* card 18px · interno 13px · botão 10px */
-
-  --elev-card: 0 1px 2px rgba(6, 24, 64, 0.04),
-    0 8px 24px -14px rgba(6, 24, 64, 0.22);
-  --elev-card-hover: 0 1px 2px rgba(6, 24, 64, 0.06),
-    0 14px 30px -16px rgba(6, 24, 64, 0.32);
-  --elev-topbar: 0 1px 0 rgba(6, 24, 64, 0.06);
-
-  /* menu lateral navy — a marca vive nele */
-  --sidebar: #0a2463;
-  --sidebar-foreground: #c2d3ee;
-  --sidebar-primary: #00b4d8;
-  --sidebar-primary-foreground: #061840;
-  --sidebar-accent: rgba(255, 255, 255, 0.1);
-  --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: rgba(255, 255, 255, 0.14);
-  --sidebar-ring: #00b4d8;
-}
-
-.dark {
-  --brand-navy: #8fb0ff;
-  --brand-deep: #eaf1ff;
-  --brand-cyan: #00b4d8;
-  --brand-mint: #00e5a0;
-  --brand-amber: #f5a524;
-  --brand-green: #00c98a;
-  --estado-ok: #4bb583;
-  --estado-atencao: #d9a54a;
-  --estado-bloqueio: #d96a6f;
-  --brand-purple: #9d85ff;
-
-  --navy-700: #17408f;
-  --navy-300: #6b7fa6;
-  --navy-200: #35496f;
-
-  --surf-ok: rgba(46, 160, 105, 0.18);
-  --on-ok: #6fd3a0;
-  --surf-info: rgba(0, 180, 216, 0.16);
-  --on-info: #6fd8f2;
-  --surf-warn: rgba(200, 140, 30, 0.18);
-  --on-warn: #e0ad5c;
-  --surf-bad: rgba(200, 60, 60, 0.18);
-  --on-bad: #e88b8b;
-  --surf-roxo: rgba(124, 92, 252, 0.18);
-  --on-roxo: #b3a1ff;
-
-  --hero-tint: #12306f;
-
-  --background: #061840;
-  --foreground: #eaf1ff;
-  --card: #0a2463;
-  --card-foreground: #eaf1ff;
-  --popover: #0a2463;
-  --popover-foreground: #eaf1ff;
-  --primary: #00b4d8;
-  --primary-foreground: #061840;
-  --primary-600: #009cbc;
-  --secondary: #12306f;
-  --secondary-foreground: #eaf1ff;
-  --muted: #12306f;
-  --muted-foreground: #9fb4d8;
-  --accent: #12306f;
-  --accent-foreground: #8fe8ff;
-  --destructive: #e5484d;
-  --border: rgba(255, 255, 255, 0.12);
-  --input: rgba(255, 255, 255, 0.18);
-  --ring: #00b4d8;
-  --chart-1: #8fb0ff;
-  --chart-2: #00b4d8;
-  --chart-3: #00e5a0;
-  --chart-4: #f5a524;
-  --chart-5: #9d85ff;
-
-  --elev-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px -14px rgba(0, 0, 0, 0.6);
-  --elev-card-hover: 0 1px 2px rgba(0, 0, 0, 0.35),
-    0 14px 30px -16px rgba(0, 0, 0, 0.7);
-  --elev-topbar: 0 1px 0 rgba(255, 255, 255, 0.08);
-
-  --sidebar: #061840;
-  --sidebar-foreground: #c2d3ee;
-  --sidebar-primary: #00b4d8;
-  --sidebar-primary-foreground: #061840;
-  --sidebar-accent: rgba(255, 255, 255, 0.1);
-  --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: rgba(255, 255, 255, 0.14);
-  --sidebar-ring: #00b4d8;
+  --accent: var(--info-bg);
+  --accent-foreground: var(--ink);
+  --destructive: var(--red);
+  --border: var(--line);
+  --input: var(--line-3);
+  --ring: var(--cyan);
+  --radius: 12px;
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
-    -webkit-font-smoothing: antialiased;
-  }
   html {
     @apply font-sans;
+  }
+  body {
+    @apply bg-page text-ink;
+    font-size: 13px;
+    -webkit-font-smoothing: antialiased;
   }
   h1,
   h2,
@@ -243,73 +168,59 @@
     letter-spacing: -0.02em;
     line-height: 1.2;
   }
+  ::placeholder {
+    color: var(--placeholder);
+  }
+  input[type="checkbox"],
+  input[type="radio"] {
+    accent-color: var(--navy);
+  }
+  /* Números alinhados em colunas de valor. */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
 }
 
 @layer components {
-  /* Gradientes da identidade original */
-  .grad-main {
-    background-image: linear-gradient(135deg, #0a2463, #00b4d8);
+  /* Campo preenchido, sem borda até o foco. */
+  .campo {
+    @apply w-full rounded-field border border-transparent bg-field text-sm text-ink transition-[background,border-color,box-shadow] outline-none;
   }
-  .grad-dark {
-    background-image: linear-gradient(135deg, #061840, #0a2463);
+  .campo:hover {
+    @apply bg-field-hover;
   }
-  /* Painel de apoio calmo (cyan lavado), no papel do hero azul da referência */
-  .surface-tint {
-    background-color: var(--hero-tint);
-    color: var(--foreground);
+  .campo:focus,
+  .campo:focus-within {
+    @apply border-cyan bg-surface;
+    box-shadow: 0 0 0 3px rgb(0 180 216 / 0.18);
   }
-  /* Rótulo-antena acima de números/blocos (cards KPI) */
-  .eyebrow {
-    font-size: 10.5px;
-    font-weight: 700;
-    letter-spacing: 1.4px;
-    text-transform: uppercase;
-    color: var(--brand-cyan);
+  .campo:disabled {
+    @apply cursor-not-allowed opacity-60;
   }
-  .kpi-num {
-    font-size: 26px;
-    font-weight: 800;
-    letter-spacing: -0.035em;
-    line-height: 1.1;
+  /* Sobre qualquer fundo tingido (e em modais) o campo cinza desaparece no
+     fundo: fica branco com um fio. Vale para toda caixa com esses fundos. */
+  :is(.caixa, [role="dialog"], .bg-soft, .bg-page, .bg-info-bg, .bg-ok-bg, .bg-warn-bg, .bg-bad-bg) .campo {
+    @apply border-line-3 bg-surface;
   }
-  .kpi-lbl {
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--muted-foreground);
-    margin-top: 4px;
+  :is(.caixa, [role="dialog"], .bg-soft, .bg-page, .bg-info-bg, .bg-ok-bg, .bg-warn-bg, .bg-bad-bg) .campo:hover {
+    @apply border-line-2;
   }
-  /* Campo de seleção nativo.
-     O <select> do navegador desenha a seta colada na borda direita, dentro do
-     padding. Aqui a seta é nossa (background-image) e o padding à direita
-     reserva o espaço dela — assim todo select do produto tem o mesmo respiro,
-     e não um valor por navegador. */
+  :is(.caixa, [role="dialog"], .bg-soft, .bg-page, .bg-info-bg, .bg-ok-bg, .bg-warn-bg, .bg-bad-bg) .campo:focus,
+  :is(.caixa, [role="dialog"], .bg-soft, .bg-page, .bg-info-bg, .bg-ok-bg, .bg-warn-bg, .bg-bad-bg) .campo:focus-within {
+    @apply border-cyan;
+  }
+
+  /* Rótulo-antena acima de blocos. */
+  .antena {
+    @apply text-2xs font-bold tracking-[0.04em] text-muted-foreground uppercase;
+  }
+
+  /* Seta própria para <select>, com respiro fixo à direita. */
   .campo-select {
     appearance: none;
-    -webkit-appearance: none;
-    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235A6B8C' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 12px center;
     background-size: 16px 16px;
-    /* O respiro da seta é utilitário Tailwind (pl-3 pr-9) no ponto de uso:
-       a camada `utilities` vence a `components`, e um padding declarado aqui
-       seria silenciosamente sobrescrito por um px-* qualquer. */
-  }
-
-  .dark .campo-select {
-    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-  }
-
-  /* Pílula de filtro da referência (.chip) */
-  .chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    padding: 7px 12px;
-    border-radius: 10px;
-    background-color: var(--secondary);
-    color: var(--secondary-foreground);
-    font-size: 12.5px;
-    font-weight: 600;
-    white-space: nowrap;
   }
 }

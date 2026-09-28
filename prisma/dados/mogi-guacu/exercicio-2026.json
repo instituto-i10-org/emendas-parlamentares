@@ -1,0 +1,102 @@
+{
+ "year": 2026,
+ "source": "Parâmetros reais de Mogi Guaçu — LOA 2026 (Lei 6.246/2025), LDO 2026 (Lei 6.151/2025), Lei Orgânica art. 140 (Emenda 47/2017) e emendas apresentadas ao PL 275/2025",
+ "audespSource": "08",
+ "audespName": "Emendas Parlamentares Individuais — Legislativo Municipal",
+ "applicationCode": "804",
+ "variation": null,
+ "icCo": null,
+ "icEp": null,
+ "individualQuota": 773014.78,
+ "healthPercent": 50,
+ "deadline": null,
+ "referenceAgeMonths": 12,
+ "simulation": false,
+ "nextVariation": 48,
+ "quotaCalculation": "1,2% × RCL 2024 (R$ 837.432.682,04, RGF 3º quadrimestre/2024) = R$ 10.049.192,18 ÷ 13 vereadores = R$ 773.014,78. Confirmado: os 13 vereadores apresentaram exatamente esse valor nas 351 emendas ao PL 275/2025.",
+ "rclPercent": 1.2,
+ "rclBase": {
+  "year": 2024,
+  "value": 837432682.04,
+  "note": "RCL ajustada do RGF 3º quadrimestre/2024; o RREO 6º bimestre traz R$ 841.791.410,84, que não fecha com as emendas apresentadas."
+ },
+ "healthMeasurement": "global",
+ "healthNote": "LOM art. 140 § 6º: \"a metade deste percentual será destinada a ações e serviços públicos de saúde\" — o texto fala do percentual total.",
+ "councilors": 13,
+ "committed": {
+  "amount": 773014.78,
+  "health": 386507.39,
+  "other": 386507.39,
+  "note": "Os 13 vereadores indicaram 100% da cota de 2026 (351 emendas). Divisão por área pela meação legal; o empenhado por vereador não é publicado.",
+  "source": "public/data/emendas-impositivas-2026.json"
+ },
+ "executionAggregate": {
+  "fonte": "08",
+  "orcado": 9263985.22,
+  "atualizado": 9038465.22,
+  "empenhado": 905695.28,
+  "liquidado": 514965.25,
+  "pago": 455123.67,
+  "source": "Portal da Transparência de Mogi Guaçu — Despesas por Fonte de Recurso"
+ },
+ "legalBasis": [
+  {
+   "norm": "Lei nº 6.246, de 05/12/2025 (LOA 2026), DOM Mogi Guaçu ed. 972, de 10/12/2025",
+   "article": "Art. 7º, caput",
+   "excerpt": "são de execução obrigatória no exercício até o limite de 1,2% (um inteiro e dois décimos por cento) da Receita Corrente Liquida efetivamente ocorrida em 2024, observada a meação determinada no § 8º do art. 140 da Lei Orgânica",
+   "url": "https://dosp.com.br/exibe_do.php?i=NzQ4OTk3"
+  },
+  {
+   "norm": "Lei nº 6.246/2025 (LOA 2026)",
+   "article": "Art. 7º, §§ 1º a 5º; Art. 6º, § 1º",
+   "excerpt": "Impedimento técnico segue o § 11 do art. 140 da LOM. Até 30/04/2026 o Legislativo pode alterar as indicações. A vedação de anulação não vale para o excedente a 1,2% ou para o que não observar a divisão do § 6º do art. 140.",
+   "url": "https://dosp.com.br/exibe_do.php?i=NzQ4OTk3"
+  },
+  {
+   "norm": "Lei nº 6.151, de 02/07/2025 (LDO 2026), DOM ed. 857A, de 02/07/2025",
+   "article": "Art. 22, §§ 3º a 6º; Art. 7º, § 7º",
+   "excerpt": "O somatório dos valores das emendas parlamentares individuais de caráter impositivo [...] não poderão exceder o limite expressamente determinado pelo § 6º, do art. 140, da Lei Orgânica do Município de Mogi Guaçu.",
+   "url": "https://sistema.camaramogiguacu.sp.gov.br/sapl_documentos/norma_juridica/44200_anexo_755"
+  },
+  {
+   "norm": "Lei Orgânica do Município de Mogi Guaçu, art. 140 (§§ 6º, 8º, 11 e 14), incluídos pela Emenda à LOM nº 47, de 28/11/2017",
+   "article": "Art. 140, §§ 6º a 15 (Emenda à LOM nº 47/2017)",
+   "excerpt": "§ 6º: limite de 1,2% da RCL, \"sendo que a metade deste percentual será destinada a ações e serviços públicos de saúde\". § 8º: execução obrigatória até 1,2% da RCL realizada no exercício anterior. § 15: execução equitativa, \"independentemente da autoria\". Não há regra de divisão por vereador.",
+   "url": "https://sistema.camaramogiguacu.sp.gov.br/@@documento_publico_viewer?doc_key=norma_juridica%2F7271_texto_integral.pdf"
+  },
+  {
+   "norm": "Proposta de Emenda à LOM nº 1/2026 (Mesa Diretora)",
+   "article": "Altera e acrescenta dispositivos ao art. 140",
+   "excerpt": "altera e acrescenta dispositivos ao art. 140 da Lei Orgânica [...] para adequá-lo à Constituição Federal e às recomendações do Tribunal de Contas [...] quanto às emendas individuais. Aprovado.",
+   "url": "https://camaramogiguacu.sp.gov.br/dois-projetos-sao-aprovados-na-sessao-desta-semana/"
+  },
+  {
+   "norm": "Câmara Municipal de Mogi Guaçu, 19ª Legislatura (2025–2028)",
+   "article": "Composição",
+   "excerpt": "Na Câmara municipal de Mogi Guaçu são 13 (treze) vereadores. O OpenLegis lista 13 vereadores em exercício na legislatura 2025–2028.",
+   "url": "https://camaramogiguacu.sp.gov.br/faq/"
+  }
+ ],
+ "deadlines": [
+  {
+   "what": "Executivo informa à Câmara se a RCL de 2024 é menor que a RCL estimada para 2025 e os valores obrigatórios e não obrigatórios (LOA art. 7º §2º: até 30 dias após a publicação; calculado a partir de 10/12/2025)",
+   "date": "2026-01-09",
+   "url": "https://dosp.com.br/exibe_do.php?i=NzQ4OTk3"
+  },
+  {
+   "what": "Prefeito indica à Câmara os impedimentos de ordem técnica (LDO 2026 art. 22 §4º I: nos primeiros 120 dias após a publicação da LOA; calculado a partir de 10/12/2025). Depois: Câmara tem 30 dias para propor ajustes e o Prefeito 30 dias úteis para enviar projeto de lei.",
+   "date": "2026-04-09",
+   "url": "https://sistema.camaramogiguacu.sp.gov.br/sapl_documentos/norma_juridica/44200_anexo_755"
+  },
+  {
+   "what": "Prazo final para o Legislativo alterar as indicações das emendas impositivas (LOA 2026 art. 7º §4º)",
+   "date": "2026-04-30",
+   "url": "https://dosp.com.br/exibe_do.php?i=NzQ4OTk3"
+  },
+  {
+   "what": "Cadastro de Emendas Parlamentares no Audesp exigido a partir do balancete de abril/2026 (Comunicados Audesp 55/2025, 17/2026 e 24/2026)",
+   "date": "2026-04-30",
+   "url": "https://www.tce.sp.gov.br/sites/default/files/publicacoes/Manual_Emendas_Or%C3%A7ament%C3%A1rias_Impositivas%20Revisado.pdf"
+  }
+ ]
+}
