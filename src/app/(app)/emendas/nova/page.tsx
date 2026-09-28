@@ -7,7 +7,7 @@ import { aplicadoDoAutor, carregarContexto } from "@/lib/emendas/contexto";
 import { estadoInicial } from "@/lib/emendas/estado";
 import { getAnoAtivo } from "@/lib/exercicio";
 import { prisma } from "@/lib/prisma";
-import { SemExercicio, SemAutor } from "@/components/emenda/avisos-pagina";
+import { SemExercicio } from "@/components/emenda/avisos-pagina";
 
 export const metadata: Metadata = { title: "Nova emenda — Emendas360" };
 
@@ -16,8 +16,9 @@ export default async function NovaEmendaPage() {
   const ano = await getAnoAtivo();
   const ctx = ano ? await carregarContexto(ano) : null;
   if (!ctx) return <SemExercicio />;
+  // Sem vínculo a um vereador, a conta não apresenta emenda: a tela não abre.
   const autor = await prisma.autor.findUnique({ where: { usuarioId: user.id } });
-  if (!autor) return <SemAutor />;
+  if (!autor) redirect("/inicio?erro=acesso-negado");
   if (!ctx.loa.length) redirect("/emendas?erro=sem-loa");
   const aplicado = await aplicadoDoAutor(ctx.exercicioId, autor.id, ctx.config.percentualSaude);
   return <EditorEmenda ctx={ctx} inicial={estadoInicial()} aplicado={aplicado} autor={autor.nome} />;

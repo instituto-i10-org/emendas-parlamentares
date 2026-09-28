@@ -31,10 +31,3 @@ function Vazio({ titulo, texto }: { titulo: string; texto: string }) {
 export const SemExercicio = () => (
   <Vazio titulo="Nova emenda" texto="Nenhum exercício orçamentário está configurado. Peça ao administrador para cadastrar o exercício e carregar a LOA." />
 );
-
-export const SemAutor = () => (
-  <Vazio
-    titulo="Nova emenda"
-    texto="Sua conta não está vinculada a um autor (vereador). O vínculo é feito pelo administrador na tela de usuários."
-  />
-);

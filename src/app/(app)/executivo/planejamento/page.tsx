@@ -22,7 +22,7 @@ const ABAS = [
 ] as const;
 
 export default async function PlanejamentoPage({ searchParams }: { searchParams: Promise<{ aba?: string; instrumento?: string }> }) {
-  const user = await requireAccess({ poder: Poder.EXECUTIVO });
+  const user = await requireAccess({ poder: Poder.EXECUTIVO, permissoes: ["gerirPlanejamento"] });
   const { aba: abaParam, instrumento: instParam } = await searchParams;
   const aba = ABAS.find((a) => a.id === abaParam)?.id ?? "instrumentos";
   const podeGerir = podeGerirPlanejamento(user);

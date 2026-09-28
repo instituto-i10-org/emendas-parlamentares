@@ -36,7 +36,10 @@ export function StatusInstrumento({ id, status, podeGerir }: { id: string; statu
     });
   return (
     <div className="flex flex-wrap items-center gap-1.5">
-      <Selo tipo={status === "EM_TRAMITACAO" ? "info" : status === "VIGENTE" ? "ok" : "neutro"}>{ROTULO_STATUS[status]}</Selo>
+      {/* Largura fixa: as setas ficam na mesma coluna em todas as linhas. */}
+      <span className="w-[120px]">
+        <Selo tipo={status === "EM_TRAMITACAO" ? "info" : status === "VIGENTE" ? "ok" : "neutro"}>{ROTULO_STATUS[status]}</Selo>
+      </span>
       {podeGerir && i > 0 ? (
         <Button size="xs" variant="ghost" disabled={pendente} onClick={() => mover(SEQUENCIA[i - 1])} title={`Voltar para ${ROTULO_STATUS[SEQUENCIA[i - 1]]}`}>
           ←

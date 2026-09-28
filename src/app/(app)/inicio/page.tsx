@@ -20,9 +20,9 @@ import { Selo } from "@/components/emenda/ui";
 import { Poder } from "@/generated/prisma/enums";
 import {
   alcancaPoder,
+  apresentaEmendas,
   podeAdministrarConfiguracoes,
   podeAnalisarViabilidade,
-  podeCriarEmenda,
   podeGerirPlanejamento,
   podeRegistrarExecucao,
   podeTramitar,
@@ -77,7 +77,7 @@ export default async function InicioPage({ searchParams }: { searchParams: Promi
 
   // Ações do perfil, na ordem de importância. A primeira vira o destaque.
   const acoes: Atalho[] = [];
-  if (podeCriarEmenda(user)) {
+  if (apresentaEmendas(user, !!autor)) {
     acoes.push({ titulo: "Nova emenda", texto: "Descreva o que quer fazer; o sistema classifica e monta o plano.", href: "/emendas/nova", icone: FilePlus2 });
     if (rascunhos) {
       acoes.push({

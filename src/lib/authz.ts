@@ -93,6 +93,13 @@ export function podeCriarEmenda(a: Ator): boolean {
   );
 }
 
+// Apresenta emendas de fato: além da permissão, a conta precisa estar
+// vinculada a um autor (vereador) — é dele a cota que a emenda consome. Quem
+// administra tem todas as permissões, mas não é vereador: não apresenta.
+export function apresentaEmendas(a: Ator, vinculadoAAutor: boolean): boolean {
+  return podeCriarEmenda(a) && vinculadoAAutor;
+}
+
 // Pode aprovar/rejeitar emendas submetidas (função de comissão).
 export function podeTramitar(a: Ator): boolean {
   return (

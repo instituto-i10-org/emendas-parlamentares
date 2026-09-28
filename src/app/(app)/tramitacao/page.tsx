@@ -18,7 +18,7 @@ export const metadata: Metadata = { title: "Tramitação — Emendas360" };
 // Tramitação na Câmara: o que está na fila da Comissão, o que já foi decidido
 // e o consolidado por programa.
 export default async function TramitacaoPage() {
-  const user = await requireAccess({ poder: Poder.LEGISLATIVO });
+  const user = await requireAccess({ poder: Poder.LEGISLATIVO, permissoes: ["tramitarEmendas"] });
   const ano = await getAnoAtivo();
   const emendas = ano ? await listarEmendas(ano, { status: { not: "RASCUNHO" } }) : [];
   const decide = podeTramitar(user);

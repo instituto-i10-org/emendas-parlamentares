@@ -130,7 +130,7 @@ export function TabelaDados({
         </thead>
         <tbody className="divide-y divide-hair">
           {linhas.map((l) => (
-            <tr key={l.chave} className="align-top">
+            <tr key={l.chave} className="align-middle">
               {l.celulas.map((c, i) => (
                 <td key={i} className={cn("px-3 py-3 first:pl-0 last:pr-0", colunas[i]?.className)}>
                   {c}

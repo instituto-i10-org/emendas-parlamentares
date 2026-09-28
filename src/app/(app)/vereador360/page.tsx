@@ -54,13 +54,13 @@ export default async function Vereador360Page({ searchParams }: { searchParams: 
 
   return (
     <Pagina titulo="Vereador 360" descricao="A cota individual em duas parcelas — saúde e demais áreas — e cada emenda que a consome.">
-      <div className={cn("grid items-start gap-5", vetodos && "grid-cols-[280px_minmax(0,1fr)] max-[1000px]:grid-cols-1")}>
+      <div className={cn("grid items-start gap-5", vetodos && "grid-cols-[300px_minmax(0,1fr)] max-[1000px]:grid-cols-1")}>
         {vetodos ? (
           <Cartao titulo="Vereadores">
             <form className="mb-3">
               <input name="q" defaultValue={q} className="campo h-10 px-3" placeholder="Buscar vereador" aria-label="Buscar vereador" />
             </form>
-            <ul className="grid gap-1">
+            <ul className="grid grid-cols-1 gap-1">
               {lista.map((x) => {
                 const sx = situacaoCota(x, c);
                 return (
@@ -70,7 +70,7 @@ export default async function Vereador360Page({ searchParams }: { searchParams: 
                       className={cn("block rounded-md px-3 py-2 text-sm hover:bg-soft", x.autorId === autorId && "bg-info-bg font-bold")}
                     >
                       <span className="flex items-center justify-between gap-2">
-                        <span className="truncate">{x.nome}</span>
+                        <span className="min-w-0 truncate" title={x.nome}>{x.nome}</span>
                         {sx.tom !== "ok" ? <i className={cn("size-2 shrink-0 rounded-full", sx.tom === "bad" ? "bg-bad" : "bg-warn")} /> : null}
                       </span>
                       {c.cotaIndividual ? (

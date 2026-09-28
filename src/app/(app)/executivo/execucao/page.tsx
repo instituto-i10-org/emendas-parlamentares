@@ -12,7 +12,7 @@ import { BRL } from "@/lib/riep";
 export const metadata: Metadata = { title: "Execução das emendas — Emendas360" };
 
 export default async function ExecucaoPage() {
-  const user = await requireAccess({ poder: Poder.EXECUTIVO });
+  const user = await requireAccess({ poder: Poder.EXECUTIVO, permissoes: ["registrarExecucao"] });
   const ano = await getAnoAtivo();
   const emendas = ano ? await listarEmendas(ano, { status: "APROVADA" }) : [];
   const linhas = emendas.map((e) => paraLinhaExecutivo(e, ano!));

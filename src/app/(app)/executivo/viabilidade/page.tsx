@@ -11,7 +11,7 @@ import { getAnoAtivo } from "@/lib/exercicio";
 export const metadata: Metadata = { title: "Viabilidade técnica — Emendas360" };
 
 export default async function ViabilidadePage() {
-  const user = await requireAccess({ poder: Poder.EXECUTIVO });
+  const user = await requireAccess({ poder: Poder.EXECUTIVO, permissoes: ["analisarViabilidade"] });
   const ano = await getAnoAtivo();
   const emendas = ano ? await listarEmendas(ano, { status: { not: "RASCUNHO" } }) : [];
   const linhas = emendas.map((e) => paraLinhaExecutivo(e, ano!));

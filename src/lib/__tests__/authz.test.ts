@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { Poder } from "@/generated/prisma/enums";
 import {
+  apresentaEmendas,
   alcancaPoder,
   ehConsulta,
   podeAcessar,
@@ -264,7 +265,7 @@ describe("salvaguardas de atribuição de perfil", () => {
 // Menu lateral: cada perfil vê só o que alcança.
 // ============================================================================
 describe("menu lateral", () => {
-  const ids = (a: Ator) => navegacaoVisivel(a).flatMap((g) => g.itens.map((i) => i.id));
+  const ids = (a: Ator, apresenta = true) => navegacaoVisivel(a, { apresenta }).flatMap((g) => g.itens.map((i) => i.id));
 
   it("conta sem perfil não vê nada", () => {
     expect(ids(SEM_PERFIL)).toEqual([]);
@@ -275,6 +276,21 @@ describe("menu lateral", () => {
     expect(ids(A.presidente)).toContain("nova");
     expect(ids(A.comissao)).not.toContain("nova");
     expect(ids(A.executivo)).not.toContain("nova");
+  });
+
+  it("sem vínculo a um vereador, Nova emenda some — inclusive para o administrador", () => {
+    expect(ids(A.adminGeral, false)).not.toContain("nova");
+    expect(ids(A.presidente, false)).not.toContain("nova");
+    expect(apresentaEmendas(A.adminGeral, false)).toBe(false);
+    expect(apresentaEmendas(A.vereador, true)).toBe(true);
+    expect(apresentaEmendas(A.executivo, true)).toBe(false);
+  });
+
+  it("tela de ação só aparece para quem executa a ação", () => {
+    expect(ids(A.vereador)).not.toContain("tramitacao");
+    expect(ids(A.consultaLeg)).not.toContain("tramitacao");
+    expect(ids(A.comissao)).toContain("tramitacao");
+    expect(ids(A.executivo)).toEqual(expect.arrayContaining(["viabilidade", "execucao", "planejamento"]));
   });
 
   it("a lista de emendas é de consulta para todos os perfis", () => {

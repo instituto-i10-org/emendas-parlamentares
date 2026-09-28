@@ -1,7 +1,6 @@
 "use client";
 
-import { useActionState, useRef, useState } from "react";
-import { flushSync } from "react-dom";
+import { useActionState, useState } from "react";
 import { ArrowRight, Building2, ChevronDown, Landmark, ShieldCheck, UserRound, UsersRound, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,27 +24,13 @@ const CONTAS: { grupo: string; contas: { nome: string; papel: string; email: str
 
 export function LoginForm({ senhaDemo, avisoSemPerfil = false }: { senhaDemo?: string; avisoSemPerfil?: boolean }) {
   const [erro, action, pending] = useActionState<LoginState, FormData>(entrar, null);
-  const form = useRef<HTMLFormElement>(null);
-  const [email, setEmail] = useState("");
-  const [senha, setSenha] = useState("");
   const [aberto, setAberto] = useState(false);
 
-  // O acesso rápido preenche o formulário e envia — o mesmo caminho do usuário.
-  // Sem flushSync o envio sai antes de o React escrever os valores nos campos.
-  function entrarComo(conta: string) {
-    if (!senhaDemo) return;
-    flushSync(() => {
-      setEmail(conta);
-      setSenha(senhaDemo);
-    });
-    form.current?.requestSubmit();
-  }
-
   const formulario = (
-    <form ref={form} action={action} className="space-y-4">
+    <form action={action} className="space-y-4">
       <div className="space-y-1.5">
         <Label htmlFor="email">E-mail</Label>
-        <Input id="email" name="email" type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+        <Input id="email" name="email" type="email" required autoComplete="email" />
       </div>
       <div className="space-y-1.5">
         <Label htmlFor="senha">Senha</Label>
@@ -55,8 +40,6 @@ export function LoginForm({ senhaDemo, avisoSemPerfil = false }: { senhaDemo?: s
           type="password"
           required
           autoComplete="current-password"
-          value={senha}
-          onChange={(e) => setSenha(e.target.value)}
         />
       </div>
       <Button type="submit" className="w-full" disabled={pending}>
@@ -80,7 +63,10 @@ export function LoginForm({ senhaDemo, avisoSemPerfil = false }: { senhaDemo?: s
 
       {senhaDemo ? (
         <>
-          <div className="space-y-4">
+          {/* Acesso rápido: cada perfil é um botão de envio deste formulário. Funciona
+              antes de o JavaScript carregar — o clique nunca se perde. */}
+          <form action={action} className="space-y-4">
+            <input type="hidden" name="senha" value={senhaDemo} />
             {CONTAS.map((g) => (
               <div key={g.grupo}>
                 <div className="antena pb-1.5">{g.grupo}</div>
@@ -90,9 +76,10 @@ export function LoginForm({ senhaDemo, avisoSemPerfil = false }: { senhaDemo?: s
                     return (
                       <button
                         key={c.email}
-                        type="button"
+                        type="submit"
+                        name="email"
+                        value={c.email}
                         disabled={pending}
-                        onClick={() => entrarComo(c.email)}
                         className="group flex w-full items-center gap-3 rounded-box border border-line bg-surface px-3.5 py-3 text-left transition-all hover:-translate-y-px hover:border-cyan hover:shadow-card focus-visible:outline-2 focus-visible:outline-cyan disabled:opacity-50"
                       >
                         <span className="grid size-10 shrink-0 place-items-center rounded-field bg-navy text-cyan">
@@ -109,7 +96,7 @@ export function LoginForm({ senhaDemo, avisoSemPerfil = false }: { senhaDemo?: s
                 </div>
               </div>
             ))}
-          </div>
+          </form>
           <div className="rounded-box bg-soft p-1.5">
             <button
               type="button"
@@ -120,8 +107,7 @@ export function LoginForm({ senhaDemo, avisoSemPerfil = false }: { senhaDemo?: s
               Entrar com e-mail e senha
               <ChevronDown className={cn("size-4 shrink-0 text-muted-foreground transition-transform", aberto && "rotate-180")} aria-hidden />
             </button>
-            {/* Sempre montado: o acesso rápido preenche e envia este formulário. */}
-            <div className={cn("px-3 pt-1 pb-3", !aberto && "hidden")}>{formulario}</div>
+            {aberto ? <div className="px-3 pt-1 pb-3">{formulario}</div> : null}
           </div>
         </>
       ) : (

@@ -6,7 +6,7 @@ import { DescartarRascunho } from "@/components/emenda/descartar-rascunho";
 import { Selo } from "@/components/emenda/ui";
 import { Button } from "@/components/ui/button";
 import type { Prisma } from "@/generated/prisma/client";
-import { podeCriarEmenda, podeGerirEmenda, podeVerTodasEmendas } from "@/lib/authz";
+import { apresentaEmendas, podeGerirEmenda, podeVerTodasEmendas } from "@/lib/authz";
 import { getAnoAtivo } from "@/lib/exercicio";
 import { prisma } from "@/lib/prisma";
 import { BRL } from "@/lib/riep";
@@ -50,7 +50,7 @@ export default async function EmendasPage({ searchParams }: { searchParams: Prom
     <Pagina
       titulo={todas ? "Emendas do exercício" : "Minhas emendas"}
       acoes={
-        podeCriarEmenda(user) ? (
+        apresentaEmendas(user, !!autor) ? (
           <Button asChild>
             <Link href="/emendas/nova">
               <FilePlus2 /> Nova emenda
@@ -119,7 +119,7 @@ export default async function EmendasPage({ searchParams }: { searchParams: Prom
         ) : (
           <div className="p-7 text-sm text-muted-foreground">
             Nenhuma emenda elaborada no sistema neste exercício.
-            {podeCriarEmenda(user) ? " Use “Nova emenda” para começar." : ""}
+            {apresentaEmendas(user, !!autor) ? " Use “Nova emenda” para começar." : ""}
           </div>
         )}
       </div>
