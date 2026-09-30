@@ -3,14 +3,18 @@ import { classificar } from "../classificar";
 import { precisaAjuste, sugerirDestinos, sugerirTextos } from "../sugerir";
 import { catalogo, destino, loa, todosDestinos } from "./dados-reais";
 
-const entrada = (objeto: string, trecho: string) => {
+const entrada = (objeto: string, trecho: string, base = loa) => {
   const d = destino(trecho);
-  return { objeto, destino: d, execucao: d.execucao, pretendido: 100000, loa, catalogo };
+  return { objeto, destino: d, execucao: d.execucao, pretendido: 100000, loa: base, catalogo };
 };
+
+// A LOA sancionada tem equipamento (52) na unidade do hospital; o recorte tira
+// para provocar o ajuste.
+const semEquipamentoNoHospital = loa.filter((d) => !(d.uo === "20.02" && d.elem === "52"));
 
 describe("ajuste automático", () => {
   it("ambulância para o hospital: não troca por obra; sugere destinos onde cabe", () => {
-    const x = entrada("Compra de uma ambulância", "Tabajara");
+    const x = entrada("Compra de uma ambulância", "Tabajara", semEquipamentoNoHospital);
     expect(precisaAjuste(classificar(x))).toBe(true);
     const textos = sugerirTextos(x);
     expect(textos.every((t) => t.dotacao.elem !== "51")).toBe(true);

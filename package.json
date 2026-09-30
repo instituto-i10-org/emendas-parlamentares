@@ -14,7 +14,11 @@
     "postinstall": "prisma generate",
     "db:up": "docker compose up -d",
     "db:migrate": "prisma migrate dev",
-    "db:senha": "tsx prisma/redefinir-senha.ts"
+    "db:senha": "tsx prisma/redefinir-senha.ts",
+    "db:extrair-qdd": "tsx prisma/extrair-qdd.ts",
+    "db:recarregar-loa": "tsx prisma/recarregar-loa.ts",
+    "db:recarregar-catalogos": "tsx prisma/recarregar-catalogos.ts",
+    "db:apagar-emendas": "tsx prisma/apagar-emendas-lote.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",

@@ -3,7 +3,8 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { codigosDeExibicao, NATUREZAS_EMENDAVEIS } from "@/lib/orcamento/codigo-dotacao";
-import type { Catalogo, ConfigMotor, DestinoMotor, DotacaoMotor } from "../tipos";
+import { subfuncaoDoDestino } from "../destino";
+import type { Catalogo, ConfigMotor, DestinoMotor, DotacaoMotor, TipoDestino } from "../tipos";
 
 const PASTA = path.resolve(process.cwd(), "prisma/dados/mogi-guacu");
 const ler = <T>(arquivo: string): T => JSON.parse(readFileSync(path.join(PASTA, arquivo), "utf8")) as T;
@@ -39,15 +40,16 @@ export const loa: DotacaoMotor[] = linhas.map((d, i) => ({
   autorizado: d.autorizado,
 }));
 
-const bib = ler<{ areas: Catalogo["areas"]; objetos: Catalogo["objetos"] }>("biblioteca-objetos.json");
+const bib = ler<{ areas: Catalogo["areas"]; objetos: Catalogo["objetos"]; tiposDestino: TipoDestino[] }>("biblioteca-objetos.json");
 export const catalogo: Catalogo = {
   objetos: bib.objetos,
   areas: bib.areas,
   unidades: ler<{ names: Record<string, string> }>("unidades-2026.json").names,
+  tiposDestino: bib.tiposDestino,
 };
 
 type DestinoJson = {
-  nome: string; execucao: "DIRETA" | "INDIRETA"; endereco: string; unidade?: string; cnpj?: string;
+  nome: string; nomeOficial?: string; execucao: "DIRETA" | "INDIRETA"; endereco: string; unidade?: string; cnpj?: string;
   populacao?: number; fontePopulacao?: string; dataPopulacao?: string;
 };
 const destinos = ler<{ destinos: DestinoJson[] }>("destinos-2026.json").destinos;
@@ -69,6 +71,8 @@ export function destino(trecho: string): DestinoMotor {
     dataPopulacao: d.dataPopulacao ?? null,
     novo: false,
     pendenciaHabilitacao: null,
+    // Como o seed faz: a subfunção sugerida vem do tipo de equipamento.
+    subfuncao: subfuncaoDoDestino(d.nome, d.nomeOficial, bib.tiposDestino),
   };
 }
 

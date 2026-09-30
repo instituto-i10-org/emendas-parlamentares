@@ -120,6 +120,22 @@ export async function semearLoa(prisma: PrismaClient, exercicioId: string) {
   const fontes = new Map<string, string>();
   const programasPpa = new Set(ppa.programas);
 
+  // Dotações já gravadas neste exercício, por órgão + ficha.
+  const gravadas = await prisma.dotacao.findMany({
+    where: { exercicioId },
+    select: { id: true, codigo: true, ficha: true, ativo: true, orgao: { select: { codigo: true } } },
+  });
+  const existentes = new Map(gravadas.filter((g) => g.ficha).map((g) => [`${g.orgao.codigo}|${g.ficha}`, g]));
+  const tocadas = new Set<string>();
+  // Os códigos de exibição vão ser regenerados sobre o conjunto novo; para
+  // não colidir no índice único durante a troca, todos passam por um código
+  // temporário antes.
+  for (const g of gravadas) {
+    await prisma.dotacao.update({ where: { id: g.id }, data: { codigo: `~${g.id}` } });
+  }
+  let criadas = 0;
+  let atualizadas = 0;
+
   const uma = async <T extends { id: string }>(cache: Map<string, string>, chave: string, fn: () => Promise<T>) => {
     const achado = cache.get(chave);
     if (achado) return achado;
@@ -219,12 +235,37 @@ export async function semearLoa(prisma: PrismaClient, exercicioId: string) {
       valorAutorizado: d.autorizado,
       paginaFonte: d.pagina,
       ordem: loa.dotacoes.indexOf(d),
+      ativo: true,
     };
-    await prisma.dotacao.upsert({
-      where: { instrumentoId_codigo: { instrumentoId: pl.id, codigo: codigos[i] } },
-      update: dotacao,
-      create: { ...dotacao, instrumentoId: pl.id, codigo: codigos[i] },
-    });
+    // A ficha é o número oficial da dotação e é estável entre versões da LOA;
+    // o código de exibição não é (depende de quantas vezes a ação se repete).
+    // Por isso a linha existente é localizada por órgão + ficha e atualizada
+    // no lugar, preservando o id — e com ele o vínculo das emendas.
+    const chave = dotacao.ficha ? `${codOrgao}|${dotacao.ficha}` : null;
+    const existente = chave ? existentes.get(chave) : undefined;
+    if (existente) {
+      await prisma.dotacao.update({ where: { id: existente.id }, data: { ...dotacao, codigo: codigos[i], instrumentoId: pl.id } });
+      tocadas.add(existente.id);
+      atualizadas++;
+    } else {
+      await prisma.dotacao.upsert({
+        where: { instrumentoId_codigo: { instrumentoId: pl.id, codigo: codigos[i] } },
+        update: dotacao,
+        create: { ...dotacao, instrumentoId: pl.id, codigo: codigos[i] },
+      });
+      criadas++;
+    }
+  }
+
+  // O que existia e não está mais na LOA (com ou sem ficha) fica inativo — nunca
+  // é apagado, porque uma emenda antiga pode apontar para cá. O código volta ao
+  // original com um sufixo, para não disputar o índice com os códigos novos.
+  let desativadas = 0;
+  for (const sobra of gravadas) {
+    if (tocadas.has(sobra.id)) continue;
+    const original = sobra.codigo.replace(/~inativo$/, "");
+    await prisma.dotacao.update({ where: { id: sobra.id }, data: { ativo: false, codigo: `${original}~inativo` } });
+    if (sobra.ativo) desativadas++;
   }
 
   // Metas do PPA 2026–2029. A LDO 2026 não tem quadro de metas físicas: a meta
@@ -257,7 +298,7 @@ export async function semearLoa(prisma: PrismaClient, exercicioId: string) {
     metas++;
   }
 
-  return { dotacoes: ordenadas.length, metas };
+  return { dotacoes: ordenadas.length, criadas, atualizadas, desativadas, metas };
 }
 
 async function upsertInstrumento(

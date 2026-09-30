@@ -106,7 +106,7 @@ async function base(instParam: string | undefined, instrumentos: Instrumentos, f
   const inst = instrumentos.find((i) => i.id === instParam) ?? instrumentos.find((i) => i.especie === "PROJETO_LEI");
   if (!inst) return <Cartao><p className="text-sm text-muted-foreground">Nenhum projeto de lei cadastrado.</p></Cartao>;
   const dotacoes = await prisma.dotacao.findMany({
-    where: { instrumentoId: inst.id },
+    where: { instrumentoId: inst.id, ativo: true },
     orderBy: { ordem: "asc" },
     include: { acao: true, programa: true, unidadeOrcamentaria: true, orgao: true, funcao: true, subfuncao: true, naturezaDespesa: true, fonteRecurso: true, _count: { select: { emendas: true } } },
   });
@@ -149,7 +149,7 @@ async function comparacao(instrumentos: Instrumentos) {
   const blocos = await Promise.all(
     leis.map(async (lei) => {
       const [somaPl, somaLei, emendas] = await Promise.all([
-        prisma.dotacao.aggregate({ where: { instrumentoId: lei.instrumentoOrigemId! }, _sum: { valorAutorizado: true } }),
+        prisma.dotacao.aggregate({ where: { instrumentoId: lei.instrumentoOrigemId!, ativo: true }, _sum: { valorAutorizado: true } }),
         prisma.dotacao.aggregate({ where: { instrumentoId: lei.id }, _sum: { valorAutorizado: true }, _count: true }),
         prisma.emenda.findMany({
           where: { status: "APROVADA", dotacao: { instrumentoId: lei.instrumentoOrigemId! } },

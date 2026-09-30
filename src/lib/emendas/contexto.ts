@@ -73,6 +73,7 @@ export function paraDestinoMotor(
     dataPopulacao: string | null;
     origem: "BASE_OFICIAL" | "CADASTRO";
     pendenciaHabilitacao: string | null;
+    subfuncaoSugerida?: string | null;
   },
   unidades: Record<string, string>
 ): DestinoTela {
@@ -90,6 +91,7 @@ export function paraDestinoMotor(
     dataPopulacao: d.dataPopulacao,
     novo: d.origem === "CADASTRO",
     pendenciaHabilitacao: d.pendenciaHabilitacao,
+    subfuncao: d.subfuncaoSugerida ?? null,
     unidadeNome: d.unidadeCodigo ? unidades[d.unidadeCodigo] ?? null : null,
     unidadeRepasse: d.unidadeRepasseCodigo,
     telefone: d.telefone,
@@ -102,11 +104,11 @@ export const carregarContexto = cache(async (ano: number): Promise<ContextoEmend
   if (!exercicio) return null;
   const exercicioId = exercicio.id;
 
-  const [configuracao, unidadesDb, dotacoes, metasDb, areas, objetos, destinosDb] = await Promise.all([
+  const [configuracao, unidadesDb, dotacoes, metasDb, areas, objetos, destinosDb, tiposDestino] = await Promise.all([
     lerConfiguracao(exercicioId),
     prisma.unidadeOrcamentaria.findMany({ where: { exercicioId }, orderBy: { codigo: "asc" } }),
     prisma.dotacao.findMany({
-      where: { exercicioId, instrumento: { especie: "PROJETO_LEI" } },
+      where: { exercicioId, ativo: true, instrumento: { especie: "PROJETO_LEI" } },
       orderBy: { ordem: "asc" },
       include: {
         orgao: true,
@@ -123,6 +125,7 @@ export const carregarContexto = cache(async (ano: number): Promise<ContextoEmend
     prisma.areaAplicacao.findMany({ orderBy: { ordem: "asc" } }),
     prisma.objetoBiblioteca.findMany({ where: { ativo: true }, orderBy: { ordem: "asc" }, include: { area: true } }),
     prisma.destino.findMany({ where: { ativo: true }, orderBy: [{ execucao: "asc" }, { nome: "asc" }] }),
+    prisma.tipoDestino.findMany({ where: { ativo: true }, orderBy: { ordem: "asc" } }),
   ]);
 
   const config = paraConfigMotor(ano, configuracao);
@@ -184,8 +187,10 @@ export const carregarContexto = cache(async (ano: number): Promise<ContextoEmend
       estrito: o.estrito,
       explicacao: o.explicacao,
       area: o.area?.nome ?? null,
+      pistas: o.pistas,
     })),
     unidades,
+    tiposDestino: tiposDestino.map((t) => ({ nome: t.nome, padrao: t.padrao, pistas: t.pistas, subfuncao: t.subfuncao })),
   };
 
   return {

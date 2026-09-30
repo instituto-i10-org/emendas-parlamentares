@@ -1,5 +1,5 @@
 {
- "note": "Nomes das unidades orçamentárias da LOA 2026 (PL 275/2025) com acentuação restaurada. O OCR do anexo trouxe parte dos nomes sem acentos; os códigos e o sentido são os do documento.",
+ "note": "Nomes das unidades orçamentárias da LOA 2026 (Lei 6.246/2025) com acentuação restaurada. Os códigos são os do QDD oficial.",
  "names": {
   "01.01": "Câmara Municipal — Corpo Legislativo",
   "02.01": "Gabinete do Prefeito — Administração Superior",
@@ -34,6 +34,7 @@
   "19.03": "Fundação Educacional Guaçuana — Ensino Médio",
   "19.04": "Fundação Educacional Guaçuana — Ensino Profissionalizante (CEGEP)",
   "19.05": "Fundação Educacional Guaçuana — Ensino Superior",
+  "19.06": "Fundação Educacional Guaçuana — Encargos Gerais da Autarquia",
   "20.01": "Hospital Municipal Dr. Tabajara Ramos — Administração e Finanças",
   "20.02": "Hospital Municipal Dr. Tabajara Ramos — Departamento Clínico",
   "20.03": "Hospital Municipal Dr. Tabajara Ramos — Recursos Supervisionados pelo DAF",

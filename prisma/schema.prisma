@@ -505,6 +505,9 @@ model Dotacao {
   paginaFonte           Int?
   // Posição da linha no anexo. O motor desempata candidatas por ela.
   ordem                 Int      @default(0)
+  // Falso quando a linha deixou de existir na versão vigente da LOA (a recarga
+  // nunca apaga: uma emenda antiga pode apontar para cá).
+  ativo                 Boolean  @default(true)
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
 
@@ -606,6 +609,9 @@ model ObjetoBiblioteca {
   subfuncao      String?
   // Estrito: o objeto só cabe na sua própria área (ambulância é Saúde).
   estrito        Boolean        @default(false)
+  // Palavras que, no nome da ação, provam aderência ao objeto mesmo sem
+  // aparecerem no texto da emenda ("saude mental" para material terapêutico).
+  pistas         String[]       @default([])
   explicacao     String
   areaId         String?
   ordem          Int            @default(0)
@@ -625,6 +631,22 @@ model ObjetoBiblioteca {
 // Para onde vai a emenda: órgão ou equipamento público (execução direta) ou
 // entidade do terceiro setor (execução indireta). Atravessa exercícios, por
 // isso a unidade é guardada pelo código, não por FK.
+// Tipo de equipamento público, reconhecido pelo nome do destino (EMEI, CAPS,
+// UBS...). Sugere a subfunção quando o objeto não a define e dá ao motor as
+// palavras que provam aderência entre o destino e a ação da LOA.
+model TipoDestino {
+  id        String   @id @default(cuid())
+  nome      String   @unique
+  // Expressão regular sobre o nome e o nome oficial, sem acentos, minúsculas.
+  padrao    String
+  pistas    String[] @default([])
+  subfuncao String?
+  ordem     Int      @default(0)
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model Destino {
   id                   String        @id @default(cuid())
   nome                 String
@@ -647,6 +669,9 @@ model Destino {
   email                String?
   // Documento de habilitação pendente (arts. 33-39 da Lei 13.019/2014).
   pendenciaHabilitacao String?
+  // Subfunção que o equipamento sugere quando o objeto não a define (EMEI e
+  // CEI → 365; EMEF → 361; EMEB, que atende os dois níveis, fica em branco).
+  subfuncaoSugerida    String?
   fonteUrl             String?
   origem               OrigemDestino @default(CADASTRO)
   ativo                Boolean       @default(true)
@@ -673,6 +698,9 @@ model Autor {
   partido   String?
   cargo     String   @default("Vereador")
   usuarioId String?  @unique
+  // Conta de demonstração: real dentro do sistema, fora do portal público e
+  // dos relatórios oficiais. Só as emendas dela podem ser apagadas em lote.
+  demonstracao Boolean @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

@@ -4,10 +4,17 @@ import { interpretar } from "../interpretar";
 import { contem, norm } from "../texto";
 import { catalogo, destino, loa } from "./dados-reais";
 
-const classifica = (objeto: string, trechoDestino: string, pretendido = 100000) => {
+const classifica = (objeto: string, trechoDestino: string, pretendido = 100000, base = loa) => {
   const d = destino(trechoDestino);
-  return classificar({ objeto, destino: d, execucao: d.execucao, pretendido, loa, catalogo });
+  return classificar({ objeto, destino: d, execucao: d.execucao, pretendido, loa: base, catalogo });
 };
+
+// Recortes da LOA real para provocar situações que a base completa não tem.
+// A LOA sancionada tem 4.4.90.52 em toda unidade e várias linhas 3.3.50.39 de
+// creche; os recortes tiram o que sobra para isolar a regra testada.
+const soUmaCreche = loa.filter((d) => !(d.uo === "11.01" && d.mod === "50" && d.codigo !== "2884.39/249"));
+const semEquipamentoNoHospital = loa.filter((d) => !(d.uo === "20.02" && d.elem === "52"));
+const semCapitalParaEntidade = loa.filter((d) => !(d.mod === "50" && d.gnd === "4"));
 
 describe("reconhecimento do objeto", () => {
   it("casa por palavra inteira, com plural", () => {
@@ -54,7 +61,7 @@ describe("reconhecimento do objeto", () => {
 
 describe("classificação contra a LOA 2026 real", () => {
   it("dotação única e aderente: OK", () => {
-    const r = classifica("Manutenção de creche para crianças de 0 a 6 anos", "APAE (Escola)");
+    const r = classifica("Manutenção de creche para crianças de 0 a 6 anos", "APAE (Escola)", 100000, soUmaCreche);
     expect(r.situacao).toBe("OK");
     expect(r.selecionada?.codigo).toBe("2884.39/249");
     expect(r.base).toBe("3.3.50");
@@ -63,7 +70,10 @@ describe("classificação contra a LOA 2026 real", () => {
   it("mais de uma candidata: VALIDAR com as opções", () => {
     const r = classifica("Aquisição de 1 (uma) ambulância para transporte de pacientes", "UBS Centro Oeste");
     expect(r.situacao).toBe("VALIDAR");
-    expect(r.opcoes.map((d) => d.codigo)).toEqual(["2001.52/470", "2001.52"]);
+    expect(r.opcoes.length).toBeGreaterThanOrEqual(2);
+    expect(r.opcoes.every((d) => d.uo === "13.01" && d.elem === "52" && d.aderente)).toBe(true);
+    // Mesma ação e mesmo elemento: o valor autorizado desempata.
+    expect(r.opcoes[0].codigo).toBe("2001.52/583");
     expect(r.semAderencia).toBe(false);
   });
 
@@ -74,14 +84,14 @@ describe("classificação contra a LOA 2026 real", () => {
   });
 
   it("nenhuma dotação comporta: ÓBICE com as mais próximas", () => {
-    const r = classifica("Aquisição de computadores", "APAE (Escola)");
+    const r = classifica("Aquisição de computadores", "APAE (Escola)", 100000, semCapitalParaEntidade);
     expect(r.situacao).toBe("OBICE");
     expect(r.proximas.length).toBeGreaterThan(0);
   });
 
   it("equipamento não cai em dotação de obra: ÓBICE", () => {
     // A unidade do hospital só tem a reforma (4.4.90.51); ambulância é 52.
-    const r = classifica("Compra de uma ambulância", "Tabajara");
+    const r = classifica("Compra de uma ambulância", "Tabajara", 100000, semEquipamentoNoHospital);
     expect(r.objeto?.elemento).toBe("52");
     expect(r.situacao).toBe("OBICE");
     expect(r.selecionada).toBeNull();
@@ -98,16 +108,17 @@ describe("classificação contra a LOA 2026 real", () => {
 
   it("valor pretendido acima do autorizado sinaliza, nunca elimina", () => {
     const r = classifica("Aquisição de 1 (uma) ambulância para transporte de pacientes", "UBS Centro Oeste", 50_000_000);
-    expect(r.candidatas.length).toBe(2);
+    expect(r.candidatas.length).toBeGreaterThanOrEqual(2);
     expect(r.candidatas.every((d) => d.abaixoDoPretendido)).toBe(true);
   });
 
   it("a escolha do proponente vale como OK", () => {
     const r = classifica("Aquisição de 1 (uma) ambulância para transporte de pacientes", "UBS Centro Oeste");
-    const s = { escolha: "PROPONENTE" as const, dotacaoId: "2001.52" };
+    const [primeira, segunda] = r.opcoes.map((d) => d.codigo);
+    const s = { escolha: "PROPONENTE" as const, dotacaoId: segunda };
     expect(situacaoEfetiva(r, s)).toBe("OK");
-    expect(dotacaoDe(r, s)?.codigo).toBe("2001.52");
+    expect(dotacaoDe(r, s)?.codigo).toBe(segunda);
     // Deixada à análise técnica, vale a primeira candidata para modelo e parcela.
-    expect(dotacaoDe(r, { escolha: "ANALISE_TECNICA", dotacaoId: null })?.codigo).toBe("2001.52/470");
+    expect(dotacaoDe(r, { escolha: "ANALISE_TECNICA", dotacaoId: null })?.codigo).toBe(primeira);
   });
 });
