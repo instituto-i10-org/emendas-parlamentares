@@ -180,16 +180,16 @@ Critério de saída: portal público sem o Vereador Exemplo; os três scripts te
    ```
    cd .../prototipo && vercel env pull .env.neon --environment=production \
      --scope ti-7875s-projects --yes && set -a && source ./.env.neon && set +a \
+     && PERMITIR_BANCO_REMOTO=1 CONFIRMAR=1 npm run db:marcar-demonstracao -- vereador@emendas360.local \
+     && PERMITIR_BANCO_REMOTO=1 npm run db:apagar-emendas -- 352-372 vereador@emendas360.local \
+     && PERMITIR_BANCO_REMOTO=1 CONFIRMAR=1 npm run db:apagar-emendas -- 352-372 vereador@emendas360.local \
      && PERMITIR_BANCO_REMOTO=1 npm run db:recarregar-loa \
      && PERMITIR_BANCO_REMOTO=1 CONFIRMAR=1 npm run db:recarregar-loa \
-     && PERMITIR_BANCO_REMOTO=1 npm run db:recarregar-catalogos \
-     && PERMITIR_BANCO_REMOTO=1 CONFIRMAR=1 npm run db:recarregar-catalogos \
-     && PERMITIR_BANCO_REMOTO=1 npm run db:apagar-emendas -- 352-372 vereador@emendas360.local \
-     && PERMITIR_BANCO_REMOTO=1 CONFIRMAR=1 npm run db:apagar-emendas -- 352-372 vereador@emendas360.local; \
+     && PERMITIR_BANCO_REMOTO=1 CONFIRMAR=1 npm run db:recarregar-catalogos; \
      rm -f .env.neon
    ```
 
-   Cada script roda duas vezes: a primeira só lista, a segunda grava. Se a listagem da recarga da LOA acusar emenda de autor real apontando para ficha que muda, a segunda chamada é recusada e o agente é avisado. O agente entrega o comando final pronto, com os nomes definitivos dos scripts. Depois, conferir que a conta de teste segue ativa, com cota íntegra e zero emendas.
+   A marca de demonstração vem primeiro: em produção o seed não roda, e sem ela a recarga trata o Vereador Exemplo como real (a trava disparou na primeira tentativa, em 30/09, por causa da emenda de teste 369). Depois a limpeza, depois a recarga. Cada script roda duas vezes: a primeira só lista, a segunda grava. Se a listagem da recarga da LOA acusar emenda de autor real apontando para ficha que muda, a segunda chamada é recusada e o agente é avisado. O agente entrega o comando final pronto, com os nomes definitivos dos scripts. Depois, conferir que a conta de teste segue ativa, com cota íntegra e zero emendas.
 6. **Devolutiva ao Dr. Emerson:** página curta, achado por achado, com o que mudou, a decisão em A8, a explicação da EMEB, o resultado de A7 sobre a base oficial, a nota sobre a base recarregada, e a lista de cenários da rodada 2 com o comportamento esperado em cada um.
 
 ---

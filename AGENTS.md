@@ -79,6 +79,7 @@ Contra banco remoto (Neon/Vercel) exigem `PERMITIR_BANCO_REMOTO=1`.
 npm run db:extrair-qdd -- "<QDD.pdf>" --anexos "<Anexos.pdf>"   # gera loa-2026.json do QDD oficial (pdftotext)
 npm run db:recarregar-loa            # ficha a ficha, preserva ids; trava se emenda real apontar para ficha que muda
 npm run db:recarregar-catalogos      # áreas, biblioteca de objetos, tipos de destino, subfunção sugerida
+npm run db:marcar-demonstracao -- vereador@emendas360.local      # a marca vem do seed; em produção, por aqui
 npm run db:apagar-emendas -- 352-372 vereador@emendas360.local   # só de autor marcado como demonstração
 ```
 

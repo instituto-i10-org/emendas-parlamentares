@@ -18,7 +18,8 @@
     "db:extrair-qdd": "tsx prisma/extrair-qdd.ts",
     "db:recarregar-loa": "tsx prisma/recarregar-loa.ts",
     "db:recarregar-catalogos": "tsx prisma/recarregar-catalogos.ts",
-    "db:apagar-emendas": "tsx prisma/apagar-emendas-lote.ts"
+    "db:apagar-emendas": "tsx prisma/apagar-emendas-lote.ts",
+    "db:marcar-demonstracao": "tsx prisma/marcar-demonstracao.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",
