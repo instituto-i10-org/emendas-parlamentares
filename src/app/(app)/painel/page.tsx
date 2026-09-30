@@ -65,9 +65,11 @@ export default async function PainelPage() {
           <TabelaDados
             colunas={[
               { titulo: "Vereador" },
-              { titulo: "Itens", className: "text-right" },
-              { titulo: "Saúde", className: "text-right max-md:hidden" },
-              { titulo: "Demais", className: "text-right max-md:hidden" },
+              { titulo: "Itens", className: "text-right @max-[520px]:hidden" },
+              // Cartão estreito (coluna ao lado dos cartões de resumo): ficam
+              // nome, total e situação; saúde e demais estão no Vereador 360.
+              { titulo: "Saúde", className: "text-right @max-[760px]:hidden" },
+              { titulo: "Demais", className: "text-right @max-[760px]:hidden" },
               { titulo: "Total", className: "text-right" },
               { titulo: "Situação" },
             ]}

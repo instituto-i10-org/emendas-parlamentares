@@ -116,8 +116,11 @@ export function TabelaDados({
   vazio?: string;
 }) {
   if (!linhas.length) return <p className="p-2 text-sm text-muted-foreground">{vazio}</p>;
+  // @container: as colunas podem se esconder pela largura do PRÓPRIO cartão
+  // (className "@max-[640px]:hidden"), não pela da janela — vale igual com o
+  // menu recolhido ou em coluna lateral.
   return (
-    <div className="overflow-x-auto">
+    <div className="@container overflow-x-auto">
       <table className="w-full text-sm">
         <thead className="text-left text-2xs font-bold tracking-[0.04em] text-muted-foreground uppercase">
           <tr className="border-b border-hair">
