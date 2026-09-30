@@ -69,6 +69,24 @@ para a produção.
 **Atenção ao banco:** `prisma migrate reset` apaga tudo. Nunca rode contra um
 banco que não seja o local.
 
+## Dados em produção: scripts, sempre listando antes de gravar
+
+Recarga de base e limpeza de teste não passam pela interface nem pelo push:
+são scripts que primeiro **listam** o que fariam e só gravam com `CONFIRMAR=1`.
+Contra banco remoto (Neon/Vercel) exigem `PERMITIR_BANCO_REMOTO=1`.
+
+```
+npm run db:extrair-qdd -- "<QDD.pdf>" --anexos "<Anexos.pdf>"   # gera loa-2026.json do QDD oficial (pdftotext)
+npm run db:recarregar-loa            # ficha a ficha, preserva ids; trava se emenda real apontar para ficha que muda
+npm run db:recarregar-catalogos      # áreas, biblioteca de objetos, tipos de destino, subfunção sugerida
+npm run db:apagar-emendas -- 352-372 vereador@emendas360.local   # só de autor marcado como demonstração
+```
+
+A base orçamentária vem do QDD publicado no Portal da Transparência da
+Prefeitura (PDF nativo), conciliado ao centavo com os Anexos da lei. As fontes
+e o cruzamento estão em `../v2-emendas-impositivas/Ajustes Emendas Impositivas/
+LOA 2026 - fontes oficiais/FONTES.md`.
+
 ## O que nunca entra no repositório
 
 Vídeo, tutorial gravado, apresentação e material de divulgação ficam fora. Se

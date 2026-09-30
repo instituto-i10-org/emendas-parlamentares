@@ -105,10 +105,11 @@ export async function semearAcesso(prisma: PrismaClient) {
       });
     }
     if (u.autor) {
+      // Autor de demonstração: real dentro do sistema, fora do portal público.
       await prisma.autor.upsert({
         where: { nome: u.nome },
-        update: { usuarioId: usuario.id },
-        create: { nome: u.nome, cargo: "Vereador", usuarioId: usuario.id },
+        update: { usuarioId: usuario.id, demonstracao: true },
+        create: { nome: u.nome, cargo: "Vereador", usuarioId: usuario.id, demonstracao: true },
       });
     }
   }

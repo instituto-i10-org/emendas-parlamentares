@@ -14,7 +14,7 @@ export const metadata: Metadata = { title: "Emenda — portal público" };
 export default async function EmendaPublicaPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const e = await prisma.emenda.findFirst({
-    where: { id, status: { not: "RASCUNHO" } },
+    where: { id, status: { not: "RASCUNHO" }, autor: { demonstracao: false } },
     include: {
       autor: true,
       destino: true,

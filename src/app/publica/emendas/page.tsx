@@ -20,9 +20,10 @@ export default async function EmendasPublicasPage({ searchParams }: { searchPara
   const { q = "", autor = "", pagina = "1" } = await searchParams;
   const ano = await getAnoAtivo();
   const [sistema, importadas, autores] = await Promise.all([
-    prisma.emenda.findMany({ where: { exercicio: { ano: ano ?? -1 }, status: { not: "RASCUNHO" } }, include: { autor: true, destino: true } }),
-    prisma.emendaImportada.findMany({ where: { exercicio: { ano: ano ?? -1 } }, include: { autor: true } }),
-    prisma.autor.findMany({ orderBy: { nome: "asc" }, where: { OR: [{ emendas: { some: { status: { not: "RASCUNHO" } } } }, { emendasImportadas: { some: {} } }] } }),
+    // Autor de demonstração não aparece no portal: as emendas dele são de teste.
+    prisma.emenda.findMany({ where: { exercicio: { ano: ano ?? -1 }, status: { not: "RASCUNHO" }, autor: { demonstracao: false } }, include: { autor: true, destino: true } }),
+    prisma.emendaImportada.findMany({ where: { exercicio: { ano: ano ?? -1 }, autor: { demonstracao: false } }, include: { autor: true } }),
+    prisma.autor.findMany({ orderBy: { nome: "asc" }, where: { demonstracao: false, OR: [{ emendas: { some: { status: { not: "RASCUNHO" } } } }, { emendasImportadas: { some: {} } }] } }),
   ]);
   const todas: (Linha & { autorId: string })[] = [
     ...sistema.map((e) => ({
