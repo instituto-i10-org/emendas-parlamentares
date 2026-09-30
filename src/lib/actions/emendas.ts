@@ -5,6 +5,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { registrarAuditoria } from "@/lib/audit";
 import { podeCriarEmenda, podeGerirEmenda } from "@/lib/authz";
 import { aplicadoDoAutor, carregarContexto } from "@/lib/emendas/contexto";
+import { mesmaEmenda } from "@/lib/emendas/duplicidade";
 import { chaveClassificacao, estadoSchema, lerNumero, paraValidacao, type EstadoEmenda } from "@/lib/emendas/estado";
 import { getAnoAtivo } from "@/lib/exercicio";
 import { prisma } from "@/lib/prisma";
@@ -28,7 +29,7 @@ import { getCurrentUser } from "@/lib/session";
 
 export type ResultadoGravacao =
   | { ok: true; id: string; revisao: number; numero: number | null; status: string }
-  | { ok: false; erro: string; checks?: Checagem[] };
+  | { ok: false; erro: string; checks?: Checagem[]; duplicata?: { numero: number | null; objeto: string; status: string } };
 
 // ============================================================================
 // Gravação da emenda. O servidor refaz a classificação a partir do banco e só
@@ -109,6 +110,25 @@ export async function salvarEmenda(entrada: EstadoEmenda, submeter = false): Pro
       return { ok: false, erro: `A emenda tem ${resumo.bloqueios} bloqueio(s). Revise a validação.`, checks };
     }
     validacao = { checks, ...resumo };
+
+    // Duplicidade: mesmo autor, mesmo destino e mesmo objeto de uma emenda já
+    // submetida no exercício. Um clique duplo ou uma rotina interrompida não
+    // podem numerar a mesma emenda duas vezes; o proponente pode confirmar.
+    if (!e.confirmarDuplicata && destino) {
+      const parecidas = await prisma.emenda.findMany({
+        where: { exercicioId: ctx.exercicioId, autorId, destinoId: destino.id, status: { not: "RASCUNHO" }, ...(e.id ? { id: { not: e.id } } : {}) },
+        select: { numero: true, objeto: true, status: true, execucao: true, destinoId: true },
+        orderBy: { numero: "asc" },
+      });
+      const igual = parecidas.find((p) => mesmaEmenda({ destinoId: p.destinoId, execucao: p.execucao, objeto: p.objeto }, { destinoId: destino.id, execucao: e.execucao, objeto: e.objeto }));
+      if (igual) {
+        return {
+          ok: false,
+          erro: `Possível duplicata da emenda nº ${igual.numero ?? "sem número"}: mesmo destino e mesmo objeto. Confirme para submeter mesmo assim.`,
+          duplicata: { numero: igual.numero, objeto: igual.objeto, status: igual.status },
+        };
+      }
+    }
   }
 
   const dados = {

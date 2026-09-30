@@ -36,6 +36,8 @@ export type EstadoEmenda = {
   instrumentoOutro: string;
   evento: Evento | null;
   declaracao: boolean;
+  // O proponente viu o aviso de possível duplicata e mandou seguir.
+  confirmarDuplicata?: boolean;
 };
 
 export const estadoInicial = (): EstadoEmenda => ({
@@ -193,4 +195,5 @@ export const estadoSchema = z.object({
     ])
     .nullable(),
   declaracao: z.boolean(),
+  confirmarDuplicata: z.boolean().optional(),
 });

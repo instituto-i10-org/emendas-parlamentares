@@ -1,5 +1,6 @@
+import { pistasDoDestino } from "./destino";
 import { interpretar } from "./interpretar";
-import { norm } from "./texto";
+import { contem, norm } from "./texto";
 import type {
   AreaAplicacao,
   Candidata,
@@ -17,8 +18,20 @@ const TOKENS_FRACOS = new Set([
   "manutencao", "aquisicao", "custeio", "compra", "apoio", "servico", "servicos", "material", "materiais",
   "equipamento", "equipamentos", "municipal", "municipais", "publico", "publica", "programa", "projeto",
   "atividade", "implantacao", "modernizacao", "revitalizacao", "adequacao", "melhoria", "para", "com", "dos",
-  "das", "nos", "nas", "geral", "gerais", "diversos", "outros",
+  "das", "nos", "nas", "geral", "gerais", "diversos", "outros", "teste", "consumo",
 ]);
+
+// Ações de pessoal e de benefícios a servidores: uma emenda individual de
+// custeio ou investimento não as financia, por mais que tenham dotação de
+// material ou de serviços. Nunca são a primeira opção e nunca contam como
+// aderentes ao objeto.
+export const ACOES_DE_PESSOAL = [
+  "beneficio ao trabalhador", "beneficios ao trabalhador", "vale alimentacao", "vale transporte", "auxilio alimentacao",
+  "folha de pagamento", "encargos sociais", "encargos gerais", "pessoal e encargos", "precatorio", "precatorios",
+  "sentencas judiciais", "divida", "amortizacao",
+];
+
+export const acaoDePessoal = (nomeNormalizado: string) => ACOES_DE_PESSOAL.some((p) => contem(nomeNormalizado, p));
 
 function area(areas: AreaAplicacao[], nome: string | null) {
   return nome ? areas.find((a) => a.nome === nome) ?? null : null;
@@ -28,6 +41,13 @@ function area(areas: AreaAplicacao[], nome: string | null) {
 export function naArea(uo: string | null | undefined, nomeArea: string | null, areas: AreaAplicacao[]): boolean {
   const a = area(areas, nomeArea);
   return !!a && a.orgaos.includes(String(uo ?? "").split(".")[0]);
+}
+
+// Área a que a unidade do destino pertence (Saúde para 13.xx e 20.xx).
+export function areaDaUnidade(uo: string | null | undefined, areas: AreaAplicacao[]): string | null {
+  const org = String(uo ?? "").split(".")[0];
+  if (!org) return null;
+  return areas.find((a) => a.orgaos.includes(org))?.nome ?? null;
 }
 
 export type EntradaClassificacao = {
@@ -42,7 +62,11 @@ export type EntradaClassificacao = {
 // Encontra a dotação da LOA que comporta o objeto no destino. Nunca inventa:
 // sem prova de vínculo entre objeto e ação, devolve as opções e o motivo.
 export function classificar({ objeto, destino, execucao, pretendido, loa, catalogo }: EntradaClassificacao): Classificacao {
-  const obj = interpretar(objeto, catalogo.objetos);
+  // Entidade do terceiro setor não tem vínculo fixo: a secretaria vem do objeto.
+  const uoAlvo = destino.uo || null;
+  // A área do destino desempata termos de áreas diferentes no mesmo texto.
+  const areaDestino = areaDaUnidade(uoAlvo, catalogo.areas);
+  const obj = interpretar(objeto, catalogo.objetos, areaDestino);
   const vazio = {
     candidatas: [],
     naoReconhecido: false,
@@ -67,12 +91,16 @@ export function classificar({ objeto, destino, execucao, pretendido, loa, catalo
   const gnd = obj.natureza === "CAPITAL" ? "4" : "3";
   const mod = execucao === "INDIRETA" ? "50" : "90";
   const base = `${gnd === "4" ? "4.4" : "3.3"}.${mod}`;
-  // Entidade do terceiro setor não tem vínculo fixo: a secretaria vem do objeto.
-  const uoAlvo = destino.uo || null;
   const uoArea = area(catalogo.areas, obj.area)?.unidadePadrao ?? null;
   // Objeto que só cabe na sua própria área.
   const estrito = !!(obj.estrito && uoArea);
   const nomeArea = (uo: string | null) => (uo ? catalogo.unidades[uo] : null) ?? obj.area;
+  // A subfunção vem do objeto ("creche" → 365); sem ela, do tipo de destino
+  // ("EMEI Aida Rocha" → 365). EMEB atende os dois níveis e não sugere nenhuma.
+  const subfuncao = obj.subfuncao ?? destino.subfuncao ?? obj.subfuncaoSecundaria ?? null;
+  // Pistas de aderência: do objeto ("saude mental" para material terapêutico)
+  // e do tipo de destino ("CAPS" → "saude mental", "UBS" → "atencao basica").
+  const pistas = [...(obj.pistas ?? []), ...pistasDoDestino(destino.nome, null, catalogo.tiposDestino)].map(norm);
 
   // Objeto de área estrita indicado a unidade de outra área: incompatibilidade,
   // não classificação.
@@ -90,7 +118,7 @@ export function classificar({ objeto, destino, execucao, pretendido, loa, catalo
       uoArea,
       uoAreaNome: nomeArea(uoArea),
       estrito,
-      subfuncao: obj.subfuncao,
+      subfuncao,
     };
   }
 
@@ -100,22 +128,24 @@ export function classificar({ objeto, destino, execucao, pretendido, loa, catalo
   if (!uoAlvo && estrito) cand = cand.filter((d) => naArea(d.uo, obj.area, catalogo.areas));
 
   // Funil: elemento antes de subfunção — obra não vira equipamento por causa
-  // da subfunção.
+  // da subfunção. Elemento incerto (objeto inferido) não filtra: só pontua.
   let elementoRestringiu = false;
   let subfuncaoRestringiu = false;
-  const porElemento = cand.filter((d) => d.elem === obj.elemento);
-  if (porElemento.length) {
-    cand = porElemento;
-    elementoRestringiu = true;
-  } else if (obj.confianca === "exato" && obj.natureza === "CAPITAL" && mod !== "50") {
-    // Em investimento, obra (51) e equipamento (52) não se substituem: sem
-    // linha do elemento do objeto, nenhuma dotação comporta — é óbice, não uma
-    // ambulância paga pela dotação de reforma do hospital.
-    cand = [];
+  if (!obj.elementoIncerto) {
+    const porElemento = cand.filter((d) => d.elem === obj.elemento);
+    if (porElemento.length) {
+      cand = porElemento;
+      elementoRestringiu = true;
+    } else if (obj.confianca === "exato" && obj.natureza === "CAPITAL" && mod !== "50") {
+      // Em investimento, obra (51) e equipamento (52) não se substituem: sem
+      // linha do elemento do objeto, nenhuma dotação comporta — é óbice, não uma
+      // ambulância paga pela dotação de reforma do hospital.
+      cand = [];
+    }
   }
   // Creche é 12.365, não 12.367: a subfunção restringe dentro do que sobrou.
-  if (obj.subfuncao) {
-    const porSubfuncao = cand.filter((d) => d.subf === obj.subfuncao);
+  if (subfuncao) {
+    const porSubfuncao = cand.filter((d) => d.subf === subfuncao);
     if (porSubfuncao.length) {
       cand = porSubfuncao;
       subfuncaoRestringiu = true;
@@ -139,15 +169,24 @@ export function classificar({ objeto, destino, execucao, pretendido, loa, catalo
         sobreposicao++;
       }
     }
+    for (const p of pistas) {
+      if (p && contem(nome, p)) {
+        s += 3;
+        sobreposicao++;
+      }
+    }
+    const pessoal = acaoDePessoal(nome);
+    if (pessoal) s -= 10;
     // Aderência mínima: o vínculo entre objeto e ação precisa ter alguma prova.
     const aderente =
-      sobreposicao > 0 ||
-      (!!obj.subfuncao && d.subf === obj.subfuncao) ||
-      (obj.estrito && !!uoArea && naArea(d.uo, obj.area, catalogo.areas) && d.elem === obj.elemento);
+      !pessoal &&
+      (sobreposicao > 0 ||
+        (!!subfuncao && d.subf === subfuncao) ||
+        (obj.estrito && !!uoArea && naArea(d.uo, obj.area, catalogo.areas) && d.elem === obj.elemento));
     if (obj.natureza === "CAPITAL" && d.tipo === "P") s += 1;
     if (obj.natureza === "CUSTEIO" && d.tipo === "A") s += 1;
     if (!uoAlvo && uoArea && naArea(d.uo, obj.area, catalogo.areas)) s += 5;
-    if (obj.subfuncao && d.subf === obj.subfuncao) s += 8;
+    if (subfuncao && d.subf === subfuncao) s += 8;
     return {
       ...d,
       pontos: s,
@@ -158,7 +197,15 @@ export function classificar({ objeto, destino, execucao, pretendido, loa, catalo
       abaixoDoPretendido: pretendido > 0 && pretendido > d.autorizado,
     };
   });
-  pontuadas.sort((a, b) => b.pontos - a.pontos || b.autorizado - a.autorizado);
+  // Aderência antes de pontos, pontos antes de valor: a maior dotação da
+  // unidade nunca vence só por ser a maior.
+  pontuadas.sort(
+    (a, b) =>
+      Number(b.aderente) - Number(a.aderente) ||
+      b.sobreposicao - a.sobreposicao ||
+      b.pontos - a.pontos ||
+      b.autorizado - a.autorizado
+  );
 
   const naoReconhecido = obj.confianca === "inferido";
   const comum = {
@@ -175,7 +222,7 @@ export function classificar({ objeto, destino, execucao, pretendido, loa, catalo
     uoArea,
     uoAreaNome: nomeArea(uoArea),
     estrito,
-    subfuncao: obj.subfuncao,
+    subfuncao,
     subfuncaoRestringiu,
     elementoRestringiu,
   };
@@ -190,32 +237,38 @@ export function classificar({ objeto, destino, execucao, pretendido, loa, catalo
     const proximas = [...mesmoElemento.slice(0, 3), ...daUnidade].slice(0, 4);
     return { ...comum, situacao: "OBICE", proximas };
   }
+  // Só o que tem o elemento do objeto é oferecido como opção. Ações de pessoal
+  // e benefícios nunca são opção.
+  const doElemento = pontuadas.filter((d) => d.elem === obj.elemento && !acaoDePessoal(norm(d.nome)));
   if (naoReconhecido) {
     // O motor sabe apenas se é custeio ou capital: não pode fingir precisão.
     return {
       ...comum,
       situacao: "VALIDAR",
-      opcoes: pontuadas.slice(0, 6),
+      opcoes: (doElemento.length ? doElemento : pontuadas.filter((d) => !acaoDePessoal(norm(d.nome)))).slice(0, 6),
       motivo:
         "O objeto descrito não corresponde a nenhum item da biblioteca; o sistema identificou apenas a natureza da despesa.",
     };
   }
   if (!pontuadas[0].aderente) {
+    // Nada verificado contra o objeto: só o que tem o elemento certo pode ser
+    // escolhido, e nada de ação sem relação como candidata válida.
     return {
       ...comum,
       situacao: "VALIDAR",
       semAderencia: true,
-      opcoes: pontuadas.slice(0, 6),
+      opcoes: doElemento.slice(0, 6),
       motivo:
         "Nenhuma ação da unidade menciona o objeto nem corresponde à sua subfunção. " +
         "A compatibilidade é apenas de natureza da despesa, o que não basta para enquadrar.",
     };
   }
-  if (pontuadas.length > 1 && pontuadas[0].pontos - pontuadas[1].pontos <= 1) {
+  const aderentes = pontuadas.filter((d) => d.aderente);
+  if (aderentes.length > 1 && aderentes[0].pontos - aderentes[1].pontos <= 1) {
     return {
       ...comum,
       situacao: "VALIDAR",
-      opcoes: pontuadas.slice(0, 6),
+      opcoes: aderentes.slice(0, 6),
       motivo: "Mais de uma ação tem aderência ao objeto e nenhuma é mais específica que a outra.",
     };
   }
@@ -227,8 +280,8 @@ export function classificar({ objeto, destino, execucao, pretendido, loa, catalo
     porQue:
       sel.sobreposicao > 0
         ? "A denominação da ação menciona o objeto"
-        : obj.subfuncao && sel.subf === obj.subfuncao
-          ? `A ação está na subfunção ${obj.subfuncao}, a que corresponde ao objeto`
+        : subfuncao && sel.subf === subfuncao
+          ? `A ação está na subfunção ${subfuncao}, a que corresponde ao objeto`
           : "Área e elemento de despesa coincidem exatamente com o objeto",
   };
 }
@@ -254,7 +307,7 @@ export function dotacaoDe(c: Classificacao | null, s: Selecao): Candidata | null
   if (c.situacao === "OK") return c.selecionada;
   const e = s.escolha === "PROPONENTE" ? escolhida(c, s) : null;
   if (e) return e;
-  return c.candidatas[0] ?? null;
+  return c.opcoes[0] ?? c.candidatas[0] ?? null;
 }
 
 // Classificação que permite seguir para o plano de trabalho. ÓBICE, CONFLITO e

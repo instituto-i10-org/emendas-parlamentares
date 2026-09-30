@@ -1,5 +1,5 @@
 {
- "observacao": "Biblioteca de objetos do motor RIEP (protótipo v9 do Dr. Emerson). O termo mais longo reconhecido define a natureza; verbos de obra e marcadores de custeio podem prevalecer.",
+ "observacao": "Biblioteca de objetos do motor RIEP (protótipo v9 do Dr. Emerson). O termo mais longo reconhecido define a natureza; verbos de obra e marcadores de custeio podem prevalecer. Pistas: palavras que, no nome da ação, provam aderência ao objeto ou ao tipo de destino. Tipos de destino: reconhecidos pelo nome do equipamento; sugerem subfunção (EMEI → 365) e pistas (CAPS → saúde mental).",
  "areas": [
   {
    "nome": "Saúde",
@@ -94,7 +94,12 @@
    "estrito": true,
    "explicacao": "veículo de remoção · bem permanente",
    "area": "Saúde",
-   "ordem": 1
+   "ordem": 1,
+   "pistas": [
+    "urgencia",
+    "samu",
+    "atencao basica"
+   ]
   },
   {
    "rotulo": "Equipamento hospitalar",
@@ -115,7 +120,8 @@
    "estrito": true,
    "explicacao": "bem permanente",
    "area": "Saúde",
-   "ordem": 2
+   "ordem": 2,
+   "pistas": []
   },
   {
    "rotulo": "Equipamento odontológico",
@@ -132,7 +138,8 @@
    "estrito": true,
    "explicacao": "bem permanente",
    "area": "Saúde",
-   "ordem": 3
+   "ordem": 3,
+   "pistas": []
   },
   {
    "rotulo": "Medicamentos",
@@ -149,7 +156,12 @@
    "estrito": true,
    "explicacao": "material de consumo",
    "area": "Saúde",
-   "ordem": 4
+   "ordem": 4,
+   "pistas": [
+    "farmaceutica",
+    "medicamento",
+    "farmacia"
+   ]
   },
   {
    "rotulo": "Material hospitalar",
@@ -157,7 +169,12 @@
     "material hospitalar",
     "insumo hospitalar",
     "material ambulatorial",
-    "material medico"
+    "material medico",
+    "material de consumo ambulatorial",
+    "material ambulatorial de consumo",
+    "material de consumo hospitalar",
+    "insumo ambulatorial",
+    "insumos ambulatoriais"
    ],
    "natureza": "CUSTEIO",
    "elemento": "30",
@@ -166,7 +183,13 @@
    "estrito": true,
    "explicacao": "material de consumo",
    "area": "Saúde",
-   "ordem": 5
+   "ordem": 5,
+   "pistas": [
+    "atencao basica",
+    "atendimento",
+    "ambulatorial",
+    "hospitalar"
+   ]
   },
   {
    "rotulo": "Serviços de saúde",
@@ -189,7 +212,8 @@
    "estrito": true,
    "explicacao": "serviço de terceiros",
    "area": "Saúde",
-   "ordem": 6
+   "ordem": 6,
+   "pistas": []
   },
   {
    "rotulo": "Obra em unidade de saúde",
@@ -206,7 +230,8 @@
    "estrito": true,
    "explicacao": "obra",
    "area": "Saúde",
-   "ordem": 7
+   "ordem": 7,
+   "pistas": []
   },
   {
    "rotulo": "Ônibus escolar",
@@ -221,7 +246,8 @@
    "estrito": true,
    "explicacao": "bem permanente",
    "area": "Educação",
-   "ordem": 8
+   "ordem": 8,
+   "pistas": []
   },
   {
    "rotulo": "Equipamento de informática",
@@ -239,7 +265,8 @@
    "estrito": false,
    "explicacao": "bem permanente",
    "area": "Educação",
-   "ordem": 9
+   "ordem": 9,
+   "pistas": []
   },
   {
    "rotulo": "Mobiliário",
@@ -257,7 +284,8 @@
    "estrito": false,
    "explicacao": "bem permanente",
    "area": "Educação",
-   "ordem": 10
+   "ordem": 10,
+   "pistas": []
   },
   {
    "rotulo": "Climatização",
@@ -274,7 +302,8 @@
    "estrito": false,
    "explicacao": "bem permanente",
    "area": "Educação",
-   "ordem": 11
+   "ordem": 11,
+   "pistas": []
   },
   {
    "rotulo": "Playground",
@@ -290,7 +319,8 @@
    "estrito": false,
    "explicacao": "bem permanente",
    "area": "Educação",
-   "ordem": 12
+   "ordem": 12,
+   "pistas": []
   },
   {
    "rotulo": "Material escolar",
@@ -307,7 +337,11 @@
    "estrito": true,
    "explicacao": "material de consumo",
    "area": "Educação",
-   "ordem": 13
+   "ordem": 13,
+   "pistas": [
+    "funcionamento das atividades da educacao",
+    "educacao"
+   ]
   },
   {
    "rotulo": "Alimentação escolar",
@@ -324,7 +358,11 @@
    "estrito": true,
    "explicacao": "material de consumo",
    "area": "Educação",
-   "ordem": 14
+   "ordem": 14,
+   "pistas": [
+    "alimentacao escolar",
+    "merenda"
+   ]
   },
   {
    "rotulo": "Tecnologia da informação",
@@ -341,7 +379,8 @@
    "estrito": false,
    "explicacao": "serviço de TIC",
    "area": "Educação",
-   "ordem": 15
+   "ordem": 15,
+   "pistas": []
   },
   {
    "rotulo": "Creche ou pré-escola",
@@ -360,16 +399,17 @@
    "estrito": true,
    "explicacao": "obra",
    "area": "Educação",
-   "ordem": 16
+   "ordem": 16,
+   "pistas": []
   },
   {
    "rotulo": "Obra escolar",
    "termos": [
     "escola",
-    "emeb",
     "quadra escolar",
     "cobertura de patio",
-    "ensino fundamental"
+    "ensino fundamental",
+    "emef"
    ],
    "natureza": "CAPITAL",
    "elemento": "51",
@@ -378,7 +418,8 @@
    "estrito": true,
    "explicacao": "obra",
    "area": "Educação",
-   "ordem": 17
+   "ordem": 17,
+   "pistas": []
   },
   {
    "rotulo": "Oficinas e formação artística",
@@ -399,7 +440,8 @@
    "estrito": true,
    "explicacao": "serviço continuado",
    "area": "Cultura",
-   "ordem": 18
+   "ordem": 18,
+   "pistas": []
   },
   {
    "rotulo": "Curso ou capacitação",
@@ -418,7 +460,8 @@
    "estrito": false,
    "explicacao": "serviço",
    "area": null,
-   "ordem": 19
+   "ordem": 19,
+   "pistas": []
   },
   {
    "rotulo": "Evento cultural",
@@ -436,7 +479,8 @@
    "estrito": true,
    "explicacao": "serviço",
    "area": "Cultura",
-   "ordem": 20
+   "ordem": 20,
+   "pistas": []
   },
   {
    "rotulo": "Instrumentos musicais",
@@ -452,7 +496,8 @@
    "estrito": true,
    "explicacao": "bem permanente",
    "area": "Cultura",
-   "ordem": 21
+   "ordem": 21,
+   "pistas": []
   },
   {
    "rotulo": "Obra em equipamento cultural",
@@ -469,7 +514,8 @@
    "estrito": true,
    "explicacao": "obra",
    "area": "Cultura",
-   "ordem": 22
+   "ordem": 22,
+   "pistas": []
   },
   {
    "rotulo": "Material esportivo",
@@ -485,7 +531,8 @@
    "estrito": true,
    "explicacao": "material de consumo",
    "area": "Esporte",
-   "ordem": 23
+   "ordem": 23,
+   "pistas": []
   },
   {
    "rotulo": "Academia ao ar livre",
@@ -501,7 +548,8 @@
    "estrito": true,
    "explicacao": "bem permanente",
    "area": "Esporte",
-   "ordem": 24
+   "ordem": 24,
+   "pistas": []
   },
   {
    "rotulo": "Obra esportiva",
@@ -520,7 +568,8 @@
    "estrito": true,
    "explicacao": "obra",
    "area": "Esporte",
-   "ordem": 25
+   "ordem": 25,
+   "pistas": []
   },
   {
    "rotulo": "Obra urbana",
@@ -540,7 +589,8 @@
    "estrito": true,
    "explicacao": "obra",
    "area": "Urbanismo",
-   "ordem": 26
+   "ordem": 26,
+   "pistas": []
   },
   {
    "rotulo": "Iluminação pública",
@@ -556,7 +606,8 @@
    "estrito": true,
    "explicacao": "bem permanente",
    "area": "Urbanismo",
-   "ordem": 27
+   "ordem": 27,
+   "pistas": []
   },
   {
    "rotulo": "Videomonitoramento",
@@ -573,7 +624,8 @@
    "estrito": true,
    "explicacao": "bem permanente",
    "area": "Segurança",
-   "ordem": 28
+   "ordem": 28,
+   "pistas": []
   },
   {
    "rotulo": "Máquina rodoviária",
@@ -593,7 +645,8 @@
    "estrito": true,
    "explicacao": "bem permanente",
    "area": "Estradas",
-   "ordem": 29
+   "ordem": 29,
+   "pistas": []
   },
   {
    "rotulo": "Obra em estrada rural",
@@ -611,7 +664,8 @@
    "estrito": true,
    "explicacao": "obra",
    "area": "Estradas",
-   "ordem": 30
+   "ordem": 30,
+   "pistas": []
   },
   {
    "rotulo": "Serviço socioassistencial",
@@ -630,7 +684,8 @@
    "estrito": true,
    "explicacao": "serviço continuado",
    "area": "Assistência social",
-   "ordem": 31
+   "ordem": 31,
+   "pistas": []
   },
   {
    "rotulo": "Manutenção de CRAS/CREAS",
@@ -645,7 +700,8 @@
    "estrito": true,
    "explicacao": "material de consumo",
    "area": "Assistência social",
-   "ordem": 32
+   "ordem": 32,
+   "pistas": []
   },
   {
    "rotulo": "Veículo",
@@ -664,7 +720,8 @@
    "estrito": false,
    "explicacao": "bem permanente",
    "area": "Geral",
-   "ordem": 33
+   "ordem": 33,
+   "pistas": []
   },
   {
    "rotulo": "Combustível",
@@ -680,7 +737,294 @@
    "estrito": false,
    "explicacao": "material de consumo",
    "area": "Geral",
-   "ordem": 34
+   "ordem": 34,
+   "pistas": []
+  },
+  {
+   "rotulo": "Material de consumo",
+   "termos": [
+    "material de consumo",
+    "materiais de consumo",
+    "insumo",
+    "insumos",
+    "suprimento",
+    "suprimentos"
+   ],
+   "natureza": "CUSTEIO",
+   "elemento": "30",
+   "divisibilidade": "DIVISIVEL",
+   "subfuncao": null,
+   "estrito": false,
+   "explicacao": "material de uso corrente · custeio",
+   "area": null,
+   "ordem": 35,
+   "pistas": []
+  },
+  {
+   "rotulo": "Material de expediente",
+   "termos": [
+    "material de expediente",
+    "papelaria",
+    "material de escritorio",
+    "materiais de escritorio"
+   ],
+   "natureza": "CUSTEIO",
+   "elemento": "30",
+   "divisibilidade": "DIVISIVEL",
+   "subfuncao": null,
+   "estrito": false,
+   "explicacao": "papel, impressos e afins · custeio",
+   "area": null,
+   "ordem": 36,
+   "pistas": []
+  },
+  {
+   "rotulo": "Material de higiene e limpeza",
+   "termos": [
+    "material de higiene",
+    "materiais de higiene",
+    "material de limpeza",
+    "materiais de limpeza",
+    "produto de limpeza",
+    "produtos de limpeza",
+    "higiene e limpeza"
+   ],
+   "natureza": "CUSTEIO",
+   "elemento": "30",
+   "divisibilidade": "DIVISIVEL",
+   "subfuncao": null,
+   "estrito": false,
+   "explicacao": "limpeza e higiene do equipamento · custeio",
+   "area": null,
+   "ordem": 37,
+   "pistas": []
+  },
+  {
+   "rotulo": "Material odontológico",
+   "termos": [
+    "material odontologico",
+    "materiais odontologicos",
+    "insumo odontologico",
+    "insumos odontologicos",
+    "material de odontologia"
+   ],
+   "natureza": "CUSTEIO",
+   "elemento": "30",
+   "divisibilidade": "DIVISIVEL",
+   "subfuncao": "301",
+   "estrito": true,
+   "explicacao": "insumo da atenção odontológica · custeio",
+   "area": "Saúde",
+   "ordem": 38,
+   "pistas": [
+    "odontolog",
+    "bucal",
+    "especialidades"
+   ]
+  },
+  {
+   "rotulo": "Material para atividades terapêuticas",
+   "termos": [
+    "material terapeutico",
+    "materiais terapeuticos",
+    "atividade terapeutica",
+    "atividades terapeuticas",
+    "oficina terapeutica",
+    "oficinas terapeuticas",
+    "material para oficinas terapeuticas"
+   ],
+   "natureza": "CUSTEIO",
+   "elemento": "30",
+   "divisibilidade": "DIVISIVEL",
+   "subfuncao": "302",
+   "estrito": true,
+   "explicacao": "insumo da Rede de Atenção Psicossocial · custeio",
+   "area": "Saúde",
+   "ordem": 39,
+   "pistas": [
+    "saude mental",
+    "psicossocial",
+    "caps"
+   ]
+  },
+  {
+   "rotulo": "Material para promoção da saúde",
+   "termos": [
+    "atividade fisica",
+    "atividades fisicas",
+    "praticas corporais",
+    "pratica corporal",
+    "academia da saude",
+    "promocao da saude",
+    "material esportivo de consumo para atividade fisica"
+   ],
+   "natureza": "CUSTEIO",
+   "elemento": "30",
+   "divisibilidade": "DIVISIVEL",
+   "subfuncao": "301",
+   "estrito": true,
+   "explicacao": "insumo do Programa Academia da Saúde e das práticas corporais no SUS · custeio",
+   "area": "Saúde",
+   "ordem": 40,
+   "pistas": [
+    "atencao basica",
+    "promocao",
+    "academia"
+   ]
+  }
+ ],
+ "tiposDestino": [
+  {
+   "nome": "CAPS",
+   "padrao": "\\bcaps\\b|centro de atencao psicossocial",
+   "pistas": [
+    "saude mental",
+    "psicossocial"
+   ],
+   "subfuncao": "302"
+  },
+  {
+   "nome": "SAMU",
+   "padrao": "\\bsamu\\b|suporte (basico|avancado)",
+   "pistas": [
+    "urgencia",
+    "samu",
+    "atendimento movel"
+   ],
+   "subfuncao": "302"
+  },
+  {
+   "nome": "UBS / USF / ESF",
+   "padrao": "\\bubs\\b|\\busf\\b|\\besf\\b|unidade basica|unidade de saude da familia|posto de saude",
+   "pistas": [
+    "atencao basica",
+    "atendimentos"
+   ],
+   "subfuncao": "301"
+  },
+  {
+   "nome": "CEO",
+   "padrao": "\\bceo\\b|especialidades odontologicas",
+   "pistas": [
+    "odontolog",
+    "bucal",
+    "media/alta compl",
+    "especialidades"
+   ],
+   "subfuncao": "302"
+  },
+  {
+   "nome": "Hospital / pronto atendimento",
+   "padrao": "\\bhospital\\b|pronto socorro|pronto atendimento|\\bupa\\b",
+   "pistas": [
+    "hospitalar",
+    "pronto socorro",
+    "urgencia"
+   ],
+   "subfuncao": "302"
+  },
+  {
+   "nome": "Centro de saúde especializado",
+   "padrao": "centro de atendimento|centro de referencia|ambulatorio|policlinica",
+   "pistas": [
+    "ambulatorial",
+    "media/alta compl",
+    "atendimento"
+   ],
+   "subfuncao": "302"
+  },
+  {
+   "nome": "Academia da Saúde",
+   "padrao": "academia da saude",
+   "pistas": [
+    "atencao basica",
+    "promocao"
+   ],
+   "subfuncao": "301"
+  },
+  {
+   "nome": "Vigilância",
+   "padrao": "vigilancia",
+   "pistas": [
+    "vigilancia"
+   ],
+   "subfuncao": "304"
+  },
+  {
+   "nome": "EMEI",
+   "padrao": "\\bemei\\b|escola municipal de educacao infantil",
+   "pistas": [
+    "educacao infantil",
+    "funcionamento das atividades da educacao"
+   ],
+   "subfuncao": "365"
+  },
+  {
+   "nome": "CEI / creche",
+   "padrao": "\\bcei\\b|\\bcreche\\b|centro de educacao infantil",
+   "pistas": [
+    "educacao infantil",
+    "creche",
+    "funcionamento das atividades da educacao"
+   ],
+   "subfuncao": "365"
+  },
+  {
+   "nome": "EMEF",
+   "padrao": "\\bemef\\b|escola municipal de ensino fundamental",
+   "pistas": [
+    "ensino fundamental",
+    "funcionamento das atividades da educacao"
+   ],
+   "subfuncao": "361"
+  },
+  {
+   "nome": "EMEB",
+   "padrao": "\\bemeb\\b|escola municipal de ensino basico|escola municipal de educacao basica",
+   "pistas": [
+    "funcionamento das atividades da educacao",
+    "educacao"
+   ],
+   "subfuncao": null
+  },
+  {
+   "nome": "CRAS",
+   "padrao": "\\bcras\\b|centro de referencia de assistencia social",
+   "pistas": [
+    "assistencia comunitaria",
+    "suas",
+    "protecao social basica"
+   ],
+   "subfuncao": "244"
+  },
+  {
+   "nome": "CREAS",
+   "padrao": "\\bcreas\\b",
+   "pistas": [
+    "assistencia comunitaria",
+    "suas",
+    "protecao social especial"
+   ],
+   "subfuncao": "244"
+  },
+  {
+   "nome": "Cadastro Único",
+   "padrao": "cadastro unico|\\bc\\.?c\\.?s\\.?c\\b",
+   "pistas": [
+    "assistencia comunitaria",
+    "suas",
+    "cadastro"
+   ],
+   "subfuncao": "244"
+  },
+  {
+   "nome": "Conselho Tutelar",
+   "padrao": "conselho tutelar",
+   "pistas": [
+    "conselho tutelar",
+    "crianca"
+   ],
+   "subfuncao": "243"
   }
  ]
 }

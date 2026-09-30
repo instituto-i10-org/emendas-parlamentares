@@ -24,6 +24,7 @@ import {
 } from "@/lib/riep";
 import { cn } from "@/lib/utils";
 import { Etapa1 } from "./etapa1";
+import { Aviso } from "./ui";
 import { Etapa2 } from "./etapa2";
 import { Etapa3 } from "./etapa3";
 import { Resumo } from "./resumo";
@@ -100,6 +101,7 @@ export function EditorEmenda({
   const [etapa, setEtapa] = useState(1);
   const [destinos, setDestinos] = useState(ctx.destinos);
   const [gravando, setGravando] = useState(false);
+  const [duplicata, setDuplicata] = useState<{ numero: number | null; objeto: string; status: string } | null>(null);
   const [alterado, setAlterado] = useState(false);
   const executorAuto = useRef<string | null>(null);
 
@@ -155,7 +157,7 @@ export function EditorEmenda({
     window.scrollTo({ top: 0 });
   }, [etapa]);
 
-  async function gravar(submeter = false) {
+  async function gravar(submeter = false, confirmarDuplicata = false) {
     if (gravando) return;
     if (submeter && !d.resumo.pode) {
       toast("Revise as pendências antes de submeter.");
@@ -163,11 +165,16 @@ export function EditorEmenda({
     }
     setGravando(true);
     try {
-      const r = await salvarEmenda(e, submeter);
+      const r = await salvarEmenda(confirmarDuplicata ? { ...e, confirmarDuplicata: true } : e, submeter);
       if (!r.ok) {
+        if (r.duplicata) {
+          setDuplicata(r.duplicata);
+          return;
+        }
         toast.error(r.erro);
         return;
       }
+      setDuplicata(null);
       setE((atual) => ({ ...atual, id: r.id, revisao: r.revisao }));
       setAlterado(false);
       if (submeter) {
@@ -240,9 +247,24 @@ export function EditorEmenda({
         </>
       ) : (
         <>
+          {duplicata ? (
+            <div className="flex-[1_1_100%]">
+            <Aviso tipo="warn">
+              <b>Possível duplicata.</b> Você já submeteu a emenda nº {duplicata.numero ?? "sem número"} ({duplicata.status.toLowerCase()}) com o mesmo
+              destino e o mesmo objeto: «{duplicata.objeto}». Se for outra emenda de fato, confirme para submeter mesmo assim.{" "}
+              <button type="button" className="font-bold text-navy underline-offset-2 hover:underline" disabled={gravando} onClick={() => gravar(true, true)}>
+                Submeter mesmo assim
+              </button>
+              {" · "}
+              <button type="button" className="font-bold text-navy underline-offset-2 hover:underline" onClick={() => setDuplicata(null)}>
+                Cancelar
+              </button>
+            </Aviso>
+            </div>
+          ) : null}
           <Button
             variant="ok"
-            disabled={!d.resumo.pode || gravando}
+            disabled={!d.resumo.pode || gravando || !!duplicata}
             onClick={() => gravar(true)}
             className="max-md:flex-[1_1_100%]"
           >

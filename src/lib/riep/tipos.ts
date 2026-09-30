@@ -41,6 +41,21 @@ export type ObjetoBiblioteca = {
   estrito: boolean;
   explicacao: string;
   area: string | null;
+  // Palavras que, no nome da ação, provam aderência ao objeto mesmo sem
+  // aparecerem no texto da emenda ("saude mental" para material terapêutico).
+  pistas?: string[];
+};
+
+// Tipo de equipamento público, reconhecido pelo nome do destino: o que ele
+// sugere de subfunção (EMEI → 365) e que palavras no nome da ação provam
+// aderência ("CAPS" → "saude mental").
+export type TipoDestino = {
+  nome: string;
+  // Expressão regular aplicada ao nome e ao nome oficial, sem acentos e em
+  // minúsculas.
+  padrao: string;
+  pistas: string[];
+  subfuncao: string | null;
 };
 
 export type AreaAplicacao = {
@@ -54,6 +69,7 @@ export type Catalogo = {
   areas: AreaAplicacao[];
   // Nome das unidades orçamentárias por código ("13.01").
   unidades: Record<string, string>;
+  tiposDestino?: TipoDestino[];
 };
 
 // --- orçamento ---------------------------------------------------------------
@@ -109,6 +125,8 @@ export type DestinoMotor = {
   // Cadastrado por usuário (não veio da base oficial).
   novo: boolean;
   pendenciaHabilitacao: string | null;
+  // Subfunção que o equipamento sugere quando o objeto não a define.
+  subfuncao?: string | null;
 };
 
 // --- configuração do exercício ----------------------------------------------
@@ -147,6 +165,13 @@ export type Interpretacao = {
   subfuncao: string | null;
   confianca: "exato" | "inferido";
   termo?: string;
+  // Objeto inferido só pela natureza: o elemento é uma preferência (material
+  // → 30, serviço → 39), não um fato — a classificação não filtra por ele.
+  elementoIncerto?: boolean;
+  pistas?: string[];
+  // Subfunção sugerida por OUTRO termo do texto ("creche" em "mobiliário para a
+  // creche"). Vale só quando nem o objeto nem o destino definem uma.
+  subfuncaoSecundaria?: string | null;
 };
 
 export type Candidata = DotacaoMotor & {

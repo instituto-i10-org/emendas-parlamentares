@@ -784,11 +784,18 @@ function ResultadoClassificacao({
             }
           >
             {c.semAderencia ? (
-              <>
-                Existem {c.opcoes.length} dotações da unidade que aceitam despesa de {natureza}, mas <b>nenhuma delas trata do que a emenda entrega</b>. O
-                sistema não enquadra por semelhança de natureza. Reescreva o objeto, indique outro destino, ou escolha assumindo a responsabilidade pelo
-                enquadramento.
-              </>
+              c.opcoes.length ? (
+                <>
+                  Existem {c.opcoes.length} dotações da unidade com o elemento de despesa do objeto, mas <b>nenhuma delas trata do que a emenda entrega</b>.
+                  O sistema não enquadra por semelhança de natureza. Reescreva o objeto, indique outro destino, ou escolha assumindo a responsabilidade
+                  pelo enquadramento.
+                </>
+              ) : (
+                <>
+                  <b>Nenhuma dotação da unidade tem relação com o objeto</b> nem o elemento de despesa que ele pede. O sistema não oferece candidatas
+                  sem relação. Reescreva o objeto, indique outro destino, ou deixe a definição para a análise técnica.
+                </>
+              )
             ) : c.naoReconhecido ? (
               <>
                 O sistema identificou apenas que a despesa é de <b>{natureza}</b> — não reconheceu <i>o que</i> a emenda entrega, então não pode escolher a
@@ -808,11 +815,13 @@ function ResultadoClassificacao({
           {e.selecao.escolha === "ANALISE_TECNICA" ? (
             <Aviso tipo="info">
               A definição da dotação ficou com a <b>análise técnica</b>. Você pode seguir para o plano de trabalho.{" "}
-              <button type="button" className="font-bold text-navy underline-offset-2 hover:underline" onClick={() => atualizar({ selecao: { escolha: null, dotacaoId: null } })}>
-                Escolher uma dotação
-              </button>
+              {c.opcoes.length ? (
+                <button type="button" className="font-bold text-navy underline-offset-2 hover:underline" onClick={() => atualizar({ selecao: { escolha: null, dotacaoId: null } })}>
+                  Escolher uma dotação
+                </button>
+              ) : null}
             </Aviso>
-          ) : (
+          ) : !c.opcoes.length ? null : (
             <div className="overflow-hidden rounded-box bg-soft">
               <div className="px-4 py-3 text-xs font-semibold text-muted-foreground">
                 {c.naoReconhecido || c.semAderencia ? (

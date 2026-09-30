@@ -85,6 +85,19 @@ export function validar(e: EstadoValidacao, ctx: ContextoValidacao): Checagem[] 
     add("bad", "Sem classificação", "Volte ao passo 1 e rode a análise — sem dotação compatível a emenda não pode ser submetida.");
   }
 
+  // O elemento do objeto e o da dotação gravada precisam coincidir, com ou sem
+  // memória de cálculo: material de consumo (30) não se paga por dotação de
+  // serviços (39), nem obra (51) por equipamento (52). Para entidade o
+  // elemento vem do instrumento e não se compara.
+  if (c?.objeto && c.objeto.confianca === "exato" && !c.objeto.elementoIncerto && d && d.mod !== "50" && d.elem !== c.objeto.elemento) {
+    add(
+      "bad",
+      "Elemento de despesa incompatível",
+      `O objeto «${c.objeto.rotulo}» é despesa do elemento ${c.objeto.elemento} e a dotação ${d.codigo} é do elemento ${d.elem}. ` +
+        "Troque a dotação no passo 1 ou reescreva o objeto para o que a dotação paga."
+    );
+  }
+
   const metasOk = e.metas.filter((m) => m.beneficiarios.trim() && m.unidade.trim() && m.quantidade > 0);
   if (metasOk.length) {
     add("ok", "Metas informadas", `${metasOk.length} linha(s) com beneficiário, unidade, meta física e forma de comprovação`);
@@ -123,11 +136,13 @@ export function validar(e: EstadoValidacao, ctx: ContextoValidacao): Checagem[] 
               `«${L.descricao}» — ` +
               (L.resultado === "nat"
                 ? `despesa de ${L.objeto!.natureza === "CAPITAL" ? "capital" : "custeio"} em dotação ${ac.gnd}.${ac.gnd}.${d.mod}.${d.elem}`
-                : `despesa de ${L.objeto!.area} e o objeto da emenda é de ${ac.area}`)
+                : L.resultado === "elem"
+                  ? `elemento ${L.objeto!.elemento} (${L.objeto!.rotulo}) em dotação do elemento ${d.elem}`
+                  : `despesa de ${L.objeto!.area} e o objeto da emenda é de ${ac.area}`)
           )
           .join(" · ") +
-          ". Divergência de natureza ou de área não é atenuada pelo valor da linha: " +
-          "ou o item sai da memória de cálculo, ou o objeto da emenda é reescrito no passo 1 para a finalidade que o item serve."
+          ". Divergência de natureza, de elemento ou de área não é atenuada pelo valor da linha: " +
+          "ou o item sai da memória de cálculo, ou a dotação e o objeto são revistos no passo 1 para a finalidade que o item serve."
       );
     } else {
       add("ok", "Itens compatíveis com o objeto", `${ac.linhas.length} linha(s) conferida(s) contra a classificação da emenda`);
@@ -159,6 +174,24 @@ export function validar(e: EstadoValidacao, ctx: ContextoValidacao): Checagem[] 
       "Referência de preço antiga",
       `${velhas.length} referência(s) anteriores a ${cfg.validadeReferenciaMeses} meses (${velhas.map((r) => r.codigo).join(", ")}). ` +
         "Pode ser a melhor disponível — apenas não passa despercebida."
+    );
+  }
+
+  // Painel de preços com amostra pequena: a mediana de uma compra só não é
+  // pesquisa de preços (Lei 14.133/2021, art. 23; IN SEGES 65/2021).
+  const AMOSTRA_MINIMA = 3;
+  const pequenas = e.referencias.filter((r) => {
+    if (r.tipo !== "PAINEL" && r.tipo !== "BANCO_PRECOS_SAUDE") return false;
+    const n = Number(String(r.campos.amostra ?? "").replace(/\D/g, ""));
+    return Number.isFinite(n) && n > 0 && n < AMOSTRA_MINIMA;
+  });
+  if (pequenas.length) {
+    add(
+      "warn",
+      "Amostra de preço pequena",
+      `${pequenas.map((r) => `${r.codigo} (${r.campos.amostra} compra${r.campos.amostra === "1" ? "" : "s"})`).join(", ")} — ` +
+        `a pesquisa de preços pede ao menos ${AMOSTRA_MINIMA} contratações (Lei 14.133/2021, art. 23; IN SEGES 65/2021). ` +
+        "Acrescente outra referência ou justifique na observação."
     );
   }
 
@@ -375,11 +408,14 @@ export function validar(e: EstadoValidacao, ctx: ContextoValidacao): Checagem[] 
         if (faltaS <= 0) {
           add("ok", "Reserva da saúde já cumprida", `${BRL(aplS)} aplicados em saúde, acima do mínimo de ${BRL(ps)}`);
         } else if (cfg.afericaoSaude === "GLOBAL") {
+          // A reserva da saúde é limite do que pode ir para as demais áreas,
+          // não obrigação de cada emenda: enquanto a cota restante ainda
+          // alcança o mínimo, é só informação.
           if (sobra >= faltaS)
             add(
-              "warn",
-              "Fora da reserva da saúde",
-              `Faltam ${BRL(faltaS)} para o mínimo em saúde e restam ${BRL(sobra)} de cota — alcançável, aferição global no conjunto das suas emendas`
+              "ok",
+              "Consome a parcela de demais áreas",
+              `Faltam ${BRL(faltaS)} para o mínimo em saúde e restam ${BRL(sobra)} de cota — o mínimo continua alcançável no conjunto das suas emendas`
             );
           else
             add(
