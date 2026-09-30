@@ -286,16 +286,26 @@ describe("A9 (complemento) — unidade do item e da referência", () => {
 
 describe("A6 — relevância da pesquisa de preço", () => {
   const lista = [
-    { descricao: "BETERRABA IN NATURA", amostra: 40 },
+    // Fichas técnicas longas que citam "material" e "consumo" soltos — o que o PNIGP devolve de verdade.
+    { descricao: "BETERRABA IN NATURA. ESCOVADA, DE PRIMEIRA QUALIDADE, ISENTA DE ENFERMIDADES, MATERIAL TERROSO E UMIDADE EXTERNA ANORMAL. EM CONDIÇÕES ADEQUADAS PARA O CONSUMO MEDIATO E IMEDIATO.", amostra: 40 },
     { descricao: "MATERIAL DE CONSUMO PARA ESCRITÓRIO", amostra: 1 },
-    { descricao: "TÊ PARA TUBO PEAD", amostra: 12 },
+    { descricao: "TÊ DE SERVIÇO INTEGRADO PARA TUBOS PEAD. A FERRAMENTA DE CORTE DEVE SER MONOLÍTICA, FABRICADA A PARTIR DE UM ÚNICO MATERIAL, INÓCUO À QUALIDADE DA ÁGUA PARA CONSUMO HUMANO.", amostra: 12 },
     { descricao: "MATERIAL DE CONSUMO HOSPITALAR - LUVAS", amostra: 7 },
     { descricao: "CONCRETO USINADO", amostra: 3 },
+    { descricao: "material de consumo", amostra: 1 },
   ];
-  it("mantém só o que menciona a consulta, mais amostra primeiro", () => {
+  it("só a expressão junta conta; palavras soltas em ficha técnica longa não", () => {
     const r = ordenarPorRelevancia("material de consumo", lista);
     expect(r.aproximados).toBe(false);
-    expect(r.itens.map((x) => x.descricao)).toEqual(["MATERIAL DE CONSUMO HOSPITALAR - LUVAS", "MATERIAL DE CONSUMO PARA ESCRITÓRIO"]);
+    expect(r.itens.map((x) => x.descricao)).toEqual([
+      "MATERIAL DE CONSUMO HOSPITALAR - LUVAS",
+      "MATERIAL DE CONSUMO PARA ESCRITÓRIO",
+      "material de consumo",
+    ]);
+  });
+  it("admite até duas palavras entre os termos e plural", () => {
+    const r = ordenarPorRelevancia("luva procedimento", [{ descricao: "LUVAS PARA PROCEDIMENTO NÃO CIRÚRGICO", amostra: 3 }, { descricao: "AVENTAL DESCARTÁVEL", amostra: 9 }]);
+    expect(r.itens.map((x) => x.descricao)).toEqual(["LUVAS PARA PROCEDIMENTO NÃO CIRÚRGICO"]);
   });
   it("sem correspondência nenhuma, devolve os originais marcados como aproximados", () => {
     const r = ordenarPorRelevancia("vacina", lista);
