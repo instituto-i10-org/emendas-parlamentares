@@ -12,6 +12,7 @@ import {
   alternarObjetoAtivo,
   criarNorma,
   definirPendenciaDestino,
+  definirSubfuncaoDestino,
   salvarArea,
   salvarObjeto,
 } from "@/lib/actions/config";
@@ -31,8 +32,27 @@ export type DestinoConfig = {
   origem: "BASE_OFICIAL" | "CADASTRO";
   ativo: boolean;
   pendencia: string | null;
+  subfuncao: string | null;
   emendas: number;
 };
+
+// Subfunções que um equipamento público costuma sugerir (Portaria MOG 42/1999).
+const SUBFUNCOES_SUGERIDAS: [string, string][] = [
+  ["", "Sem sugestão — o vereador escolhe"],
+  ["301", "301 · Atenção básica"],
+  ["302", "302 · Assistência hospitalar e ambulatorial"],
+  ["303", "303 · Suporte profilático e terapêutico"],
+  ["304", "304 · Vigilância sanitária"],
+  ["305", "305 · Vigilância epidemiológica"],
+  ["361", "361 · Ensino fundamental"],
+  ["365", "365 · Educação infantil"],
+  ["367", "367 · Educação especial"],
+  ["241", "241 · Assistência ao idoso"],
+  ["243", "243 · Assistência à criança e ao adolescente"],
+  ["244", "244 · Assistência comunitária"],
+  ["392", "392 · Difusão cultural"],
+  ["812", "812 · Desporto comunitário"],
+];
 
 export function AbaDestinos({ destinos }: { destinos: DestinoConfig[] }) {
   const [pend, setPend] = useState<DestinoConfig | null>(null);
@@ -62,9 +82,11 @@ export function AbaDestinos({ destinos }: { destinos: DestinoConfig[] }) {
                 <Selo tipo={d.origem === "CADASTRO" ? "info" : "neutro"}>{d.origem === "CADASTRO" ? "cadastrado" : "base oficial"}</Selo>
                 {!d.ativo ? <Selo tipo="warn">inativo</Selo> : null}
                 {d.pendencia ? <Selo tipo="bad">pendência: {d.pendencia}</Selo> : null}
+                {d.subfuncao ? <Selo tipo="info">subfunção {d.subfuncao}</Selo> : null}
                 {d.emendas ? <Selo>{d.emendas} emenda(s)</Selo> : null}
               </span>
             </div>
+            {d.execucao === "DIRETA" ? <SubfuncaoDestino destino={d} /> : null}
             {d.execucao === "INDIRETA" ? (
               <Button size="xs" variant="ghost" onClick={() => setPend(d)}>
                 Habilitação
@@ -76,6 +98,29 @@ export function AbaDestinos({ destinos }: { destinos: DestinoConfig[] }) {
       />
       <PendenciaDialog destino={pend} aoFechar={() => setPend(null)} />
     </Cartao>
+  );
+}
+
+// Seleção da subfunção sugerida, gravada ao mudar.
+function SubfuncaoDestino({ destino }: { destino: DestinoConfig }) {
+  const { pendente, executar } = useAcao();
+  return (
+    <label className="flex items-center gap-2 text-xs text-muted-foreground">
+      <span className="sr-only">Subfunção sugerida de {destino.nome}</span>
+      <select
+        aria-label={`Subfunção sugerida de ${destino.nome}`}
+        className="campo h-9 max-w-[260px] px-2 text-xs"
+        value={destino.subfuncao ?? ""}
+        disabled={pendente}
+        onChange={(e) => executar(() => definirSubfuncaoDestino(destino.id, e.target.value))}
+      >
+        {SUBFUNCOES_SUGERIDAS.map(([v, r]) => (
+          <option key={v} value={v}>
+            {r}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }
 

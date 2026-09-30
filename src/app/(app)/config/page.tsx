@@ -154,6 +154,7 @@ async function destinos() {
         origem: d.origem,
         ativo: d.ativo,
         pendencia: d.pendenciaHabilitacao,
+        subfuncao: d.subfuncaoSugerida,
         emendas: d._count.emendas,
       }))}
     />

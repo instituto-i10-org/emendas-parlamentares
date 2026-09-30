@@ -15,7 +15,9 @@ type Biblioteca = {
     explicacao: string;
     area: string | null;
     ordem: number;
+    pistas?: string[];
   }[];
+  tiposDestino?: { nome: string; padrao: string; pistas: string[]; subfuncao: string | null }[];
 };
 
 // Áreas de aplicação e biblioteca de objetos do motor de classificação.
@@ -35,8 +37,20 @@ export async function semearCatalogos(prisma: PrismaClient) {
 
   await prisma.objetoBiblioteca.deleteMany({});
   await prisma.objetoBiblioteca.createMany({
-    data: b.objetos.map(({ area, ...o }) => ({ ...o, areaId: area ? areaId.get(area) ?? null : null })),
+    data: b.objetos.map(({ area, pistas, ...o }) => ({ ...o, pistas: pistas ?? [], areaId: area ? areaId.get(area) ?? null : null })),
   });
 
-  return { areas: b.areas.length, objetos: b.objetos.length };
+  // Tipos de destino: o arquivo é a fonte; nome é a chave.
+  const tipos = b.tiposDestino ?? [];
+  for (const [i, t] of tipos.entries()) {
+    await prisma.tipoDestino.upsert({
+      where: { nome: t.nome },
+      update: { padrao: t.padrao, pistas: t.pistas, subfuncao: t.subfuncao, ordem: i + 1, ativo: true },
+      create: { nome: t.nome, padrao: t.padrao, pistas: t.pistas, subfuncao: t.subfuncao, ordem: i + 1 },
+    });
+  }
+  const nomes = new Set(tipos.map((t) => t.nome));
+  await prisma.tipoDestino.updateMany({ where: { nome: { notIn: [...nomes] } }, data: { ativo: false } });
+
+  return { areas: b.areas.length, objetos: b.objetos.length, tiposDestino: tipos.length };
 }

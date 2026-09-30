@@ -291,6 +291,17 @@ export async function alternarDestinoAtivo(id: string): Promise<Resultado> {
   return pronto();
 }
 
+// Subfunção que o equipamento sugere quando o objeto da emenda não a define
+// (EMEI → 365). Em branco, o motor oferece as subfunções da unidade.
+export async function definirSubfuncaoDestino(id: string, subfuncao: string): Promise<Resultado> {
+  const user = await exigir("administrarConfiguracoes");
+  if (falhou(user)) return user;
+  const codigo = /^\d{3}$/.test(subfuncao) ? subfuncao : null;
+  const d = await prisma.destino.update({ where: { id }, data: { subfuncaoSugerida: codigo } });
+  await registrarAuditoria({ usuarioId: user.id, entidade: "Destino", entidadeId: id, acao: "SUBFUNCAO_SUGERIDA", dadosDepois: { subfuncao: codigo, destino: d.nome } });
+  return pronto(codigo ? `Subfunção sugerida: ${codigo}.` : "Subfunção sugerida removida: o vereador escolhe entre as da unidade.");
+}
+
 export async function definirPendenciaDestino(id: string, pendencia: string): Promise<Resultado> {
   const user = await exigir("administrarConfiguracoes");
   if (falhou(user)) return user;

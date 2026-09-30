@@ -1,4 +1,6 @@
 import type { PrismaClient } from "../../src/generated/prisma/client";
+import { subfuncaoDoDestino } from "../../src/lib/riep/destino";
+import type { TipoDestino } from "../../src/lib/riep/tipos";
 import { lerDados } from "./dados";
 
 type DestinoJson = {
@@ -21,8 +23,12 @@ type DestinoJson = {
 // cadastrados por usuários não são tocados.
 export async function semearDestinos(prisma: PrismaClient) {
   const { destinos } = lerDados<{ destinos: DestinoJson[] }>("destinos-2026.json");
+  const { tiposDestino = [] } = lerDados<{ tiposDestino?: TipoDestino[] }>("biblioteca-objetos.json");
   for (const d of destinos) {
     const dados = {
+      // Sugerida pelo tipo de equipamento (EMEI → 365); quem editar o destino
+      // nas Configurações pode trocar.
+      subfuncaoSugerida: subfuncaoDoDestino(d.nome, d.nomeOficial, tiposDestino),
       nome: d.nome,
       nomeOficial: d.nomeOficial,
       execucao: d.execucao,
