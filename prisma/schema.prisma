@@ -851,6 +851,9 @@ model ItemEmenda {
   emendaId      String
   ordem         Int
   descricao     String
+  // Unidade de medida da quantidade ("kit", "caixa", "peça"). Comparada com a
+  // unidade da referência de preço apontada.
+  unidade       String?
   quantidade    Decimal @db.Decimal(18, 4)
   valorUnitario Decimal @db.Decimal(18, 2)
   referenciaId  String?

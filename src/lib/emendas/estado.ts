@@ -8,7 +8,7 @@ import type { EstadoValidacao, Evento, Execucao, Instrumento, ReferenciaPreco, S
 // ============================================================================
 
 export type MetaForm = { beneficiarios: string; unidade: string; quantidade: string };
-export type ItemForm = { descricao: string; quantidade: string; valorUnitario: string; referencia: string | null };
+export type ItemForm = { descricao: string; unidade: string; quantidade: string; valorUnitario: string; referencia: string | null };
 
 export type EstadoEmenda = {
   id: string | null;
@@ -56,7 +56,7 @@ export const estadoInicial = (): EstadoEmenda => ({
   etapas: "",
   etapasEditadas: false,
   metas: [{ beneficiarios: "", unidade: "", quantidade: "" }],
-  itens: [{ descricao: "", quantidade: "1", valorUnitario: "", referencia: null }],
+  itens: [{ descricao: "", unidade: "", quantidade: "1", valorUnitario: "", referencia: null }],
   referencias: [],
   parcelas: [],
   quadro: {},
@@ -108,6 +108,7 @@ export function paraValidacao(
     })),
     itens: e.itens.map((i) => ({
       descricao: i.descricao,
+      unidade: i.unidade,
       quantidade: lerNumero(i.quantidade),
       valorUnitario: lerNumero(i.valorUnitario),
       referencia: i.referencia,
@@ -177,6 +178,7 @@ export const estadoSchema = z.object({
     .array(
       z.object({
         descricao: texto(500),
+        unidade: texto(60).optional().default(""),
         quantidade: numeroTexto,
         valorUnitario: numeroTexto,
         referencia: z.string().max(8).nullable(),

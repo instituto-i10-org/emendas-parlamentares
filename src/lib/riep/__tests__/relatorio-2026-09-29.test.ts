@@ -266,6 +266,23 @@ describe("A9 — amostra mínima da referência de painel", () => {
   });
 });
 
+describe("A9 (complemento) — unidade do item e da referência", () => {
+  const base = () => estado("[TESTE 03] Custeio de material de consumo para a UBS Zona Norte", "UBS Zona Norte", "material de consumo");
+  const em30 = (e: EstadoValidacao) => comDotacao(e, (d) => d.uo === "13.01" && d.elem === "30");
+  it("item em caixa apontando referência por peça avisa", () => {
+    const e = base();
+    e.itens = [{ ...e.itens[0], unidade: "caixa" }];
+    expect(titulos(validar(em30(e), ctx), "warn")).toContain("Unidade do item difere da referência");
+  });
+  it("mesma unidade, abreviada ou no plural, não avisa; item sem unidade também não", () => {
+    const e = base();
+    e.itens = [{ ...e.itens[0], unidade: "peças" }];
+    expect(titulos(validar(em30(e), ctx), "warn")).not.toContain("Unidade do item difere da referência");
+    e.itens = [{ ...e.itens[0], unidade: "" }];
+    expect(titulos(validar(em30(e), ctx), "warn")).not.toContain("Unidade do item difere da referência");
+  });
+});
+
 describe("A6 — relevância da pesquisa de preço", () => {
   const lista = [
     { descricao: "BETERRABA IN NATURA", amostra: 40 },

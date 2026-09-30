@@ -3,6 +3,8 @@ import type { Candidata, Classificacao, Interpretacao, ObjetoBiblioteca } from "
 
 export type ItemCalculo = {
   descricao: string;
+  // Unidade de medida da quantidade; comparada com a da referência apontada.
+  unidade?: string;
   quantidade: number;
   valorUnitario: number;
   referencia: string | null;

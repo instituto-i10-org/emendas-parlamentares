@@ -212,6 +212,7 @@ export async function salvarEmenda(entrada: EstadoEmenda, submeter = false): Pro
           emendaId: emenda.id,
           ordem,
           descricao: i.descricao.trim(),
+          unidade: (i.unidade ?? "").trim() || null,
           quantidade: lerNumero(i.quantidade),
           valorUnitario: lerNumero(i.valorUnitario),
           referenciaId: i.referencia ? refId.get(i.referencia) ?? null : null,

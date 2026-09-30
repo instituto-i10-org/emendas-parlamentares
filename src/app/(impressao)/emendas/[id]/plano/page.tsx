@@ -145,7 +145,7 @@ export default async function PlanoPage({ params }: { params: Promise<{ id: stri
                 <tr key={i.id} className="border-b border-hair align-top">
                   <td className="py-1.5">{i.descricao}</td>
                   <td className="pl-3 text-right whitespace-nowrap tnum">
-                    {i.quantidade.toNumber().toLocaleString("pt-BR")} {i.referencia?.unidade ?? ""}
+                    {i.quantidade.toNumber().toLocaleString("pt-BR")} {i.unidade ?? i.referencia?.unidade ?? ""}
                   </td>
                   <td className="pl-3 text-right whitespace-nowrap tnum">{BRL(i.valorUnitario.toNumber())}</td>
                   <td className="pl-3 text-right whitespace-nowrap tnum">{BRL(i.quantidade.toNumber() * i.valorUnitario.toNumber())}</td>

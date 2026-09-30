@@ -13,7 +13,7 @@ Observações da execução:
 - Os Anexos da lei trazem também o QDD consolidado de Câmara, SAMAE, FEG e Hospital, em formato compacto. O extrator cobre as duas fontes: 857 fichas, 28 órgãos conciliados ao centavo com o Anexo 2.
 - As dotações continuam no instrumento "PL 275/2025", porque é ele que o app usa como base das emendas; a base é a do QDD sancionado e o rótulo na tela já diz "Lei 6.246/2025".
 - Tipos de destino (EMEI, CAPS, UBS...) viraram catálogo em banco (`TipoDestino`): sugerem a subfunção e dão ao motor pistas de aderência ("CAPS" → "saúde mental"). Editáveis na aba Destinos.
-- G6 (unidade da referência ≠ unidade do item) não foi implementado: os itens da memória de cálculo não têm campo de unidade. Fica registrado como fora do escopo.
+- G6 (unidade da referência ≠ unidade do item) foi implementado em seguida, com autorização do Diego: o item da memória de cálculo ganhou campo de unidade (preenchido pela referência aprovada), a validação avisa quando difere da unidade da referência, e a impressão do plano mostra a unidade do item.
 
 ---
 

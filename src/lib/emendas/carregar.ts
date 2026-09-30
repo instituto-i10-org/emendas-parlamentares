@@ -76,6 +76,8 @@ export function paraEstado(x: EmendaCompleta): EstadoEmenda {
     itens: x.itens.length
       ? x.itens.map((i) => ({
           descricao: i.descricao,
+          // Emendas anteriores à unidade no item herdam a da referência.
+          unidade: i.unidade ?? i.referencia?.unidade ?? "",
           quantidade: qtd(i.quantidade),
           valorUnitario: formatarNumero(i.valorUnitario.toNumber(), 2),
           referencia: i.referencia?.codigo ?? null,

@@ -13,7 +13,7 @@ import {
   metodoQuantidade,
   modeloDaDotacao,
 } from "./plano";
-import { referenciaAntiga, referenciaCombina, type ReferenciaPreco } from "./referencias";
+import { referenciaAntiga, referenciaCombina, unidadeDiverge, type ReferenciaPreco } from "./referencias";
 import { BRL, NUM, norm } from "./texto";
 import type {
   Aplicado,
@@ -192,6 +192,21 @@ export function validar(e: EstadoValidacao, ctx: ContextoValidacao): Checagem[] 
       `${pequenas.map((r) => `${r.codigo} (${r.campos.amostra} compra${r.campos.amostra === "1" ? "" : "s"})`).join(", ")} — ` +
         `a pesquisa de preços pede ao menos ${AMOSTRA_MINIMA} contratações (Lei 14.133/2021, art. 23; IN SEGES 65/2021). ` +
         "Acrescente outra referência ou justifique na observação."
+    );
+  }
+
+  // Unidade do item ≠ unidade da referência: o preço unitário não vale para a
+  // quantidade lançada ("peça" na referência, "caixa" no item).
+  const unidades: string[] = [];
+  for (const i of e.itens) {
+    const r = refPorCodigo(i.referencia);
+    if (r && i.descricao.trim() && unidadeDiverge(i.unidade, r.unidade)) unidades.push(`«${i.descricao.trim()}» em ${i.unidade} · ${r.codigo} por ${r.unidade}`);
+  }
+  if (unidades.length) {
+    add(
+      "warn",
+      "Unidade do item difere da referência",
+      unidades.join(" · ") + ". O preço unitário da referência vale para a unidade dela — ajuste a unidade do item ou a quantidade."
     );
   }
 

@@ -1,4 +1,5 @@
 import { interpretar } from "./interpretar";
+import { norm } from "./texto";
 import type { ObjetoBiblioteca, TipoReferencia } from "./tipos";
 
 // Tipos de referência de preço. A identificação exigida muda com o tipo — é
@@ -67,6 +68,26 @@ export type ReferenciaPreco = {
   origemExterna: string | null;
   consultadoEm: string | null;
 };
+
+// A unidade do item difere da unidade da referência? Comparação sem caixa,
+// acentos, pontuação e plural simples ("peça" = "peças" = "pç." não; "un" =
+// "unidade" sim, pelas abreviações usuais). Vazio de um lado não acusa.
+const ABREVIACOES: Record<string, string> = {
+  un: "unidade", und: "unidade", unid: "unidade", pc: "peca", pç: "peca", pcs: "peca", cx: "caixa", kg: "quilo",
+  quilograma: "quilo", l: "litro", lt: "litro", m: "metro", m2: "metro quadrado", m3: "metro cubico", pct: "pacote",
+  fr: "frasco", amp: "ampola", cp: "comprimido", cpr: "comprimido", rl: "rolo", gl: "galao", sc: "saco", par: "par",
+};
+const normUnidade = (u: string) => {
+  const base = norm(u).replace(/[^a-z0-9]+/g, " ").trim();
+  const semPlural = base.replace(/(oes|aes)$/, "ao").replace(/s$/, "");
+  return ABREVIACOES[semPlural] ?? ABREVIACOES[base] ?? semPlural;
+};
+export function unidadeDiverge(unidadeItem: string | null | undefined, unidadeReferencia: string | null | undefined): boolean {
+  const a = normUnidade(unidadeItem ?? "");
+  const b = normUnidade(unidadeReferencia ?? "");
+  if (!a || !b) return false;
+  return a !== b;
+}
 
 // "R2 · Ata de registro de preços vigente Ata SRP 014/2025"
 export function rotuloReferencia(r: Pick<ReferenciaPreco, "codigo" | "tipo" | "campos">): string {

@@ -29,6 +29,7 @@ import {
   quantidadeSugerida,
   referenciaAntiga,
   referenciaCombina,
+  unidadeDiverge,
   rotuloReferencia,
   type Instrumento,
   type ReferenciaPreco,
@@ -454,7 +455,7 @@ function MemoriaCalculo({
             const itens = x.itens.filter((it) => it.descricao.trim() || lerNumero(it.valorUnitario));
             return {
               referencias: [...x.referencias, r],
-              itens: [...itens, { descricao: p.descricao, quantidade: "1", valorUnitario: formatarNumero(p.preco, 2), referencia: codigo }],
+              itens: [...itens, { descricao: p.descricao, unidade, quantidade: "1", valorUnitario: formatarNumero(p.preco, 2), referencia: codigo }],
             };
           });
         }}
@@ -464,6 +465,7 @@ function MemoriaCalculo({
         <Tabela
           cabecalho={[
             ["Item *", ""],
+            ["Un.", "w-[96px]"],
             ["Qtd *", "text-right w-[90px]"],
             ["Valor unitário *", "text-right w-[140px]"],
             ["Valor total", "text-right w-[120px]"],
@@ -490,6 +492,15 @@ function MemoriaCalculo({
                   </div>
                 ) : null}
               </div>,
+              <input
+                key="u"
+                className={cn("campo h-10 px-3", r && unidadeDiverge(it.unidade, r.unidade) && "border-warn")}
+                placeholder={r?.unidade || "un."}
+                aria-label="Unidade do item"
+                maxLength={60}
+                value={it.unidade}
+                onChange={(ev) => mudarItem(i, { unidade: ev.target.value })}
+              />,
               <CampoNumero key="q" className="h-10 px-3 text-right" casas={2} completar={false} valor={it.quantidade} aoMudar={(q) => mudarItem(i, { quantidade: q })} />,
               <CampoNumero key="v" className="h-10 px-3 text-right" valor={it.valorUnitario} aoMudar={(vu) => mudarItem(i, { valorUnitario: vu })} placeholder="0,00" />,
               <div key="t" className="pt-2.5 text-right text-sm font-bold tnum">
@@ -519,6 +530,7 @@ function MemoriaCalculo({
                       <Selo tipo="warn">mais de {ctx.config.validadeReferenciaMeses} meses</Selo>
                     ) : null}
                     {!referenciaCombina(r, it.descricao, biblioteca) ? <Selo tipo="warn">objeto da referência diverge</Selo> : null}
+                    {unidadeDiverge(it.unidade, r.unidade) ? <Selo tipo="warn">unidade da referência: {r.unidade}</Selo> : null}
                   </div>
                 ) : null}
               </div>,
@@ -526,13 +538,13 @@ function MemoriaCalculo({
           })}
           aoRemover={(i) =>
             atualizar((x) => ({
-              itens: x.itens.length > 1 ? x.itens.filter((_, j) => j !== i) : [{ descricao: "", quantidade: "1", valorUnitario: "", referencia: null }],
+              itens: x.itens.length > 1 ? x.itens.filter((_, j) => j !== i) : [{ descricao: "", unidade: "", quantidade: "1", valorUnitario: "", referencia: null }],
             }))
           }
           aoAdicionar={(i) =>
             atualizar((x) => {
               const itens = [...x.itens];
-              itens.splice(i + 1, 0, { descricao: "", quantidade: "1", valorUnitario: "", referencia: null });
+              itens.splice(i + 1, 0, { descricao: "", unidade: "", quantidade: "1", valorUnitario: "", referencia: null });
               return { itens };
             })
           }
@@ -606,7 +618,7 @@ function MemoriaCalculo({
               <Button
                 variant="surface"
                 size="sm"
-                onClick={() => atualizar((x) => ({ itens: [...x.itens, { descricao: "", quantidade: "1", valorUnitario: "", referencia: null }] }))}
+                onClick={() => atualizar((x) => ({ itens: [...x.itens, { descricao: "", unidade: "", quantidade: "1", valorUnitario: "", referencia: null }] }))}
               >
                 <Plus /> Adicionar item
               </Button>
