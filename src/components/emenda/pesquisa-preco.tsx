@@ -25,7 +25,7 @@ export function PesquisaPreco({
 }) {
   const [consulta, setConsulta] = useState("");
   const [buscando, setBuscando] = useState(false);
-  const [resultado, setResultado] = useState<{ consulta: string; itens: ResultadoPreco[]; indisponiveis: string[] } | null>(null);
+  const [resultado, setResultado] = useState<{ consulta: string; itens: ResultadoPreco[]; indisponiveis: string[]; aproximados: boolean } | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [conferindo, setConferindo] = useState<ResultadoPreco | null>(null);
   const [unidade, setUnidade] = useState("");
@@ -48,7 +48,7 @@ export function PesquisaPreco({
         setResultado(null);
         return;
       }
-      setResultado({ consulta: q, itens: r.resultados, indisponiveis: r.indisponiveis });
+      setResultado({ consulta: q, itens: r.resultados, indisponiveis: r.indisponiveis, aproximados: r.aproximados });
     } finally {
       if (n === pedido.current) setBuscando(false);
     }
@@ -97,7 +97,9 @@ export function PesquisaPreco({
           <div className="mt-3 overflow-hidden rounded-field border border-line bg-surface">
             <p className="border-b border-line px-3.5 py-3 text-xs text-muted-foreground">
               {resultado.itens.length
-                ? `${resultado.itens.length} referências encontradas. Confira a descrição e a unidade de cada resultado.`
+                ? resultado.aproximados
+                  ? `Nenhuma referência menciona "${resultado.consulta}". Estes ${resultado.itens.length} resultados são aproximados — confira a descrição antes de usar, ou refine a consulta.`
+                  : `${resultado.itens.length} referências encontradas, as que mencionam a consulta primeiro. Confira a descrição e a unidade de cada resultado.`
                 : "Nenhuma referência encontrada para este termo. Tente uma descrição mais curta ou um sinônimo."}
               {resultado.indisponiveis.length ? ` Fontes indisponíveis nesta consulta: ${resultado.indisponiveis.join(", ")}.` : ""}
             </p>

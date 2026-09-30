@@ -1,5 +1,7 @@
 import "server-only";
 
+import { ordenarPorRelevancia } from "./relevancia-precos";
+
 // ============================================================================
 // Pesquisa de preço no PNIGP (compras públicas) e, para obras, nas tabelas
 // SINAPI, SICRO e SIE-SC. O resultado nunca entra sozinho na memória de
@@ -114,5 +116,9 @@ export async function pesquisarPrecos(consulta: string, engenharia: boolean) {
       });
     }
   });
-  return { resultados, indisponiveis };
+  // O PNIGP devolve tudo o que casa com qualquer palavra da consulta — "material
+  // de consumo" trazia beterraba e concreto usinado. Fica o que menciona a
+  // consulta; sem correspondência nenhuma, os primeiros originais, marcados.
+  const { itens, aproximados } = ordenarPorRelevancia(consulta, resultados);
+  return { resultados: itens, indisponiveis, aproximados };
 }

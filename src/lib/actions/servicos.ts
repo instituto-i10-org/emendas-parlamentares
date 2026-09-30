@@ -92,7 +92,7 @@ export async function melhorarTexto(entrada: {
 export async function buscarPrecos(
   consulta: string,
   objeto: string
-): Promise<{ ok: true; resultados: ResultadoPreco[]; indisponiveis: string[] } | Falha> {
+): Promise<{ ok: true; resultados: ResultadoPreco[]; indisponiveis: string[]; aproximados: boolean } | Falha> {
   const user = await getCurrentUser();
   const q = String(consulta ?? "").trim();
   if (q.length < 3 || q.length > 160) return { ok: false, erro: "Digite de 3 a 160 caracteres para pesquisar." };
