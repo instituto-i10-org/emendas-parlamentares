@@ -160,7 +160,7 @@ export default async function InicioPage({ searchParams }: { searchParams: Promi
         </h1>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1.5fr_1fr]">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
         {destaque ? <AtalhoDestaque a={destaque} /> : null}
         {c ? (
           <section className={cn("flex flex-col rounded-card bg-surface p-6 shadow-card", !destaque && "lg:col-span-2")}>
@@ -253,7 +253,7 @@ function CotaResumo({ usado, c }: { usado: { saude: number; demais: number; tota
           de {BRL(c.cotaIndividual)} · {c.percentualSaude}% reservado à saúde
         </div>
       </div>
-      <div className="grid gap-4">
+      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4">
         <Faixa rotulo="Saúde" usado={usado.saude} total={parcelaSaude} tom="ok" />
         <Faixa rotulo="Demais áreas" usado={usado.demais} total={parcelaDemais} tom="cyan" />
       </div>

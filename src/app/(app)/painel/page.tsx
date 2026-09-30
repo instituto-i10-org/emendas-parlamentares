@@ -98,7 +98,9 @@ export default async function PainelPage() {
           />
         </Cartao>
 
-        <div className="grid gap-5">
+        {/* minmax(0,1fr): sem isso a coluna cresce até o texto mais longo (nome de
+            destino truncado) e estoura a tela para a direita. */}
+        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-5">
           <Cartao titulo="Saúde × demais áreas">
             {c.total > 0 ? (
               <>
@@ -122,11 +124,11 @@ export default async function PainelPage() {
             )}
           </Cartao>
           <Cartao titulo="Situação das emendas">
-            <ul className="grid gap-2 text-sm">
+            <ul className="grid grid-cols-[minmax(0,1fr)] gap-2 text-sm">
               {status.map(([k, v]) => (
                 <li key={k} className="flex items-center justify-between gap-2">
                   <span>{k === "IMPORTADA" ? "Apresentadas fora do sistema" : STATUS_EMENDA[k]?.rotulo ?? k}</span>
-                  <span className="tnum">
+                  <span className="shrink-0 whitespace-nowrap tnum">
                     {v.qtd} · <b>{BRL(v.valor)}</b>
                   </span>
                 </li>
@@ -135,12 +137,12 @@ export default async function PainelPage() {
           </Cartao>
           <Cartao titulo="Maiores destinos (no sistema)">
             {c.porDestino.length ? (
-              <ul className="grid gap-3 text-sm">
+              <ul className="grid grid-cols-[minmax(0,1fr)] gap-3 text-sm">
                 {c.porDestino.slice(0, 7).map((d) => (
                   <li key={d.nome}>
-                    <div className="flex justify-between gap-2">
-                      <span className="truncate">{d.nome}</span>
-                      <b className="tnum">{BRL(d.valor)}</b>
+                    <div className="flex min-w-0 justify-between gap-2">
+                      <span className="min-w-0 truncate">{d.nome}</span>
+                      <b className="shrink-0 whitespace-nowrap tnum">{BRL(d.valor)}</b>
                     </div>
                     <Barra valor={d.valor} total={c.porDestino[0].valor} />
                   </li>

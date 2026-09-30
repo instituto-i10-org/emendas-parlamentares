@@ -86,7 +86,7 @@ export default async function Vereador360Page({ searchParams }: { searchParams: 
           </Cartao>
         ) : null}
 
-        <div className="grid gap-5">
+        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-5">
           <Cartao>
             <div className="flex flex-wrap items-center gap-3">
               <h2 className="text-xl font-extrabold">{a.nome}</h2>
