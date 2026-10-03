@@ -36,6 +36,12 @@ export function contem(textoNormalizado: string, termo: string): boolean {
 export const BRL = (v: number | null | undefined) =>
   (v ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
+// Data e hora de um registro, sempre no horário de Brasília: o servidor roda em
+// UTC e, sem o fuso, a hora sai adiantada e o dia vira às 21h.
+const FUSO = "America/Sao_Paulo";
+export const DATA = (d: Date | null | undefined) => (d ? d.toLocaleDateString("pt-BR", { timeZone: FUSO }) : "—");
+export const DATA_HORA = (d: Date | null | undefined) => (d ? d.toLocaleString("pt-BR", { timeZone: FUSO }) : "—");
+
 export const NUM = (v: number | null | undefined) => (v == null ? "" : Number(v).toLocaleString("pt-BR"));
 
 export const PCT = (v: number | null | undefined) => (v ?? 0).toFixed(1).replace(".", ",") + "%";

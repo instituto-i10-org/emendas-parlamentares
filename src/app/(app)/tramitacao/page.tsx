@@ -11,7 +11,7 @@ import { podeTramitar } from "@/lib/authz";
 import { listarEmendas } from "@/lib/emendas/consultas";
 import { RESULTADO_VIABILIDADE, STATUS_EMENDA } from "@/lib/emendas/rotulos";
 import { getAnoAtivo } from "@/lib/exercicio";
-import { BRL } from "@/lib/riep";
+import { BRL, DATA } from "@/lib/riep";
 
 export const metadata: Metadata = { title: "Tramitação — Emendas360" };
 
@@ -78,7 +78,7 @@ export default async function TramitacaoPage() {
                   </Link>
                   <span className="block text-xs text-muted-foreground">
                     {e.destino?.nome ?? "—"} · {e.dotacao ? e.dotacao.codigo : "dotação a definir pela análise técnica"}
-                    {e.reenviadaEm ? ` · reenviada após diligência em ${e.reenviadaEm.toLocaleDateString("pt-BR")}` : ""}
+                    {e.reenviadaEm ? ` · reenviada após diligência em ${DATA(e.reenviadaEm)}` : ""}
                   </span>
                 </div>,
                 <span key="a" className="max-md:hidden">{e.autor.nome}</span>,
@@ -112,7 +112,7 @@ export default async function TramitacaoPage() {
                   </div>,
                   <p key="p" className="line-clamp-2 max-w-md text-xs text-muted-foreground max-lg:hidden">{e.diligenciaMotivo}</p>,
                   <div key="z">
-                    <span className="block text-xs">{e.diligenciaAte?.toLocaleDateString("pt-BR") ?? "—"}</span>
+                    <span className="block text-xs">{DATA(e.diligenciaAte)}</span>
                     {e.diligenciaAte && e.diligenciaAte < hoje ? <Selo tipo="bad">prazo vencido</Selo> : <Selo tipo="warn">aguardando o autor</Selo>}
                   </div>,
                   <span key="v" className="font-bold whitespace-nowrap tnum">{BRL(e.valor.toNumber())}</span>,
@@ -139,7 +139,7 @@ export default async function TramitacaoPage() {
                 </div>,
                 <div key="s">
                   <Selo tipo={STATUS_EMENDA[e.status].tipo}>{STATUS_EMENDA[e.status].rotulo}</Selo>
-                  <span className="mt-1 block text-xs text-muted-foreground">{e.tramitadaEm?.toLocaleDateString("pt-BR")}</span>
+                  <span className="mt-1 block text-xs text-muted-foreground">{DATA(e.tramitadaEm)}</span>
                 </div>,
                 <p key="p" className="line-clamp-2 max-w-md text-xs text-muted-foreground max-lg:hidden">{e.parecerTramitacao}</p>,
                 <span key="v" className="font-bold whitespace-nowrap tnum">{BRL(e.valor.toNumber())}</span>,

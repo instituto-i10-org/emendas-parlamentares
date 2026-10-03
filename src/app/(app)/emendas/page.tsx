@@ -10,7 +10,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { apresentaEmendas, podeGerirEmenda, podeVerTodasEmendas } from "@/lib/authz";
 import { exercicioHistorico, getAnoAtivo } from "@/lib/exercicio";
 import { prisma } from "@/lib/prisma";
-import { BRL } from "@/lib/riep";
+import { BRL, DATA } from "@/lib/riep";
 import { getCurrentUser } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Emendas — Emendas360" };
@@ -99,7 +99,7 @@ export default async function EmendasPage({ searchParams }: { searchParams: Prom
                         {x.objeto || "Rascunho sem objeto"}
                       </Link>
                       <span className="block text-xs text-muted-foreground">
-                        atualizada em {x.updatedAt.toLocaleDateString("pt-BR")}
+                        atualizada em {DATA(x.updatedAt)}
                         {x.parcela ? ` · ${x.parcela === "SAUDE" ? "saúde" : "demais áreas"}` : ""}
                       </span>
                     </td>

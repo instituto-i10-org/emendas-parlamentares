@@ -12,7 +12,7 @@ import { buscarEmenda, paraEstado } from "@/lib/emendas/carregar";
 import { aplicadoDoAutor, carregarContexto } from "@/lib/emendas/contexto";
 import { somasExecucao } from "@/lib/emendas/execucao";
 import { ETAPA_EXECUCAO, RESULTADO_VIABILIDADE, STATUS_EMENDA } from "@/lib/emendas/rotulos";
-import { BRL, MODELOS, type Checagem } from "@/lib/riep";
+import { BRL, DATA, DATA_HORA, MODELOS, type Checagem } from "@/lib/riep";
 import { getCurrentUser } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Emenda — Emendas360" };
@@ -32,7 +32,7 @@ export default async function EmendaPage({ params }: { params: Promise<{ id: str
     const aplicado = await aplicadoDoAutor(ctx.exercicioId, x.autorId, ctx.config.percentualSaude, x.id);
     const diligencia =
       x.status === "EM_DILIGENCIA"
-        ? { numero: x.numero, motivo: x.diligenciaMotivo ?? "", ate: x.diligenciaAte?.toLocaleDateString("pt-BR") ?? null }
+        ? { numero: x.numero, motivo: x.diligenciaMotivo ?? "", ate: x.diligenciaAte ? DATA(x.diligenciaAte) : null }
         : null;
     return <EditorEmenda ctx={ctx} inicial={paraEstado(x)} aplicado={aplicado} autor={x.autor.nome} diligencia={diligencia} />;
   }
@@ -64,7 +64,7 @@ export default async function EmendaPage({ params }: { params: Promise<{ id: str
           <div className="mb-4 flex flex-wrap items-center gap-2">
             <Selo tipo={STATUS_EMENDA[x.status].tipo}>{STATUS_EMENDA[x.status].rotulo}</Selo>
             {x.modelo ? <Selo>Modelo {MODELOS[x.modelo].numero} — {MODELOS[x.modelo].titulo}</Selo> : null}
-            {x.submetidaEm ? <span className="text-xs text-muted-foreground">submetida em {x.submetidaEm.toLocaleString("pt-BR")}</span> : null}
+            {x.submetidaEm ? <span className="text-xs text-muted-foreground">submetida em {DATA_HORA(x.submetidaEm)}</span> : null}
           </div>
           <h2 className="text-lg font-bold">{x.objeto}</h2>
           <dl className="mt-4 grid grid-cols-[minmax(150px,auto)_1fr] gap-x-4 gap-y-2 text-sm max-sm:grid-cols-1">
@@ -98,7 +98,7 @@ export default async function EmendaPage({ params }: { params: Promise<{ id: str
             <div className="mt-6 rounded-box bg-warn-bg p-4 text-sm">
               <div className="antena mb-1">Diligência da Comissão</div>
               <p className="text-xs text-muted-foreground">
-                Pedida em {x.diligenciaEm?.toLocaleDateString("pt-BR") ?? "—"} · prazo {x.diligenciaAte?.toLocaleDateString("pt-BR") ?? "—"}
+                Pedida em {DATA(x.diligenciaEm)} · prazo {DATA(x.diligenciaAte)}
               </p>
               <p className="mt-1 whitespace-pre-line">{x.diligenciaMotivo}</p>
             </div>
@@ -107,7 +107,7 @@ export default async function EmendaPage({ params }: { params: Promise<{ id: str
             <div className="mt-6 rounded-box bg-soft p-4 text-sm">
               <div className="antena mb-1">Parecer da Comissão</div>
               <p className="text-xs text-muted-foreground">
-                {x.status === "APROVADA" ? "Aprovada" : "Rejeitada"} em {x.tramitadaEm?.toLocaleDateString("pt-BR")} por{" "}
+                {x.status === "APROVADA" ? "Aprovada" : "Rejeitada"} em {DATA(x.tramitadaEm)} por{" "}
                 {x.tramitadaPor?.name ?? x.tramitadaPor?.email ?? "—"}
               </p>
               <p className="mt-1 whitespace-pre-line">{x.parecerTramitacao}</p>
@@ -123,7 +123,7 @@ export default async function EmendaPage({ params }: { params: Promise<{ id: str
                     <div className="flex flex-wrap items-center gap-2">
                       <Selo tipo={RESULTADO_VIABILIDADE[p.resultado].tipo}>{RESULTADO_VIABILIDADE[p.resultado].rotulo}</Selo>
                       <span className="text-xs text-muted-foreground">
-                        {p.usuario?.name ?? p.usuario?.email ?? "—"} · {p.criadoEm.toLocaleString("pt-BR")}
+                        {p.usuario?.name ?? p.usuario?.email ?? "—"} · {DATA_HORA(p.criadoEm)}
                         {i ? " · anterior" : " · vigente"}
                       </span>
                     </div>

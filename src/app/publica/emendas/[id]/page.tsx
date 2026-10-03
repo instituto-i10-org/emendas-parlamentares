@@ -6,7 +6,7 @@ import { Selo } from "@/components/emenda/ui";
 import { somasExecucao } from "@/lib/emendas/execucao";
 import { STATUS_EMENDA } from "@/lib/emendas/rotulos";
 import { prisma } from "@/lib/prisma";
-import { BRL, MODELOS } from "@/lib/riep";
+import { BRL, DATA, MODELOS } from "@/lib/riep";
 
 export const metadata: Metadata = { title: "Emenda — portal público" };
 
@@ -88,20 +88,20 @@ export default async function EmendaPublicaPage({ params }: { params: Promise<{ 
               : "—"}
           </dd>
           <dt className="text-muted-foreground">Apresentada em</dt>
-          <dd>{e.submetidaEm?.toLocaleDateString("pt-BR") ?? "—"}</dd>
+          <dd>{DATA(e.submetidaEm)}</dd>
           <dt className="text-muted-foreground">Parecer da Comissão</dt>
           <dd className="whitespace-pre-line">
             {e.status === "EM_DILIGENCIA" ? (
               <>
                 <span className="block text-xs text-muted-foreground">
-                  Devolvida ao autor para ajuste em {e.diligenciaEm?.toLocaleDateString("pt-BR") ?? "—"} · prazo {e.diligenciaAte?.toLocaleDateString("pt-BR") ?? "—"}
+                  Devolvida ao autor para ajuste em {DATA(e.diligenciaEm)} · prazo {DATA(e.diligenciaAte)}
                 </span>
                 {e.diligenciaMotivo}
               </>
             ) : e.parecerTramitacao ? (
               <>
                 <span className="block text-xs text-muted-foreground">
-                  {e.status === "APROVADA" ? "Aprovada" : e.status === "REJEITADA" ? "Rejeitada" : "Decidida"} em {e.tramitadaEm?.toLocaleDateString("pt-BR") ?? "—"}
+                  {e.status === "APROVADA" ? "Aprovada" : e.status === "REJEITADA" ? "Rejeitada" : "Decidida"} em {DATA(e.tramitadaEm)}
                 </span>
                 {e.parecerTramitacao}
               </>
@@ -119,7 +119,7 @@ export default async function EmendaPublicaPage({ params }: { params: Promise<{ 
             ))}
           </dd>
           <dt className="text-muted-foreground">Última atualização</dt>
-          <dd>{ultimaAtualizacao.toLocaleDateString("pt-BR")}</dd>
+          <dd>{DATA(ultimaAtualizacao)}</dd>
         </dl>
       </Cartao>
     </div>

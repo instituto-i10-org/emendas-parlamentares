@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { podeGerirEmenda, podeVerTodasEmendas, temPermissao } from "@/lib/authz";
 import { buscarEmenda } from "@/lib/emendas/carregar";
-import { BRL, EVENTOS, INSTRUMENTOS, MODELOS, QUADROS, TIPOS_REFERENCIA, chaveQuadro, rotuloReferencia, type Modelo } from "@/lib/riep";
+import { BRL, DATA, EVENTOS, INSTRUMENTOS, MODELOS, QUADROS, TIPOS_REFERENCIA, chaveQuadro, rotuloReferencia, type Modelo } from "@/lib/riep";
 import { getCurrentUser } from "@/lib/session";
 import { BotaoImprimir } from "@/components/app/botao-imprimir";
 
@@ -49,7 +49,7 @@ export default async function PlanoPage({ params }: { params: Promise<{ id: stri
           <h1 className="mt-1 text-xl font-extrabold">Plano de trabalho de emenda impositiva</h1>
           <p className="mt-1 text-sm font-bold text-navy">{M ? `Modelo ${M.numero} — ${M.titulo}` : "Modelo a definir pela análise técnica"}</p>
           <p className="mt-2 text-xs text-muted-foreground">
-            {x.status === "RASCUNHO" ? "Rascunho — prévia para conferência." : `Emenda nº ${x.numero}/${x.exercicio.ano}, submetida em ${x.submetidaEm?.toLocaleDateString("pt-BR")}.`}{" "}
+            {x.status === "RASCUNHO" ? "Rascunho — prévia para conferência." : `Emenda nº ${x.numero}/${x.exercicio.ano}, submetida em ${DATA(x.submetidaEm)}.`}{" "}
             A aprovação e as assinaturas permanecem pendentes.
           </p>
         </header>

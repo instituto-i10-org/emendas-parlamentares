@@ -8,6 +8,7 @@ import { requireAccess } from "@/lib/access";
 import { PERMISSOES, podeAtribuirPerfil, podeGerirExercicio, podeGerirPerfis } from "@/lib/authz";
 import { getAnoAtivo, listarExercicios } from "@/lib/exercicio";
 import { prisma } from "@/lib/prisma";
+import { DATA_HORA } from "@/lib/riep";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Configurações — Emendas360" };
@@ -198,7 +199,7 @@ async function auditoria() {
     <AbaAuditoria
       linhas={lista.map((l) => ({
         id: l.id,
-        quando: l.criadoEm.toLocaleString("pt-BR"),
+        quando: DATA_HORA(l.criadoEm),
         usuario: l.usuario?.name ?? l.usuario?.email ?? "sistema",
         entidade: l.entidade,
         entidadeId: l.entidadeId,

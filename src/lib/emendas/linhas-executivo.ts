@@ -1,5 +1,6 @@
 import "server-only";
 import type { LinhaExecutivo } from "@/components/executivo/listas";
+import { DATA_HORA } from "@/lib/riep";
 import type { EmendaLinha } from "./consultas";
 
 // Emenda → linha serializável para as listas do Executivo.
@@ -19,7 +20,7 @@ export function paraLinhaExecutivo(e: EmendaLinha, ano: number): LinhaExecutivo 
           resultado: p.resultado,
           justificativa: p.justificativa,
           por: p.usuario?.name ?? p.usuario?.email ?? "—",
-          em: p.criadoEm.toLocaleString("pt-BR"),
+          em: DATA_HORA(p.criadoEm),
         }
       : null,
     execucao: e.somasExec,
