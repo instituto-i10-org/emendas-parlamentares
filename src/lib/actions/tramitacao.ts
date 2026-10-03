@@ -46,6 +46,45 @@ export async function decidirTramitacao(entrada: z.input<typeof decisaoSchema>):
   return { ok: true };
 }
 
+// Diligência (Regimento Interno, art. 210-C, § 2º): a Comissão devolve a
+// emenda ao autor para sanear vício formal ou completar o plano, por até 5
+// dias. A emenda mantém o número e a cota; ao ser reenviada, volta à fila.
+// O prazo é informado, não executado: vencido, a fila sinaliza e a Comissão
+// decide (a emenda não saneada é inadmissível, mas quem rejeita é a Comissão).
+const diligenciaSchema = z.object({
+  emendaId: z.string().min(1).max(40),
+  motivo: z.string().trim().min(20, "Descreva o que precisa ser sanado (ao menos 20 caracteres).").max(4000),
+  dias: z.number().int().min(1).max(30),
+});
+
+export async function pedirDiligencia(entrada: z.input<typeof diligenciaSchema>): Promise<Resultado> {
+  const user = await getCurrentUser();
+  if (!podeTramitar(user)) return { ok: false, erro: "Sem permissão para tramitar emendas." };
+  const p = diligenciaSchema.safeParse(entrada);
+  if (!p.success) return { ok: false, erro: p.error.issues[0]?.message ?? "Dados inválidos." };
+  const emenda = await prisma.emenda.findUnique({ where: { id: p.data.emendaId } });
+  if (!emenda) return { ok: false, erro: "Emenda não encontrada." };
+  if (emenda.status !== "SUBMETIDA") return { ok: false, erro: "Só emendas na fila da Comissão vão para diligência." };
+  const ate = new Date();
+  ate.setUTCDate(ate.getUTCDate() + p.data.dias);
+  await prisma.emenda.update({
+    where: { id: emenda.id },
+    data: { status: "EM_DILIGENCIA", diligenciaMotivo: p.data.motivo, diligenciaAte: ate, diligenciaEm: new Date(), reenviadaEm: null },
+  });
+  await registrarAuditoria({
+    usuarioId: user.id,
+    entidade: "Emenda",
+    entidadeId: emenda.id,
+    acao: "PEDIR_DILIGENCIA",
+    dadosAntes: { status: emenda.status },
+    dadosDepois: { status: "EM_DILIGENCIA", motivo: p.data.motivo, dias: p.data.dias },
+  });
+  revalidatePath("/tramitacao");
+  revalidatePath("/emendas");
+  revalidatePath(`/emendas/${emenda.id}`);
+  return { ok: true };
+}
+
 // Devolve uma emenda decidida para a fila (erro de decisão). Só quem tramita.
 export async function reabrirTramitacao(emendaId: string, motivo: string): Promise<Resultado> {
   const user = await getCurrentUser();
@@ -124,9 +163,14 @@ export async function registrarAndamento(entrada: z.input<typeof andamentoSchema
   if (data.getTime() > Date.now() + 86_400_000) return { ok: false, erro: "A data do lançamento não pode ser futura." };
 
   return prisma.$transaction(async (tx) => {
-    const emenda = await tx.emenda.findUnique({ where: { id: p.data.emendaId }, include: { andamentos: true } });
+    const emenda = await tx.emenda.findUnique({ where: { id: p.data.emendaId }, include: { andamentos: true, exercicio: { select: { ano: true } } } });
     if (!emenda) return { ok: false as const, erro: "Emenda não encontrada." };
     if (emenda.status !== "APROVADA") return { ok: false as const, erro: "Só emendas aprovadas têm execução orçamentária a lançar." };
+    // O orçamento só vigora a partir de 1º de janeiro do exercício; depois dele
+    // pode (restos a pagar), antes não.
+    if (data.getTime() < Date.UTC(emenda.exercicio.ano, 0, 1)) {
+      return { ok: false as const, erro: `A emenda é do exercício ${emenda.exercicio.ano}: o lançamento só pode ter data a partir de 01/01/${emenda.exercicio.ano}.` };
+    }
     const recusa = conferirLancamento(
       emenda.valor.toNumber(),
       emenda.andamentos.map((a) => ({ etapa: a.etapa, valor: a.valor.toNumber() })),

@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: "Emendas impositivas — portal públ
 
 export default async function PortalPage() {
   const ano = await getAnoAtivo();
-  const c = ano ? await consolidar(ano) : null;
+  const c = ano ? await consolidar(ano, true) : null;
   if (!c) return <p className="text-sm text-muted-foreground">Nenhum exercício publicado.</p>;
   const comEmenda = c.porAutor.filter((a) => a.total > 0).length;
   return (

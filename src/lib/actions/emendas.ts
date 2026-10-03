@@ -7,7 +7,7 @@ import { podeCriarEmenda, podeGerirEmenda } from "@/lib/authz";
 import { aplicadoDoAutor, carregarContexto } from "@/lib/emendas/contexto";
 import { mesmaEmenda } from "@/lib/emendas/duplicidade";
 import { chaveClassificacao, estadoSchema, lerNumero, paraValidacao, type EstadoEmenda } from "@/lib/emendas/estado";
-import { getAnoAtivo } from "@/lib/exercicio";
+import { anoDaTela, exercicioHistorico } from "@/lib/exercicio";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rate-limit";
 import {
@@ -36,7 +36,7 @@ export type ResultadoGravacao =
 // aceita a escolha de dotação se ela estiver entre as opções do motor.
 // ============================================================================
 
-export async function salvarEmenda(entrada: EstadoEmenda, submeter = false): Promise<ResultadoGravacao> {
+export async function salvarEmenda(entrada: EstadoEmenda, submeter = false, anoTela?: number): Promise<ResultadoGravacao> {
   const user = await getCurrentUser();
   const parsed = estadoSchema.safeParse(entrada);
   if (!parsed.success) return { ok: false, erro: "Dados inválidos na emenda. Recarregue a página e tente de novo." };
@@ -46,21 +46,34 @@ export async function salvarEmenda(entrada: EstadoEmenda, submeter = false): Pro
     return { ok: false, erro: "Muitas submissões seguidas. Aguarde um minuto." };
   }
 
-  const ano = await getAnoAtivo();
-  const ctx = ano ? await carregarContexto(ano) : null;
-  if (!ctx) return { ok: false, erro: "Nenhum exercício ativo." };
-
   // Autoria e permissão.
   const existente = e.id
-    ? await prisma.emenda.findUnique({ where: { id: e.id }, include: { autor: true } })
+    ? await prisma.emenda.findUnique({ where: { id: e.id }, include: { autor: true, exercicio: { select: { ano: true } } } })
     : null;
   if (e.id && !existente) return { ok: false, erro: "Emenda não encontrada." };
+
+  // A emenda gravada fica no exercício dela; a nova nasce no exercício da tela.
+  // Nunca no exercício do cookie: outra aba pode tê-lo trocado no seletor.
+  const ano = existente ? existente.exercicio.ano : await anoDaTela(anoTela);
+  const ctx = ano ? await carregarContexto(ano) : null;
+  if (!ctx) return { ok: false, erro: "Nenhum exercício ativo." };
+  if (await exercicioHistorico(ctx.config.exercicio)) {
+    return { ok: false, erro: `O exercício ${ctx.config.exercicio} é histórico: não recebe emenda nova nem alteração. Use o exercício em curso.` };
+  }
+  // Depois do fim do protocolo, o rascunho ainda se salva; submeter, não. O
+  // reenvio depois de diligência não é protocolo novo: a emenda já foi apresentada.
+  if (submeter && ctx.prazoEncerrado && ctx.prazoProtocolo && existente?.status !== "EM_DILIGENCIA") {
+    const [a, m, d] = ctx.prazoProtocolo.split("-");
+    return { ok: false, erro: `O prazo de protocolo das emendas do exercício ${ctx.config.exercicio} terminou em ${d}/${m}/${a}. A emenda não pode mais ser submetida.` };
+  }
   let autorId: string;
   if (existente) {
     if (!podeGerirEmenda(user, { autorUsuarioId: existente.autor.usuarioId })) {
       return { ok: false, erro: "Você não pode alterar esta emenda." };
     }
-    if (existente.status !== "RASCUNHO") return { ok: false, erro: "Emenda já submetida não se altera por aqui." };
+    if (existente.status !== "RASCUNHO" && existente.status !== "EM_DILIGENCIA") {
+      return { ok: false, erro: "Emenda já submetida não se altera por aqui." };
+    }
     if (existente.revisao !== e.revisao) {
       return { ok: false, erro: "Esta emenda foi alterada em outra aba. Reabra a versão salva antes de continuar." };
     }
@@ -227,12 +240,6 @@ export async function salvarEmenda(entrada: EstadoEmenda, submeter = false): Pro
 
     if (!validacao) return emenda;
 
-    // Número atribuído na submissão, em transação: nunca por contagem.
-    const contador = await tx.contadorEmenda.upsert({
-      where: { exercicioId: ctx.exercicioId },
-      update: { ultimo: { increment: 1 } },
-      create: { exercicioId: ctx.exercicioId, ultimo: 1 },
-    });
     await tx.validacaoEmenda.create({
       data: {
         emendaId: emenda.id,
@@ -240,6 +247,16 @@ export async function salvarEmenda(entrada: EstadoEmenda, submeter = false): Pro
         alertas: validacao.alertas,
         itens: validacao.checks,
       },
+    });
+    // Reenvio depois de diligência: volta à fila com o número que já tinha.
+    if (existente?.status === "EM_DILIGENCIA") {
+      return tx.emenda.update({ where: { id: emenda.id }, data: { status: "SUBMETIDA", reenviadaEm: new Date() } });
+    }
+    // Número atribuído na submissão, em transação: nunca por contagem.
+    const contador = await tx.contadorEmenda.upsert({
+      where: { exercicioId: ctx.exercicioId },
+      update: { ultimo: { increment: 1 } },
+      create: { exercicioId: ctx.exercicioId, ultimo: 1 },
     });
     return tx.emenda.update({
       where: { id: emenda.id },
@@ -251,7 +268,7 @@ export async function salvarEmenda(entrada: EstadoEmenda, submeter = false): Pro
     usuarioId: user.id,
     entidade: "Emenda",
     entidadeId: salvo.id,
-    acao: submeter ? "SUBMETER" : existente ? "ATUALIZAR_RASCUNHO" : "CRIAR_RASCUNHO",
+    acao: submeter ? (existente?.status === "EM_DILIGENCIA" ? "REENVIAR_APOS_DILIGENCIA" : "SUBMETER") : existente ? "ATUALIZAR_RASCUNHO" : "CRIAR_RASCUNHO",
     dadosAntes: existente ? { status: existente.status, revisao: existente.revisao, valor: existente.valor } : undefined,
     dadosDepois: { status: salvo.status, revisao: salvo.revisao, valor: salvo.valor, numero: salvo.numero },
   });
@@ -297,6 +314,44 @@ export async function excluirRascunho(id: string): Promise<{ ok: boolean; erro?:
     entidadeId: id,
     acao: "EXCLUIR_RASCUNHO",
     dadosAntes: { objeto: emenda.objeto, valor: emenda.valor },
+  });
+  revalidatePath("/emendas");
+  return { ok: true };
+}
+
+// Apaga uma emenda de teste já submetida — só da conta de demonstração. É o
+// mesmo que `prisma/apagar-emenda.ts` faz pelo terminal: a emenda sai com tudo
+// o que pende dela (metas, itens, referências, parcelas, validações, pareceres,
+// andamentos e a trilha de auditoria); se for a última numerada do exercício,
+// o contador volta um, para o teste não deixar buraco na numeração.
+export async function apagarEmendaDeTeste(id: string): Promise<{ ok: boolean; erro?: string }> {
+  const user = await getCurrentUser();
+  const emenda = await prisma.emenda.findUnique({
+    where: { id },
+    include: { autor: true, exercicio: true, pareceres: { select: { id: true } }, andamentos: { select: { id: true } } },
+  });
+  if (!emenda) return { ok: false, erro: "Emenda não encontrada." };
+  if (!podeGerirEmenda(user, { autorUsuarioId: emenda.autor.usuarioId })) return { ok: false, erro: "Sem permissão." };
+  if (!emenda.autor.demonstracao) return { ok: false, erro: "Só emendas da conta de demonstração podem ser apagadas." };
+
+  const idsAuditados = [emenda.id, ...emenda.pareceres.map((p) => p.id), ...emenda.andamentos.map((a) => a.id)];
+  await prisma.$transaction(async (tx) => {
+    await tx.auditLog.deleteMany({ where: { entidadeId: { in: idsAuditados } } });
+    await tx.emenda.delete({ where: { id } });
+    if (emenda.numero !== null) {
+      // Só volta se ninguém numerou depois: a condição vai no próprio update.
+      await tx.contadorEmenda.updateMany({
+        where: { exercicioId: emenda.exercicioId, ultimo: emenda.numero },
+        data: { ultimo: emenda.numero - 1 },
+      });
+    }
+  });
+  await registrarAuditoria({
+    usuarioId: user.id,
+    entidade: "Emenda",
+    entidadeId: id,
+    acao: "APAGAR_EMENDA_DE_TESTE",
+    dadosAntes: { numero: emenda.numero, exercicio: emenda.exercicio.ano, status: emenda.status, objeto: emenda.objeto, valor: emenda.valor, autor: emenda.autor.nome },
   });
   revalidatePath("/emendas");
   return { ok: true };

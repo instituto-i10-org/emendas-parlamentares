@@ -62,6 +62,27 @@ export function interpretar(texto: string, biblioteca: ObjetoBiblioteca[], areaP
     const subfuncao = o.subfuncao;
     const subfuncaoSecundaria = o.subfuncao ? null : (achados.find((a) => a.o !== o && a.o.subfuncao)?.o.subfuncao ?? null);
     const pistas = o.pistas ?? [];
+    // "Aquisição de equipamentos para a UBS": o único termo reconhecido é o
+    // nome do lugar (ubs, escola, emef…), que está na biblioteca como obra. Sem
+    // verbo de obra, o verbo de aquisição decide: é compra de bem, de elemento
+    // ainda incerto — nunca uma reforma.
+    if (bem && !obra && o.elemento === "51") {
+      return {
+        rotulo: "Aquisição de bem",
+        divisibilidade: null,
+        explicacao: `verbo de aquisição prevalece sobre “${termo}”, que é o lugar, não o que se compra`,
+        natureza: "CAPITAL",
+        elemento: "52",
+        elementoIncerto: true,
+        area: o.area,
+        estrito: false,
+        subfuncao,
+        subfuncaoSecundaria,
+        confianca: "inferido",
+        termo: `${termo} + verbo de aquisição`,
+        pistas,
+      };
+    }
     // Construção, reforma e ampliação são marcadores inequívocos de obra.
     if (obra && o.elemento !== "51") {
       return {

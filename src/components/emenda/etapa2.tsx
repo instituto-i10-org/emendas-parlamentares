@@ -59,7 +59,7 @@ export function Etapa2({
   if (!c || !dot || !m) return <p className="pb-7 text-sm text-muted-foreground">Rode a análise no passo 1 primeiro.</p>;
   const M = MODELOS[m];
   const au = audesp(ctx.config);
-  const contextoIA = { objeto: e.objeto, destino: d.destino?.nome ?? "", execucao: e.execucao };
+  const contextoIA = { objeto: e.objeto, destino: d.destino?.nome ?? "", execucao: e.execucao, exercicio: ctx.config.exercicio };
 
   return (
     <div className="flex flex-col pb-2">
@@ -424,6 +424,7 @@ function MemoriaCalculo({
     <Secao titulo="Memória de cálculo" ajuda="As mesmas linhas das metas, agora com preço. Toda linha precisa apontar de onde veio o valor.">
       <PesquisaPreco
         objeto={e.objeto}
+        exercicio={ctx.config.exercicio}
         orientacao={orientacao}
         aoAprovar={(p, unidade, consulta) => {
           const agora = new Date();

@@ -1,6 +1,6 @@
 "use server";
 
-import { getAnoAtivo } from "@/lib/exercicio";
+import { anoDaTela } from "@/lib/exercicio";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rate-limit";
 import { interpretar } from "@/lib/riep";
@@ -20,6 +20,7 @@ export async function melhorarTexto(entrada: {
   objeto: string;
   destino: string;
   execucao: "DIRETA" | "INDIRETA";
+  exercicio?: number;
 }): Promise<{ ok: true; texto: string; referencias: Referencia[] } | Falha> {
   const user = await getCurrentUser();
   const max = LIMITES_CAMPO[entrada.campo];
@@ -30,7 +31,7 @@ export async function melhorarTexto(entrada: {
   if (!chave) return { ok: false, erro: "A melhoria de texto aguarda a chave da OpenAI no servidor." };
   if (!rateLimit(`ia:${user.id}`, 8, 60_000)) return { ok: false, erro: "Aguarde um minuto antes de pedir novas sugestões." };
 
-  const ano = await getAnoAtivo();
+  const ano = await anoDaTela(entrada.exercicio);
   const ctx = ano ? await carregarContexto(ano) : null;
   const programas = ano
     ? await prisma.programa.findMany({ where: { exercicio: { ano }, constaNoPPA: true }, select: { codigo: true, nome: true } })
@@ -91,13 +92,14 @@ export async function melhorarTexto(entrada: {
 
 export async function buscarPrecos(
   consulta: string,
-  objeto: string
+  objeto: string,
+  exercicio?: number
 ): Promise<{ ok: true; resultados: ResultadoPreco[]; indisponiveis: string[]; aproximados: boolean } | Falha> {
   const user = await getCurrentUser();
   const q = String(consulta ?? "").trim();
   if (q.length < 3 || q.length > 160) return { ok: false, erro: "Digite de 3 a 160 caracteres para pesquisar." };
   if (!rateLimit(`precos:${user.id}`, 30, 60_000)) return { ok: false, erro: "Muitas consultas seguidas. Aguarde um minuto." };
-  const ano = await getAnoAtivo();
+  const ano = await anoDaTela(exercicio);
   const ctx = ano ? await carregarContexto(ano) : null;
   const biblioteca = ctx?.catalogo.objetos ?? [];
   // Obra consulta também as tabelas oficiais de engenharia.

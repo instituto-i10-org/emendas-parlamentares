@@ -15,38 +15,43 @@ type Linha = {
   applicationCode: string; autorizado: number; pagina: number;
 };
 
-const linhas = ler<{ dotacoes: Linha[] }>("loa-2026.json").dotacoes.filter(
-  (d) => NATUREZAS_EMENDAVEIS.has(`${d.gnd}|${d.mod}`) && !["01", "17"].includes(d.uo.split(".")[0])
-);
-const codigos = codigosDeExibicao(linhas, new Set());
+// As dotações que recebem emenda no exercício, no formato do motor.
+export function loaDoExercicio(ano: number): DotacaoMotor[] {
+  const linhas = ler<{ dotacoes: Linha[] }>(`loa-${ano}.json`).dotacoes.filter(
+    (d) => NATUREZAS_EMENDAVEIS.has(`${d.gnd}|${d.mod}`) && !["01", "17"].includes(d.uo.split(".")[0])
+  );
+  const codigos = codigosDeExibicao(linhas, new Set());
+  return linhas.map((d, i) => ({
+    id: codigos[i],
+    codigo: codigos[i],
+    ficha: /^\d+$/.test(d.ficha) ? d.ficha : null,
+    nome: d.nome,
+    uo: d.uo,
+    funcao: d.funcao,
+    subf: d.subf,
+    subfn: d.subfn,
+    prog: d.prog,
+    progn: d.programName,
+    tipo: d.actionCode.startsWith("1") ? "P" : "A",
+    gnd: d.gnd,
+    mod: d.mod,
+    elem: d.elem,
+    fonte: `${d.sourceCode}.${d.applicationCode}`,
+    fonten: "",
+    autorizado: d.autorizado,
+  }));
+}
 
-export const loa: DotacaoMotor[] = linhas.map((d, i) => ({
-  id: codigos[i],
-  codigo: codigos[i],
-  ficha: /^\d+$/.test(d.ficha) ? d.ficha : null,
-  nome: d.nome,
-  uo: d.uo,
-  funcao: d.funcao,
-  subf: d.subf,
-  subfn: d.subfn,
-  prog: d.prog,
-  progn: d.programName,
-  tipo: d.actionCode.startsWith("1") ? "P" : "A",
-  gnd: d.gnd,
-  mod: d.mod,
-  elem: d.elem,
-  fonte: `${d.sourceCode}.${d.applicationCode}`,
-  fonten: "",
-  autorizado: d.autorizado,
-}));
+export const loa: DotacaoMotor[] = loaDoExercicio(2026);
 
 const bib = ler<{ areas: Catalogo["areas"]; objetos: Catalogo["objetos"]; tiposDestino: TipoDestino[] }>("biblioteca-objetos.json");
-export const catalogo: Catalogo = {
+export const catalogoDoExercicio = (ano: number): Catalogo => ({
   objetos: bib.objetos,
   areas: bib.areas,
-  unidades: ler<{ names: Record<string, string> }>("unidades-2026.json").names,
+  unidades: ler<{ names: Record<string, string> }>(`unidades-${ano}.json`).names,
   tiposDestino: bib.tiposDestino,
-};
+});
+export const catalogo: Catalogo = catalogoDoExercicio(2026);
 
 type DestinoJson = {
   nome: string; nomeOficial?: string; execucao: "DIRETA" | "INDIRETA"; endereco: string; unidade?: string; cnpj?: string;

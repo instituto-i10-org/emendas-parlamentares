@@ -1,4 +1,4 @@
-import { pistasDoDestino } from "./destino";
+import { pistasDoDestino, unidadesDoDestino } from "./destino";
 import { interpretar } from "./interpretar";
 import { contem, norm } from "./texto";
 import type {
@@ -64,6 +64,10 @@ export type EntradaClassificacao = {
 export function classificar({ objeto, destino, execucao, pretendido, loa, catalogo }: EntradaClassificacao): Classificacao {
   // Entidade do terceiro setor não tem vínculo fixo: a secretaria vem do objeto.
   const uoAlvo = destino.uo || null;
+  // As unidades em que a dotação é procurada: a do destino ou, quando ele
+  // aponta para o órgão inteiro, todas as do órgão.
+  const unidadesAlvo = unidadesDoDestino(uoAlvo, [...Object.keys(catalogo.unidades), ...loa.map((d) => d.uo)]);
+  const noAlvo = (uo: string) => unidadesAlvo.includes(uo);
   // A área do destino desempata termos de áreas diferentes no mesmo texto.
   const areaDestino = areaDaUnidade(uoAlvo, catalogo.areas);
   const obj = interpretar(objeto, catalogo.objetos, areaDestino);
@@ -72,6 +76,8 @@ export function classificar({ objeto, destino, execucao, pretendido, loa, catalo
     naoReconhecido: false,
     semAderencia: false,
     uoAlvo: null,
+    unidadesAlvo: [] as string[],
+    unidadeDaObra: null as string | null,
     uoArea: null,
     uoAreaNome: null,
     estrito: false,
@@ -115,6 +121,7 @@ export function classificar({ objeto, destino, execucao, pretendido, loa, catalo
       execucao,
       destino,
       uoAlvo,
+      unidadesAlvo,
       uoArea,
       uoAreaNome: nomeArea(uoArea),
       estrito,
@@ -122,10 +129,29 @@ export function classificar({ objeto, destino, execucao, pretendido, loa, catalo
     };
   }
 
-  let cand = loa.filter((d) => d.gnd === gnd && d.mod === mod && (uoAlvo ? d.uo === uoAlvo : true));
+  let cand = loa.filter((d) => d.gnd === gnd && d.mod === mod && (uoAlvo ? noAlvo(d.uo) : true));
 
   // Sem vínculo fixo, a área do objeto restringe — não apenas pontua.
   if (!uoAlvo && estrito) cand = cand.filter((d) => naArea(d.uo, obj.area, catalogo.areas));
+
+  // Obra do destino executada por outra secretaria. O orçamento pode reunir as
+  // obras de escola e de unidade de saúde na secretaria de obras, em linhas da
+  // função da área ("construção e reforma — prédios da educação", função 12).
+  // Só vale quando o órgão do destino não tem nenhuma linha de obra; a linha
+  // tem de ser da função do destino e de um órgão de fora da área dele — a
+  // fundação e o hospital, que são da área, têm obra própria e não entram.
+  function obraEmOutraSecretaria(): DotacaoMotor[] {
+    if (!uoAlvo || !areaDestino || gnd !== "4" || mod !== "90" || obj!.elemento !== "51") return [];
+    const obra = (d: DotacaoMotor) => d.gnd === "4" && d.mod === "90" && d.elem === "51";
+    const orgaos = new Set(unidadesAlvo.map((u) => u.split(".")[0]));
+    if (loa.some((d) => obra(d) && orgaos.has(d.uo.split(".")[0]))) return [];
+    const porFuncao = new Map<string, number>();
+    for (const d of loa) if (noAlvo(d.uo)) porFuncao.set(d.funcao, (porFuncao.get(d.funcao) ?? 0) + 1);
+    const funcao = [...porFuncao].sort((a, b) => b[1] - a[1])[0]?.[0];
+    if (!funcao) return [];
+    return loa.filter((d) => obra(d) && d.funcao === funcao && !naArea(d.uo, areaDestino, catalogo.areas));
+  }
+  let unidadeDaObra: string | null = null;
 
   // Funil: elemento antes de subfunção — obra não vira equipamento por causa
   // da subfunção. Elemento incerto (objeto inferido) não filtra: só pontua.
@@ -136,11 +162,18 @@ export function classificar({ objeto, destino, execucao, pretendido, loa, catalo
     if (porElemento.length) {
       cand = porElemento;
       elementoRestringiu = true;
-    } else if (obj.confianca === "exato" && obj.natureza === "CAPITAL" && mod !== "50") {
-      // Em investimento, obra (51) e equipamento (52) não se substituem: sem
-      // linha do elemento do objeto, nenhuma dotação comporta — é óbice, não uma
-      // ambulância paga pela dotação de reforma do hospital.
-      cand = [];
+    } else {
+      const emOutraSecretaria = obraEmOutraSecretaria();
+      if (emOutraSecretaria.length) {
+        cand = emOutraSecretaria;
+        elementoRestringiu = true;
+        unidadeDaObra = emOutraSecretaria[0].uo;
+      } else if (obj.confianca === "exato" && obj.natureza === "CAPITAL" && mod !== "50") {
+        // Em investimento, obra (51) e equipamento (52) não se substituem: sem
+        // linha do elemento do objeto, nenhuma dotação comporta — é óbice, não uma
+        // ambulância paga pela dotação de reforma do hospital.
+        cand = [];
+      }
     }
   }
   // Creche é 12.365, não 12.367: a subfunção restringe dentro do que sobrou.
@@ -219,6 +252,8 @@ export function classificar({ objeto, destino, execucao, pretendido, loa, catalo
     candidatas: pontuadas,
     naoReconhecido,
     uoAlvo,
+    unidadesAlvo,
+    unidadeDaObra,
     uoArea,
     uoAreaNome: nomeArea(uoArea),
     estrito,
@@ -231,21 +266,24 @@ export function classificar({ objeto, destino, execucao, pretendido, loa, catalo
     // Primeiro o que resolveria: a mesma natureza e o mesmo elemento em outra
     // unidade (da área do objeto antes das demais); depois as linhas da unidade.
     const mesmoElemento = loa
-      .filter((d) => d.uo !== (uoAlvo || uoArea) && d.gnd === gnd && d.mod === mod && d.elem === obj.elemento)
+      .filter((d) => (uoAlvo ? !noAlvo(d.uo) : d.uo !== uoArea) && d.gnd === gnd && d.mod === mod && d.elem === obj.elemento)
       .sort((a, b) => Number(naArea(b.uo, obj.area, catalogo.areas)) - Number(naArea(a.uo, obj.area, catalogo.areas)));
-    const daUnidade = loa.filter((d) => (uoAlvo ? d.uo === uoAlvo : !!uoArea && naArea(d.uo, obj.area, catalogo.areas)));
+    const daUnidade = loa.filter((d) => (uoAlvo ? noAlvo(d.uo) : !!uoArea && naArea(d.uo, obj.area, catalogo.areas)));
     const proximas = [...mesmoElemento.slice(0, 3), ...daUnidade].slice(0, 4);
     return { ...comum, situacao: "OBICE", proximas };
   }
   // Só o que tem o elemento do objeto é oferecido como opção. Ações de pessoal
-  // e benefícios nunca são opção.
+  // e benefícios nunca são opção. A lista para em seis — salvo quando o destino
+  // cobre o órgão inteiro: aí cada unidade (setor do Hospital) precisa aparecer,
+  // e a tela as agrupa por unidade.
+  const limite = unidadesAlvo.length > 1 ? Infinity : 6;
   const doElemento = pontuadas.filter((d) => d.elem === obj.elemento && !acaoDePessoal(norm(d.nome)));
   if (naoReconhecido) {
     // O motor sabe apenas se é custeio ou capital: não pode fingir precisão.
     return {
       ...comum,
       situacao: "VALIDAR",
-      opcoes: (doElemento.length ? doElemento : pontuadas.filter((d) => !acaoDePessoal(norm(d.nome)))).slice(0, 6),
+      opcoes: (doElemento.length ? doElemento : pontuadas.filter((d) => !acaoDePessoal(norm(d.nome)))).slice(0, limite),
       motivo:
         "O objeto descrito não corresponde a nenhum item da biblioteca; o sistema identificou apenas a natureza da despesa.",
     };
@@ -257,7 +295,7 @@ export function classificar({ objeto, destino, execucao, pretendido, loa, catalo
       ...comum,
       situacao: "VALIDAR",
       semAderencia: true,
-      opcoes: doElemento.slice(0, 6),
+      opcoes: doElemento.slice(0, limite),
       motivo:
         "Nenhuma ação da unidade menciona o objeto nem corresponde à sua subfunção. " +
         "A compatibilidade é apenas de natureza da despesa, o que não basta para enquadrar.",
@@ -268,8 +306,18 @@ export function classificar({ objeto, destino, execucao, pretendido, loa, catalo
     return {
       ...comum,
       situacao: "VALIDAR",
-      opcoes: aderentes.slice(0, 6),
+      opcoes: aderentes.slice(0, limite),
       motivo: "Mais de uma ação tem aderência ao objeto e nenhuma é mais específica que a outra.",
+    };
+  }
+  // Destino sem subfunção definida (a EMEB atende os dois níveis) e ações
+  // aderentes em subfunções diferentes: a escolha do nível é de quem elabora.
+  if (!subfuncao && aderentes.length > 1 && new Set(aderentes.map((d) => d.subf)).size > 1) {
+    return {
+      ...comum,
+      situacao: "VALIDAR",
+      opcoes: aderentes.slice(0, limite),
+      motivo: "O destino atende a mais de uma subfunção e há ação aderente em cada uma. Escolha a dotação do nível que a emenda atende.",
     };
   }
   const sel = pontuadas[0];

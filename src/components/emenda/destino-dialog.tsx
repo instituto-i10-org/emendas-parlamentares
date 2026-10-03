@@ -30,6 +30,7 @@ export function DestinoDialog({
   nomeInicial,
   editando,
   unidades,
+  exercicio,
   aoFechar,
   aoSalvar,
 }: {
@@ -38,6 +39,7 @@ export function DestinoDialog({
   nomeInicial: string;
   editando: DestinoTela | null;
   unidades: { codigo: string; nome: string }[];
+  exercicio: number;
   aoFechar: () => void;
   aoSalvar: (d: DestinoTela) => void;
 }) {
@@ -138,6 +140,7 @@ export function DestinoDialog({
     try {
       const dados = {
         execucao,
+        exercicio,
         nome: f.nome,
         endereco: f.endereco,
         unidadeCodigo: indireta ? null : f.unidadeCodigo || null,
@@ -231,6 +234,9 @@ export function DestinoDialog({
                 }}
               >
                 <option value="">Selecione a secretaria ou órgão</option>
+                {f.unidadeCodigo && !unidades.some((u) => u.codigo === f.unidadeCodigo) ? (
+                  <option value={f.unidadeCodigo}>{f.unidadeCodigo} — órgão inteiro (todas as unidades)</option>
+                ) : null}
                 {sugeridas.length ? (
                   <>
                     <optgroup label="Sugeridas pelo nome">

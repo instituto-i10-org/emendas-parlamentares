@@ -5,7 +5,7 @@ import { registrarAuditoria } from "@/lib/audit";
 import { podeCriarEmenda, temPermissao } from "@/lib/authz";
 import { cnpjValido, somenteDigitos } from "@/lib/cnpj";
 import { paraDestinoMotor, type DestinoTela } from "@/lib/emendas/contexto";
-import { getAnoAtivo } from "@/lib/exercicio";
+import { anoDaTela } from "@/lib/exercicio";
 import { prisma } from "@/lib/prisma";
 import { norm } from "@/lib/riep";
 import { getCurrentUser } from "@/lib/session";
@@ -29,6 +29,8 @@ const destinoSchema = z.object({
   nome: semTags(300).min(2, "Informe o nome do destino."),
   endereco: semTags(500).min(1, "Informe o endereço."),
   unidadeCodigo: semTags(20).nullable(),
+  // Exercício da tela: a lista de unidades válidas é a dele.
+  exercicio: z.number().int().optional(),
   cnpj: semTags(20).nullable(),
   responsavelNome: semTags(200).nullable(),
   responsavelCargo: semTags(120).nullable(),
@@ -43,13 +45,15 @@ async function validarDados(dados: DadosDestino): Promise<{ ok: true; d: z.outpu
   const parsed = destinoSchema.safeParse(dados);
   if (!parsed.success) return { ok: false, erro: parsed.error.issues[0]?.message ?? "Dados inválidos." };
   const d = parsed.data;
-  const ano = await getAnoAtivo();
+  const ano = await anoDaTela(d.exercicio);
   const unidadesDb = ano
     ? await prisma.unidadeOrcamentaria.findMany({ where: { exercicio: { ano } }, select: { codigo: true, nome: true } })
     : [];
   const unidades = Object.fromEntries(unidadesDb.map((u) => [u.codigo, u.nome]));
   if (d.execucao === "DIRETA") {
-    if (!d.unidadeCodigo || !unidades[d.unidadeCodigo]) return { ok: false, erro: "Selecione a secretaria ou órgão responsável." };
+    // Vale uma unidade do exercício ou o órgão inteiro ("20"), quando ele tem unidades.
+    const orgaoInteiro = !!d.unidadeCodigo && !d.unidadeCodigo.includes(".") && Object.keys(unidades).some((u) => u.split(".")[0] === d.unidadeCodigo);
+    if (!d.unidadeCodigo || (!unidades[d.unidadeCodigo] && !orgaoInteiro)) return { ok: false, erro: "Selecione a secretaria ou órgão responsável." };
   } else {
     if (!cnpjValido(d.cnpj)) return { ok: false, erro: "CNPJ inválido." };
     if (!d.responsavelNome) return { ok: false, erro: "Informe o responsável legal." };

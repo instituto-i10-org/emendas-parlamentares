@@ -21,11 +21,20 @@ export default async function EmendaPublicaPage({ params }: { params: Promise<{ 
       exercicio: true,
       dotacao: { include: { acao: true, programa: true, unidadeOrcamentaria: true, naturezaDespesa: true } },
       metas: { orderBy: { ordem: "asc" } },
-      andamentos: true,
+      parcelas: { orderBy: { ordem: "asc" } },
+      andamentos: { orderBy: [{ data: "asc" }, { criadoEm: "asc" }] },
+      pareceres: { orderBy: { criadoEm: "desc" }, take: 1 },
     },
   });
   if (!e) notFound();
   const exec = somasExecucao(e.andamentos.map((a) => ({ etapa: a.etapa, valor: a.valor.toNumber() })));
+  // Transparência ativa (Regimento Interno, art. 210-E): a data da última
+  // alteração relevante é a mais recente entre a emenda, a decisão, o parecer
+  // do Executivo e os lançamentos de execução.
+  const ultimaAtualizacao = [e.updatedAt, e.tramitadaEm, e.diligenciaEm, e.reenviadaEm, e.pareceres[0]?.criadoEm, ...e.andamentos.map((a) => a.criadoEm)]
+    .filter((d): d is Date => !!d)
+    .reduce((m, d) => (d > m ? d : m));
+  const etapa = { EMPENHO: "Empenho", LIQUIDACAO: "Liquidação", PAGAMENTO: "Pagamento" } as const;
   return (
     <div className="grid gap-5">
       <Link href="/publica/emendas" className="text-sm font-semibold text-muted-foreground hover:underline">
@@ -68,12 +77,49 @@ export default async function EmendaPublicaPage({ params }: { params: Promise<{ 
               </span>
             ))}
           </dd>
-          <dt className="text-muted-foreground">Execução</dt>
+          <dt className="text-muted-foreground">Cronograma</dt>
           <dd>
-            Empenhado {BRL(exec.empenhado)} · liquidado {BRL(exec.liquidado)} · pago <b>{BRL(exec.pago)}</b>
+            {e.parcelas.length
+              ? e.parcelas.map((p) => (
+                  <span key={p.id} className="block">
+                    {p.ordem + 1}ª parcela — {BRL(p.valor.toNumber())}
+                  </span>
+                ))
+              : "—"}
           </dd>
           <dt className="text-muted-foreground">Apresentada em</dt>
           <dd>{e.submetidaEm?.toLocaleDateString("pt-BR") ?? "—"}</dd>
+          <dt className="text-muted-foreground">Parecer da Comissão</dt>
+          <dd className="whitespace-pre-line">
+            {e.status === "EM_DILIGENCIA" ? (
+              <>
+                <span className="block text-xs text-muted-foreground">
+                  Devolvida ao autor para ajuste em {e.diligenciaEm?.toLocaleDateString("pt-BR") ?? "—"} · prazo {e.diligenciaAte?.toLocaleDateString("pt-BR") ?? "—"}
+                </span>
+                {e.diligenciaMotivo}
+              </>
+            ) : e.parecerTramitacao ? (
+              <>
+                <span className="block text-xs text-muted-foreground">
+                  {e.status === "APROVADA" ? "Aprovada" : e.status === "REJEITADA" ? "Rejeitada" : "Decidida"} em {e.tramitadaEm?.toLocaleDateString("pt-BR") ?? "—"}
+                </span>
+                {e.parecerTramitacao}
+              </>
+            ) : (
+              "aguardando decisão da Comissão de Finanças e Orçamento"
+            )}
+          </dd>
+          <dt className="text-muted-foreground">Execução</dt>
+          <dd>
+            Empenhado {BRL(exec.empenhado)} · liquidado {BRL(exec.liquidado)} · pago <b>{BRL(exec.pago)}</b>
+            {e.andamentos.map((a) => (
+              <span key={a.id} className="block text-xs text-muted-foreground">
+                {etapa[a.etapa]} — {BRL(a.valor.toNumber())} em {a.data.toLocaleDateString("pt-BR", { timeZone: "UTC" })}
+              </span>
+            ))}
+          </dd>
+          <dt className="text-muted-foreground">Última atualização</dt>
+          <dd>{ultimaAtualizacao.toLocaleDateString("pt-BR")}</dd>
         </dl>
       </Cartao>
     </div>

@@ -72,15 +72,18 @@ export type Consolidado = {
 // Cota por autor e totais do exercício. Conta as emendas submetidas,
 // aprovadas e as importadas (apresentadas fora do sistema); rejeitadas e
 // rascunhos não consomem cota. Importadas sem área dividem-se pela meação.
-export const consolidar = cache(async (ano: number): Promise<Consolidado | null> => {
+// `publico`: o que o portal e a página inicial mostram — sem a conta de
+// demonstração, que é real dentro do sistema e invisível fora dele.
+export const consolidar = cache(async (ano: number, publico = false): Promise<Consolidado | null> => {
   const exercicio = await prisma.exercicio.findUnique({ where: { ano }, include: { configuracao: true } });
   if (!exercicio) return null;
   const cfg = exercicio.configuracao;
   const pct = cfg?.percentualSaude.toNumber() ?? 50;
+  const semDemonstracao = publico ? { autor: { demonstracao: false } } : {};
   const [emendas, importadas, autores] = await Promise.all([
-    listarEmendas(ano),
-    prisma.emendaImportada.findMany({ where: { exercicioId: exercicio.id } }),
-    prisma.autor.findMany({ orderBy: { nome: "asc" } }),
+    listarEmendas(ano, semDemonstracao),
+    prisma.emendaImportada.findMany({ where: { exercicioId: exercicio.id, ...semDemonstracao } }),
+    prisma.autor.findMany({ where: publico ? { demonstracao: false } : {}, orderBy: { nome: "asc" } }),
   ]);
 
   const porAutor = new Map<string, ResumoAutor>(
@@ -88,7 +91,7 @@ export const consolidar = cache(async (ano: number): Promise<Consolidado | null>
   );
   const porStatus: Consolidado["porStatus"] = {};
   const porDestino = new Map<string, { nome: string; qtd: number; valor: number; saude: number }>();
-  const contam = (s: string) => s === "SUBMETIDA" || s === "APROVADA";
+  const contam = (s: string) => s === "SUBMETIDA" || s === "EM_DILIGENCIA" || s === "APROVADA";
 
   for (const e of emendas) {
     const v = e.valor.toNumber();

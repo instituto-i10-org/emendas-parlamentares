@@ -43,9 +43,9 @@ const PASSOS = [
 // Landing pública: a porta de entrada do sistema e do portal de transparência.
 export default async function Landing() {
   const [sessao, ano, municipio] = await Promise.all([auth(), getAnoAtivo(), prisma.municipio.findFirst()]);
-  const c = ano ? await consolidar(ano) : null;
+  const c = ano ? await consolidar(ano, true) : null;
   const logado = !!sessao?.user;
-  const emendas = c ? ["SUBMETIDA", "APROVADA", "IMPORTADA"].reduce((s, k) => s + (c.porStatus[k]?.qtd ?? 0), 0) : 0;
+  const emendas = c ? ["SUBMETIDA", "EM_DILIGENCIA", "APROVADA", "IMPORTADA"].reduce((s, k) => s + (c.porStatus[k]?.qtd ?? 0), 0) : 0;
   const numeros = c
     ? [
         { valor: BRL(c.total), rotulo: "indicados em emendas" },

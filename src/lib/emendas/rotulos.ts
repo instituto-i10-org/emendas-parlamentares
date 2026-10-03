@@ -3,6 +3,7 @@
 export const STATUS_EMENDA: Record<string, { rotulo: string; tipo: "ok" | "warn" | "bad" | "info" | "neutro" }> = {
   RASCUNHO: { rotulo: "Rascunho", tipo: "neutro" },
   SUBMETIDA: { rotulo: "Submetida", tipo: "info" },
+  EM_DILIGENCIA: { rotulo: "Em diligência", tipo: "warn" },
   APROVADA: { rotulo: "Aprovada", tipo: "ok" },
   REJEITADA: { rotulo: "Rejeitada", tipo: "bad" },
 };

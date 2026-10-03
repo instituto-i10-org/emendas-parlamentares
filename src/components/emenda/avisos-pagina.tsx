@@ -28,6 +28,13 @@ function Vazio({ titulo, texto }: { titulo: string; texto: string }) {
   );
 }
 
+export const ExercicioHistoricoAviso = ({ ano, padrao }: { ano: number; padrao: number }) => (
+  <Vazio
+    titulo="Nova emenda"
+    texto={`O exercício ${ano} é histórico: fica disponível para consulta, tramitação e execução, mas não recebe emenda nova. Para elaborar, troque o exercício no menu para ${padrao}.`}
+  />
+);
+
 export const SemExercicio = () => (
   <Vazio titulo="Nova emenda" texto="Nenhum exercício orçamentário está configurado. Peça ao administrador para cadastrar o exercício e carregar a LOA." />
 );

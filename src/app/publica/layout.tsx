@@ -1,12 +1,15 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { SeletorExercicio } from "@/components/app/seletor-exercicio";
 import { LogoEmendas360 } from "@/components/logo-emendas360";
+import { rotuloExercicio } from "@/lib/ciclo";
+import { getSeletorExercicio } from "@/lib/exercicio";
 import { prisma } from "@/lib/prisma";
 
 // Portal público: consulta sem login (transparência ativa — ADPF 854, art.
 // 163-A da CF). Só dados de emendas já submetidas.
 export default async function LayoutPublico({ children }: { children: ReactNode }) {
-  const municipio = await prisma.municipio.findFirst();
+  const [municipio, exercicio] = await Promise.all([prisma.municipio.findFirst(), getSeletorExercicio()]);
   return (
     <div className="min-h-dvh bg-page">
       <header className="bg-navy text-white">
@@ -15,7 +18,13 @@ export default async function LayoutPublico({ children }: { children: ReactNode 
             <LogoEmendas360 />
           </Link>
           <span className="text-sm text-on-navy">{municipio ? `${municipio.nome}/${municipio.uf}` : ""} · Portal das emendas impositivas</span>
-          <nav className="ml-auto flex gap-1 text-sm font-semibold">
+          <nav className="ml-auto flex flex-wrap items-center gap-1 text-sm font-semibold">
+            {exercicio && exercicio.anos.length > 1 ? (
+              <label className="mr-1 flex items-center gap-1.5 rounded-md bg-white/6 px-3 py-1.5 text-on-navy">
+                {rotuloExercicio(exercicio)}
+                <SeletorExercicio {...exercicio} />
+              </label>
+            ) : null}
             <Link href="/publica" className="rounded-md px-3 py-2 hover:bg-white/10">
               Visão geral
             </Link>

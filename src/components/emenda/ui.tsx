@@ -298,7 +298,7 @@ export function AreaTexto({
   aoMudar: (v: string) => void;
   max: number;
   campo: CampoTexto;
-  contexto: { objeto: string; destino: string; execucao: "DIRETA" | "INDIRETA" };
+  contexto: { objeto: string; destino: string; execucao: "DIRETA" | "INDIRETA"; exercicio?: number };
   linhas?: number;
   linhaUnica?: boolean;
   placeholder?: string;

@@ -194,6 +194,12 @@ export type Classificacao = {
   naoReconhecido: boolean;
   semAderencia: boolean;
   uoAlvo: string | null;
+  // As unidades pesquisadas: a do destino ou, quando ele aponta para o órgão
+  // inteiro (Hospital), todas as do órgão.
+  unidadesAlvo: string[];
+  // Preenchida quando a dotação de obra veio de outra secretaria (a de obras),
+  // porque o órgão do destino não tem linha de obra no orçamento.
+  unidadeDaObra: string | null;
   uoArea: string | null;
   uoAreaNome: string | null;
   estrito: boolean;

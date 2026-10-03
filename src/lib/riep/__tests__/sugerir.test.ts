@@ -8,9 +8,9 @@ const entrada = (objeto: string, trecho: string, base = loa) => {
   return { objeto, destino: d, execucao: d.execucao, pretendido: 100000, loa: base, catalogo };
 };
 
-// A LOA sancionada tem equipamento (52) na unidade do hospital; o recorte tira
-// para provocar o ajuste.
-const semEquipamentoNoHospital = loa.filter((d) => !(d.uo === "20.02" && d.elem === "52"));
+// A LOA sancionada tem equipamento (52) no Hospital; o recorte tira de todas
+// as unidades dele (o destino cobre o órgão inteiro) para provocar o ajuste.
+const semEquipamentoNoHospital = loa.filter((d) => !(d.uo.startsWith("20.") && d.elem === "52"));
 
 describe("ajuste automático", () => {
   it("ambulância para o hospital: não troca por obra; sugere destinos onde cabe", () => {

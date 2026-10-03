@@ -16,10 +16,12 @@ import { Ajuda, TextoRico } from "./ui";
 // só a aprovação cria a referência e a linha.
 export function PesquisaPreco({
   objeto,
+  exercicio,
   orientacao,
   aoAprovar,
 }: {
   objeto: string;
+  exercicio: number;
   orientacao: string | null;
   aoAprovar: (p: ResultadoPreco, unidade: string, consulta: string) => void;
 }) {
@@ -41,7 +43,7 @@ export function PesquisaPreco({
     setBuscando(true);
     setErro(null);
     try {
-      const r = await buscarPrecos(q, objeto);
+      const r = await buscarPrecos(q, objeto, exercicio);
       if (n !== pedido.current) return;
       if (!r.ok) {
         setErro(r.erro);

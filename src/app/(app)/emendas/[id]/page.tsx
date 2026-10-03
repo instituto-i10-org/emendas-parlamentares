@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ApagarEmendaTeste } from "@/components/emenda/apagar-emenda-teste";
 import { Pagina } from "@/components/emenda/avisos-pagina";
 import { EditorEmenda } from "@/components/emenda/editor";
 import { LinhaChecagem } from "@/components/emenda/etapa3";
@@ -10,7 +11,7 @@ import { podeGerirEmenda, podeVerTodasEmendas, temPermissao } from "@/lib/authz"
 import { buscarEmenda, paraEstado } from "@/lib/emendas/carregar";
 import { aplicadoDoAutor, carregarContexto } from "@/lib/emendas/contexto";
 import { somasExecucao } from "@/lib/emendas/execucao";
-import { ETAPA_EXECUCAO, RESULTADO_VIABILIDADE } from "@/lib/emendas/rotulos";
+import { ETAPA_EXECUCAO, RESULTADO_VIABILIDADE, STATUS_EMENDA } from "@/lib/emendas/rotulos";
 import { BRL, MODELOS, type Checagem } from "@/lib/riep";
 import { getCurrentUser } from "@/lib/session";
 
@@ -25,11 +26,15 @@ export default async function EmendaPage({ params }: { params: Promise<{ id: str
   const ve = gere || podeVerTodasEmendas(user) || temPermissao(user, "analisarViabilidade", "registrarExecucao") || x.autor.usuarioId === user.id;
   if (!ve) notFound();
 
-  if (x.status === "RASCUNHO" && gere) {
+  if ((x.status === "RASCUNHO" || x.status === "EM_DILIGENCIA") && gere) {
     const ctx = await carregarContexto(x.exercicio.ano);
     if (!ctx) notFound();
     const aplicado = await aplicadoDoAutor(ctx.exercicioId, x.autorId, ctx.config.percentualSaude, x.id);
-    return <EditorEmenda ctx={ctx} inicial={paraEstado(x)} aplicado={aplicado} autor={x.autor.nome} />;
+    const diligencia =
+      x.status === "EM_DILIGENCIA"
+        ? { numero: x.numero, motivo: x.diligenciaMotivo ?? "", ate: x.diligenciaAte?.toLocaleDateString("pt-BR") ?? null }
+        : null;
+    return <EditorEmenda ctx={ctx} inicial={paraEstado(x)} aplicado={aplicado} autor={x.autor.nome} diligencia={diligencia} />;
   }
 
   const checks = (x.validacoes[0]?.itens ?? []) as Checagem[];
@@ -39,7 +44,10 @@ export default async function EmendaPage({ params }: { params: Promise<{ id: str
     <Pagina
       titulo={x.numero ? `Emenda nº ${x.numero}/${x.exercicio.ano}` : "Emenda"}
       acoes={
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          {gere && x.autor.demonstracao ? (
+            <ApagarEmendaTeste id={x.id} rotulo={x.numero ? `Emenda nº ${x.numero}/${x.exercicio.ano}` : "Esta emenda"} comoBotao />
+          ) : null}
           <Button variant="ghost" asChild>
             <Link href="/emendas">Voltar</Link>
           </Button>
@@ -54,7 +62,7 @@ export default async function EmendaPage({ params }: { params: Promise<{ id: str
       <div className="grid grid-cols-[minmax(0,1fr)_400px] items-start gap-5 max-[1080px]:grid-cols-1">
         <section className="rounded-card bg-surface p-7 shadow-card max-md:px-4">
           <div className="mb-4 flex flex-wrap items-center gap-2">
-            <Selo tipo={x.status === "APROVADA" ? "ok" : x.status === "REJEITADA" ? "bad" : "info"}>{x.status.toLowerCase()}</Selo>
+            <Selo tipo={STATUS_EMENDA[x.status].tipo}>{STATUS_EMENDA[x.status].rotulo}</Selo>
             {x.modelo ? <Selo>Modelo {MODELOS[x.modelo].numero} — {MODELOS[x.modelo].titulo}</Selo> : null}
             {x.submetidaEm ? <span className="text-xs text-muted-foreground">submetida em {x.submetidaEm.toLocaleString("pt-BR")}</span> : null}
           </div>
@@ -86,6 +94,15 @@ export default async function EmendaPage({ params }: { params: Promise<{ id: str
             <dd>{x.metaFinalistica || "—"}</dd>
           </dl>
 
+          {x.status === "EM_DILIGENCIA" ? (
+            <div className="mt-6 rounded-box bg-warn-bg p-4 text-sm">
+              <div className="antena mb-1">Diligência da Comissão</div>
+              <p className="text-xs text-muted-foreground">
+                Pedida em {x.diligenciaEm?.toLocaleDateString("pt-BR") ?? "—"} · prazo {x.diligenciaAte?.toLocaleDateString("pt-BR") ?? "—"}
+              </p>
+              <p className="mt-1 whitespace-pre-line">{x.diligenciaMotivo}</p>
+            </div>
+          ) : null}
           {x.parecerTramitacao ? (
             <div className="mt-6 rounded-box bg-soft p-4 text-sm">
               <div className="antena mb-1">Parecer da Comissão</div>

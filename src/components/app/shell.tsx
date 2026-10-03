@@ -21,8 +21,10 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import type { GrupoNav, Icone } from "@/config/navegacao";
+import { SeletorExercicio } from "@/components/app/seletor-exercicio";
 import { LogoEmendas360, MarcaDocumento } from "@/components/logo-emendas360";
 import { sair } from "@/lib/actions/auth";
+import { rotuloExercicio, type SeletorExercicioDados } from "@/lib/ciclo";
 import { cn } from "@/lib/utils";
 
 const ICONES: Record<Icone, typeof Folder> = {
@@ -57,7 +59,7 @@ export function AppShell({
 }: {
   grupos: GrupoNav[];
   usuario: { nome: string; perfil: string };
-  exercicio: number | null;
+  exercicio: SeletorExercicioDados | null;
   children: ReactNode;
 }) {
   const pathname = usePathname();
@@ -188,13 +190,13 @@ export function AppShell({
 
         {exercicio ? (
           <div
-            title={`Exercício ${exercicio}`}
+            title={`${rotuloExercicio(exercicio)} ${exercicio.ativo}`}
             className={cn("mx-2.5 mt-auto mb-3 flex items-center gap-2.5 rounded-md bg-white/6 px-3 py-2", recolhido && "md:justify-center md:px-0")}
           >
             <CalendarDays className="size-[18px] shrink-0 text-cyan" strokeWidth={1.6} />
             <span className={cn("flex items-baseline gap-1.5 text-sm", recolhido && "md:hidden")}>
-              <small className="text-sm font-semibold text-on-navy">Exercício</small>
-              <b className="font-bold">{exercicio}</b>
+              <small className="text-sm font-semibold text-on-navy">{rotuloExercicio(exercicio)}</small>
+              <SeletorExercicio {...exercicio} destino="/inicio" />
             </span>
           </div>
         ) : (

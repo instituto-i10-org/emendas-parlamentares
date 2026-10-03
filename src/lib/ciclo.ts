@@ -19,6 +19,14 @@ export function rotuloCiclo(anoExercicio: number): string {
   return `${anoElaboracao(anoExercicio)}/${anoExercicio}`;
 }
 
+/** O que o seletor de exercício mostra: o ano em exibição, o padrão e os disponíveis. */
+export type SeletorExercicioDados = { ativo: number; padrao: number; anos: number[] };
+
+/** "Histórico" quando o ano em exibição é anterior ao que abre por padrão. */
+export function rotuloExercicio({ ativo, padrao }: Pick<SeletorExercicioDados, "ativo" | "padrao">): string {
+  return ativo < padrao ? "Histórico" : "Exercício";
+}
+
 /** Frase por extenso, para tooltip e cabeçalho. */
 export function descricaoCiclo(anoExercicio: number): string {
   return `emendas elaboradas em ${anoElaboracao(anoExercicio)} para o orçamento de ${anoExercicio}`;

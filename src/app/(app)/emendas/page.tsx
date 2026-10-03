@@ -2,12 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { FilePlus2 } from "lucide-react";
 import { Pagina } from "@/components/emenda/avisos-pagina";
+import { ApagarEmendaTeste } from "@/components/emenda/apagar-emenda-teste";
 import { DescartarRascunho } from "@/components/emenda/descartar-rascunho";
 import { Selo } from "@/components/emenda/ui";
 import { Button } from "@/components/ui/button";
 import type { Prisma } from "@/generated/prisma/client";
 import { apresentaEmendas, podeGerirEmenda, podeVerTodasEmendas } from "@/lib/authz";
-import { getAnoAtivo } from "@/lib/exercicio";
+import { exercicioHistorico, getAnoAtivo } from "@/lib/exercicio";
 import { prisma } from "@/lib/prisma";
 import { BRL } from "@/lib/riep";
 import { getCurrentUser } from "@/lib/session";
@@ -17,6 +18,7 @@ export const metadata: Metadata = { title: "Emendas — Emendas360" };
 const STATUS: Record<string, { rotulo: string; tipo: "ok" | "warn" | "bad" | "info" | "neutro" }> = {
   RASCUNHO: { rotulo: "Rascunho", tipo: "neutro" },
   SUBMETIDA: { rotulo: "Submetida", tipo: "info" },
+  EM_DILIGENCIA: { rotulo: "Em diligência", tipo: "warn" },
   APROVADA: { rotulo: "Aprovada", tipo: "ok" },
   REJEITADA: { rotulo: "Rejeitada", tipo: "bad" },
 };
@@ -25,6 +27,7 @@ export default async function EmendasPage({ searchParams }: { searchParams: Prom
   const { erro } = await searchParams;
   const user = await getCurrentUser();
   const ano = await getAnoAtivo();
+  const historico = ano !== null && (await exercicioHistorico(ano));
   const todas = podeVerTodasEmendas(user);
   const autor = await prisma.autor.findUnique({ where: { usuarioId: user.id } });
 
@@ -50,7 +53,7 @@ export default async function EmendasPage({ searchParams }: { searchParams: Prom
     <Pagina
       titulo={todas ? "Emendas do exercício" : "Minhas emendas"}
       acoes={
-        apresentaEmendas(user, !!autor) ? (
+        apresentaEmendas(user, !!autor) && !historico ? (
           <Button asChild>
             <Link href="/emendas/nova">
               <FilePlus2 /> Nova emenda
@@ -107,8 +110,10 @@ export default async function EmendasPage({ searchParams }: { searchParams: Prom
                       <Selo tipo={STATUS[x.status].tipo}>{STATUS[x.status].rotulo}</Selo>
                     </td>
                     <td className="px-3 py-2">
-                      {x.status === "RASCUNHO" && podeGerirEmenda(user, { autorUsuarioId: x.autor.usuarioId }) ? (
+                      {!podeGerirEmenda(user, { autorUsuarioId: x.autor.usuarioId }) ? null : x.status === "RASCUNHO" ? (
                         <DescartarRascunho id={x.id} rotulo={x.objeto ? `“${x.objeto.slice(0, 80)}”` : "Este rascunho"} />
+                      ) : x.autor.demonstracao ? (
+                        <ApagarEmendaTeste id={x.id} rotulo={`Emenda nº ${x.numero ?? "—"}/${ano}`} />
                       ) : null}
                     </td>
                   </tr>
@@ -119,7 +124,7 @@ export default async function EmendasPage({ searchParams }: { searchParams: Prom
         ) : (
           <div className="p-7 text-sm text-muted-foreground">
             Nenhuma emenda elaborada no sistema neste exercício.
-            {apresentaEmendas(user, !!autor) ? " Use “Nova emenda” para começar." : ""}
+            {apresentaEmendas(user, !!autor) && !historico ? " Use “Nova emenda” para começar." : ""}
           </div>
         )}
       </div>

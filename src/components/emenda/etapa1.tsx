@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, Building2, Check, Loader2, MapPin, Pencil, Users, Wand2 } from "lucide-react";
+import { AlertTriangle, Building2, Check, Loader2, MapPin, Pencil, Save, Users, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { Ajuda } from "@/components/ui/ajuda";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,7 @@ import {
   type SugestaoDestino,
   type SugestaoTexto,
 } from "@/lib/riep";
+import { nomeDoAlcance } from "@/lib/riep/destino";
 import { cn } from "@/lib/utils";
 import { DestinoDialog } from "./destino-dialog";
 import type { Atualizar, DerivadoEmenda } from "./editor";
@@ -170,7 +171,7 @@ export function Etapa1({
             max={500}
             campo="objeto"
             placeholder="Ex.: aquisição de uma ambulância para transporte de pacientes"
-            contexto={{ objeto: e.objeto, destino: d.destino?.nome ?? "", execucao: e.execucao }}
+            contexto={{ objeto: e.objeto, destino: d.destino?.nome ?? "", execucao: e.execucao, exercicio: ctx.config.exercicio }}
           />
         </Campo>
       </div>
@@ -206,7 +207,7 @@ export function Etapa1({
         ) : null}
       </div>
 
-      <div className="sticky bottom-0 z-10 -mx-7 rounded-b-card flex flex-wrap items-center gap-2 bg-surface px-7 py-4 shadow-[0_-12px_16px_var(--surface)] max-md:-mx-4 max-md:px-4">
+      <div className="@container/acoes1 sticky bottom-0 z-10 -mx-7 rounded-b-card flex flex-wrap items-center gap-2 bg-surface px-7 py-4 shadow-[0_-12px_16px_var(--surface)] max-md:-mx-4 max-md:px-4">
         {pronto && !d.obsoleta ? (
           <Button onClick={irParaPlano} className="max-md:flex-[1_1_100%]">
             Ir para o plano de trabalho →
@@ -226,8 +227,16 @@ export function Etapa1({
             {d.obsoleta ? "Analisar novamente →" : "Analisar e classificar →"}
           </Button>
         )}
-        <Button variant="ghost" onClick={gravar} disabled={gravando}>
-          {gravando ? "Salvando…" : "Salvar rascunho"}
+        <Button
+          variant="ghost"
+          className="@max-xl/acoes1:w-11 @max-xl/acoes1:px-0 @max-3xl/acoes:w-11 @max-3xl/acoes:px-0"
+          onClick={gravar}
+          disabled={gravando}
+          aria-label="Salvar rascunho"
+          title="Salvar rascunho"
+        >
+          <Save className="@xl/acoes1:hidden @3xl/acoes:hidden" />
+          <span className="hidden @xl/acoes1:inline @3xl/acoes:inline">{gravando ? "Salvando…" : "Salvar rascunho"}</span>
         </Button>
         {descartar}
       </div>
@@ -256,7 +265,7 @@ function AjusteAutomatico({
 }) {
   const [r, setR] = useState<{ textos: SugestaoTexto[]; destinos: { sugestoes: SugestaoDestino[]; total: number } } | null>(null);
   const o = c.objeto;
-  const unidade = c.uoAlvo ? ctx.catalogo.unidades[c.uoAlvo] ?? c.destino.nome : c.destino.nome;
+  const unidade = nomeDoAlcance(c.uoAlvo, ctx.catalogo.unidades) ?? c.destino.nome;
   const motivo =
     c.situacao === "CONFLITO" && o
       ? `“${o.rotulo}” é despesa de ${o.area}; o destino escolhido é de outra área.`
@@ -559,6 +568,7 @@ function CampoDestino({
         nomeInicial={dialogo?.nome ?? ""}
         editando={dialogo?.editando ?? null}
         unidades={ctx.unidades}
+        exercicio={ctx.config.exercicio}
         aoFechar={() => setDialogo(null)}
         aoSalvar={(novo) => {
           const enderecoManual = dialogo?.editando && e.endereco.trim() && e.endereco.trim() !== dialogo.editando.endereco.trim();
@@ -649,17 +659,25 @@ function Processando({ passo, rotuloBase }: { passo: number; rotuloBase: string 
 
 // ------------------------------------------------------------- resultado
 
+// A, B, …, Z, AA, AB… — a lista pode passar de 26 quando o destino cobre um órgão.
+function letraCandidata(i: number): string {
+  return (i >= 26 ? letraCandidata(Math.floor(i / 26) - 1) : "") + String.fromCharCode(65 + (i % 26));
+}
+
 function LinhaDotacao({
   d,
   selo,
   ambar,
   selecionada,
+  unidade,
   children,
 }: {
   d: Candidata | DotacaoMotor;
   selo?: string;
   ambar?: boolean;
   selecionada?: boolean;
+  // Nome da unidade da dotação: só aparece quando a busca cobre mais de uma.
+  unidade?: string | null;
   children?: React.ReactNode;
 }) {
   const abaixo = "abaixoDoPretendido" in d && d.abaixoDoPretendido;
@@ -680,7 +698,8 @@ function LinhaDotacao({
           {d.codigo} — {d.nome}
         </div>
         <div className="text-xs text-muted-foreground">
-          {d.uo} · função {d.funcao}.{d.subf} — {d.subfn} · programa {d.prog}
+          {d.uo}
+          {unidade ? ` — ${unidade}` : ""} · função {d.funcao}.{d.subf} — {d.subfn} · programa {d.prog}
         </div>
         <div className="text-xs text-muted-foreground">
           {d.gnd}.{d.gnd}.{d.mod}.{d.elem} · fonte {d.fonte}
@@ -719,6 +738,17 @@ function ResultadoClassificacao({
   const sit = situacaoEfetiva(c, e.selecao);
   const manual = c.situacao === "VALIDAR" && sit === "OK";
   const rotuloBase = ctx.config.rotuloBase ?? "LOA";
+  // Destino que cobre o órgão inteiro (Hospital): cada dotação diz de que unidade é.
+  const nomeSeVarias = (uo: string) =>
+    c.unidadesAlvo.length > 1 || !c.unidadesAlvo.includes(uo) ? (ctx.catalogo.unidades[uo] ?? "").split(" — ").pop() || null : null;
+  const unidadeDestino = (nomeDoAlcance(c.uoAlvo, ctx.catalogo.unidades) ?? c.destino.nome).split(" — ")[0];
+  // Obra que o orçamento põe em outra secretaria: a tela diz onde a dotação está e por quê.
+  const avisoObra = c.unidadeDaObra ? (
+    <Aviso tipo="info">
+      {unidadeDestino} não tem dotação de obra na {rotuloBase}. As obras desta área estão em{" "}
+      <b>{(ctx.catalogo.unidades[c.unidadeDaObra] ?? c.unidadeDaObra).split(" — ")[0]}</b>, em linha própria da área — é dela a dotação abaixo.
+    </Aviso>
+  ) : null;
 
   if (c.situacao === "CONFLITO" && o) {
     return (
@@ -765,7 +795,8 @@ function ResultadoClassificacao({
           <Veredito tipo="ok" titulo={manual ? "Dotação escolhida" : "Dotação encontrada"}>
             {manual ? `Escolha registrada entre as ${c.opcoes.length} dotações compatíveis.` : `Uma dotação da ${rotuloBase} comporta este objeto neste destino.`}
           </Veredito>
-          <LinhaDotacao d={d.dotacao} selo={manual ? "escolhida pelo proponente" : "selecionada pelo sistema"}>
+          {avisoObra}
+          <LinhaDotacao d={d.dotacao} selo={manual ? "escolhida pelo proponente" : "selecionada pelo sistema"} unidade={nomeSeVarias(d.dotacao.uo)}>
             {manual ? (
               <Button variant="surface" size="sm" className="mt-2.5" onClick={() => atualizar({ selecao: { escolha: null, dotacaoId: null } })}>
                 Rever as outras {c.opcoes.length - 1} compatíveis
@@ -809,6 +840,7 @@ function ResultadoClassificacao({
               </>
             )}
           </Veredito>
+          {avisoObra}
           {c.naoReconhecido || c.semAderencia ? (
             <p className="text-xs text-muted-foreground">Ex.: em vez de “material”, diga “material escolar” ou “material hospitalar”.</p>
           ) : null}
@@ -834,22 +866,58 @@ function ResultadoClassificacao({
                   </>
                 )}
               </div>
-              <div className="grid gap-2.5 px-3">
-                {c.opcoes.map((x, i) => (
-                  <LinhaDotacao key={x.id} d={x} selo={`candidata ${String.fromCharCode(65 + i)}`} ambar>
-                    <Button
-                      size="sm"
-                      className="mt-2.5"
-                      onClick={() => {
-                        atualizar({ selecao: { escolha: "PROPONENTE", dotacaoId: x.id } });
-                        toast(`Dotação escolhida: ${x.codigo}.`);
-                      }}
-                    >
-                      Usar esta dotação
-                    </Button>
-                  </LinhaDotacao>
-                ))}
-              </div>
+              {c.unidadesAlvo.length > 1 ? (
+                // Destino que cobre o órgão inteiro: as opções vêm agrupadas por unidade (setor).
+                <div className="grid gap-2 px-3">
+                  {c.unidadesAlvo
+                    .map((uo) => ({ uo, itens: c.opcoes.map((x, i) => ({ x, i })).filter(({ x }) => x.uo === uo) }))
+                    .filter((g) => g.itens.length)
+                    .map((g, gi) => (
+                      <details key={g.uo} open={gi === 0} className="group rounded-box bg-surface">
+                        <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-3 text-sm font-bold [&::-webkit-details-marker]:hidden">
+                          <span className="text-muted-foreground transition-transform group-open:rotate-90">›</span>
+                          {g.uo} — {(ctx.catalogo.unidades[g.uo] ?? "").split(" — ").pop()}
+                          <span className="ml-auto text-xs font-semibold text-muted-foreground">
+                            {g.itens.length} {g.itens.length === 1 ? "dotação" : "dotações"}
+                          </span>
+                        </summary>
+                        <div className="grid gap-2.5 px-3 pb-3">
+                          {g.itens.map(({ x, i }) => (
+                            <LinhaDotacao key={x.id} d={x} selo={`candidata ${letraCandidata(i)}`} ambar>
+                              <Button
+                                size="sm"
+                                className="mt-2.5"
+                                onClick={() => {
+                                  atualizar({ selecao: { escolha: "PROPONENTE", dotacaoId: x.id } });
+                                  toast(`Dotação escolhida: ${x.codigo}.`);
+                                }}
+                              >
+                                Usar esta dotação
+                              </Button>
+                            </LinhaDotacao>
+                          ))}
+                        </div>
+                      </details>
+                    ))}
+                </div>
+              ) : (
+                <div className="grid gap-2.5 px-3">
+                  {c.opcoes.map((x, i) => (
+                    <LinhaDotacao key={x.id} d={x} selo={`candidata ${letraCandidata(i)}`} ambar unidade={nomeSeVarias(x.uo)}>
+                      <Button
+                        size="sm"
+                        className="mt-2.5"
+                        onClick={() => {
+                          atualizar({ selecao: { escolha: "PROPONENTE", dotacaoId: x.id } });
+                          toast(`Dotação escolhida: ${x.codigo}.`);
+                        }}
+                      >
+                        Usar esta dotação
+                      </Button>
+                    </LinhaDotacao>
+                  ))}
+                </div>
+              )}
               <div className="flex flex-wrap items-center gap-3 px-4 pt-3.5 pb-4">
                 <Button
                   variant="surface"
@@ -928,7 +996,7 @@ function ResultadoClassificacao({
           </Par>
           <Par k={c.uoAlvo ? "Unidade pesquisada" : "Secretaria do repasse"}>
             {c.uoAlvo
-              ? `${c.uoAlvo} — ${ctx.catalogo.unidades[c.uoAlvo] ?? ""}`
+              ? `${c.uoAlvo} — ${nomeDoAlcance(c.uoAlvo, ctx.catalogo.unidades) ?? ""}`
               : d.dotacao && sit === "OK"
                 ? `${d.dotacao.uo} — ${ctx.catalogo.unidades[d.dotacao.uo] ?? ""}`
                 : `deduzida do objeto — ${o.area ?? "área não identificada"}`}

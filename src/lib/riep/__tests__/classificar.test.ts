@@ -13,7 +13,8 @@ const classifica = (objeto: string, trechoDestino: string, pretendido = 100000, 
 // A LOA sancionada tem 4.4.90.52 em toda unidade e várias linhas 3.3.50.39 de
 // creche; os recortes tiram o que sobra para isolar a regra testada.
 const soUmaCreche = loa.filter((d) => !(d.uo === "11.01" && d.mod === "50" && d.codigo !== "2884.39/249"));
-const semEquipamentoNoHospital = loa.filter((d) => !(d.uo === "20.02" && d.elem === "52"));
+// O destino "Hospital" cobre o órgão inteiro: o recorte tira o equipamento de todas as unidades dele.
+const semEquipamentoNoHospital = loa.filter((d) => !(d.uo.startsWith("20.") && d.elem === "52"));
 const semCapitalParaEntidade = loa.filter((d) => !(d.mod === "50" && d.gnd === "4"));
 
 describe("reconhecimento do objeto", () => {
@@ -90,7 +91,7 @@ describe("classificação contra a LOA 2026 real", () => {
   });
 
   it("equipamento não cai em dotação de obra: ÓBICE", () => {
-    // A unidade do hospital só tem a reforma (4.4.90.51); ambulância é 52.
+    // O Hospital só tem a reforma (4.4.90.51); ambulância é 52.
     const r = classifica("Compra de uma ambulância", "Tabajara", 100000, semEquipamentoNoHospital);
     expect(r.objeto?.elemento).toBe("52");
     expect(r.situacao).toBe("OBICE");

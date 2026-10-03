@@ -3,6 +3,7 @@ import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import { NATUREZAS_EMENDAVEIS } from "@/lib/orcamento/codigo-dotacao";
 import type { Aplicado, Catalogo, ConfigMotor, DestinoMotor, DotacaoMotor, MetaPlanejamento } from "@/lib/riep";
+import { nomeDoAlcance } from "@/lib/riep/destino";
 
 // ============================================================================
 // Contexto do motor para um exercício: configuração, LOA elegível, catálogos,
@@ -29,7 +30,15 @@ export type ContextoEmenda = {
   destinos: DestinoTela[];
   // Unidades orçamentárias do exercício, para o cadastro de destino.
   unidades: { codigo: string; nome: string }[];
+  // Fim do protocolo de emendas (aaaa-mm-dd), de Configurações; nulo = sem data.
+  prazoProtocolo: string | null;
+  // Verdadeiro quando o dia de hoje (horário de Brasília) já passou do prazo.
+  prazoEncerrado: boolean;
 };
+
+// Dia de hoje em Brasília, no formato aaaa-mm-dd — é assim que o prazo é guardado.
+export const diaBrasilia = (d: Date) => d.toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+export const hojeBrasilia = () => diaBrasilia(new Date());
 
 export function paraConfigMotor(ano: number, c: Awaited<ReturnType<typeof lerConfiguracao>>): ConfigMotor {
   return {
@@ -92,7 +101,7 @@ export function paraDestinoMotor(
     novo: d.origem === "CADASTRO",
     pendenciaHabilitacao: d.pendenciaHabilitacao,
     subfuncao: d.subfuncaoSugerida ?? null,
-    unidadeNome: d.unidadeCodigo ? unidades[d.unidadeCodigo] ?? null : null,
+    unidadeNome: nomeDoAlcance(d.unidadeCodigo, unidades),
     unidadeRepasse: d.unidadeRepasseCodigo,
     telefone: d.telefone,
     email: d.email,
@@ -129,6 +138,8 @@ export const carregarContexto = cache(async (ano: number): Promise<ContextoEmend
   ]);
 
   const config = paraConfigMotor(ano, configuracao);
+  // Guardado como 23:59:59 de Brasília; o dia é lido no mesmo fuso.
+  const prazoProtocolo = configuracao?.prazoProtocolo ? diaBrasilia(configuracao.prazoProtocolo) : null;
   const unidades = Object.fromEntries(unidadesDb.map((u) => [u.codigo, u.nome]));
   const fora = new Set(configuracao?.orgaosForaDasEmendas ?? []);
 
@@ -203,6 +214,8 @@ export const carregarContexto = cache(async (ano: number): Promise<ContextoEmend
     unidades: unidadesDb
       .filter((u) => !fora.has(u.codigo.split(".")[0]))
       .map((u) => ({ codigo: u.codigo, nome: u.nome })),
+    prazoProtocolo,
+    prazoEncerrado: !!prazoProtocolo && hojeBrasilia() > prazoProtocolo,
   };
 });
 
@@ -220,7 +233,8 @@ export async function aplicadoDoAutor(
       where: {
         exercicioId,
         autorId,
-        status: { in: ["SUBMETIDA", "APROVADA"] },
+        // Em diligência a emenda continua apresentada: a cota segue reservada.
+        status: { in: ["SUBMETIDA", "EM_DILIGENCIA", "APROVADA"] },
         ...(excetoEmendaId ? { id: { not: excetoEmendaId } } : {}),
       },
       _sum: { valor: true },

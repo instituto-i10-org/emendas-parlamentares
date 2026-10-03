@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Download } from "lucide-react";
 import { Cartao, Kpi, Pagina, TabelaDados } from "@/components/app/pagina";
 import { Selo } from "@/components/emenda/ui";
-import { DecidirEmenda, ReabrirEmenda } from "@/components/tramitacao/acoes";
+import { DecidirEmenda, PedirAjuste, ReabrirEmenda } from "@/components/tramitacao/acoes";
 import { Button } from "@/components/ui/button";
 import { Poder } from "@/generated/prisma/enums";
 import { requireAccess } from "@/lib/access";
@@ -23,6 +23,8 @@ export default async function TramitacaoPage() {
   const emendas = ano ? await listarEmendas(ano, { status: { not: "RASCUNHO" } }) : [];
   const decide = podeTramitar(user);
   const fila = emendas.filter((e) => e.status === "SUBMETIDA");
+  const emDiligencia = emendas.filter((e) => e.status === "EM_DILIGENCIA");
+  const hoje = new Date();
   const decididas = emendas.filter((e) => e.status === "APROVADA" || e.status === "REJEITADA");
   const soma = (l: typeof emendas) => l.reduce((s, e) => s + e.valor.toNumber(), 0);
 
@@ -76,16 +78,50 @@ export default async function TramitacaoPage() {
                   </Link>
                   <span className="block text-xs text-muted-foreground">
                     {e.destino?.nome ?? "—"} · {e.dotacao ? e.dotacao.codigo : "dotação a definir pela análise técnica"}
+                    {e.reenviadaEm ? ` · reenviada após diligência em ${e.reenviadaEm.toLocaleDateString("pt-BR")}` : ""}
                   </span>
                 </div>,
                 <span key="a" className="max-md:hidden">{e.autor.nome}</span>,
                 parecerExecutivo(e),
                 <span key="v" className="font-bold whitespace-nowrap tnum">{BRL(e.valor.toNumber())}</span>,
-                decide ? <DecidirEmenda key="d" emendaId={e.id} rotulo={rotulo(e)} /> : null,
+                decide ? (
+                  <div key="d" className="flex flex-wrap justify-end gap-1.5">
+                    <PedirAjuste emendaId={e.id} rotulo={rotulo(e)} />
+                    <DecidirEmenda emendaId={e.id} rotulo={rotulo(e)} />
+                  </div>
+                ) : null,
               ],
             }))}
           />
         </Cartao>
+
+        {emDiligencia.length ? (
+          <Cartao titulo={`Em diligência (${emDiligencia.length})`}>
+            <TabelaDados
+              vazio=""
+              colunas={[{ titulo: "Nº" }, { titulo: "Emenda" }, { titulo: "Pedido da Comissão", className: "max-lg:hidden" }, { titulo: "Prazo" }, { titulo: "Valor", className: "text-right" }, { titulo: "" }]}
+              linhas={emDiligencia.map((e) => ({
+                chave: e.id,
+                celulas: [
+                  <b key="n" className="tnum">{e.numero ?? "—"}</b>,
+                  <div key="o">
+                    <Link href={`/emendas/${e.id}`} className="font-bold hover:underline">
+                      {e.objeto}
+                    </Link>
+                    <span className="block text-xs text-muted-foreground">{e.autor.nome}</span>
+                  </div>,
+                  <p key="p" className="line-clamp-2 max-w-md text-xs text-muted-foreground max-lg:hidden">{e.diligenciaMotivo}</p>,
+                  <div key="z">
+                    <span className="block text-xs">{e.diligenciaAte?.toLocaleDateString("pt-BR") ?? "—"}</span>
+                    {e.diligenciaAte && e.diligenciaAte < hoje ? <Selo tipo="bad">prazo vencido</Selo> : <Selo tipo="warn">aguardando o autor</Selo>}
+                  </div>,
+                  <span key="v" className="font-bold whitespace-nowrap tnum">{BRL(e.valor.toNumber())}</span>,
+                  decide && e.diligenciaAte && e.diligenciaAte < hoje ? <DecidirEmenda key="d" emendaId={e.id} rotulo={rotulo(e)} /> : null,
+                ],
+              }))}
+            />
+          </Cartao>
+        ) : null}
 
         <Cartao titulo={`Decididas (${decididas.length})`}>
           <TabelaDados

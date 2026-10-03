@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Trash2 } from "lucide-react";
+import { Eye, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -90,11 +90,14 @@ export function EditorEmenda({
   inicial,
   aplicado,
   autor,
+  diligencia = null,
 }: {
   ctx: ContextoEmenda;
   inicial: EstadoEmenda;
   aplicado: Aplicado;
   autor: string;
+  // Emenda devolvida pela Comissão para sanear: o pedido, o prazo e o número.
+  diligencia?: { numero: number | null; motivo: string; ate: string | null } | null;
 }) {
   const router = useRouter();
   const [e, setE] = useState<EstadoEmenda>(inicial);
@@ -165,7 +168,7 @@ export function EditorEmenda({
     }
     setGravando(true);
     try {
-      const r = await salvarEmenda(confirmarDuplicata ? { ...e, confirmarDuplicata: true } : e, submeter);
+      const r = await salvarEmenda(confirmarDuplicata ? { ...e, confirmarDuplicata: true } : e, submeter, ctx.config.exercicio);
       if (!r.ok) {
         if (r.duplicata) {
           setDuplicata(r.duplicata);
@@ -206,8 +209,16 @@ export function EditorEmenda({
   }
   const descartar = (
     <>
-      <Button variant="ghost" className="ml-auto text-bad-ink hover:text-bad-ink" onClick={() => setConfirmando(true)} disabled={gravando}>
-        <Trash2 /> Descartar rascunho
+      {/* Na barra estreita, em que os botões quebrariam de linha, fica só a lixeira. */}
+      <Button
+        variant="ghost"
+        className="ml-auto text-bad-ink hover:text-bad-ink @max-xl/acoes1:w-11 @max-xl/acoes1:px-0 @max-3xl/acoes:w-11 @max-3xl/acoes:px-0"
+        onClick={() => setConfirmando(true)}
+        disabled={gravando}
+        aria-label="Descartar rascunho"
+        title="Descartar rascunho"
+      >
+        <Trash2 /> <span className="hidden @xl/acoes1:inline @3xl/acoes:inline">Descartar rascunho</span>
       </Button>
       <Dialog open={confirmando} onOpenChange={setConfirmando}>
         <DialogContent
@@ -235,7 +246,7 @@ export function EditorEmenda({
   );
 
   const rodape = (
-    <div className="sticky bottom-0 z-10 -mx-7 rounded-b-card mt-7 flex flex-wrap items-center gap-2 bg-surface px-7 py-4 shadow-[0_-12px_16px_var(--surface)] max-md:-mx-4 max-md:px-4">
+    <div className="@container/acoes sticky bottom-0 z-10 -mx-7 rounded-b-card mt-7 flex flex-wrap items-center gap-2 bg-surface px-7 py-4 shadow-[0_-12px_16px_var(--surface)] max-md:-mx-4 max-md:px-4">
       {etapa === 1 ? null : etapa === 2 ? (
         <>
           <Button onClick={() => irPara(3)} className="max-md:flex-[1_1_100%]">
@@ -264,34 +275,54 @@ export function EditorEmenda({
           ) : null}
           <Button
             variant="ok"
-            disabled={!d.resumo.pode || gravando || !!duplicata}
+            disabled={!d.resumo.pode || gravando || !!duplicata || ctx.prazoEncerrado}
             onClick={() => gravar(true)}
             className="max-md:flex-[1_1_100%]"
           >
             {d.resumo.bloqueios > 0
-              ? `Submeter — ${d.resumo.bloqueios} bloqueio${d.resumo.bloqueios > 1 ? "s" : ""}`
+              ? `${diligencia ? "Reenviar" : "Submeter"} — ${d.resumo.bloqueios} bloqueio${d.resumo.bloqueios > 1 ? "s" : ""}`
               : d.resumo.alertas > 0
-                ? "Submeter mesmo assim"
-                : "Submeter emenda"}
+                ? `${diligencia ? "Reenviar" : "Submeter"} mesmo assim`
+                : diligencia
+                  ? "Reenviar à Comissão"
+                  : "Submeter emenda"}
           </Button>
           <Button variant="ghost" onClick={() => irPara(2)}>
             Voltar
           </Button>
         </>
       )}
-      <Button variant="ghost" onClick={() => gravar(false)} disabled={gravando}>
-        {gravando ? "Salvando…" : "Salvar rascunho"}
+      {/* Na barra estreita, em que os botões quebrariam de linha, fica só o disquete. */}
+      <Button
+        variant="ghost"
+        className="@max-xl/acoes1:w-11 @max-xl/acoes1:px-0 @max-3xl/acoes:w-11 @max-3xl/acoes:px-0"
+        onClick={() => gravar(false)}
+        disabled={gravando}
+        aria-label="Salvar rascunho"
+        title="Salvar rascunho"
+      >
+        <Save className="@xl/acoes1:hidden @3xl/acoes:hidden" />
+        <span className="hidden @xl/acoes1:inline @3xl/acoes:inline">{gravando ? "Salvando…" : "Salvar rascunho"}</span>
       </Button>
-      {descartar}
+      {diligencia ? null : descartar}
       {etapa > 1 ? (
-        <Button variant="ghost" asChild>
-          <a href={e.id ? `/emendas/${e.id}/plano` : "#"} target="_blank" rel="noopener" aria-disabled={!e.id} onClick={(ev) => {
-            if (!e.id || alterado) {
-              ev.preventDefault();
-              toast("Salve o rascunho para visualizar o plano.");
-            }
-          }}>
-            Visualizar plano
+        <Button variant="ghost" asChild className="@max-3xl/acoes:w-11 @max-3xl/acoes:px-0">
+          <a
+            href={e.id ? `/emendas/${e.id}/plano` : "#"}
+            target="_blank"
+            rel="noopener"
+            aria-disabled={!e.id}
+            aria-label="Visualizar plano"
+            title="Visualizar plano"
+            onClick={(ev) => {
+              if (!e.id || alterado) {
+                ev.preventDefault();
+                toast("Salve o rascunho para visualizar o plano.");
+              }
+            }}
+          >
+            <Eye className="@3xl/acoes:hidden" />
+            <span className="hidden @3xl/acoes:inline">Visualizar plano</span>
           </a>
         </Button>
       ) : null}
@@ -301,8 +332,20 @@ export function EditorEmenda({
   return (
     <div className="px-7 pt-9 pb-11 max-md:px-4 max-md:pt-6">
       <div className="mb-2 text-xs font-medium text-muted-foreground">
-        Emendas › <b className="font-bold text-ink">{e.id ? "Editar emenda" : "Nova emenda"}</b>
+        Emendas › <b className="font-bold text-ink">{diligencia ? `Emenda nº ${diligencia.numero ?? "—"}/${ctx.config.exercicio} — ajuste pedido pela Comissão` : e.id ? "Editar emenda" : "Nova emenda"}</b>
       </div>
+      {diligencia ? (
+        <div className="mb-5">
+          <Aviso tipo="warn" titulo="A Comissão de Finanças pediu ajuste nesta emenda">
+            <span className="whitespace-pre-line">{diligencia.motivo}</span>
+            {diligencia.ate ? (
+              <span className="mt-1.5 block text-xs">
+                Prazo para reenviar: <b>{diligencia.ate}</b>. A emenda mantém o número e a cota; corrija o que foi pedido e clique em “Reenviar à Comissão” no passo 3.
+              </span>
+            ) : null}
+          </Aviso>
+        </div>
+      ) : null}
       <div className="mb-5 flex items-center justify-between gap-4 max-md:flex-col-reverse max-md:items-stretch">
         <h1 className="text-2xl font-extrabold tracking-[-0.02em]">{ETAPAS[etapa - 1]}</h1>
         <nav aria-label="Etapas" className="flex gap-1 rounded-box bg-surface p-1.5 shadow-[0_1px_2px_rgba(10,36,99,.06)]">
@@ -344,12 +387,12 @@ export function EditorEmenda({
               irParaPlano={() => irPara(2)}
               gravar={() => gravar(false)}
               gravando={gravando}
-              descartar={descartar}
+              descartar={diligencia ? null : descartar}
             />
           ) : etapa === 2 ? (
             <Etapa2 e={e} d={d} ctx={ctx} atualizar={atualizar} autor={autor} />
           ) : (
-            <Etapa3 e={e} d={d} atualizar={atualizar} />
+            <Etapa3 e={e} d={d} atualizar={atualizar} prazo={ctx.prazoProtocolo ? { data: ctx.prazoProtocolo, encerrado: ctx.prazoEncerrado } : null} />
           )}
           {etapa > 1 ? rodape : <div className="h-7" />}
         </section>
