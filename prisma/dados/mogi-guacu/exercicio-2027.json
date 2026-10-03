@@ -1,0 +1,69 @@
+{
+ "year": 2027,
+ "source": "Parâmetros de Mogi Guaçu para o orçamento de 2027 — PL 264/2026 (projeto da LOA 2027, protocolo 1669/2026), LDO 2027 (Lei 6.393/2026) e Lei Orgânica art. 140 (Emenda 47/2017)",
+ "baseLabel": "proposta orçamentária de 2027 (PL 264/2026)",
+ "instruments": {
+  "bill": {
+   "number": "PL 264/2026",
+   "summary": "Estima a receita e fixa a despesa do município para o exercício de 2027.",
+   "status": "EM_TRAMITACAO",
+   "sentAt": "2026-09-30"
+  },
+  "law": null
+ },
+ "excludedOrgans": [
+  "01",
+  "17"
+ ],
+ "goalNote": "Meta de 2027 do PPA 2026–2029",
+ "audespSource": "08",
+ "audespName": "Emendas Parlamentares Individuais — Legislativo Municipal",
+ "applicationCode": "804",
+ "audespNote": "Tabelas Auxiliares AUDESP 2027 V-03 (TCE-SP): fonte 8, emendas parlamentares individuais do Legislativo municipal; código de aplicação 804. A reserva das emendas no PL 264/2026 (ficha 1208) já vem na fonte 08.",
+ "variation": null,
+ "icCo": null,
+ "icEp": "1110",
+ "icEpNote": "IC-EP 1110 — emendas individuais. Vigência a partir do exercício de 2027 (art. 2º da Portaria STN/MF 636/2026). Código conforme a especificação do motor RIEP; não conferido no texto publicado da portaria.",
+ "individualQuota": 854797.44,
+ "healthPercent": 50,
+ "deadline": null,
+ "referenceAgeMonths": 12,
+ "simulation": false,
+ "quotaCalculation": "1,2% × RCL 2025 (R$ 926.030.562,09, RREO 6º bimestre/2025) = R$ 11.112.366,75 ÷ 13 vereadores = R$ 854.797,44. O PL 264/2026 reserva R$ 11.112.367,00 para as emendas individuais (ficha 1208, órgão 17, Reserva de Contingência, fonte 08).",
+ "rclPercent": 1.2,
+ "rclBase": {
+  "year": 2025,
+  "value": 926030562.09,
+  "note": "RCL realizada em 2025 — SICONFI/Tesouro Nacional, RREO 6º bimestre/2025, ente IBGE 3530706. Os arts. 6º e 7º do PL 264/2026 adotam a Receita Corrente Líquida efetivamente ocorrida em 2025."
+ },
+ "healthMeasurement": "global",
+ "healthNote": "LOM art. 140 § 6º: \"a metade deste percentual será destinada a ações e serviços públicos de saúde\" — o texto fala do percentual total.",
+ "councilors": 13,
+ "legalBasis": [
+  {
+   "norm": "Projeto de Lei nº 264/2026 (LOA 2027), protocolo 1669/2026, de 30/09/2026",
+   "article": "Art. 7º, caput",
+   "excerpt": "são de execução obrigatória no exercício até o limite de 1,2% (um inteiro e dois décimos por cento) da Receita Corrente Líquida efetivamente ocorrida em 2025, observada a meação determinada no § 8º do art. 140 da Lei Orgânica do Município e salvo quando houver impedimentos de ordem técnica",
+   "url": null
+  },
+  {
+   "norm": "Projeto de Lei nº 264/2026 (LOA 2027)",
+   "article": "Art. 6º, caput e §§ 1º a 5º; Art. 7º, §§ 1º e 2º",
+   "excerpt": "É vedada a anulação de dotações provenientes de emendas individuais, salvo no que exceder 1,2% da RCL de 2025 ou não observar a divisão do § 6º do art. 140 da LOM. Até 30/04/2027 o Legislativo pode apresentar alterações nas indicações. Impedimento técnico segue o § 11 do art. 140 da LOM.",
+   "url": null
+  },
+  {
+   "norm": "Lei nº 6.393/2026 (LDO 2027)",
+   "article": "Art. 23, §§ 1º a 6º",
+   "excerpt": "O somatório dos valores das emendas parlamentares individuais de caráter impositivo que vierem a ser aprovadas na lei orçamentária não poderão exceder o limite expressamente determinado pelo § 6º, do art. 140, da Lei Orgânica do Município de Mogi Guaçu. Emenda que crie ou amplie ação deve demonstrar compatibilidade com o PPA e a LDO.",
+   "url": null
+  }
+ ],
+ "deadlines": [
+  {
+   "what": "Prazo final para o Legislativo apresentar alterações nas indicações das emendas impositivas (PL 264/2026, art. 6º, § 4º)",
+   "date": "2027-04-30",
+   "url": null
+  }
+ ]
+}

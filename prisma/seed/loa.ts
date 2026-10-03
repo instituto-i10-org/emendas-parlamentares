@@ -2,6 +2,7 @@ import type { PrismaClient } from "../../src/generated/prisma/client";
 import type { TipoAcao } from "../../src/generated/prisma/enums";
 import { codigosDeExibicao, NATUREZAS_EMENDAVEIS } from "../../src/lib/orcamento/codigo-dotacao";
 import { data, lerDados } from "./dados";
+import { lerExercicio } from "./exercicio";
 
 type LinhaLoa = {
   ficha: string;
@@ -33,9 +34,10 @@ type MetaJson = {
   produto: string | null;
   unidadeMedida: string | null;
   publico: string | null;
-  quantidade2026: number | null;
   quantidadePpa: number | null;
   pagina: number | null;
+  // Meta de cada ano do PPA: quantidade2026, quantidade2027…
+  [quantidadeDoAno: `quantidade${number}`]: number | null | undefined;
 };
 
 // Tabelas federais (Portaria MOG 42/1999 e Portaria Interministerial 163/2001).
@@ -49,19 +51,22 @@ const FUNCOES: Record<string, string> = {
   "27": "Desporto e Lazer", "28": "Encargos Especiais", "99": "Reserva de Contingência",
 };
 const ELEMENTOS: Record<string, string> = {
-  "01": "Aposentadorias e reformas", "03": "Pensões", "11": "Vencimentos e vantagens fixas — pessoal civil",
+  "01": "Aposentadorias e reformas", "03": "Pensões", "08": "Outros benefícios assistenciais do servidor e do militar",
+  "11": "Vencimentos e vantagens fixas — pessoal civil",
   "13": "Obrigações patronais", "14": "Diárias — civil", "16": "Outras despesas variáveis — pessoal civil",
   "18": "Auxílio financeiro a estudantes", "21": "Juros sobre a dívida por contrato", "30": "Material de consumo",
+  "31": "Premiações culturais, artísticas, científicas, desportivas e outras",
   "32": "Material, bem ou serviço para distribuição gratuita", "33": "Passagens e despesas com locomoção",
   "34": "Outras despesas de pessoal decorrentes de contratos de terceirização", "35": "Serviços de consultoria",
   "36": "Outros serviços de terceiros — pessoa física", "39": "Outros serviços de terceiros — pessoa jurídica",
   "40": "Serviços de tecnologia da informação e comunicação", "41": "Contribuições", "42": "Auxílios",
   "43": "Subvenções sociais", "45": "Subvenções econômicas", "46": "Auxílio-alimentação",
   "47": "Obrigações tributárias e contributivas", "48": "Outros auxílios financeiros a pessoas físicas",
-  "51": "Obras e instalações", "52": "Equipamentos e material permanente",
+  "51": "Obras e instalações", "52": "Equipamentos e material permanente", "61": "Aquisição de imóveis",
   "65": "Constituição ou aumento de capital de empresas", "70": "Rateio pela participação em consórcio público",
   "71": "Principal da dívida contratual resgatado", "91": "Sentenças judiciais",
   "92": "Despesas de exercícios anteriores", "93": "Indenizações e restituições",
+  "94": "Indenizações e restituições trabalhistas",
   "96": "Ressarcimento de despesas de pessoal requisitado", "99": "A classificar",
 };
 const CATEGORIA: Record<string, string> = { "1": "3", "2": "3", "3": "3", "4": "4", "5": "4", "6": "4", "9": "9" };
@@ -76,30 +81,37 @@ function tipoAcao(codigo: string): TipoAcao {
 // Python str.capitalize(): primeira letra maiúscula, o resto minúsculo.
 const capitalizar = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 
-export async function semearLoa(prisma: PrismaClient, exercicioId: string) {
-  const loa = lerDados<{ titulo: string; fonte: string; dotacoes: LinhaLoa[] }>("loa-2026.json");
-  const unidadesNomes = lerDados<{ names: Record<string, string> }>("unidades-2026.json").names;
+export async function semearLoa(prisma: PrismaClient, exercicioId: string, ano: number) {
+  const ex = lerExercicio(ano);
+  const loa = lerDados<{ titulo: string; fonte: string | null; dotacoes: LinhaLoa[] }>(`loa-${ano}.json`);
+  const unidadesNomes = lerDados<{ names: Record<string, string> }>(`unidades-${ano}.json`).names;
   const ppa = lerDados<{ acoes: MetaJson[]; programas: string[] }>("metas-ppa-2026-2029.json");
-  const orgaosFora = new Set(["01", "17"]);
+  const orgaosFora = new Set(ex.excludedOrgans);
 
+  // As dotações ficam sempre no projeto de lei: é sobre ele que a emenda incide.
+  const { bill, law } = ex.instruments;
   const pl = await upsertInstrumento(prisma, exercicioId, {
     tipo: "LOA",
     especie: "PROJETO_LEI",
-    numero: "PL 275/2025",
-    ementa: "Estima a receita e fixa a despesa do Município de Mogi Guaçu para o exercício de 2026.",
-    status: "APROVADO",
+    numero: bill.number,
+    ementa: bill.summary,
+    status: bill.status,
     arquivoUrl: loa.fonte,
+    // Data ausente no arquivo não apaga a que foi preenchida em Planejamento.
+    dataEnvio: bill.sentAt ? data(bill.sentAt) : undefined,
   });
-  await upsertInstrumento(prisma, exercicioId, {
-    tipo: "LOA",
-    especie: "LEI_APROVADA",
-    numero: "Lei 6.246/2025",
-    ementa: "Lei Orçamentária Anual de 2026 (DOM Mogi Guaçu ed. 972, de 10/12/2025).",
-    status: "VIGENTE",
-    dataAprovacao: data("2025-12-05"),
-    dataVigencia: data("2026-01-01"),
-    instrumentoOrigemId: pl.id,
-  });
+  if (law) {
+    await upsertInstrumento(prisma, exercicioId, {
+      tipo: "LOA",
+      especie: "LEI_APROVADA",
+      numero: law.number,
+      ementa: law.summary,
+      status: law.status,
+      dataAprovacao: law.approvedAt ? data(law.approvedAt) : undefined,
+      dataVigencia: law.effectiveAt ? data(law.effectiveAt) : undefined,
+      instrumentoOrigemId: pl.id,
+    });
+  }
 
   const elegiveis = loa.dotacoes.filter(
     (d) => NATUREZAS_EMENDAVEIS.has(`${d.gnd}|${d.mod}`) && !orgaosFora.has(d.uo.split(".")[0])
@@ -268,34 +280,49 @@ export async function semearLoa(prisma: PrismaClient, exercicioId: string) {
     if (sobra.ativo) desativadas++;
   }
 
-  // Metas do PPA 2026–2029. A LDO 2026 não tem quadro de metas físicas: a meta
-  // de 2026 do PPA faz as vezes da meta do exercício, e a nota diz isso.
+  // Metas do PPA 2026–2029. A meta do ano no PPA faz as vezes da meta do
+  // exercício, e a nota diz de onde ela veio. A meta é da ação: quando a ação
+  // mudou de unidade em relação ao PPA (os setores do Hospital em 2027, as obras
+  // que foram para a Secretaria de Obras), ela acompanha a ação, em cada unidade
+  // que a executa neste exercício.
   const unidadePorUnitId = new Map(loa.dotacoes.map((d) => [d.unitId, d.uo]));
+  const unidadesDaAcao = new Map<string, Set<string>>();
+  for (const d of loa.dotacoes) {
+    const k = `${d.prog}|${d.actionCode}`;
+    if (!unidadesDaAcao.has(k)) unidadesDaAcao.set(k, new Set());
+    unidadesDaAcao.get(k)!.add(d.uo);
+  }
   let metas = 0;
   for (const a of ppa.acoes) {
-    if (!a.quantidade2026) continue;
-    const uo = unidadePorUnitId.get(a.unitId);
-    const unidadeId = uo && unidades.get(uo);
+    const quantidadeDoAno = a[`quantidade${ano}`];
+    if (!quantidadeDoAno) continue;
     const programaId = programas.get(a.programa);
     const acaoId = acoes.get(`${a.programa}|${a.acao}`);
-    if (!unidadeId || !programaId || !acaoId) continue;
+    if (!programaId || !acaoId) continue;
+    const executoras = unidadesDaAcao.get(`${a.programa}|${a.acao}`) ?? new Set<string>();
+    const uoPpa = unidadePorUnitId.get(a.unitId);
+    const alvos = uoPpa && executoras.has(uoPpa) ? [uoPpa] : [...executoras];
     const meta = {
       exercicioId,
       produto: capitalizar(a.produto || a.nomeAcao),
       unidadeMedida: a.unidadeMedida ? a.unidadeMedida.toLowerCase() : null,
       publicoAlvo: a.publico ? capitalizar(a.publico) : null,
       quantidadePpa: a.quantidadePpa,
-      quantidadeExercicio: a.quantidade2026,
+      quantidadeExercicio: quantidadeDoAno,
       beneficiariosExercicio: null,
-      notaLdo: `LDO 2026 sem quadro de metas físicas — usada a meta de 2026 do PPA 2026–2029 (p. ${a.pagina})`,
+      notaLdo: `${ex.goalNote} (p. ${a.pagina})`,
       paginaFonte: a.pagina,
     };
-    await prisma.metaAcao.upsert({
-      where: { unidadeId_programaId_acaoId: { unidadeId, programaId, acaoId } },
-      update: meta,
-      create: { ...meta, unidadeId, programaId, acaoId },
-    });
-    metas++;
+    for (const uo of alvos) {
+      const unidadeId = unidades.get(uo);
+      if (!unidadeId) continue;
+      await prisma.metaAcao.upsert({
+        where: { unidadeId_programaId_acaoId: { unidadeId, programaId, acaoId } },
+        update: meta,
+        create: { ...meta, unidadeId, programaId, acaoId },
+      });
+      metas++;
+    }
   }
 
   return { dotacoes: ordenadas.length, criadas, atualizadas, desativadas, metas };

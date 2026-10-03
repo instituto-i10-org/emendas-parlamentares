@@ -8,14 +8,17 @@ import { lerDados } from "./seed/dados";
 
 // Recarrega os catálogos do motor a partir de prisma/dados/mogi-guacu/
 // biblioteca-objetos.json: áreas de aplicação, biblioteca de objetos (com
-// pistas), tipos de destino e a subfunção sugerida dos destinos.
+// pistas), tipos de destino e a subfunção sugerida dos destinos. Realinha
+// também a unidade orçamentária dos destinos da base oficial com
+// destinos-2026.json (o Hospital, por exemplo, aponta para o órgão inteiro).
 //
 //   npm run db:recarregar-catalogos                 só lista
 //   CONFIRMAR=1 npm run db:recarregar-catalogos     grava
 //
 // A biblioteca é substituída inteira (o arquivo é a fonte). A subfunção
 // sugerida só é preenchida onde está vazia — quem editou um destino à mão não
-// é sobrescrito. Contra banco remoto exige PERMITIR_BANCO_REMOTO=1.
+// é sobrescrito. A unidade só muda em destino da base oficial; os cadastrados
+// por usuários não são tocados. Contra banco remoto exige PERMITIR_BANCO_REMOTO=1.
 
 const url = process.env.DIRECT_URL || process.env.DATABASE_URL;
 if (!url) {
@@ -33,8 +36,16 @@ async function main() {
   const [objetosDb, tiposDb, destinos] = await Promise.all([
     prisma.objetoBiblioteca.findMany({ select: { rotulo: true } }),
     prisma.tipoDestino.count({ where: { ativo: true } }),
-    prisma.destino.findMany({ select: { id: true, nome: true, nomeOficial: true, execucao: true, subfuncaoSugerida: true } }),
+    prisma.destino.findMany({
+      select: { id: true, nome: true, nomeOficial: true, execucao: true, subfuncaoSugerida: true, unidadeCodigo: true, origem: true },
+    }),
   ]);
+  const doArquivo = lerDados<{ destinos: { nome: string; execucao: string; unidade?: string }[] }>("destinos-2026.json").destinos;
+  const mudamDeUnidade = destinos.flatMap((d) => {
+    if (d.origem !== "BASE_OFICIAL" || d.execucao !== "DIRETA") return [];
+    const unidade = doArquivo.find((x) => x.execucao === d.execucao && x.nome === d.nome)?.unidade;
+    return unidade && unidade !== d.unidadeCodigo ? [{ id: d.id, nome: d.nome, de: d.unidadeCodigo, para: unidade }] : [];
+  });
   const novos = b.objetos.filter((o) => !objetosDb.some((x) => x.rotulo === o.rotulo)).map((o) => o.rotulo);
   const somem = objetosDb.filter((x) => !b.objetos.some((o) => o.rotulo === x.rotulo)).map((x) => x.rotulo);
   const tipos = b.tiposDestino ?? [];
@@ -45,6 +56,8 @@ async function main() {
   if (somem.length) console.log(`  saem: ${somem.join(", ")}`);
   console.log(`Tipos de destino: ${tiposDb} ativos no banco · ${tipos.length} no arquivo`);
   console.log(`Destinos que ganham subfunção sugerida: ${preencher.length}`);
+  console.log(`Destinos da base oficial que mudam de unidade: ${mudamDeUnidade.length}`);
+  for (const m of mudamDeUnidade) console.log(`  ${m.nome}: ${m.de ?? "—"} → ${m.para}`);
 
   if (process.env.CONFIRMAR !== "1") {
     console.log("\nNada gravado. Rode de novo com CONFIRMAR=1 para gravar.");
@@ -56,7 +69,10 @@ async function main() {
     await prisma.destino.update({ where: { id: d.id }, data: { subfuncaoSugerida: subfuncaoDoDestino(d.nome, d.nomeOficial, tipos) } });
     n++;
   }
-  console.log(`\nGravado: ${r.areas} áreas · ${r.objetos} objetos · ${r.tiposDestino} tipos de destino · ${n} destinos com subfunção sugerida.`);
+  for (const m of mudamDeUnidade) await prisma.destino.update({ where: { id: m.id }, data: { unidadeCodigo: m.para } });
+  console.log(
+    `\nGravado: ${r.areas} áreas · ${r.objetos} objetos · ${r.tiposDestino} tipos de destino · ${n} destinos com subfunção sugerida · ${mudamDeUnidade.length} com unidade realinhada.`
+  );
 }
 
 main()

@@ -291,7 +291,7 @@
    "nomeOficial": "CENTRO DE ESPECIALIDADES MEDICAS DE MOGI GUACU",
    "execucao": "DIRETA",
    "endereco": "Avenida Padre Jaime, 1422 — Jardim Planalto Verd · CEP 13844-070",
-   "unidade": "20.02",
+   "unidade": "20",
    "cnpj": "59015438000196",
    "cnes": "4032004",
    "fonte": "https://apidadosabertos.saude.gov.br/cnes/estabelecimentos/4032004"
@@ -944,7 +944,7 @@
    "nomeOficial": "HOSPITAL MUNICIPAL DR TABAJARA RAMOS",
    "execucao": "DIRETA",
    "endereco": "Avenida Padre Jaime, 1500 — Planalto Verde · CEP 13844-070",
-   "unidade": "20.02",
+   "unidade": "20",
    "cnpj": "59015438000196",
    "cnes": "2096498",
    "fonte": "https://apidadosabertos.saude.gov.br/cnes/estabelecimentos/2096498"

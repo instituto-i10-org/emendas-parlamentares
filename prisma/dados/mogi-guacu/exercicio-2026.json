@@ -1,6 +1,26 @@
 {
  "year": 2026,
  "source": "Parâmetros reais de Mogi Guaçu — LOA 2026 (Lei 6.246/2025), LDO 2026 (Lei 6.151/2025), Lei Orgânica art. 140 (Emenda 47/2017) e emendas apresentadas ao PL 275/2025",
+ "baseLabel": "LOA 2026 (Lei 6.246/2025)",
+ "instruments": {
+  "bill": {
+   "number": "PL 275/2025",
+   "summary": "Estima a receita e fixa a despesa do Município de Mogi Guaçu para o exercício de 2026.",
+   "status": "APROVADO"
+  },
+  "law": {
+   "number": "Lei 6.246/2025",
+   "summary": "Lei Orçamentária Anual de 2026 (DOM Mogi Guaçu ed. 972, de 10/12/2025).",
+   "status": "VIGENTE",
+   "approvedAt": "2025-12-05",
+   "effectiveAt": "2026-01-01"
+  }
+ },
+ "excludedOrgans": [
+  "01",
+  "17"
+ ],
+ "goalNote": "LDO 2026 sem quadro de metas físicas — usada a meta de 2026 do PPA 2026–2029",
  "audespSource": "08",
  "audespName": "Emendas Parlamentares Individuais — Legislativo Municipal",
  "applicationCode": "804",

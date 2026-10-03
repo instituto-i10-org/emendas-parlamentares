@@ -1,12 +1,31 @@
 import type { PrismaClient } from "../../src/generated/prisma/client";
-import type { TipoNorma } from "../../src/generated/prisma/enums";
+import type { StatusInstrumento, TipoNorma } from "../../src/generated/prisma/enums";
 import { data, lerDados } from "./dados";
 
-type ExercicioJson = {
+type InstrumentoJson = {
+  number: string;
+  summary: string;
+  status: StatusInstrumento;
+  sentAt?: string;
+  approvedAt?: string;
+  effectiveAt?: string;
+};
+
+export type ExercicioJson = {
   year: number;
+  // Como a base aparece para quem elabora ("LOA 2026 (Lei 6.246/2025)").
+  baseLabel: string;
+  // O projeto de lei é a base das emendas; a lei só existe depois da sanção.
+  instruments: { bill: InstrumentoJson; law: InstrumentoJson | null };
+  // Órgãos cujo orçamento não recebe emenda.
+  excludedOrgans: string[];
+  // Procedência da meta física do exercício, impressa junto de cada meta.
+  goalNote: string;
   audespSource: string;
   audespName: string;
   applicationCode: string;
+  // Nulo enquanto o identificador não vigora no exercício.
+  icEp: string | null;
   individualQuota: number;
   healthPercent: number;
   healthMeasurement: "global" | "individual";
@@ -16,9 +35,15 @@ type ExercicioJson = {
   rclPercent: number;
   rclBase: { year: number; value: number; note: string };
   councilors: number;
-  legalBasis: { norm: string; article: string; excerpt: string; url: string }[];
-  deadlines: { what: string; date: string; url: string }[];
+  legalBasis: { norm: string; article: string; excerpt: string; url: string | null }[];
+  deadlines: { what: string; date: string; url: string | null }[];
 };
+
+// Exercícios com dados em prisma/dados/mogi-guacu/ (exercicio-<ano>.json,
+// loa-<ano>.json e unidades-<ano>.json).
+export const ANOS_COM_DADOS = [2026, 2027] as const;
+
+export const lerExercicio = (ano: number) => lerDados<ExercicioJson>(`exercicio-${ano}.json`);
 
 function tipoNorma(titulo: string): TipoNorma {
   if (/lei orgânica/i.test(titulo) && !/proposta/i.test(titulo)) return "LOM";
@@ -26,8 +51,8 @@ function tipoNorma(titulo: string): TipoNorma {
   return "OUTRO";
 }
 
-export async function semearExercicio(prisma: PrismaClient) {
-  const ex = lerDados<ExercicioJson>("exercicio-2026.json");
+export async function semearExercicio(prisma: PrismaClient, ano: number) {
+  const ex = lerExercicio(ano);
 
   if (!(await prisma.municipio.findFirst())) {
     await prisma.municipio.create({
@@ -67,11 +92,10 @@ export async function semearExercicio(prisma: PrismaClient) {
     formatoVariacao: 4,
     variacaoOcupaFonte: false,
     // IC-EP vigora a partir de 2027 (art. 2º da Portaria STN/MF 636/2026).
-    icEpVigente: false,
-    icEpCodigo: null,
-    // A Câmara e os encargos gerais do município não recebem emenda.
-    orgaosForaDasEmendas: ["01", "17"],
-    rotuloBase: "LOA 2026 (Lei 6.246/2025)",
+    icEpVigente: ex.icEp !== null,
+    icEpCodigo: ex.icEp,
+    orgaosForaDasEmendas: ex.excludedOrgans,
+    rotuloBase: ex.baseLabel,
   };
   await prisma.configuracaoExercicio.upsert({
     where: { exercicioId: exercicio.id },

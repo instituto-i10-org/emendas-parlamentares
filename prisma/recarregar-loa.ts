@@ -4,10 +4,11 @@ import { PrismaClient } from "../src/generated/prisma/client";
 import { lerDados } from "./seed/dados";
 import { semearLoa } from "./seed/loa";
 
-// Recarrega a base orçamentária do exercício a partir de
-// prisma/dados/mogi-guacu/loa-2026.json, ficha a ficha, sem apagar nada.
+// Recarrega a base orçamentária de um exercício a partir de
+// prisma/dados/mogi-guacu/loa-<ano>.json, ficha a ficha, sem apagar nada.
 //
-//   npm run db:recarregar-loa                 só lista o que mudaria
+//   npm run db:recarregar-loa                 só lista o que mudaria (2026)
+//   npm run db:recarregar-loa -- 2027         idem, para o exercício 2027
 //   CONFIRMAR=1 npm run db:recarregar-loa     grava
 //
 // Contra banco remoto (Neon/Vercel) exige PERMITIR_BANCO_REMOTO=1.
@@ -30,8 +31,12 @@ const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: url 
 type Linha = { ficha: string; uo: string; autorizado: number; nome: string };
 
 async function main() {
-  const loa = lerDados<{ titulo: string; geradoEm?: string; dotacoes: Linha[] }>("loa-2026.json");
-  const ano = 2026;
+  const ano = Number(process.argv[2] ?? 2026);
+  if (!Number.isInteger(ano)) {
+    console.error("Informe o ano do exercício (ex.: 2027).");
+    process.exit(1);
+  }
+  const loa = lerDados<{ titulo: string; geradoEm?: string; dotacoes: Linha[] }>(`loa-${ano}.json`);
   const exercicio = await prisma.exercicio.findUnique({ where: { ano } });
   if (!exercicio) {
     console.error(`Exercício ${ano} não existe no banco.`);
@@ -96,7 +101,7 @@ async function main() {
     console.log("\nNada gravado. Rode de novo com CONFIRMAR=1 para gravar.");
     return;
   }
-  const r = await semearLoa(prisma, exercicio.id);
+  const r = await semearLoa(prisma, exercicio.id, ano);
   console.log(`\nGravado: ${r.criadas} criadas · ${r.atualizadas} atualizadas · ${r.desativadas} desativadas · ${r.metas} metas do PPA.`);
 }
 

@@ -16,6 +16,7 @@
     "db:migrate": "prisma migrate dev",
     "db:senha": "tsx prisma/redefinir-senha.ts",
     "db:extrair-qdd": "tsx prisma/extrair-qdd.ts",
+    "db:carregar-exercicio": "tsx prisma/carregar-exercicio.ts",
     "db:recarregar-loa": "tsx prisma/recarregar-loa.ts",
     "db:recarregar-catalogos": "tsx prisma/recarregar-catalogos.ts",
     "db:apagar-emendas": "tsx prisma/apagar-emendas-lote.ts",
