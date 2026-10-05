@@ -3,15 +3,12 @@ import { defineConfig, devices } from "@playwright/test";
 // ============================================================================
 // Testes end-to-end.
 //
-// Rodam contra um BUILD DE PRODUÇÃO (`next build && next start`), não contra o
-// `next dev`. A diferença é essencial: fora de produção o sistema desliga a
-// autenticação — `getCurrentUser` cai num fallback por cookie que fabrica um
-// SUPER_ADMIN e o callback `authorized` libera todas as rotas. Testar em dev
-// validaria uma aplicação que não existe em produção.
+// Rodam contra um BUILD DE PRODUÇÃO (`next build && next start`), como a
+// Vercel serve. Cada caso do plano (docs/borborema/PLANO.md, seção 11) tem o
+// código no nome do teste ("T-1.1-1 ...").
 //
-// Banco: `emendas_test`, separado do banco de desenvolvimento, recriado pelo
-// global setup a cada execução. O trabalho de UX no banco de dev nunca é
-// afetado.
+// Banco: `emendas_test`, no mesmo Postgres local (porta 5441), separado do
+// banco de desenvolvimento e preparado pelo global setup a cada execução.
 // ============================================================================
 
 const PORTA = 3210;
@@ -19,7 +16,7 @@ export const BASE_URL = `http://localhost:${PORTA}`;
 
 export const TEST_DATABASE_URL =
   process.env.TEST_DATABASE_URL ??
-  "postgresql://postgres:emendas@localhost:5433/emendas_test";
+  "postgresql://emendas:emendas@localhost:5441/emendas_test";
 
 // AUTH_URL precisa apontar para a porta de teste: o Auth.js monta a URL de
 // redirecionamento a partir dela, e um valor errado joga o navegador para
@@ -30,11 +27,13 @@ const envServidor = {
   AUTH_SECRET: "e2e-secret-determinista-nao-usar-em-producao",
   AUTH_URL: BASE_URL,
   AUTH_TRUST_HOST: "true",
+  // Sem chave de IA nos testes: o que depende dela é testado com resposta simulada.
+  OPENAI_API_KEY: "",
 };
 
 export default defineConfig({
   testDir: "./e2e",
-  globalSetup: "./e2e/global-setup.ts",
+  // O banco é preparado por `npm run test:e2e` antes do servidor subir (e2e/preparar.ts).
   // As specs compartilham um único banco: rodar em paralelo tornaria os
   // resultados dependentes de ordem.
   fullyParallel: false,
@@ -49,8 +48,10 @@ export default defineConfig({
     baseURL: BASE_URL,
     locale: "pt-BR",
     timezoneId: "America/Sao_Paulo",
+    // Sem animação: a análise da etapa 1 conclui na hora.
+    contextOptions: { reducedMotion: "reduce" },
     trace: "retain-on-failure",
-    screenshot: "only-on-failure",
+    screenshot: "on",
     video: "off",
   },
 
