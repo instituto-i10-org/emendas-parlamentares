@@ -7,7 +7,7 @@ import { defineConfig, devices } from "@playwright/test";
 // Vercel serve. Cada caso do plano (docs/borborema/PLANO.md, seção 11) tem o
 // código no nome do teste ("T-1.1-1 ...").
 //
-// Banco: `emendas_test`, no mesmo Postgres local (porta 5441), separado do
+// Banco: `emendas_test`, no mesmo Postgres local (porta 5440), separado do
 // banco de desenvolvimento e preparado pelo global setup a cada execução.
 // ============================================================================
 
@@ -16,7 +16,7 @@ export const BASE_URL = `http://localhost:${PORTA}`;
 
 export const TEST_DATABASE_URL =
   process.env.TEST_DATABASE_URL ??
-  "postgresql://emendas:emendas@localhost:5441/emendas_test";
+  "postgresql://emendas:emendas@localhost:5440/emendas_test";
 
 // AUTH_URL precisa apontar para a porta de teste: o Auth.js monta a URL de
 // redirecionamento a partir dela, e um valor errado joga o navegador para
