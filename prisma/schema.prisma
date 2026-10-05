@@ -294,6 +294,13 @@ model ConfiguracaoExercicio {
   // Fim do protocolo de emendas; depois disso não se submete.
   prazoProtocolo DateTime?
 
+  // --- preços e plano da entidade --------------------------------------------
+  // Item com preço e sem fonte informada: bloqueia a submissão (verdadeiro) ou
+  // só alerta (falso).
+  fontePrecoObrigatoria    Boolean @default(true)
+  // Dias de validade do link que a entidade usa para preencher o plano.
+  validadeLinkEntidadeDias Int     @default(10)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -696,16 +703,16 @@ model Destino {
 // Autor (vereador). Pode existir sem usuário: as emendas importadas têm autor
 // real que ainda não acessa o sistema.
 model Autor {
-  id        String   @id @default(cuid())
-  nome      String
-  partido   String?
-  cargo     String   @default("Vereador")
-  usuarioId String?  @unique
+  id           String   @id @default(cuid())
+  nome         String
+  partido      String?
+  cargo        String   @default("Vereador")
+  usuarioId    String?  @unique
   // Conta de demonstração: real dentro do sistema, fora do portal público e
   // dos relatórios oficiais. Só as emendas dela podem ser apagadas em lote.
-  demonstracao Boolean @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  demonstracao Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   usuario           User?             @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
   emendas           Emenda[]
@@ -780,10 +787,10 @@ model Emenda {
   tramitadaPorId    String?
   // --- diligência da Comissão ---------------------------------------------
   // O que a Comissão pediu para sanear, até quando, e quando o autor reenviou.
-  diligenciaMotivo String?
-  diligenciaAte    DateTime?
-  diligenciaEm     DateTime?
-  reenviadaEm      DateTime?
+  diligenciaMotivo  String?
+  diligenciaAte     DateTime?
+  diligenciaEm      DateTime?
+  reenviadaEm       DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -800,6 +807,7 @@ model Emenda {
   validacoes   ValidacaoEmenda[]
   pareceres    ParecerViabilidade[]
   andamentos   AndamentoExecucao[]
+  convites     ConviteEntidade[]
 
   @@unique([exercicioId, numero])
   @@index([exercicioId, status])
@@ -847,11 +855,63 @@ model ReferenciaPreco {
   aprovadoEm    DateTime?
   origemExterna String?
   consultadoEm  DateTime?
+  // Fonte oficial de onde o autor tirou o preço (nula em "outra fonte").
+  fonteId       String?
 
-  emenda Emenda       @relation(fields: [emendaId], references: [id], onDelete: Cascade)
+  emenda Emenda             @relation(fields: [emendaId], references: [id], onDelete: Cascade)
+  fonte  FontePrecoOficial? @relation(fields: [fonteId], references: [id], onDelete: SetNull)
   itens  ItemEmenda[]
 
   @@unique([emendaId, codigo])
+}
+
+// Fonte oficial de preço que o sistema indica ao autor da emenda, com o link
+// para pesquisar. O sistema não busca nem sugere preço: aponta onde buscar.
+model FontePrecoOficial {
+  id         String              @id @default(cuid())
+  nome       String              @unique
+  url        String
+  // Como pesquisar, em uma ou duas frases.
+  orientacao String
+  // Para que despesas serve: modelos de plano (CUSTEIO, OBRAS, EQUIPAMENTOS,
+  // TERCEIRO_SETOR) e SAUDE. Vazio = serve para tudo.
+  aplicaA    String[]            @default([])
+  // Como a referência tirada desta fonte é classificada.
+  tipo       TipoReferenciaPreco
+  ordem      Int                 @default(0)
+  ativo      Boolean             @default(true)
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+
+  referencias ReferenciaPreco[]
+
+  @@index([ativo, ordem])
+}
+
+// Link para a entidade beneficiária preencher o plano de trabalho sem cadastro.
+// De uso único: morre no envio. Só o resumo SHA-256 do código é guardado.
+model ConviteEntidade {
+  id               String    @id @default(cuid())
+  emendaId         String
+  codigoHash       String    @unique
+  expiraEm         DateTime
+  criadoPorId      String?
+  criadoEm         DateTime  @default(now())
+  revogadoEm       DateTime?
+  revogadoPorId    String?
+  // Envio da entidade.
+  usadoEm          DateTime?
+  responsavelNome  String?
+  responsavelCargo String?
+  enviadoDeIp      String?
+  // O plano como a entidade enviou. O gabinete aplica (ou não) ao rascunho.
+  conteudo         Json?
+  aplicadoEm       DateTime?
+  aplicadoPorId    String?
+
+  emenda Emenda @relation(fields: [emendaId], references: [id], onDelete: Cascade)
+
+  @@index([emendaId])
 }
 
 // Linha da memória de cálculo. O total é derivado (quantidade × unitário).

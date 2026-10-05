@@ -34,6 +34,8 @@ export type ConfiguracaoTela = {
   orgaosForaDasEmendas: string[];
   rotuloBase: string | null;
   prazoProtocolo: string | null;
+  fontePrecoObrigatoria: boolean;
+  validadeLinkEntidadeDias: number;
 };
 
 const txt = (v: string | null | undefined) => v ?? "";
@@ -117,6 +119,8 @@ function FormConfiguracao({ c, podeGerir }: { c: ConfiguracaoTela; podeGerir: bo
     orgaosForaDasEmendas: c.orgaosForaDasEmendas.join(", "),
     rotuloBase: txt(c.rotuloBase),
     prazoProtocolo: txt(c.prazoProtocolo),
+    fontePrecoObrigatoria: c.fontePrecoObrigatoria,
+    validadeLinkEntidadeDias: String(c.validadeLinkEntidadeDias),
   });
   const { pendente, executar } = useAcao();
   const m = (k: keyof typeof f) => ({
@@ -157,6 +161,8 @@ function FormConfiguracao({ c, podeGerir }: { c: ConfiguracaoTela; podeGerir: bo
         orgaosForaDasEmendas: f.orgaosForaDasEmendas.split(/[,\s]+/).filter(Boolean),
         rotuloBase: nulo(f.rotuloBase),
         prazoProtocolo: nulo(f.prazoProtocolo),
+        fontePrecoObrigatoria: f.fontePrecoObrigatoria,
+        validadeLinkEntidadeDias: Number(f.validadeLinkEntidadeDias),
       } as Parameters<typeof salvarConfiguracao>[0])
     );
   }
@@ -241,6 +247,23 @@ function FormConfiguracao({ c, podeGerir }: { c: ConfiguracaoTela; podeGerir: bo
         </Campo>
         <Campo rotulo="Fim do protocolo de emendas" htmlFor="c-prazo" dica="Depois dessa data não se submete.">
           <input id="c-prazo" type="date" className="campo h-12 px-3.5" {...m("prazoProtocolo")} />
+        </Campo>
+      </div>
+
+      <h3 className="mb-2 antena">Preços e plano da entidade</h3>
+      <div className="mb-5 grid grid-cols-3 gap-3.5 max-md:grid-cols-1">
+        <div className="col-span-2 max-md:col-span-1">
+          <p className="mb-1.5 text-sm font-semibold text-label">Item com preço e sem fonte informada</p>
+          <Pilulas
+            rotulo="Fonte do preço"
+            opcoes={["BLOQUEIA", "ALERTA"] as const}
+            valor={f.fontePrecoObrigatoria ? "BLOQUEIA" : "ALERTA"}
+            curto={(v) => (v === "BLOQUEIA" ? "Impede a submissão" : "Só alerta")}
+            aoEscolher={(v) => podeGerir && setF({ ...f, fontePrecoObrigatoria: v === "BLOQUEIA" })}
+          />
+        </div>
+        <Campo rotulo="Validade do link da entidade (dias)" htmlFor="c-link" dica="Depois disso o link deixa de abrir.">
+          <input id="c-link" className="campo h-12 px-3.5 tnum" {...m("validadeLinkEntidadeDias")} />
         </Campo>
       </div>
 

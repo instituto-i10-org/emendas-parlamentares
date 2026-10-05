@@ -4,8 +4,10 @@ import { Pagina } from "@/components/app/pagina";
 import { AbaPerfis, AbaUsuarios, type PerfilTela } from "@/components/config/acesso";
 import { AbaAuditoria, AbaBiblioteca, AbaDestinos, AbaNormas } from "@/components/config/catalogos";
 import { AbaExercicio } from "@/components/config/exercicio";
+import { AbaFontesPreco } from "@/components/config/fontes-preco";
 import { requireAccess } from "@/lib/access";
-import { PERMISSOES, podeAtribuirPerfil, podeGerirExercicio, podeGerirPerfis } from "@/lib/authz";
+import { PERMISSOES, podeAtribuirPerfil, podeGerirExercicio, podeGerirPerfis, temPermissao } from "@/lib/authz";
+import { diaBrasilia } from "@/lib/emendas/contexto";
 import { getAnoAtivo, listarExercicios } from "@/lib/exercicio";
 import { prisma } from "@/lib/prisma";
 import { DATA_HORA } from "@/lib/riep";
@@ -19,6 +21,7 @@ const ABAS = [
   { id: "perfis", titulo: "Perfis", adminGeral: true },
   { id: "destinos", titulo: "Destinos" },
   { id: "biblioteca", titulo: "Biblioteca de objetos" },
+  { id: "precos", titulo: "Fontes de preço" },
   { id: "normas", titulo: "Base legal" },
   { id: "auditoria", titulo: "Auditoria" },
 ] as const;
@@ -50,6 +53,7 @@ export default async function ConfigPage({ searchParams }: { searchParams: Promi
       {aba === "perfis" ? await perfis(user) : null}
       {aba === "destinos" ? await destinos() : null}
       {aba === "biblioteca" ? await biblioteca() : null}
+      {aba === "precos" ? await fontesPreco(temPermissao(user, "administrarConfiguracoes")) : null}
       {aba === "normas" ? await normas() : null}
       {aba === "auditoria" ? await auditoria() : null}
     </Pagina>
@@ -91,7 +95,10 @@ async function exercicio(podeGerir: boolean) {
               icEpCodigo: c?.icEpCodigo ?? null,
               orgaosForaDasEmendas: c?.orgaosForaDasEmendas ?? [],
               rotuloBase: c?.rotuloBase ?? null,
-              prazoProtocolo: c?.prazoProtocolo ? c.prazoProtocolo.toISOString().slice(0, 10) : null,
+              // Guardado às 23:59:59 de Brasília: o dia se lê no mesmo fuso.
+              prazoProtocolo: c?.prazoProtocolo ? diaBrasilia(c.prazoProtocolo) : null,
+              fontePrecoObrigatoria: c?.fontePrecoObrigatoria ?? true,
+              validadeLinkEntidadeDias: c?.validadeLinkEntidadeDias ?? 10,
             }
           : null
       }
@@ -204,6 +211,26 @@ async function auditoria() {
         entidade: l.entidade,
         entidadeId: l.entidadeId,
         acao: l.acao,
+      }))}
+    />
+  );
+}
+
+async function fontesPreco(podeEditar: boolean) {
+  const lista = await prisma.fontePrecoOficial.findMany({ orderBy: [{ ordem: "asc" }, { nome: "asc" }], include: { _count: { select: { referencias: true } } } });
+  return (
+    <AbaFontesPreco
+      podeEditar={podeEditar}
+      fontes={lista.map((f) => ({
+        id: f.id,
+        nome: f.nome,
+        url: f.url,
+        orientacao: f.orientacao,
+        aplicaA: f.aplicaA,
+        tipo: f.tipo,
+        ordem: f.ordem,
+        ativo: f.ativo,
+        usos: f._count.referencias,
       }))}
     />
   );

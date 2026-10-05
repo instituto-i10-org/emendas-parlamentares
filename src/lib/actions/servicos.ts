@@ -3,10 +3,8 @@
 import { anoDaTela } from "@/lib/exercicio";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rate-limit";
-import { interpretar } from "@/lib/riep";
 import { carregarContexto } from "@/lib/emendas/contexto";
 import { consultarCnpj, type DadosCnpj } from "@/lib/servicos/cnpj";
-import { pesquisarPrecos, type ResultadoPreco } from "@/lib/servicos/precos";
 import { LIMITES_CAMPO, payloadRedacao, referenciasDeRedacao, type CampoTexto, type Referencia } from "@/lib/servicos/redacao";
 import { getCurrentUser } from "@/lib/session";
 
@@ -86,31 +84,6 @@ export async function melhorarTexto(entrada: {
     return { ok: false, erro: "A sugestão não respeitou o tamanho do campo. Tente novamente; seu texto foi preservado." };
   }
   return { ok: true, texto, referencias };
-}
-
-// ---------------------------------------------------------------------- Preços
-
-export async function buscarPrecos(
-  consulta: string,
-  objeto: string,
-  exercicio?: number
-): Promise<{ ok: true; resultados: ResultadoPreco[]; indisponiveis: string[]; aproximados: boolean } | Falha> {
-  const user = await getCurrentUser();
-  const q = String(consulta ?? "").trim();
-  if (q.length < 3 || q.length > 160) return { ok: false, erro: "Digite de 3 a 160 caracteres para pesquisar." };
-  if (!rateLimit(`precos:${user.id}`, 30, 60_000)) return { ok: false, erro: "Muitas consultas seguidas. Aguarde um minuto." };
-  const ano = await anoDaTela(exercicio);
-  const ctx = ano ? await carregarContexto(ano) : null;
-  const biblioteca = ctx?.catalogo.objetos ?? [];
-  // Obra consulta também as tabelas oficiais de engenharia.
-  const item = interpretar(q, biblioteca);
-  const obj = interpretar(String(objeto ?? "").slice(0, 500), biblioteca);
-  const engenharia = item?.confianca === "exato" ? item.elemento === "51" : obj?.elemento === "51";
-  try {
-    return { ok: true, ...(await pesquisarPrecos(q, engenharia)) };
-  } catch (e) {
-    return { ok: false, erro: e instanceof Error ? e.message : "Não foi possível pesquisar agora." };
-  }
 }
 
 // ------------------------------------------------------------------------ CNPJ

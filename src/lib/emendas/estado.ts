@@ -153,6 +153,7 @@ export const referenciaSchema = z.object({
   aprovadoEm: texto(40).nullable(),
   origemExterna: texto(40).nullable(),
   consultadoEm: texto(40).nullable(),
+  fonteId: z.string().max(40).nullable().optional(),
 });
 
 export const estadoSchema = z.object({

@@ -28,7 +28,8 @@ import {
   proximoCodigoReferencia,
   quantidadeSugerida,
   referenciaAntiga,
-  referenciaCombina,
+  fontesParaEmenda,
+  parcelaDaDotacao,
   unidadeDiverge,
   rotuloReferencia,
   type Instrumento,
@@ -36,7 +37,8 @@ import {
 } from "@/lib/riep";
 import { cn } from "@/lib/utils";
 import type { Atualizar, DerivadoEmenda } from "./editor";
-import { PesquisaPreco } from "./pesquisa-preco";
+import { FontesPreco } from "./fontes-preco";
+import { LinkEntidade } from "./link-entidade";
 import { ReferenciaDialog } from "./referencia-dialog";
 import { Ajuda, AreaTexto, Aviso, Campo, CampoNumero, Detalhes, Pilulas, Secao, Selo, TextoRico } from "./ui";
 
@@ -46,12 +48,14 @@ export function Etapa2({
   ctx,
   atualizar,
   autor,
+  alterado = false,
 }: {
   e: EstadoEmenda;
   d: DerivadoEmenda;
   ctx: ContextoEmenda;
   atualizar: Atualizar;
   autor: string;
+  alterado?: boolean;
 }) {
   const c = d.classificacao;
   const dot = d.dotacao;
@@ -109,6 +113,8 @@ export function Etapa2({
         </dl>
         <p className="mt-3 text-xs text-muted-foreground">Para mudar qualquer linha deste quadro, volte ao passo 1 e reclassifique.</p>
       </Detalhes>
+
+      {e.execucao === "INDIRETA" ? <LinkEntidade emendaId={e.id} alterado={alterado} atualizar={atualizar} /> : null}
 
       <div className="mt-6 grid gap-5">
         <Campo
@@ -387,6 +393,7 @@ function MemoriaCalculo({
   const [novaRefPara, setNovaRefPara] = useState<number | null>(null);
   const [quadroAberto, setQuadroAberto] = useState(false);
   const biblioteca = ctx.catalogo.objetos;
+  const indicadas = fontesParaEmenda(ctx.fontesPreco, d.modelo, parcelaDaDotacao(d.dotacao) === "SAUDE");
   const itensNum = e.itens.map((i) => ({
     descricao: i.descricao,
     quantidade: lerNumero(i.quantidade),
@@ -407,10 +414,19 @@ function MemoriaCalculo({
   const mudarItem = (i: number, parcial: Partial<ItemForm>) =>
     atualizar((x) => ({ itens: x.itens.map((it, j) => (j === i ? { ...it, ...parcial } : it)) }));
 
+  // A fonte registrada passa a valer para a linha: o preço e a unidade da
+  // linha são os que o autor informou ao registrar a fonte.
   function registrarReferencia(r: ReferenciaPreco, linha: number | null) {
     atualizar((x) => ({
       referencias: [...x.referencias, r],
-      itens: linha === null ? x.itens : x.itens.map((it, j) => (j === linha ? { ...it, referencia: r.codigo } : it)),
+      itens:
+        linha === null
+          ? x.itens
+          : x.itens.map((it, j) =>
+              j === linha
+                ? { ...it, referencia: r.codigo, valorUnitario: formatarNumero(r.valor, 2), unidade: it.unidade.trim() ? it.unidade : r.unidade }
+                : it
+            ),
     }));
   }
 
@@ -421,46 +437,8 @@ function MemoriaCalculo({
   const foraTolerancia = pretendido > 0 && d.valor > 0 && (Math.abs(divergencia) / pretendido) * 100 > ctx.config.toleranciaValorPct;
 
   return (
-    <Secao titulo="Memória de cálculo" ajuda="As mesmas linhas das metas, agora com preço. Toda linha precisa apontar de onde veio o valor.">
-      <PesquisaPreco
-        objeto={e.objeto}
-        exercicio={ctx.config.exercicio}
-        orientacao={orientacao}
-        aoAprovar={(p, unidade, consulta) => {
-          const agora = new Date();
-          atualizar((x) => {
-            const codigo = proximoCodigoReferencia(x.referencias);
-            const r: ReferenciaPreco = {
-              codigo,
-              tipo: p.tipo,
-              campos:
-                p.tipo === "TABELA_OFICIAL"
-                  ? { sistema: p.fonte, composicao: p.identificacao, databse: p.periodo ?? "Não informada", deson: p.fonte }
-                  : { consulta: p.identificacao, recorte: p.periodo ?? "Período não informado", amostra: p.amostra ? String(p.amostra) : "Não informada" },
-              emissor: p.fonte,
-              data: null,
-              dataTexto: p.periodo ?? "Não informada",
-              unidade,
-              valor: p.preco,
-              objeto: p.descricao,
-              porte: p.amostra ? `${p.amostra} compras` : "Não informado",
-              link: p.url,
-              observacao: `Consulta: ${consulta} · realizada em ${new Date(p.consultadoEm).toLocaleString("pt-BR")}`,
-              procedencia: "CONFERIDA",
-              aprovadoPor: "proponente",
-              aprovadoEm: agora.toISOString(),
-              origemExterna: "PNIGP",
-              consultadoEm: p.consultadoEm,
-            };
-            // Linha vazia intocada é substituída pelo item aprovado.
-            const itens = x.itens.filter((it) => it.descricao.trim() || lerNumero(it.valorUnitario));
-            return {
-              referencias: [...x.referencias, r],
-              itens: [...itens, { descricao: p.descricao, unidade, quantidade: "1", valorUnitario: formatarNumero(p.preco, 2), referencia: codigo }],
-            };
-          });
-        }}
-      />
+    <Secao titulo="Memória de cálculo" ajuda="As mesmas linhas das metas, agora com preço. Toda linha precisa dizer de qual fonte veio o valor.">
+      <FontesPreco fontes={indicadas} orientacao={orientacao} />
 
       <div className="mt-4">
         <Tabela
@@ -470,7 +448,7 @@ function MemoriaCalculo({
             ["Qtd *", "text-right w-[90px]"],
             ["Valor unitário *", "text-right w-[140px]"],
             ["Valor total", "text-right w-[120px]"],
-            ["Origem do preço *", "w-[220px]"],
+            ["Fonte do preço *", "w-[220px]"],
           ]}
           linhas={e.itens.map((it, i) => {
             const L = resultadoLinha(i);
@@ -516,21 +494,20 @@ function MemoriaCalculo({
                     else mudarItem(i, { referencia: ev.target.value || null });
                   }}
                 >
-                  <option value="">sem referência…</option>
+                  <option value="">sem fonte…</option>
                   {e.referencias.map((x) => (
                     <option key={x.codigo} value={x.codigo}>
                       {rotuloReferencia(x)}
                     </option>
                   ))}
-                  <option value="__nova">+ Nova referência…</option>
+                  <option value="__nova">+ Informar fonte…</option>
                 </select>
                 {r ? (
                   <div className="mt-1 flex flex-wrap gap-1">
-                    <Selo tipo={r.procedencia === "CONFERIDA" ? "ok" : "info"}>{r.procedencia === "CONFERIDA" ? "conferida" : "informada"}</Selo>
+                    <Selo tipo={r.fonteId ? "ok" : "info"}>{r.fonteId ? "fonte oficial" : "outra fonte"}</Selo>
                     {referenciaAntiga(r.data, ctx.config.validadeReferenciaMeses) ? (
                       <Selo tipo="warn">mais de {ctx.config.validadeReferenciaMeses} meses</Selo>
                     ) : null}
-                    {!referenciaCombina(r, it.descricao, biblioteca) ? <Selo tipo="warn">objeto da referência diverge</Selo> : null}
                     {unidadeDiverge(it.unidade, r.unidade) ? <Selo tipo="warn">unidade da referência: {r.unidade}</Selo> : null}
                   </div>
                 ) : null}
@@ -643,30 +620,21 @@ function MemoriaCalculo({
       <ReferenciaDialog
         aberto={novaRefPara !== null}
         codigo={proximoCodigoReferencia(e.referencias)}
+        indicadas={indicadas}
+        todas={ctx.fontesPreco}
+        item={novaRefPara !== null ? e.itens[novaRefPara] ?? null : null}
         aoFechar={() => setNovaRefPara(null)}
         aoRegistrar={(r) => {
           registrarReferencia(r, novaRefPara);
           setNovaRefPara(null);
         }}
       />
-      <QuadroOrigem aberto={quadroAberto} aoFechar={() => setQuadroAberto(false)} e={e} biblioteca={biblioteca} meses={ctx.config.validadeReferenciaMeses} />
+      <QuadroOrigem aberto={quadroAberto} aoFechar={() => setQuadroAberto(false)} e={e} meses={ctx.config.validadeReferenciaMeses} />
     </Secao>
   );
 }
 
-function QuadroOrigem({
-  aberto,
-  aoFechar,
-  e,
-  biblioteca,
-  meses,
-}: {
-  aberto: boolean;
-  aoFechar: () => void;
-  e: EstadoEmenda;
-  biblioteca: ContextoEmenda["catalogo"]["objetos"];
-  meses: number;
-}) {
+function QuadroOrigem({ aberto, aoFechar, e, meses }: { aberto: boolean; aoFechar: () => void; e: EstadoEmenda; meses: number }) {
   return (
     <Dialog open={aberto} onOpenChange={(a) => !a && aoFechar()}>
       <DialogContent titulo="Quadro de origem dos preços" descricao="Anexo do plano de trabalho — uma entrada por referência." largura="lg">
@@ -674,12 +642,11 @@ function QuadroOrigem({
           {e.referencias.map((r) => {
             const t = TIPOS_REFERENCIA[r.tipo];
             const usos = e.itens.filter((i) => i.referencia === r.codigo && i.descricao.trim()).map((i) => i.descricao.trim());
-            const diverge = usos.filter((it) => !referenciaCombina(r, it, biblioteca));
             return (
               <div key={r.codigo} className="rounded-box bg-soft p-4 text-sm">
                 <div className="mb-2 flex flex-wrap items-center gap-2 font-bold">
-                  {r.codigo} · {t.nome}
-                  <Selo tipo={r.procedencia === "CONFERIDA" ? "ok" : "info"}>{r.procedencia === "CONFERIDA" ? "conferida" : "informada"}</Selo>
+                  {r.codigo} · {r.fonteId ? r.emissor : t.nome}
+                  <Selo tipo={r.fonteId ? "ok" : "info"}>{r.fonteId ? "fonte oficial" : "outra fonte"}</Selo>
                 </div>
                 <dl className="grid grid-cols-[minmax(140px,auto)_1fr] gap-x-4 gap-y-1 max-sm:grid-cols-1">
                   {t.campos.map(([k, rot]) =>
@@ -690,14 +657,14 @@ function QuadroOrigem({
                       </div>
                     ) : null
                   )}
-                  <dt className="text-muted-foreground">Emissor</dt>
+                  <dt className="text-muted-foreground">{r.fonteId ? "Fonte" : "Emissor"}</dt>
                   <dd>{r.emissor}</dd>
-                  <dt className="text-muted-foreground">Data</dt>
+                  <dt className="text-muted-foreground">Data da consulta</dt>
                   <dd>
                     {r.data ? new Date(`${r.data}T12:00:00`).toLocaleDateString("pt-BR") : r.dataTexto}
                     {referenciaAntiga(r.data, meses) ? <span className="text-warn"> · mais de {meses} meses</span> : null}
                   </dd>
-                  <dt className="text-muted-foreground">Objeto da referência</dt>
+                  <dt className="text-muted-foreground">Item pesquisado</dt>
                   <dd>{r.objeto}</dd>
                   <dt className="text-muted-foreground">Unidade</dt>
                   <dd>{r.unidade}</dd>
@@ -707,6 +674,16 @@ function QuadroOrigem({
                     <>
                       <dt className="text-muted-foreground">Porte na origem</dt>
                       <dd>{r.porte}</dd>
+                    </>
+                  ) : null}
+                  {r.link ? (
+                    <>
+                      <dt className="text-muted-foreground">Link do resultado</dt>
+                      <dd className="break-all">
+                        <a href={r.link} target="_blank" rel="noopener noreferrer" className="text-navy underline">
+                          {r.link}
+                        </a>
+                      </dd>
                     </>
                   ) : null}
                   {r.observacao ? (
@@ -719,11 +696,6 @@ function QuadroOrigem({
                 <p className="mt-2 text-xs">
                   Itens que a utilizam: {usos.length ? <b>{usos.join(" · ")}</b> : "nenhum ainda"}
                 </p>
-                {diverge.length ? (
-                  <p className="mt-1 text-xs text-warn">
-                    A referência é de «{r.objeto}» e o item é «{diverge[0]}» — confira se o preço é comparável, ou justifique na observação.
-                  </p>
-                ) : null}
               </div>
             );
           })}

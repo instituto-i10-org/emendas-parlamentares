@@ -193,6 +193,8 @@ export async function salvarEmenda(entrada: EstadoEmenda, submeter = false, anoT
         })),
     });
     const refId = new Map<string, string>();
+    // Fonte oficial só vale se existe no cadastro; senão a referência fica como "outra fonte".
+    const fontesValidas = new Set(ctx.fontesPreco.map((f) => f.id));
     for (const r of e.referencias) {
       const criada = await tx.referenciaPreco.create({
         data: {
@@ -214,6 +216,7 @@ export async function salvarEmenda(entrada: EstadoEmenda, submeter = false, anoT
           aprovadoEm: r.aprovadoEm ? new Date(r.aprovadoEm) : null,
           origemExterna: r.origemExterna,
           consultadoEm: r.consultadoEm ? new Date(r.consultadoEm) : null,
+          fonteId: r.fonteId && fontesValidas.has(r.fonteId) ? r.fonteId : null,
         },
       });
       refId.set(r.codigo, criada.id);
@@ -239,6 +242,12 @@ export async function salvarEmenda(entrada: EstadoEmenda, submeter = false, anoT
     });
 
     if (!validacao) return emenda;
+
+    // A emenda sai de rascunho: os links da entidade ainda abertos deixam de valer.
+    await tx.conviteEntidade.updateMany({
+      where: { emendaId: emenda.id, usadoEm: null, revogadoEm: null },
+      data: { revogadoEm: new Date(), revogadoPorId: user.id },
+    });
 
     await tx.validacaoEmenda.create({
       data: {

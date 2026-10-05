@@ -100,7 +100,7 @@ export default async function ConformidadePage() {
     nivel: !itensEmendas.length ? "warn" : semRef ? "bad" : antigas ? "warn" : "ok",
     titulo: "Origem dos preços demonstrada",
     detalhe: itensEmendas.length
-      ? `${itensEmendas.length - semRef} de ${itensEmendas.length} itens com referência de preço${antigas ? `; ${antigas} com referência mais antiga que ${cfg?.validadeReferenciaMeses ?? 12} meses` : ""}.`
+      ? `${itensEmendas.length - semRef} de ${itensEmendas.length} itens com a fonte do preço informada${antigas ? `; ${antigas} com consulta mais antiga que ${cfg?.validadeReferenciaMeses ?? 12} meses` : ""}.`
       : "Nenhum item de memória de cálculo em emenda submetida.",
     fundamento: "Lei 14.133/2021 art. 23; Comunicado SDG 28/2025",
   });

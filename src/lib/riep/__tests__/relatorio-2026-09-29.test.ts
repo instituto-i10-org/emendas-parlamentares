@@ -6,7 +6,6 @@
 import { describe, expect, it } from "vitest";
 import { classificar } from "../classificar";
 import { interpretar } from "../interpretar";
-import { ordenarPorRelevancia } from "@/lib/servicos/relevancia-precos";
 import { mesmaEmenda } from "@/lib/emendas/duplicidade";
 import type { Candidata, Classificacao, DotacaoMotor, Selecao } from "../tipos";
 import { validar, type EstadoValidacao } from "../validar";
@@ -231,15 +230,9 @@ describe("A8 — reserva da saúde é limite, não obrigação", () => {
   });
 });
 
-describe("A9 — amostra mínima da referência de painel", () => {
-  it("amostra de 1 compra gera alerta", () => {
+describe("Preço manual — sem pesquisa automática", () => {
+  it("referência de painel com uma compra só não gera mais alerta de amostra: o autor informa a fonte", () => {
     const e = comDotacao(estado("[TESTE 03] Custeio de material de consumo para a UBS Zona Norte", "UBS Zona Norte", "material de consumo"), (d) => d.uo === "13.01" && d.elem === "30");
-    expect(titulos(validar(e, ctx), "warn")).toContain("Amostra de preço pequena");
-  });
-
-  it("amostra de 3 compras não gera alerta", () => {
-    const base = estado("[TESTE 03] Custeio de material de consumo para a UBS Zona Norte", "UBS Zona Norte", "material de consumo");
-    const e = comDotacao({ ...base, referencias: [ref({ campos: { consulta: "x", recorte: "y", amostra: "3" } })] }, (d) => d.uo === "13.01" && d.elem === "30");
     expect(titulos(validar(e, ctx), "warn")).not.toContain("Amostra de preço pequena");
   });
 });
@@ -258,36 +251,6 @@ describe("A9 (complemento) — unidade do item e da referência", () => {
     expect(titulos(validar(em30(e), ctx), "warn")).not.toContain("Unidade do item difere da referência");
     e.itens = [{ ...e.itens[0], unidade: "" }];
     expect(titulos(validar(em30(e), ctx), "warn")).not.toContain("Unidade do item difere da referência");
-  });
-});
-
-describe("A6 — relevância da pesquisa de preço", () => {
-  const lista = [
-    // Fichas técnicas longas que citam "material" e "consumo" soltos — o que o PNIGP devolve de verdade.
-    { descricao: "BETERRABA IN NATURA. ESCOVADA, DE PRIMEIRA QUALIDADE, ISENTA DE ENFERMIDADES, MATERIAL TERROSO E UMIDADE EXTERNA ANORMAL. EM CONDIÇÕES ADEQUADAS PARA O CONSUMO MEDIATO E IMEDIATO.", amostra: 40 },
-    { descricao: "MATERIAL DE CONSUMO PARA ESCRITÓRIO", amostra: 1 },
-    { descricao: "TÊ DE SERVIÇO INTEGRADO PARA TUBOS PEAD. A FERRAMENTA DE CORTE DEVE SER MONOLÍTICA, FABRICADA A PARTIR DE UM ÚNICO MATERIAL, INÓCUO À QUALIDADE DA ÁGUA PARA CONSUMO HUMANO.", amostra: 12 },
-    { descricao: "MATERIAL DE CONSUMO HOSPITALAR - LUVAS", amostra: 7 },
-    { descricao: "CONCRETO USINADO", amostra: 3 },
-    { descricao: "material de consumo", amostra: 1 },
-  ];
-  it("só a expressão junta conta; palavras soltas em ficha técnica longa não", () => {
-    const r = ordenarPorRelevancia("material de consumo", lista);
-    expect(r.aproximados).toBe(false);
-    expect(r.itens.map((x) => x.descricao)).toEqual([
-      "MATERIAL DE CONSUMO HOSPITALAR - LUVAS",
-      "MATERIAL DE CONSUMO PARA ESCRITÓRIO",
-      "material de consumo",
-    ]);
-  });
-  it("admite até duas palavras entre os termos e plural", () => {
-    const r = ordenarPorRelevancia("luva procedimento", [{ descricao: "LUVAS PARA PROCEDIMENTO NÃO CIRÚRGICO", amostra: 3 }, { descricao: "AVENTAL DESCARTÁVEL", amostra: 9 }]);
-    expect(r.itens.map((x) => x.descricao)).toEqual(["LUVAS PARA PROCEDIMENTO NÃO CIRÚRGICO"]);
-  });
-  it("sem correspondência nenhuma, devolve os originais marcados como aproximados", () => {
-    const r = ordenarPorRelevancia("vacina", lista);
-    expect(r.aproximados).toBe(true);
-    expect(r.itens.length).toBe(lista.length);
   });
 });
 

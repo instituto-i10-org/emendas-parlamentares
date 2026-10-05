@@ -137,7 +137,7 @@ export default async function PlanoPage({ params }: { params: Promise<{ id: stri
                 <th className="pl-3 text-right">Qtde.</th>
                 <th className="pl-3 text-right">Unitário</th>
                 <th className="pl-3 text-right">Total</th>
-                <th className="pl-3">Origem do preço</th>
+                <th className="pl-3">Fonte do preço</th>
               </tr>
             </thead>
             <tbody>
@@ -151,8 +151,14 @@ export default async function PlanoPage({ params }: { params: Promise<{ id: stri
                   <td className="pl-3 text-right whitespace-nowrap tnum">{BRL(i.quantidade.toNumber() * i.valorUnitario.toNumber())}</td>
                   <td className="pl-3 text-xs">
                     {i.referencia
-                      ? rotuloReferencia({ codigo: i.referencia.codigo, tipo: i.referencia.tipo, campos: i.referencia.campos as Record<string, string> })
-                      : pendente("Referência não informada")}
+                      ? rotuloReferencia({
+                          codigo: i.referencia.codigo,
+                          tipo: i.referencia.tipo,
+                          campos: i.referencia.campos as Record<string, string>,
+                          emissor: i.referencia.emissor,
+                          fonteId: i.referencia.fonteId,
+                        })
+                      : pendente("Fonte não informada")}
                   </td>
                 </tr>
               ))}
@@ -191,15 +197,17 @@ export default async function PlanoPage({ params }: { params: Promise<{ id: stri
             {x.referencias.map((r) => (
               <div key={r.id} className="mb-3 break-inside-avoid text-sm">
                 <b>
-                  {r.codigo} · {TIPOS_REFERENCIA[r.tipo].nome}
+                  {r.codigo} · {r.fonteId ? r.emissor : TIPOS_REFERENCIA[r.tipo].nome}
                 </b>{" "}
-                <span className="text-xs text-muted-foreground">({r.procedencia === "CONFERIDA" ? "conferida" : "informada"})</span>
+                <span className="text-xs text-muted-foreground">({r.fonteId ? "fonte oficial" : "outra fonte"})</span>
                 <p className="text-xs">
                   {Object.entries((r.campos ?? {}) as Record<string, string>)
                     .map(([, v]) => v)
                     .join(" · ")}{" "}
-                  · {r.emissor} · {r.data ? r.data.toLocaleDateString("pt-BR") : r.dataTexto} · {r.objeto} · {BRL(r.valor.toNumber())} por {r.unidade}
+                  · {r.emissor} · consultada em {r.data ? r.data.toLocaleDateString("pt-BR") : r.dataTexto} · {r.objeto} · {BRL(r.valor.toNumber())} por{" "}
+                  {r.unidade}
                 </p>
+                {r.link ? <p className="text-xs break-all">{r.link}</p> : null}
               </div>
             ))}
           </Secao>

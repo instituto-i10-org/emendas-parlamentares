@@ -13,7 +13,7 @@ import {
   metodoQuantidade,
   modeloDaDotacao,
 } from "./plano";
-import { referenciaAntiga, referenciaCombina, unidadeDiverge, type ReferenciaPreco } from "./referencias";
+import { referenciaAntiga, unidadeDiverge, type ReferenciaPreco } from "./referencias";
 import { BRL, NUM, norm } from "./texto";
 import type {
   Aplicado,
@@ -111,12 +111,13 @@ export function validar(e: EstadoValidacao, ctx: ContextoValidacao): Checagem[] 
   if (v > 0) {
     if (incompletas.length) {
       add(
-        "bad",
-        "Linha sem referência de preço",
-        `${incompletas.length} linha(s) sem referência apontada. Cadastre a referência e aponte-a — é ela que permite conferir o valor na fonte.`
+        cfg.fontePrecoObrigatoria ? "bad" : "warn",
+        "Linha sem fonte de preço",
+        `${incompletas.length} linha(s) sem a fonte do preço. Informe de onde tirou o valor (a lista de fontes oficiais está acima da tabela) — ` +
+          "é a fonte que permite conferir o preço."
       );
     } else {
-      add("ok", "Memória de cálculo completa", `Valor da emenda: ${BRL(v)}, com referência apontada em todas as linhas`);
+      add("ok", "Memória de cálculo completa", `Valor da emenda: ${BRL(v)}, com a fonte do preço informada em todas as linhas`);
     }
   } else {
     add("bad", "Memória de cálculo vazia", "O valor da emenda nasce da memória de cálculo — lance ao menos um item com preço.");
@@ -158,12 +159,12 @@ export function validar(e: EstadoValidacao, ctx: ContextoValidacao): Checagem[] 
 
   // Quadro de origem: uma entrada por referência, não por linha.
   if (e.referencias.length) {
-    const conferidas = e.referencias.filter((r) => r.procedencia === "CONFERIDA").length;
+    const oficiais = e.referencias.filter((r) => r.fonteId).length;
     add(
       "ok",
       "Quadro de origem dos preços",
-      `${e.referencias.length} referência(s) registrada(s) · ${conferidas} conferida(s) com aprovação e ` +
-        `${e.referencias.length - conferidas} informada(s) pelo proponente. Sai como anexo do plano.`
+      `${e.referencias.length} fonte(s) de preço registrada(s) · ${oficiais} de fonte oficial indicada pelo sistema e ` +
+        `${e.referencias.length - oficiais} de outra fonte. Sai como anexo do plano.`
     );
   }
 
@@ -174,24 +175,6 @@ export function validar(e: EstadoValidacao, ctx: ContextoValidacao): Checagem[] 
       "Referência de preço antiga",
       `${velhas.length} referência(s) anteriores a ${cfg.validadeReferenciaMeses} meses (${velhas.map((r) => r.codigo).join(", ")}). ` +
         "Pode ser a melhor disponível — apenas não passa despercebida."
-    );
-  }
-
-  // Painel de preços com amostra pequena: a mediana de uma compra só não é
-  // pesquisa de preços (Lei 14.133/2021, art. 23; IN SEGES 65/2021).
-  const AMOSTRA_MINIMA = 3;
-  const pequenas = e.referencias.filter((r) => {
-    if (r.tipo !== "PAINEL" && r.tipo !== "BANCO_PRECOS_SAUDE") return false;
-    const n = Number(String(r.campos.amostra ?? "").replace(/\D/g, ""));
-    return Number.isFinite(n) && n > 0 && n < AMOSTRA_MINIMA;
-  });
-  if (pequenas.length) {
-    add(
-      "warn",
-      "Amostra de preço pequena",
-      `${pequenas.map((r) => `${r.codigo} (${r.campos.amostra} compra${r.campos.amostra === "1" ? "" : "s"})`).join(", ")} — ` +
-        `a pesquisa de preços pede ao menos ${AMOSTRA_MINIMA} contratações (Lei 14.133/2021, art. 23; IN SEGES 65/2021). ` +
-        "Acrescente outra referência ou justifique na observação."
     );
   }
 
@@ -207,21 +190,6 @@ export function validar(e: EstadoValidacao, ctx: ContextoValidacao): Checagem[] 
       "warn",
       "Unidade do item difere da referência",
       unidades.join(" · ") + ". O preço unitário da referência vale para a unidade dela — ajuste a unidade do item ou a quantidade."
-    );
-  }
-
-  const divergentes: string[] = [];
-  for (const i of e.itens) {
-    const r = refPorCodigo(i.referencia);
-    const it = i.descricao.trim();
-    if (r && it && !referenciaCombina(r, it, biblioteca)) divergentes.push(`${r.codigo} («${r.objeto}») em «${it}»`);
-  }
-  if (divergentes.length) {
-    add(
-      "warn",
-      "Referência sem relação com o item",
-      divergentes.join(" · ") +
-        ". Uso de referência aproximada é legítimo quando não há contratação idêntica — justifique na observação da referência."
     );
   }
 

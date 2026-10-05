@@ -51,6 +51,7 @@ export function paraEstado(x: EmendaCompleta): EstadoEmenda {
     aprovadoEm: r.aprovadoEm?.toISOString() ?? null,
     origemExterna: r.origemExterna,
     consultadoEm: r.consultadoEm?.toISOString() ?? null,
+    fonteId: r.fonteId,
   }));
   const e: EstadoEmenda = {
     ...base,

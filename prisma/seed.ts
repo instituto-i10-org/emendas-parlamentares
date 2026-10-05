@@ -6,6 +6,7 @@ import { ANOS_COM_DADOS, semearExercicio } from "./seed/exercicio";
 import { semearLoa } from "./seed/loa";
 import { semearCatalogos } from "./seed/catalogos";
 import { semearDestinos } from "./seed/destinos";
+import { semearFontesPreco } from "./seed/fontes-preco";
 import { semearEmendasImportadas } from "./seed/emendas-importadas";
 
 // Carga inicial: Mogi Guaçu, exercícios 2026 (lei aprovada) e 2027 (projeto em
@@ -39,6 +40,7 @@ async function main() {
   }
   const catalogos = await semearCatalogos(prisma);
   const destinos = await semearDestinos(prisma);
+  const fontesPreco = await semearFontesPreco(prisma);
   // As emendas importadas são as apresentadas ao PL 275/2025 (LOA 2026).
   const importadas = await semearEmendasImportadas(prisma, exercicios[2026]);
 
@@ -53,6 +55,7 @@ async function main() {
     areas: catalogos.areas,
     objetos: catalogos.objetos,
     destinos,
+    fontesPreco,
     autores: importadas.autores,
     emendasImportadas: importadas.emendas,
   });

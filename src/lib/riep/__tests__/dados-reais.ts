@@ -97,6 +97,7 @@ export const config: ConfigMotor = {
   icEpVigente: false,
   icEpCodigo: null,
   rotuloBase: "LOA 2026 (Lei 6.246/2025)",
+  fontePrecoObrigatoria: true,
 };
 
 // Todos os destinos, no formato do motor.

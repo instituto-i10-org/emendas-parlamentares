@@ -2,7 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import { NATUREZAS_EMENDAVEIS } from "@/lib/orcamento/codigo-dotacao";
-import type { Aplicado, Catalogo, ConfigMotor, DestinoMotor, DotacaoMotor, MetaPlanejamento } from "@/lib/riep";
+import type { Aplicado, Catalogo, ConfigMotor, DestinoMotor, DotacaoMotor, FontePreco, MetaPlanejamento } from "@/lib/riep";
 import { nomeDoAlcance } from "@/lib/riep/destino";
 
 // ============================================================================
@@ -34,6 +34,10 @@ export type ContextoEmenda = {
   prazoProtocolo: string | null;
   // Verdadeiro quando o dia de hoje (horário de Brasília) já passou do prazo.
   prazoEncerrado: boolean;
+  // Fontes oficiais de preço que a tela indica ao autor.
+  fontesPreco: FontePreco[];
+  // Dias de validade do link da entidade.
+  validadeLinkEntidadeDias: number;
 };
 
 // Dia de hoje em Brasília, no formato aaaa-mm-dd — é assim que o prazo é guardado.
@@ -57,6 +61,7 @@ export function paraConfigMotor(ano: number, c: Awaited<ReturnType<typeof lerCon
     icEpVigente: c?.icEpVigente ?? false,
     icEpCodigo: c?.icEpCodigo ?? null,
     rotuloBase: c?.rotuloBase ?? null,
+    fontePrecoObrigatoria: c?.fontePrecoObrigatoria ?? true,
   };
 }
 
@@ -113,7 +118,7 @@ export const carregarContexto = cache(async (ano: number): Promise<ContextoEmend
   if (!exercicio) return null;
   const exercicioId = exercicio.id;
 
-  const [configuracao, unidadesDb, dotacoes, metasDb, areas, objetos, destinosDb, tiposDestino] = await Promise.all([
+  const [configuracao, unidadesDb, dotacoes, metasDb, areas, objetos, destinosDb, tiposDestino, fontesDb] = await Promise.all([
     lerConfiguracao(exercicioId),
     prisma.unidadeOrcamentaria.findMany({ where: { exercicioId }, orderBy: { codigo: "asc" } }),
     prisma.dotacao.findMany({
@@ -135,6 +140,7 @@ export const carregarContexto = cache(async (ano: number): Promise<ContextoEmend
     prisma.objetoBiblioteca.findMany({ where: { ativo: true }, orderBy: { ordem: "asc" }, include: { area: true } }),
     prisma.destino.findMany({ where: { ativo: true }, orderBy: [{ execucao: "asc" }, { nome: "asc" }] }),
     prisma.tipoDestino.findMany({ where: { ativo: true }, orderBy: { ordem: "asc" } }),
+    lerFontesPreco(),
   ]);
 
   const config = paraConfigMotor(ano, configuracao);
@@ -216,8 +222,16 @@ export const carregarContexto = cache(async (ano: number): Promise<ContextoEmend
       .map((u) => ({ codigo: u.codigo, nome: u.nome })),
     prazoProtocolo,
     prazoEncerrado: !!prazoProtocolo && hojeBrasilia() > prazoProtocolo,
+    fontesPreco: fontesDb,
+    validadeLinkEntidadeDias: configuracao?.validadeLinkEntidadeDias ?? 10,
   };
 });
+
+// Fontes oficiais de preço ativas, na ordem do cadastro.
+export async function lerFontesPreco(): Promise<FontePreco[]> {
+  const fontes = await prisma.fontePrecoOficial.findMany({ where: { ativo: true }, orderBy: [{ ordem: "asc" }, { nome: "asc" }] });
+  return fontes.map((f) => ({ id: f.id, nome: f.nome, url: f.url, orientacao: f.orientacao, aplicaA: f.aplicaA, tipo: f.tipo }));
+}
 
 // Já apresentado pelo autor no exercício, sem contar a emenda em edição.
 // Emendas importadas sem área identificada dividem-se pela meação legal.

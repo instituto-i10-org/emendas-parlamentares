@@ -9,7 +9,7 @@ import {
   modeloDaDotacao,
   quantidadeSugerida,
 } from "../plano";
-import { referenciaAntiga, referenciaCombina, referenciaCompleta, rotuloReferencia, type ReferenciaPreco } from "../referencias";
+import { fontesParaEmenda, referenciaAntiga, referenciaCombina, referenciaCompleta, rotuloReferencia, type ReferenciaPreco } from "../referencias";
 import type { Selecao } from "../tipos";
 import { resumoValidacao, sinaisValor, validar, type EstadoValidacao } from "../validar";
 import { catalogo, config, destino, loa } from "./dados-reais";
@@ -148,10 +148,24 @@ describe("quantidade sugerida", () => {
 });
 
 describe("referências de preço", () => {
-  it("exige os campos próprios do tipo", () => {
+  it("exige fonte, data, objeto, unidade e valor; os campos próprios do tipo ajudam, mas não travam", () => {
     expect(referenciaCompleta(ref())).toBe(true);
-    expect(referenciaCompleta(ref({ campos: { num: "Ata 1" } }))).toBe(false);
+    expect(referenciaCompleta(ref({ campos: { num: "Ata 1" } }))).toBe(true);
     expect(referenciaCompleta(ref({ valor: 0 }))).toBe(false);
+    expect(referenciaCompleta(ref({ emissor: "  " }))).toBe(false);
+    expect(referenciaCompleta(ref({ data: null, dataTexto: null }))).toBe(false);
+  });
+
+  it("rótulo de referência tirada de fonte oficial usa o nome da fonte", () => {
+    expect(rotuloReferencia({ ...ref(), fonteId: "f1", emissor: "SINAPI (Caixa)", campos: { composicao: "92873" } })).toBe("R1 · SINAPI (Caixa) 92873");
+  });
+
+  it("fontes indicadas: gerais, do modelo do plano e de saúde quando a dotação é de saúde", () => {
+    const f = (id: string, aplicaA: string[]) => ({ id, nome: id, url: "https://x", orientacao: "", aplicaA, tipo: "PAINEL" as const });
+    const todas = [f("geral", []), f("obra", ["OBRAS"]), f("saude", ["SAUDE"]), f("equip", ["EQUIPAMENTOS"])];
+    expect(fontesParaEmenda(todas, "OBRAS", false).map((x) => x.id)).toEqual(["geral", "obra"]);
+    expect(fontesParaEmenda(todas, "EQUIPAMENTOS", true).map((x) => x.id)).toEqual(["geral", "saude", "equip"]);
+    expect(fontesParaEmenda(todas, null, false).map((x) => x.id)).toEqual(["geral"]);
   });
 
   it("rótulo, antiguidade e comparabilidade", () => {
@@ -186,10 +200,18 @@ describe("validação da etapa 3", () => {
     expect(titulo(validar(e, ctx), "bad")).toContain("Cronograma não confere");
   });
 
-  it("linha sem referência bloqueia", () => {
+  it("linha sem fonte de preço bloqueia quando a fonte é obrigatória", () => {
     const e = estadoAmbulancia();
     e.itens = [{ ...e.itens[0], referencia: null }];
-    expect(titulo(validar(e, ctx), "bad")).toContain("Linha sem referência de preço");
+    expect(titulo(validar(e, ctx), "bad")).toContain("Linha sem fonte de preço");
+  });
+
+  it("linha sem fonte de preço só alerta quando a configuração tira a obrigatoriedade", () => {
+    const e = estadoAmbulancia();
+    e.itens = [{ ...e.itens[0], referencia: null }];
+    const checks = validar(e, { ...ctx, config: { ...ctx.config, fontePrecoObrigatoria: false } });
+    expect(titulo(checks, "bad")).not.toContain("Linha sem fonte de preço");
+    expect(titulo(checks, "warn")).toContain("Linha sem fonte de preço");
   });
 
   it("item de outra área bloqueia mesmo em valor pequeno", () => {

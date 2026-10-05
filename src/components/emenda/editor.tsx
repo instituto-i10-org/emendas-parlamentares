@@ -390,7 +390,7 @@ export function EditorEmenda({
               descartar={diligencia ? null : descartar}
             />
           ) : etapa === 2 ? (
-            <Etapa2 e={e} d={d} ctx={ctx} atualizar={atualizar} autor={autor} />
+            <Etapa2 e={e} d={d} ctx={ctx} atualizar={atualizar} autor={autor} alterado={alterado} />
           ) : (
             <Etapa3 e={e} d={d} atualizar={atualizar} prazo={ctx.prazoProtocolo ? { data: ctx.prazoProtocolo, encerrado: ctx.prazoEncerrado } : null} />
           )}

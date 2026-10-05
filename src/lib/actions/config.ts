@@ -56,6 +56,8 @@ const configuracaoSchema = z.object({
   orgaosForaDasEmendas: z.array(z.string().regex(/^\d{1,4}$/, "Código de órgão inválido.")).max(100),
   rotuloBase: z.string().max(200).nullable(),
   prazoProtocolo: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
+  fontePrecoObrigatoria: z.boolean(),
+  validadeLinkEntidadeDias: z.number().int().min(1, "A validade do link vai de 1 a 90 dias.").max(90, "A validade do link vai de 1 a 90 dias."),
 });
 
 export async function salvarConfiguracao(entrada: z.input<typeof configuracaoSchema>): Promise<Resultado> {
@@ -410,4 +412,64 @@ export async function alternarNormaAtiva(id: string): Promise<Resultado> {
   await prisma.documentoNormativo.update({ where: { id }, data: { ativo: !n.ativo } });
   await registrarAuditoria({ usuarioId: user.id, entidade: "DocumentoNormativo", entidadeId: id, acao: n.ativo ? "DESATIVAR" : "ATIVAR" });
   return pronto();
+}
+
+// ============================================================================
+// Fontes oficiais de preço
+// ============================================================================
+
+const APLICA_A = ["CUSTEIO", "OBRAS", "EQUIPAMENTOS", "TERCEIRO_SETOR", "SAUDE"] as const;
+const TIPOS_REF = [
+  "ATA", "CONTRATACAO_MUNICIPIO", "CONTRATACAO_OUTRO_ORGAO", "PAINEL", "BANCO_PRECOS_SAUDE",
+  "TABELA_OFICIAL", "COTACAO", "NOTA_FISCAL", "TERMO_PARCERIA", "ESTIMATIVA",
+] as const;
+
+const fonteSchema = z.object({
+  id: z.string().max(40).optional(),
+  nome: z.string().trim().min(3, "Informe o nome da fonte.").max(200),
+  url: z.url("Link inválido.").max(1000),
+  orientacao: z.string().trim().min(10, "Diga em uma frase como pesquisar nesta fonte.").max(600),
+  aplicaA: z.array(z.enum(APLICA_A)).max(APLICA_A.length),
+  tipo: z.enum(TIPOS_REF),
+  ordem: z.number().int().min(0).max(10000),
+});
+
+export async function salvarFontePreco(entrada: z.input<typeof fonteSchema>): Promise<Resultado> {
+  const user = await exigir("administrarConfiguracoes");
+  if (falhou(user)) return user;
+  const p = fonteSchema.safeParse(entrada);
+  if (!p.success) return erro(p.error);
+  const { id, ...dados } = p.data;
+  try {
+    if (id) {
+      const antes = await prisma.fontePrecoOficial.findUnique({ where: { id } });
+      if (!antes) return { ok: false, erro: "Fonte não encontrada." };
+      const depois = await prisma.fontePrecoOficial.update({ where: { id }, data: dados });
+      await registrarAuditoria({ usuarioId: user.id, entidade: "FontePrecoOficial", entidadeId: id, acao: "ATUALIZAR", dadosAntes: antes, dadosDepois: depois });
+      return pronto("Fonte de preço salva.");
+    }
+    const criada = await prisma.fontePrecoOficial.create({ data: dados });
+    await registrarAuditoria({ usuarioId: user.id, entidade: "FontePrecoOficial", entidadeId: criada.id, acao: "CRIAR", dadosDepois: criada });
+    return pronto("Fonte de preço cadastrada.");
+  } catch (e) {
+    if (duplicado(e)) return { ok: false, erro: "Já existe uma fonte com esse nome." };
+    throw e;
+  }
+}
+
+export async function alternarFontePrecoAtiva(id: string): Promise<Resultado> {
+  const user = await exigir("administrarConfiguracoes");
+  if (falhou(user)) return user;
+  const antes = await prisma.fontePrecoOficial.findUnique({ where: { id } });
+  if (!antes) return { ok: false, erro: "Fonte não encontrada." };
+  const depois = await prisma.fontePrecoOficial.update({ where: { id }, data: { ativo: !antes.ativo } });
+  await registrarAuditoria({
+    usuarioId: user.id,
+    entidade: "FontePrecoOficial",
+    entidadeId: id,
+    acao: antes.ativo ? "DESATIVAR" : "ATIVAR",
+    dadosAntes: antes,
+    dadosDepois: depois,
+  });
+  return pronto(antes.ativo ? "Fonte desativada: deixa de aparecer para o autor." : "Fonte ativada.");
 }

@@ -67,7 +67,27 @@ export type ReferenciaPreco = {
   aprovadoEm: string | null;
   origemExterna: string | null;
   consultadoEm: string | null;
+  // Fonte oficial de onde o preço foi tirado; nula em "outra fonte".
+  fonteId?: string | null;
 };
+
+// Fonte oficial de preço, como a tela a mostra ao autor.
+export type FontePreco = {
+  id: string;
+  nome: string;
+  url: string;
+  orientacao: string;
+  aplicaA: string[];
+  tipo: TipoReferencia;
+};
+
+// As fontes que servem à emenda: as gerais (aplicaA vazio), as do modelo do
+// plano e, se a dotação é de saúde, as de saúde. Na ordem do cadastro.
+export function fontesParaEmenda(fontes: FontePreco[], modelo: string | null, saude: boolean): FontePreco[] {
+  return fontes.filter(
+    (f) => !f.aplicaA.length || (modelo && f.aplicaA.includes(modelo)) || (saude && f.aplicaA.includes("SAUDE"))
+  );
+}
 
 // A unidade do item difere da unidade da referência? Comparação sem caixa,
 // acentos, pontuação e plural simples ("peça" = "peças" = "pç." não; "un" =
@@ -89,19 +109,22 @@ export function unidadeDiverge(unidadeItem: string | null | undefined, unidadeRe
   return a !== b;
 }
 
-// "R2 · Ata de registro de preços vigente Ata SRP 014/2025"
-export function rotuloReferencia(r: Pick<ReferenciaPreco, "codigo" | "tipo" | "campos">): string {
+// "R2 · Ata de registro de preços vigente Ata SRP 014/2025"; tirada de fonte
+// oficial, "R2 · SINAPI (Caixa) 92873".
+export function rotuloReferencia(r: Pick<ReferenciaPreco, "codigo" | "tipo" | "campos"> & { emissor?: string; fonteId?: string | null }): string {
   const t = TIPOS_REFERENCIA[r.tipo];
   const chave = r.campos.num || r.campos.composicao || r.campos.consulta || r.campos.razao || "";
-  return `${r.codigo} · ${t.nome.split(" (")[0]}${chave ? " " + chave : ""}`;
+  // Tirada de fonte oficial: o nome da fonte diz mais que o tipo.
+  const origem = r.fonteId && r.emissor?.trim() ? r.emissor.trim() : t.nome.split(" (")[0];
+  return `${r.codigo} · ${origem}${chave ? " " + chave : ""}`;
 }
 
-// Registro completo: os campos comuns e os próprios do tipo.
+// Registro completo: de onde (fonte), quando, o quê, em que unidade e quanto.
+// Os campos próprios do tipo (número da ata, código da composição) ajudam a
+// conferir, mas não travam: o autor nem sempre os tem à mão.
 export function referenciaCompleta(r: ReferenciaPreco): boolean {
-  const t = TIPOS_REFERENCIA[r.tipo];
-  if (!t) return false;
-  if (!r.emissor || !(r.data || r.dataTexto) || !r.objeto || !r.unidade || !(r.valor > 0)) return false;
-  return t.campos.every(([k]) => !!r.campos[k]?.trim());
+  if (!TIPOS_REFERENCIA[r.tipo]) return false;
+  return !!r.emissor.trim() && !!(r.data || r.dataTexto) && !!r.objeto.trim() && !!r.unidade.trim() && r.valor > 0;
 }
 
 // O objeto da referência se relaciona ao item da linha? Silêncio da biblioteca

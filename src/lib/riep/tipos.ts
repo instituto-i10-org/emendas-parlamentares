@@ -147,6 +147,8 @@ export type ConfigMotor = {
   icEpVigente: boolean;
   icEpCodigo: string | null;
   rotuloBase: string | null;
+  // Item com preço e sem fonte: bloqueia (verdadeiro) ou só alerta.
+  fontePrecoObrigatoria: boolean;
 };
 
 // Já apresentado pelo autor no exercício, por parcela, sem contar esta emenda.
