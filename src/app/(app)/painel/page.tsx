@@ -34,7 +34,7 @@ export default async function PainelPage() {
   return (
     <Pagina
       titulo="Resumo consolidado"
-      descricao={`Emendas impositivas do exercício ${c.ano}. Contam submetidas, aprovadas e as apresentadas fora do sistema; rascunhos e rejeitadas não consomem cota.`}
+      descricao={`Emendas impositivas do exercício ${c.ano}, calculadas da base a cada abertura. Apresentado é o que foi remetido à Câmara; acatado, o que a Comissão aprovou. Rascunhos e rejeitadas não consomem cota.`}
       acoes={
         <BotaoImprimir variante="ghost" />
       }
@@ -47,9 +47,9 @@ export default async function PainelPage() {
           tom="navy"
         />
         <Kpi
-          rotulo="Indicado"
-          valor={BRL(c.total)}
-          detalhe={c.tetoGlobal ? `${PCT((c.total / c.tetoGlobal) * 100)} do teto` : undefined}
+          rotulo="Consumo do teto"
+          valor={BRL(c.consumoTeto)}
+          detalhe={c.tetoGlobal ? `${PCT((c.consumoTeto / c.tetoGlobal) * 100)} do teto` : undefined}
         />
         <Kpi
           rotulo="Saúde (IC-CO 1002)"
@@ -58,6 +58,30 @@ export default async function PainelPage() {
           tom={pisoSaude !== null && c.saude + 0.005 < pisoSaude && c.total >= (c.tetoGlobal ?? 0) ? "bad" : "ok"}
         />
         <Kpi rotulo="Demais áreas" valor={BRL(c.demais)} detalhe={c.total ? `${PCT((c.demais / c.total) * 100)} do indicado` : undefined} />
+      </div>
+
+      <div className="mb-5 grid grid-cols-3 gap-3.5 max-lg:grid-cols-1">
+        <Kpi rotulo="Apresentado" valor={BRL(c.apresentado.valor)} detalhe={`${c.apresentado.qtd} emenda${c.apresentado.qtd === 1 ? "" : "s"} remetida${c.apresentado.qtd === 1 ? "" : "s"} à Câmara`} />
+        <Kpi rotulo="Acatado" valor={BRL(c.acatado.valor)} detalhe={`${c.acatado.qtd} aprovada${c.acatado.qtd === 1 ? "" : "s"} pela Comissão`} tom="ok" />
+        <Kpi rotulo="Incorporado à lei" valor={BRL(c.incorporado.valor)} detalhe={`${c.incorporado.qtd} marcada${c.incorporado.qtd === 1 ? "" : "s"} na lei aprovada`} />
+      </div>
+
+      <div className="mb-5">
+        <Cartao titulo="Por área" ajuda="Área de aplicação pela unidade da dotação (cadastro em Configurações › Biblioteca). Só as emendas remetidas à Câmara.">
+          <TabelaDados
+            vazio="Sem áreas cadastradas."
+            colunas={[{ titulo: "Área" }, { titulo: "Emendas", className: "text-right" }, { titulo: "Apresentado", className: "text-right" }, { titulo: "Acatado", className: "text-right" }]}
+            linhas={c.porArea.map((a) => ({
+              chave: a.nome,
+              celulas: [
+                a.nome,
+                <span key="q" className="tnum">{a.qtd}</span>,
+                <span key="p" className="whitespace-nowrap tnum">{BRL(a.apresentado)}</span>,
+                <b key="a" className="whitespace-nowrap tnum">{BRL(a.acatado)}</b>,
+              ],
+            }))}
+          />
+        </Cartao>
       </div>
 
       <div className="grid grid-cols-[minmax(0,1fr)_380px] items-start gap-5 max-[1100px]:grid-cols-1">

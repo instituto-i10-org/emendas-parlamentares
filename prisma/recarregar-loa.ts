@@ -44,8 +44,9 @@ async function main() {
   }
 
   const novas = new Map(loa.dotacoes.filter((d) => /^\d+$/.test(d.ficha)).map((d) => [`${d.uo.split(".")[0]}|${d.ficha}`, d]));
+  // Só as do projeto de lei: a lei aprovada repete as fichas.
   const gravadas = await prisma.dotacao.findMany({
-    where: { exercicioId: exercicio.id },
+    where: { exercicioId: exercicio.id, instrumento: { tipo: "LOA", especie: "PROJETO_LEI" } },
     include: { orgao: { select: { codigo: true } }, acao: { select: { nome: true } }, _count: { select: { emendas: true } } },
   });
   const chaveDe = (g: (typeof gravadas)[number]) => (g.ficha ? `${g.orgao.codigo}|${g.ficha}` : null);

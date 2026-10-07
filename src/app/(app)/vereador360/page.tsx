@@ -71,7 +71,7 @@ export default async function Vereador360Page({ searchParams }: { searchParams: 
                     >
                       <span className="flex items-center justify-between gap-2">
                         <span className="min-w-0 truncate" title={x.nome}>{x.nome}</span>
-                        {sx.tom !== "ok" ? <i className={cn("size-2 shrink-0 rounded-full", sx.tom === "bad" ? "bg-bad" : "bg-warn")} /> : null}
+                        {sx.tom !== "ok" ? <span className="shrink-0 text-2xs font-bold text-muted-foreground">{sx.rotulo}</span> : null}
                       </span>
                       {c.cotaIndividual ? (
                         <span className="mt-1 block">
@@ -94,9 +94,10 @@ export default async function Vereador360Page({ searchParams }: { searchParams: 
               <Selo tipo={s.tom}>{s.rotulo}</Selo>
             </div>
           </Cartao>
-          <div className="grid grid-cols-4 gap-3.5 max-lg:grid-cols-2">
-            <Kpi rotulo="Apresentado" valor={BRL(a.total)} detalhe={c.cotaIndividual !== null ? `de ${BRL(c.cotaIndividual)}` : undefined} tom="navy" />
-            <Kpi rotulo="Itens" valor={a.itens} detalhe={a.importadas ? `${a.importadas} apresentados fora do sistema` : undefined} />
+          <div className="grid grid-cols-3 gap-3.5 max-lg:grid-cols-2">
+            <Kpi rotulo="Cota individual" valor={c.cotaIndividual !== null ? BRL(c.cotaIndividual) : "não definida"} detalhe={parcelaSaude !== null ? `${BRL(parcelaSaude)} reservados à saúde` : undefined} tom="navy" />
+            <Kpi rotulo="Comprometido" valor={BRL(a.total)} detalhe={`${a.itens} emenda${a.itens === 1 ? "" : "s"}${a.importadas ? `, ${a.importadas} fora do sistema` : ""}`} />
+            <Kpi rotulo="Saldo da cota" valor={c.cotaIndividual !== null ? BRL(Math.max(0, c.cotaIndividual - a.total)) : "—"} tom={c.cotaIndividual !== null && a.total - c.cotaIndividual > 0.005 ? "bad" : "ok"} />
             <Kpi rotulo="Saúde" valor={BRL(a.saude)} detalhe={parcelaSaude !== null ? `mínimo ${BRL(parcelaSaude)}` : undefined} tom={parcelaSaude !== null && a.saude + 0.005 >= parcelaSaude ? "ok" : undefined} />
             <Kpi rotulo="Demais áreas" valor={BRL(a.demais)} detalhe={parcelaDemais !== null ? `limite ${BRL(parcelaDemais)}` : undefined} tom={parcelaDemais !== null && a.demais - parcelaDemais > 0.005 ? "bad" : undefined} />
           </div>

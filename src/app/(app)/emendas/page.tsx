@@ -99,7 +99,7 @@ export default async function EmendasPage({ searchParams }: { searchParams: Prom
       </div>
       <div className="overflow-hidden rounded-card bg-surface shadow-card">
         {emendas.length ? (
-          <div className="overflow-x-auto">
+          <div className="relative overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-soft text-left text-2xs font-bold tracking-[0.04em] text-muted-foreground uppercase">
                 <tr>

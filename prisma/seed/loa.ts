@@ -136,9 +136,11 @@ export async function semearLoa(prisma: PrismaClient, exercicioId: string, ano: 
   const fontes = new Map<string, string>();
   const programasPpa = new Set(ppa.programas);
 
-  // Dotações já gravadas neste exercício, por órgão + ficha.
+  // Dotações já gravadas neste exercício, por órgão + ficha — só as do projeto
+  // de lei: a lei aprovada (gerada do projeto no comparativo ou importada) tem
+  // as mesmas fichas e não pode ser confundida com ele.
   const gravadas = await prisma.dotacao.findMany({
-    where: { exercicioId },
+    where: { exercicioId, instrumentoId: pl.id },
     select: { id: true, codigo: true, ficha: true, ativo: true, orgao: { select: { codigo: true } } },
   });
   const existentes = new Map(gravadas.filter((g) => g.ficha).map((g) => [`${g.orgao.codigo}|${g.ficha}`, g]));

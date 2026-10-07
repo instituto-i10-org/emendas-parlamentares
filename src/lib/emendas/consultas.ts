@@ -95,7 +95,26 @@ export type Consolidado = {
   total: number;
   porStatus: Record<string, { qtd: number; valor: number }>;
   porDestino: { nome: string; qtd: number; valor: number; saude: number }[];
+  // Remetidas à Câmara (qualquer situação depois da remessa) e acatadas
+  // (aprovadas pela Comissão), em colunas separadas; incorporadas à lei.
+  apresentado: { qtd: number; valor: number };
+  acatado: { qtd: number; valor: number };
+  incorporado: { qtd: number; valor: number };
+  // O que consome o teto (cota × vereadores): as emendas que contam na cota
+  // mais as importadas.
+  consumoTeto: number;
+  porArea: { nome: string; qtd: number; apresentado: number; acatado: number }[];
 };
+
+const REMETIDAS = ["SUBMETIDA", "EM_TRAMITACAO", "EM_DILIGENCIA", "APROVADA", "REJEITADA"];
+
+// A área de uma unidade: a do cadastro que cita o órgão ou a própria unidade
+// (a primeira, na ordem do cadastro, quando duas áreas citam o mesmo órgão).
+export function areaDaUnidade(uo: string | null | undefined, areas: { nome: string; orgaos: string[] }[]): string {
+  if (!uo) return "Sem dotação definida";
+  for (const a of areas) if (a.orgaos.some((c) => uo === c || uo.startsWith(`${c}.`))) return a.nome;
+  return "Outras áreas";
+}
 
 // Cota por autor e totais do exercício. Conta as emendas submetidas,
 // aprovadas e as importadas (apresentadas fora do sistema); rejeitadas e
@@ -108,11 +127,18 @@ export const consolidar = cache(async (ano: number, publico = false): Promise<Co
   const cfg = exercicio.configuracao;
   const pct = cfg?.percentualSaude.toNumber() ?? 50;
   const semDemonstracao = publico ? { autor: { demonstracao: false } } : {};
-  const [emendas, importadas, autores] = await Promise.all([
+  const [emendas, importadas, autores, areas] = await Promise.all([
     listarEmendas(ano, semDemonstracao),
     prisma.emendaImportada.findMany({ where: { exercicioId: exercicio.id, ...semDemonstracao } }),
     prisma.autor.findMany({ where: publico ? { demonstracao: false } : {}, orderBy: { nome: "asc" } }),
+    prisma.areaAplicacao.findMany({ orderBy: { ordem: "asc" }, select: { nome: true, orgaos: true } }),
   ]);
+  const apresentado = { qtd: 0, valor: 0 };
+  const acatado = { qtd: 0, valor: 0 };
+  const incorporado = { qtd: 0, valor: 0 };
+  const porArea = new Map<string, { nome: string; qtd: number; apresentado: number; acatado: number }>(
+    areas.map((a) => [a.nome, { nome: a.nome, qtd: 0, apresentado: 0, acatado: 0 }])
+  );
 
   const porAutor = new Map<string, ResumoAutor>(
     autores.map((a) => [a.id, { autorId: a.id, nome: a.nome, partido: a.partido, itens: 0, saude: 0, demais: 0, total: 0, importadas: 0 }])
@@ -126,6 +152,25 @@ export const consolidar = cache(async (ano: number, publico = false): Promise<Co
     const st = (porStatus[e.status] ??= { qtd: 0, valor: 0 });
     st.qtd++;
     st.valor += v;
+    if (REMETIDAS.includes(e.status)) {
+      apresentado.qtd++;
+      apresentado.valor += v;
+      const aprovada = e.status === "APROVADA";
+      if (aprovada) {
+        acatado.qtd++;
+        acatado.valor += v;
+      }
+      if (e.incorporadaEm) {
+        incorporado.qtd++;
+        incorporado.valor += v;
+      }
+      const nomeArea = areaDaUnidade(e.dotacao?.unidadeOrcamentaria.codigo, areas);
+      const ar = porArea.get(nomeArea) ?? { nome: nomeArea, qtd: 0, apresentado: 0, acatado: 0 };
+      ar.qtd++;
+      ar.apresentado += v;
+      if (aprovada) ar.acatado += v;
+      porArea.set(nomeArea, ar);
+    }
     if (!contam(e.status)) continue;
     const a = porAutor.get(e.autorId)!;
     a.itens++;
@@ -175,6 +220,11 @@ export const consolidar = cache(async (ano: number, publico = false): Promise<Co
     total: lista.reduce((s, a) => s + a.total, 0),
     porStatus,
     porDestino: [...porDestino.values()].sort((a, b) => b.valor - a.valor),
+    apresentado,
+    acatado,
+    incorporado,
+    consumoTeto: lista.reduce((s, a) => s + a.total, 0),
+    porArea: [...porArea.values()],
   };
 });
 

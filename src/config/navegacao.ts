@@ -42,6 +42,7 @@ export const NAVEGACAO: GrupoNav[] = [
     itens: [
       { id: "inicio", titulo: "Início", href: "/inicio", icone: "inicio", poder: "TRANSVERSAL" },
       { id: "painel", titulo: "Resumo consolidado", href: "/painel", icone: "painel", poder: "TRANSVERSAL" },
+      { id: "comparativo", titulo: "Projeto × lei", href: "/comparativo", icone: "planejamento", poder: "TRANSVERSAL" },
       { id: "tramitacao", titulo: "Tramitação", href: "/tramitacao", icone: "tramitacao", poder: Poder.LEGISLATIVO, permissoes: ["tramitarEmendas", "consultarTudo"] },
     ],
   },

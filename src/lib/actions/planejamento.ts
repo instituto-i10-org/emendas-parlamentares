@@ -6,6 +6,8 @@ import { auditar } from "@/lib/audit";
 import { podeGerirPlanejamento } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
+import { dadosComparativo } from "@/lib/orcamento/comparativo-servidor";
+import { leiDoProjeto } from "@/lib/orcamento/comparativo";
 
 type Resultado = { ok: true; mensagem?: string } | { ok: false; erro: string };
 
@@ -149,4 +151,56 @@ export async function excluirInstrumento(id: string): Promise<Resultado> {
   });
   revalidatePath("/executivo/planejamento");
   return { ok: true, mensagem: "Instrumento excluído." };
+}
+
+
+// Base da lei aprovada gerada do projeto mais as emendas incorporadas, para
+// quando a lei ainda não foi importada. Cria o instrumento "lei aprovada" com
+// uma dotação para cada dotação do projeto.
+export async function gerarLeiDoProjeto(ano: number): Promise<{ ok: true; mensagem: string } | { ok: false; erro: string }> {
+  const user = await getCurrentUser();
+  if (!podeGerirPlanejamento(user)) return { ok: false, erro: "Sem permissão para gerir o planejamento." };
+  const dados = await dadosComparativo(ano);
+  if (!dados?.projeto) return { ok: false, erro: "O exercício não tem projeto de lei com base carregada." };
+  if (dados.temLei) return { ok: false, erro: "A lei aprovada já tem base. Para refazer, use a importação." };
+  const valores = new Map(leiDoProjeto(dados.pl, dados.emendas).map((x) => [x.id, x.valor]));
+  const origem = await prisma.dotacao.findMany({ where: { instrumentoId: dados.projeto.id, ativo: true } });
+  const lei = await prisma.$transaction(async (tx) => {
+    const lei =
+      dados.lei ??
+      (await tx.instrumentoPlanejamento.create({
+        data: {
+          tipo: "LOA",
+          especie: "LEI_APROVADA",
+          numero: `${dados.projeto!.numero} (lei gerada)`,
+          ementa: `Gerada do ${dados.projeto!.numero} com ${dados.emendas.length} emenda(s) incorporada(s).`,
+          exercicioId: dados.exercicioId,
+          status: "APROVADO",
+          instrumentoOrigemId: dados.projeto!.id,
+        },
+      }));
+    await tx.dotacao.createMany({
+      data: origem.map((d) => ({
+        instrumentoId: lei.id,
+        exercicioId: d.exercicioId,
+        codigo: d.codigo,
+        ficha: d.ficha,
+        orgaoId: d.orgaoId,
+        unidadeOrcamentariaId: d.unidadeOrcamentariaId,
+        funcaoId: d.funcaoId,
+        subfuncaoId: d.subfuncaoId,
+        programaId: d.programaId,
+        acaoId: d.acaoId,
+        naturezaDespesaId: d.naturezaDespesaId,
+        fonteRecursoId: d.fonteRecursoId,
+        valorAutorizado: valores.get(d.id) ?? d.valorAutorizado.toNumber(),
+        ordem: d.ordem,
+      })),
+    });
+    await auditar(tx, { usuarioId: user.id, entidade: "InstrumentoPlanejamento", entidadeId: lei.id, acao: "GERAR_LEI_DO_PROJETO", dadosDepois: { dotacoes: origem.length, emendas: dados.emendas.length } });
+    return lei;
+  });
+  revalidatePath("/comparativo");
+  revalidatePath("/executivo/planejamento");
+  return { ok: true, mensagem: `Lei gerada (${lei.numero}): ${origem.length} dotações, ${dados.emendas.length} emenda(s) incorporada(s).` };
 }
