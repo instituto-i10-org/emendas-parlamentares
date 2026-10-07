@@ -229,11 +229,15 @@ export function classificar({ objeto, destino, execucao, pretendido, loa, catalo
       abaixoDoPretendido: pretendido > 0 && pretendido > d.autorizado,
     };
   });
-  // Aderência antes de pontos, pontos antes de valor: a maior dotação da
-  // unidade nunca vence só por ser a maior.
+  // Aderência antes de tudo; depois, para entidade, a secretaria de repasse
+  // cadastrada no destino; depois pontos, e pontos antes de valor: a maior
+  // dotação da unidade nunca vence só por ser a maior.
+  const repasse = !uoAlvo && destino.unidadeRepasse ? destino.unidadeRepasse : null;
+  const daSecretariaDeRepasse = (uo: string) => (repasse ? Number(pertence(uo, repasse)) : 0);
   pontuadas.sort(
     (a, b) =>
       Number(b.aderente) - Number(a.aderente) ||
+      daSecretariaDeRepasse(b.uo) - daSecretariaDeRepasse(a.uo) ||
       b.sobreposicao - a.sobreposicao ||
       b.pontos - a.pontos ||
       b.autorizado - a.autorizado

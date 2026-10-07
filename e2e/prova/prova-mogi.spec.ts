@@ -263,6 +263,7 @@ test.describe("Grupo 6 — Tramitação", () => {
     await expect(page.getByLabel("Área")).toBeVisible();
     await captura(page, "6.1");
     await linha.getByRole("button", { name: "Receber" }).click();
+    await page.getByRole("dialog").getByRole("button", { name: "Receber" }).click();
     await expect(page.getByText("Emenda recebida: em tramitação.")).toBeVisible();
   });
 

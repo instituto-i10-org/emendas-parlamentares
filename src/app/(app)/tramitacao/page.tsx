@@ -185,7 +185,7 @@ export default async function TramitacaoPage({ searchParams }: { searchParams: P
                     valor(e),
                     decide ? (
                       <div key="d" className="flex flex-wrap justify-end gap-1.5">
-                        {e.status === "SUBMETIDA" ? <ReceberEmenda emendaId={e.id} /> : null}
+                        {e.status === "SUBMETIDA" ? <ReceberEmenda emendaId={e.id} rotulo={rotulo(e)} /> : null}
                         <PedirAjuste emendaId={e.id} rotulo={rotulo(e)} diasPadrao={cfg?.prazoDiligenciaDias ?? 5} />
                         <DecidirEmenda emendaId={e.id} rotulo={rotulo(e)} />
                       </div>

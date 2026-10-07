@@ -39,7 +39,15 @@ test.describe("Grupo 6 — tramitação", () => {
       await entrar(page, "comissao");
       await page.goto(`/tramitacao?q=${numero}`);
       const linha = page.locator("tr", { hasText: "macas para o centro" }).first();
+      // Confirmação: cancelar não muda nada; confirmar recebe.
       await linha.getByRole("button", { name: "Receber" }).click();
+      const dialogo = page.getByRole("dialog");
+      await expect(dialogo.getByText("Em tramitação")).toBeVisible();
+      await dialogo.getByRole("button", { name: "Cancelar" }).click();
+      await expect(dialogo).toBeHidden();
+      expect((await sql<{ status: string }>(`select status from "Emenda" where id = $1`, [id]))[0].status).toBe("SUBMETIDA");
+      await linha.getByRole("button", { name: "Receber" }).click();
+      await page.getByRole("dialog").getByRole("button", { name: "Receber" }).click();
       await expect(page.getByText("Emenda recebida: em tramitação.")).toBeVisible();
       await decidir(page, page.locator("tr", { hasText: "macas para o centro" }).first(), "Aprovar", "A emenda atende ao interesse público e às regras da Lei Orgânica.");
       await expect(page.getByText("Emenda aprovada.")).toBeVisible();

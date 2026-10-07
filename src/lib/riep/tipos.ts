@@ -127,6 +127,10 @@ export type DestinoMotor = {
   pendenciaHabilitacao: string | null;
   // Subfunção que o equipamento sugere quando o objeto não a define.
   subfuncao?: string | null;
+  // Entidade (execução indireta): a secretaria pela qual o repasse costuma
+  // sair. Não restringe a busca (a secretaria vem do objeto); só põe as
+  // dotações dela à frente das demais igualmente aderentes.
+  unidadeRepasse?: string | null;
 };
 
 // --- configuração do exercício ----------------------------------------------

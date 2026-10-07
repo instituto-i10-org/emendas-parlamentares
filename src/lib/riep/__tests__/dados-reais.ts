@@ -54,7 +54,7 @@ export const catalogoDoExercicio = (ano: number): Catalogo => ({
 export const catalogo: Catalogo = catalogoDoExercicio(2026);
 
 type DestinoJson = {
-  nome: string; nomeOficial?: string; execucao: "DIRETA" | "INDIRETA"; endereco: string; unidade?: string; cnpj?: string;
+  nome: string; nomeOficial?: string; execucao: "DIRETA" | "INDIRETA"; endereco: string; unidade?: string; unidadeRepasse?: string; cnpj?: string;
   populacao?: number; fontePopulacao?: string; dataPopulacao?: string;
 };
 const destinos = ler<{ destinos: DestinoJson[] }>("destinos-2026.json").destinos;
@@ -78,6 +78,7 @@ export function destino(trecho: string): DestinoMotor {
     pendenciaHabilitacao: null,
     // Como o seed faz: a subfunção sugerida vem do tipo de equipamento.
     subfuncao: subfuncaoDoDestino(d.nome, d.nomeOficial, bib.tiposDestino),
+    unidadeRepasse: d.unidadeRepasse ?? null,
   };
 }
 

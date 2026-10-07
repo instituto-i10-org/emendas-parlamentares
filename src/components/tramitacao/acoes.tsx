@@ -191,25 +191,46 @@ export function ReabrirEmenda({ emendaId }: { emendaId: string }) {
 }
 
 // Recebimento: a Comissão registra que a emenda entrou em tramitação.
-export function ReceberEmenda({ emendaId }: { emendaId: string }) {
+export function ReceberEmenda({ emendaId, rotulo }: { emendaId: string; rotulo: string }) {
   const router = useRouter();
+  const [aberto, setAberto] = useState(false);
   const [pendente, iniciar] = useTransition();
   return (
-    <Button
-      size="sm"
-      variant="surface"
-      disabled={pendente}
-      onClick={() =>
-        iniciar(async () => {
-          const r = await receberEmenda(emendaId);
-          if (!r.ok) return void toast.error(r.erro);
-          toast("Emenda recebida: em tramitação.");
-          router.refresh();
-        })
-      }
-    >
-      Receber
-    </Button>
+    <>
+      <Button size="sm" variant="surface" onClick={() => setAberto(true)}>
+        Receber
+      </Button>
+      <Dialog open={aberto} onOpenChange={setAberto}>
+        <DialogContent
+          titulo={`Receber a emenda — ${rotulo}`}
+          acoes={
+            <>
+              <Button
+                disabled={pendente}
+                onClick={() =>
+                  iniciar(async () => {
+                    const r = await receberEmenda(emendaId);
+                    if (!r.ok) return void toast.error(r.erro);
+                    toast("Emenda recebida: em tramitação.");
+                    setAberto(false);
+                    router.refresh();
+                  })
+                }
+              >
+                Receber
+              </Button>
+              <Button variant="ghost" onClick={() => setAberto(false)}>
+                Cancelar
+              </Button>
+            </>
+          }
+        >
+          <p className="text-sm text-muted-foreground">
+            A emenda passa de <b>Submetida</b> para <b>Em tramitação</b>, e o histórico registra quem a recebeu e quando. Pedir ajuste e decidir continuam disponíveis.
+          </p>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 

@@ -287,3 +287,36 @@ describe("correções da rodada de testes de 02/10", () => {
     expect(r.opcoes.length).toBeLessThanOrEqual(6);
   });
 });
+
+describe("entidade: a secretaria de repasse do destino vem primeiro (07/10)", () => {
+  const loa = loaDoExercicio(2027);
+  const catalogo = catalogoDoExercicio(2027);
+  const OBJETO =
+    "Repasse à Associação Ágape para custeio de suas atividades de assistência social, com aquisição de gêneros alimentícios e materiais de higiene e limpeza para os atendidos.";
+  const classifica = (d: ReturnType<typeof destino>) =>
+    classificar({ objeto: OBJETO, destino: d, execucao: "INDIRETA", pretendido: 30000, loa, catalogo });
+
+  it("Ágape (repasse pela 14.01): as opções começam pela Assistência Social", () => {
+    const agape = destino("Ágape");
+    expect(agape.unidadeRepasse).toBe("14.01");
+    const r = classifica(agape);
+    expect(r.opcoes.length).toBeGreaterThan(0);
+    expect(r.opcoes[0].uo).toBe("14.01");
+    // As da secretaria de repasse vêm antes de qualquer outra.
+    const primeiraDeFora = r.opcoes.findIndex((o) => o.uo !== "14.01");
+    const ultimaDaSecretaria = r.opcoes.map((o) => o.uo).lastIndexOf("14.01");
+    if (primeiraDeFora >= 0) expect(ultimaDaSecretaria).toBeLessThan(primeiraDeFora);
+  });
+
+  it("sem secretaria de repasse cadastrada, a ordem é a de antes", () => {
+    const semRepasse = { ...destino("Ágape"), unidadeRepasse: null };
+    const r = classifica(semRepasse);
+    expect(r.opcoes[0].uo).not.toBe("14.01");
+  });
+
+  it("a secretaria de repasse não passa à frente do que adere ao objeto", () => {
+    const r = classifica(destino("Ágape"));
+    const aderencia = r.candidatas.map((c) => c.aderente);
+    expect(aderencia.indexOf(false) === -1 || aderencia.lastIndexOf(true) < aderencia.indexOf(false)).toBe(true);
+  });
+});
