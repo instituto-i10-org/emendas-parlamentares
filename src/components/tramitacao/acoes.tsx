@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Pilulas } from "@/components/emenda/ui";
-import { decidirTramitacao, pedirDiligencia, reabrirTramitacao } from "@/lib/actions/tramitacao";
+import { decidirTramitacao, devolverAoAutor, marcarIncorporada, pedirDiligencia, reabrirTramitacao, receberEmenda } from "@/lib/actions/tramitacao";
 
 // Decisão da Comissão sobre uma emenda submetida: aprovar ou rejeitar, sempre
 // com parecer escrito.
@@ -73,12 +73,12 @@ export function DecidirEmenda({ emendaId, rotulo }: { emendaId: string; rotulo: 
 }
 
 // Diligência: a Comissão devolve a emenda ao autor para sanear, com prazo
-// (Regimento Interno, art. 210-C, § 2º — até 5 dias).
-export function PedirAjuste({ emendaId, rotulo }: { emendaId: string; rotulo: string }) {
+// (Regimento Interno, art. 210-C, § 2º — até 5 dias; padrão em Configurações).
+export function PedirAjuste({ emendaId, rotulo, diasPadrao = 5 }: { emendaId: string; rotulo: string; diasPadrao?: number }) {
   const router = useRouter();
   const [aberto, setAberto] = useState(false);
   const [motivo, setMotivo] = useState("");
-  const [dias, setDias] = useState(5);
+  const [dias, setDias] = useState(diasPadrao);
   const [pendente, iniciar] = useTransition();
   return (
     <>
@@ -133,7 +133,7 @@ export function PedirAjuste({ emendaId, rotulo }: { emendaId: string; rotulo: st
                 Prazo em dias
               </label>
               <input id="dil-dias" type="number" min={1} max={30} className="campo h-12 w-28 px-3.5" value={dias} onChange={(e) => setDias(Number(e.target.value) || 5)} />
-              <span className="ml-2 text-xs text-muted-foreground">O Regimento prevê até 5 dias.</span>
+              <span className="ml-2 text-xs text-muted-foreground">O Regimento prevê até 5 dias; padrão configurado: {diasPadrao} dia{diasPadrao === 1 ? "" : "s"}.</span>
             </div>
           </div>
         </DialogContent>
@@ -187,5 +187,97 @@ export function ReabrirEmenda({ emendaId }: { emendaId: string }) {
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+// Recebimento: a Comissão registra que a emenda entrou em tramitação.
+export function ReceberEmenda({ emendaId }: { emendaId: string }) {
+  const router = useRouter();
+  const [pendente, iniciar] = useTransition();
+  return (
+    <Button
+      size="sm"
+      variant="surface"
+      disabled={pendente}
+      onClick={() =>
+        iniciar(async () => {
+          const r = await receberEmenda(emendaId);
+          if (!r.ok) return void toast.error(r.erro);
+          toast("Emenda recebida: em tramitação.");
+          router.refresh();
+        })
+      }
+    >
+      Receber
+    </Button>
+  );
+}
+
+// Saneamento: devolve a emenda inválida ao autor, com o apontamento por escrito.
+export function DevolverAoAutor({ emendaId, rotulo }: { emendaId: string; rotulo: string }) {
+  const router = useRouter();
+  const [aberto, setAberto] = useState(false);
+  const [texto, setTexto] = useState("");
+  const [pendente, iniciar] = useTransition();
+  return (
+    <>
+      <Button size="sm" variant="ghost" onClick={() => setAberto(true)}>
+        Devolver ao autor
+      </Button>
+      <Dialog open={aberto} onOpenChange={setAberto}>
+        <DialogContent
+          titulo={`Devolver ao autor — ${rotulo}`}
+          acoes={
+            <>
+              <Button
+                disabled={pendente}
+                onClick={() =>
+                  iniciar(async () => {
+                    const r = await devolverAoAutor(emendaId, texto);
+                    if (!r.ok) return void toast.error(r.erro);
+                    toast("Emenda devolvida ao autor.");
+                    setAberto(false);
+                    router.refresh();
+                  })
+                }
+              >
+                Devolver
+              </Button>
+              <Button variant="ghost" onClick={() => setAberto(false)}>
+                Cancelar
+              </Button>
+            </>
+          }
+        >
+          <label className="grid gap-1.5 text-sm font-semibold text-label" htmlFor={`dev-${emendaId}`}>
+            O que o autor precisa corrigir
+            <textarea id={`dev-${emendaId}`} className="campo min-h-[120px] p-3 font-normal" maxLength={4000} value={texto} onChange={(e) => setTexto(e.target.value)} />
+          </label>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+// Marca (ou desmarca) a emenda aprovada como incorporada ao texto da lei.
+export function MarcarIncorporada({ emendaId, incorporada }: { emendaId: string; incorporada: boolean }) {
+  const router = useRouter();
+  const [pendente, iniciar] = useTransition();
+  return (
+    <Button
+      size="sm"
+      variant={incorporada ? "ghost" : "surface"}
+      disabled={pendente}
+      onClick={() =>
+        iniciar(async () => {
+          const r = await marcarIncorporada(emendaId, !incorporada);
+          if (!r.ok) return void toast.error(r.erro);
+          toast(incorporada ? "Incorporação desfeita." : "Marcada como incorporada à lei.");
+          router.refresh();
+        })
+      }
+    >
+      {incorporada ? "Desfazer" : "Marcar incorporada"}
+    </Button>
   );
 }

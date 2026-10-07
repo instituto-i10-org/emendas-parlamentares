@@ -18,6 +18,7 @@ const PARAMETROS: [string, string][] = [
   ["toleranciaValorPct", "Tolerância do valor"],
   ["validadeReferenciaMeses", "Validade das referências de preço"],
   ["prazoProtocolo", "Prazo de protocolo das emendas"],
+  ["prazoDiligenciaDias", "Prazo da diligência"],
   ["validadeLinkEntidadeDias", "Validade do link da entidade"],
 ];
 
@@ -26,6 +27,7 @@ export function AbaValidacao({
   ano,
   regras,
   normas,
+  prazoDiligenciaDias,
   fundamentos,
   podeEditar,
 }: {
@@ -33,9 +35,11 @@ export function AbaValidacao({
   ano: number;
   regras: RegraTela[];
   normas: NormaTela[];
+  prazoDiligenciaDias: number;
   fundamentos: Record<string, { texto: string; normaId: string | null }>;
   podeEditar: boolean;
 }) {
+  const [dias, setDias] = useState(String(prazoDiligenciaDias));
   const inicial = (codigo: string, padrao: "BLOQUEANTE" | "ALERTA"): RegraTela =>
     regras.find((r) => r.codigo === codigo) ?? { codigo, modo: padrao, ativa: true, fundamento: "", normaId: null };
   const [lista, setLista] = useState<RegraTela[]>(() => VERIFICACOES.filter((v) => v.configuravel).map((v) => inicial(v.codigo, v.padrao)));
@@ -142,7 +146,15 @@ export function AbaValidacao({
         ) : null}
       </Cartao>
 
-      <Cartao titulo="Fundamento de cada parâmetro" ajuda="Cada parâmetro do exercício (os valores ficam na aba Exercício) leva o fundamento por extenso e, se houver, a norma citada. Parâmetro definido sem fundamento não é aceito.">
+      <Cartao titulo="Parâmetros da validação e da tramitação" ajuda="Cada parâmetro do exercício (os demais valores ficam na aba Exercício) leva o fundamento por extenso e, se houver, a norma citada. Parâmetro definido sem fundamento não é aceito.">
+        <div className="grid grid-cols-2 gap-3.5 max-md:grid-cols-1">
+          <label className="grid gap-1 text-sm font-semibold text-label">
+            Prazo padrão da diligência (dias)
+            <input id="prazo-diligencia" type="number" min={1} max={30} className="campo h-11 px-3" value={dias} disabled={!podeEditar} onChange={(ev) => setDias(ev.target.value)} />
+            <span className="text-xs font-medium text-muted-foreground">O Regimento Interno (art. 210-C, § 2º) prevê até 5 dias.</span>
+          </label>
+        </div>
+        <h3 className="mt-6 mb-2 text-sm font-bold">Fundamento de cada parâmetro</h3>
         <div className="grid gap-2.5">
           {PARAMETROS.map(([chave, rotulo]) => (
             <div key={chave} className="grid grid-cols-[200px_minmax(0,1fr)_minmax(0,260px)] items-center gap-2.5 max-lg:grid-cols-1">
@@ -164,7 +176,7 @@ export function AbaValidacao({
             <Button
               disabled={pendente}
               onClick={() =>
-                executar(() => salvarParametrosValidacao(exercicioId, { fundamentos: fund }))
+                executar(() => salvarParametrosValidacao(exercicioId, { prazoDiligenciaDias: Number(dias), fundamentos: fund }))
               }
             >
               Salvar parâmetros da validação

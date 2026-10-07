@@ -349,6 +349,8 @@ model ConfiguracaoExercicio {
   situacoesEmendamento StatusInstrumento[] @default([EM_TRAMITACAO])
   // Fundamento normativo por extenso de cada parâmetro: { cotaIndividual: { texto, normaId } }.
   fundamentos          Json                @default("{}")
+  // Prazo padrão da diligência, em dias (RI, art. 210-C, § 2º: 5 dias).
+  prazoDiligenciaDias  Int                 @default(5)
 
   // --- preços e plano da entidade --------------------------------------------
   // Item com preço e sem fonte informada: bloqueia a submissão (verdadeiro) ou
@@ -546,13 +548,14 @@ model InstrumentoPlanejamento {
   createdAt           DateTime           @default(now())
   updatedAt           DateTime           @updatedAt
 
-  exercicio         Exercicio                 @relation(fields: [exercicioId], references: [id], onDelete: Cascade)
-  instrumentoOrigem InstrumentoPlanejamento?  @relation("InstrumentoOrigem", fields: [instrumentoOrigemId], references: [id])
-  arquivo           Arquivo?                  @relation(fields: [arquivoId], references: [id], onDelete: SetNull)
-  importacoes       Importacao[]
-  prioridades       PrioridadeLdo[]
-  derivados         InstrumentoPlanejamento[] @relation("InstrumentoOrigem")
-  dotacoes          Dotacao[]
+  exercicio           Exercicio                 @relation(fields: [exercicioId], references: [id], onDelete: Cascade)
+  instrumentoOrigem   InstrumentoPlanejamento?  @relation("InstrumentoOrigem", fields: [instrumentoOrigemId], references: [id])
+  arquivo             Arquivo?                  @relation(fields: [arquivoId], references: [id], onDelete: SetNull)
+  importacoes         Importacao[]
+  prioridades         PrioridadeLdo[]
+  derivados           InstrumentoPlanejamento[] @relation("InstrumentoOrigem")
+  emendasIncorporadas Emenda[]                  @relation("LeiIncorporacao")
+  dotacoes            Dotacao[]
 
   @@index([exercicioId, especie, status])
 }
@@ -844,6 +847,11 @@ model Emenda {
   // Soma da memória de cálculo — o valor definitivo.
   valor             Decimal              @default(0) @db.Decimal(18, 2)
 
+  // Incorporada ao texto da lei aprovada (distinto de acatada pela Comissão).
+  incorporadaEm    DateTime?
+  incorporadaPorId String?
+  incorporadaLeiId String?
+
   // --- etapa 3 ---------------------------------------------------------------
   declaracaoVinculo Boolean   @default(false)
   submetidaEm       DateTime?
@@ -862,20 +870,22 @@ model Emenda {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  exercicio    Exercicio            @relation(fields: [exercicioId], references: [id], onDelete: Cascade)
-  autor        Autor                @relation(fields: [autorId], references: [id])
-  tramitadaPor User?                @relation("EmendaTramitada", fields: [tramitadaPorId], references: [id], onDelete: SetNull)
-  destino      Destino?             @relation(fields: [destinoId], references: [id], onDelete: SetNull)
-  dotacao      Dotacao?             @relation(fields: [dotacaoId], references: [id], onDelete: SetNull)
-  metas        MetaEmenda[]
-  referencias  ReferenciaPreco[]
-  itens        ItemEmenda[]
-  parcelas     ParcelaDesembolso[]
-  validacoes   ValidacaoEmenda[]
-  pareceres    ParecerViabilidade[]
-  andamentos   AndamentoExecucao[]
-  convites     ConviteEntidade[]
-  historico    HistoricoEmenda[]
+  exercicio      Exercicio                @relation(fields: [exercicioId], references: [id], onDelete: Cascade)
+  autor          Autor                    @relation(fields: [autorId], references: [id])
+  tramitadaPor   User?                    @relation("EmendaTramitada", fields: [tramitadaPorId], references: [id], onDelete: SetNull)
+  incorporadaPor User?                    @relation("EmendaIncorporada", fields: [incorporadaPorId], references: [id], onDelete: SetNull)
+  incorporadaLei InstrumentoPlanejamento? @relation("LeiIncorporacao", fields: [incorporadaLeiId], references: [id], onDelete: SetNull)
+  destino        Destino?                 @relation(fields: [destinoId], references: [id], onDelete: SetNull)
+  dotacao        Dotacao?                 @relation(fields: [dotacaoId], references: [id], onDelete: SetNull)
+  metas          MetaEmenda[]
+  referencias    ReferenciaPreco[]
+  itens          ItemEmenda[]
+  parcelas       ParcelaDesembolso[]
+  validacoes     ValidacaoEmenda[]
+  pareceres      ParecerViabilidade[]
+  andamentos     AndamentoExecucao[]
+  convites       ConviteEntidade[]
+  historico      HistoricoEmenda[]
 
   @@unique([exercicioId, numero])
   @@index([exercicioId, status])
@@ -1141,17 +1151,18 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  perfil            PerfilAcesso?        @relation(fields: [perfilId], references: [id], onDelete: SetNull)
-  accounts          Account[]
-  sessions          Session[]
-  autor             Autor?
-  auditLogs         AuditLog[]
-  pareceres         ParecerViabilidade[]
-  andamentos        AndamentoExecucao[]
-  destinos          Destino[]
-  emendasTramitadas Emenda[]             @relation("EmendaTramitada")
-  historicos        HistoricoEmenda[]
-  arquivos          Arquivo[]
+  perfil              PerfilAcesso?        @relation(fields: [perfilId], references: [id], onDelete: SetNull)
+  accounts            Account[]
+  sessions            Session[]
+  autor               Autor?
+  auditLogs           AuditLog[]
+  pareceres           ParecerViabilidade[]
+  andamentos          AndamentoExecucao[]
+  destinos            Destino[]
+  emendasTramitadas   Emenda[]             @relation("EmendaTramitada")
+  emendasIncorporadas Emenda[]             @relation("EmendaIncorporada")
+  historicos          HistoricoEmenda[]
+  arquivos            Arquivo[]
 
   @@index([perfilId])
 }

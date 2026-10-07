@@ -30,7 +30,7 @@ export async function decidirTramitacao(entrada: z.input<typeof decisaoSchema>):
   if (!p.success) return { ok: false, erro: p.error.issues[0]?.message ?? "Dados inválidos." };
   const emenda = await prisma.emenda.findUnique({ where: { id: p.data.emendaId } });
   if (!emenda) return { ok: false, erro: "Emenda não encontrada." };
-  if (emenda.status !== "SUBMETIDA" && emenda.status !== "EM_TRAMITACAO") return { ok: false, erro: "Apenas emendas submetidas podem ser tramitadas." };
+  if (emenda.status !== "SUBMETIDA" && emenda.status !== "EM_TRAMITACAO") return { ok: false, erro: "Apenas emendas remetidas ou em tramitação podem ser decididas." };
   await prisma.$transaction(async (tx) => {
     const salvo = await mudarSituacao(tx, {
       emendaId: emenda.id,
@@ -96,6 +96,77 @@ export async function pedirDiligencia(entrada: z.input<typeof diligenciaSchema>)
   revalidatePath("/tramitacao");
   revalidatePath("/emendas");
   revalidatePath(`/emendas/${emenda.id}`);
+  return { ok: true };
+}
+
+// Recebimento pela Comissão: a emenda remetida passa a "em tramitação".
+export async function receberEmenda(emendaId: string): Promise<Resultado> {
+  const user = await getCurrentUser();
+  if (!podeTramitar(user)) return { ok: false, erro: "Sem permissão para tramitar emendas." };
+  const emenda = await prisma.emenda.findUnique({ where: { id: emendaId } });
+  if (!emenda) return { ok: false, erro: "Emenda não encontrada." };
+  if (emenda.status !== "SUBMETIDA") return { ok: false, erro: "Só a emenda remetida é recebida." };
+  await prisma.$transaction(async (tx) => {
+    await mudarSituacao(tx, { emendaId, de: "SUBMETIDA", para: "EM_TRAMITACAO", usuarioId: user.id, texto: "Recebida pela Comissão." });
+    await auditar(tx, { usuarioId: user.id, entidade: "Emenda", entidadeId: emendaId, acao: "RECEBER", dadosAntes: { status: "SUBMETIDA" }, dadosDepois: { status: "EM_TRAMITACAO" } });
+  });
+  revalidatePath("/tramitacao");
+  revalidatePath(`/emendas/${emendaId}`);
+  return { ok: true };
+}
+
+// Saneamento: a análise técnica devolve ao autor a emenda inválida, com o
+// apontamento por escrito. Ela volta a rascunho; o texto fica no histórico e
+// aparece no editor do autor. Emenda já remetida vai pela diligência.
+export async function devolverAoAutor(emendaId: string, texto: string): Promise<Resultado> {
+  const user = await getCurrentUser();
+  if (!podeTramitar(user)) return { ok: false, erro: "Sem permissão para tramitar emendas." };
+  const t = String(texto ?? "").trim();
+  if (t.length < 20) return { ok: false, erro: "Escreva o que o autor precisa corrigir (ao menos 20 caracteres)." };
+  if (t.length > 4000) return { ok: false, erro: "Texto longo demais (até 4.000 caracteres)." };
+  const emenda = await prisma.emenda.findUnique({ where: { id: emendaId } });
+  if (!emenda) return { ok: false, erro: "Emenda não encontrada." };
+  if (emenda.status !== "INVALIDA") return { ok: false, erro: "Só a emenda inválida volta ao autor por aqui; a remetida vai pela diligência." };
+  await prisma.$transaction(async (tx) => {
+    await mudarSituacao(tx, { emendaId, de: "INVALIDA", para: "RASCUNHO", usuarioId: user.id, texto: `Devolvida ao autor: ${t}` });
+    await auditar(tx, { usuarioId: user.id, entidade: "Emenda", entidadeId: emendaId, acao: "DEVOLVER_AO_AUTOR", dadosAntes: { status: "INVALIDA" }, dadosDepois: { status: "RASCUNHO", texto: t } });
+  });
+  revalidatePath("/tramitacao");
+  return { ok: true };
+}
+
+// Incorporação ao texto da lei aprovada: marcada uma a uma, com data e quem.
+// Só a emenda aprovada pela Comissão é incorporada.
+export async function marcarIncorporada(emendaId: string, incorporada: boolean): Promise<Resultado> {
+  const user = await getCurrentUser();
+  if (!podeTramitar(user)) return { ok: false, erro: "Sem permissão para tramitar emendas." };
+  const emenda = await prisma.emenda.findUnique({ where: { id: emendaId } });
+  if (!emenda) return { ok: false, erro: "Emenda não encontrada." };
+  if (incorporada && emenda.status !== "APROVADA") return { ok: false, erro: "Só a emenda aprovada é incorporada à lei." };
+  const lei = incorporada
+    ? await prisma.instrumentoPlanejamento.findFirst({ where: { exercicioId: emenda.exercicioId, tipo: "LOA", especie: "LEI_APROVADA" }, orderBy: { createdAt: "desc" } })
+    : null;
+  await prisma.$transaction(async (tx) => {
+    const depois = await tx.emenda.update({
+      where: { id: emendaId },
+      data: incorporada
+        ? { incorporadaEm: new Date(), incorporadaPorId: user.id, incorporadaLeiId: lei?.id ?? null }
+        : { incorporadaEm: null, incorporadaPorId: null, incorporadaLeiId: null },
+    });
+    await tx.historicoEmenda.create({
+      data: { emendaId, de: emenda.status, para: emenda.status, usuarioId: user.id, texto: incorporada ? `Incorporada à lei${lei?.numero ? ` ${lei.numero}` : ""}.` : "Incorporação à lei desfeita." },
+    });
+    await auditar(tx, {
+      usuarioId: user.id,
+      entidade: "Emenda",
+      entidadeId: emendaId,
+      acao: incorporada ? "INCORPORAR_LEI" : "DESFAZER_INCORPORACAO",
+      dadosAntes: { incorporadaEm: emenda.incorporadaEm, incorporadaLeiId: emenda.incorporadaLeiId },
+      dadosDepois: { incorporadaEm: depois.incorporadaEm, incorporadaLeiId: depois.incorporadaLeiId },
+    });
+  });
+  revalidatePath("/tramitacao");
+  revalidatePath(`/emendas/${emendaId}`);
   return { ok: true };
 }
 

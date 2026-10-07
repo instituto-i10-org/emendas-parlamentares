@@ -54,6 +54,7 @@ export async function salvarRegras(exercicioId: string, regras: z.input<typeof r
 }
 
 const parametrosSchema = z.object({
+  prazoDiligenciaDias: z.number().int("Prazo da diligência em dias inteiros.").min(1, "Prazo da diligência: ao menos 1 dia.").max(30, "Prazo da diligência: até 30 dias.").optional(),
   fundamentos: z.record(z.string(), z.object({ texto: z.string().trim().max(1000), normaId: z.string().max(40).nullable() })),
 });
 
@@ -70,18 +71,19 @@ export async function salvarParametrosValidacao(exercicioId: string, entrada: z.
     ["cotaIndividual", "cota individual", cfg.cotaIndividual != null],
     ["percentualSaude", "percentual da saúde", cfg.percentualSaude != null],
     ["prazoProtocolo", "prazo de protocolo", cfg.prazoProtocolo != null],
+    ["prazoDiligenciaDias", "prazo da diligência", true],
   ];
   const semFundamento = definidos.filter(([k, , definido]) => definido && !p.data.fundamentos[k]?.texto?.trim()).map(([, rotulo]) => rotulo);
   if (semFundamento.length) return { ok: false, erro: `Informe o fundamento de: ${semFundamento.join(", ")}.` };
   await prisma.$transaction(async (tx) => {
-    const depois = await tx.configuracaoExercicio.update({ where: { exercicioId }, data: { fundamentos: p.data.fundamentos } });
+    const depois = await tx.configuracaoExercicio.update({ where: { exercicioId }, data: { fundamentos: p.data.fundamentos, ...(p.data.prazoDiligenciaDias !== undefined ? { prazoDiligenciaDias: p.data.prazoDiligenciaDias } : {}) } });
     await auditar(tx, {
       usuarioId: user.id,
       entidade: "ConfiguracaoExercicio",
       entidadeId: depois.id,
       acao: "ATUALIZAR_VALIDACAO",
-      dadosAntes: { fundamentos: cfg.fundamentos },
-      dadosDepois: { fundamentos: depois.fundamentos },
+      dadosAntes: { fundamentos: cfg.fundamentos, prazoDiligenciaDias: cfg.prazoDiligenciaDias },
+      dadosDepois: { fundamentos: depois.fundamentos, prazoDiligenciaDias: depois.prazoDiligenciaDias },
     });
   });
   revalidatePath("/", "layout");

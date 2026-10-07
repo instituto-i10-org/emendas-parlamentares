@@ -14,10 +14,13 @@ import { somasExecucao } from "./execucao";
 const incluir = {
   autor: true,
   destino: true,
-  dotacao: { include: { acao: true, programa: true, unidadeOrcamentaria: true, funcao: true, subfuncao: true, naturezaDespesa: true } },
+  dotacao: { include: { acao: true, programa: true, orgao: true, unidadeOrcamentaria: true, funcao: true, subfuncao: true, naturezaDespesa: true, fonteRecurso: true } },
   pareceres: { orderBy: { criadoEm: "desc" }, take: 1, include: { usuario: { select: { name: true, email: true } } } },
   andamentos: { orderBy: [{ data: "desc" }, { criadoEm: "desc" }] },
   tramitadaPor: { select: { name: true, email: true } },
+  incorporadaPor: { select: { name: true, email: true } },
+  // A última validação: a fila de saneamento mostra o que falhou; a de parecer, os alertas.
+  validacoes: { orderBy: { executadaEm: "desc" }, take: 1, select: { verificacoes: true, itens: true, valida: true, executadaEm: true } },
 } satisfies Prisma.EmendaInclude;
 
 export type EmendaLinha = Prisma.EmendaGetPayload<{ include: typeof incluir }> & {
@@ -37,6 +40,31 @@ export async function listarEmendas(ano: number, onde: Prisma.EmendaWhereInput =
       x.parcela ?? (x.dotacao ? parcelaDaDotacao({ funcao: x.dotacao.funcao.codigo, subf: x.dotacao.subfuncao.codigo }) : null),
     somasExec: somasExecucao(x.andamentos.map((a) => ({ etapa: a.etapa, valor: a.valor.toNumber() }))),
   }));
+}
+
+// Uma página da lista, com o total para a paginação.
+export async function paginaDeEmendas(ano: number, onde: Prisma.EmendaWhereInput, pagina: number, porPagina: number) {
+  const where = { exercicio: { ano }, ...onde };
+  const [total, linhas] = await Promise.all([
+    prisma.emenda.count({ where }),
+    prisma.emenda.findMany({ where, include: incluir, orderBy: [{ numero: "asc" }, { updatedAt: "desc" }], skip: (pagina - 1) * porPagina, take: porPagina }),
+  ]);
+  return {
+    total,
+    linhas: linhas.map((x) => ({
+      ...x,
+      parcelaEfetiva:
+        x.parcela ?? (x.dotacao ? parcelaDaDotacao({ funcao: x.dotacao.funcao.codigo, subf: x.dotacao.subfuncao.codigo }) : null),
+      somasExec: somasExecucao(x.andamentos.map((a) => ({ etapa: a.etapa, valor: a.valor.toNumber() }))),
+    })) as EmendaLinha[],
+  };
+}
+
+// Órgãos e unidades de uma área de aplicação (filtro por área).
+export async function orgaosDaArea(areaId: string | null): Promise<string[] | null> {
+  if (!areaId) return null;
+  const a = await prisma.areaAplicacao.findUnique({ where: { id: areaId }, select: { orgaos: true } });
+  return a?.orgaos ?? [];
 }
 
 // ----------------------------------------------------------- consolidado

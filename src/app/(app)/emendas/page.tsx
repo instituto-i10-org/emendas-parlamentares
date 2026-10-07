@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { FilePlus2 } from "lucide-react";
+import { Download, FilePlus2 } from "lucide-react";
 import { Pagina } from "@/components/emenda/avisos-pagina";
 import { ApagarEmendaTeste } from "@/components/emenda/apagar-emenda-teste";
 import { DescartarRascunho } from "@/components/emenda/descartar-rascunho";
@@ -9,7 +9,10 @@ import { Selo } from "@/components/emenda/ui";
 import { Button } from "@/components/ui/button";
 import type { Prisma } from "@/generated/prisma/client";
 import { apresentaEmendas, podeGerirEmenda, podeVerTodasEmendas } from "@/lib/authz";
+import { FiltrosEmendas, Paginacao } from "@/components/app/filtros-emendas";
+import { orgaosDaArea } from "@/lib/emendas/consultas";
 import { lerEmendamento } from "@/lib/emendas/contexto";
+import { POR_PAGINA, comFiltros, lerFiltros, ondeDosFiltros } from "@/lib/emendas/filtros";
 import { STATUS_EMENDA } from "@/lib/emendas/rotulos";
 import { naoRemetida } from "@/lib/emendas/situacoes";
 import { exercicioHistorico, getAnoAtivo } from "@/lib/exercicio";
@@ -19,8 +22,14 @@ import { getCurrentUser } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Emendas — Emendas360" };
 
-export default async function EmendasPage({ searchParams }: { searchParams: Promise<{ erro?: string }> }) {
-  const { erro } = await searchParams;
+// Situações que aparecem no filtro (em Mogi, "em validação" e "válida" não
+// são usadas: a emenda vai do rascunho direto à remessa).
+const SITUACOES_FILTRO = Object.keys(STATUS_EMENDA).filter((s) => s !== "EM_VALIDACAO" && s !== "VALIDA");
+
+export default async function EmendasPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const sp = await searchParams;
+  const erro = typeof sp.erro === "string" ? sp.erro : undefined;
+  const filtros = lerFiltros(sp);
   const user = await getCurrentUser();
   const ano = await getAnoAtivo();
   const historico = ano !== null && (await exercicioHistorico(ano));
@@ -30,19 +39,24 @@ export default async function EmendasPage({ searchParams }: { searchParams: Prom
   const onde: Prisma.EmendaWhereInput = {
     exercicio: { ano: ano ?? -1 },
     ...(todas ? {} : { autorId: autor?.id ?? "-" }),
+    ...ondeDosFiltros(filtros, await orgaosDaArea(filtros.areaId)),
   };
-  const [emendas, importadas] = await Promise.all([
+  const [emendas, total, importadas, autores, areas] = await Promise.all([
     prisma.emenda.findMany({
       where: onde,
       orderBy: [{ updatedAt: "desc" }],
       include: { destino: true, autor: true },
-      take: 200,
+      skip: (filtros.pagina - 1) * POR_PAGINA,
+      take: POR_PAGINA,
     }),
+    prisma.emenda.count({ where: onde }),
     prisma.emendaImportada.aggregate({
       where: { exercicio: { ano: ano ?? -1 }, ...(todas ? {} : { autorId: autor?.id ?? "-" }) },
       _count: { _all: true },
       _sum: { valor: true },
     }),
+    todas ? prisma.autor.findMany({ orderBy: { nome: "asc" }, select: { id: true, nome: true } }) : [],
+    prisma.areaAplicacao.findMany({ orderBy: { ordem: "asc" }, select: { id: true, nome: true } }),
   ]);
 
   return (
@@ -70,6 +84,19 @@ export default async function EmendasPage({ searchParams }: { searchParams: Prom
         </p>
       ) : null}
 
+      <FiltrosEmendas acao="/emendas" filtros={filtros} autores={autores} areas={areas} situacoes={SITUACOES_FILTRO} />
+      <div className="mb-3 flex flex-wrap justify-end gap-2">
+        <Button variant="ghost" size="sm" asChild>
+          <a href={comFiltros("/api/export/emendas", filtros, { ano: ano ?? "", formato: "xlsx", lista: 1 })}>
+            <Download /> Exportar XLSX
+          </a>
+        </Button>
+        <Button variant="ghost" size="sm" asChild>
+          <a href={comFiltros("/api/export/emendas", filtros, { ano: ano ?? "", formato: "csv", lista: 1 })}>
+            <Download /> CSV
+          </a>
+        </Button>
+      </div>
       <div className="overflow-hidden rounded-card bg-surface shadow-card">
         {emendas.length ? (
           <div className="overflow-x-auto">
@@ -126,6 +153,7 @@ export default async function EmendasPage({ searchParams }: { searchParams: Prom
         )}
       </div>
 
+      <Paginacao base="/emendas" filtros={filtros} total={total} porPagina={POR_PAGINA} />
       {importadas._count._all ? (
         <p className="mt-4 text-xs text-muted-foreground">
           Além destas, {importadas._count._all} emenda(s) apresentada(s) fora do sistema foram importadas para o exercício, somando{" "}

@@ -103,6 +103,7 @@ export function EditorEmenda({
   aplicado,
   autor,
   diligencia = null,
+  devolucao = null,
 }: {
   ctx: ContextoEmenda;
   inicial: EstadoEmenda;
@@ -110,6 +111,8 @@ export function EditorEmenda({
   autor: string;
   // Emenda devolvida pela Comissão para sanear: o pedido, o prazo e o número.
   diligencia?: { numero: number | null; motivo: string; ate: string | null } | null;
+  // Devolvida ao autor pela análise técnica (saneamento), com o apontamento.
+  devolucao?: { texto: string; quando: string } | null;
 }) {
   const router = useRouter();
   const [e, setE] = useState<EstadoEmenda>(inicial);
@@ -377,6 +380,14 @@ export function EditorEmenda({
                 Prazo para reenviar: <b>{diligencia.ate}</b>. A emenda mantém o número e a cota; corrija o que foi pedido e clique em “Reenviar à Comissão” no passo 3.
               </span>
             ) : null}
+          </Aviso>
+        </div>
+      ) : null}
+      {devolucao ? (
+        <div className="mb-5">
+          <Aviso tipo="warn" titulo="A análise técnica devolveu esta emenda">
+            <span className="whitespace-pre-line">{devolucao.texto}</span>
+            <span className="mt-1.5 block text-xs">Devolvida em {devolucao.quando}. Corrija o que foi apontado e submeta de novo no passo 3.</span>
           </Aviso>
         </div>
       ) : null}

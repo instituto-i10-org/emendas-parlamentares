@@ -141,3 +141,26 @@ export async function inserirEmenda(o: {
 export async function apagarEmendasDeTeste(prefixo: string) {
   await sql(`delete from "Emenda" where id like $1`, [`${prefixo}%`]);
 }
+
+// Rascunho pela tela e plano completo pelo banco: uma emenda válida.
+export async function emendaValida(page: Page, objeto: string): Promise<string> {
+  const id = await criarRascunho(page, { execucao: "DIRETA", destino: DESTINOS.saude, objeto, valor: "3000" });
+  const [fonte] = await sql<{ id: string }>(`select id from "FontePrecoOficial" where ativo order by ordem limit 1`);
+  await sql(
+    `update "Emenda" set justificativa = $2, "metaFinalistica" = $3, "agenteExecutor" = 'Secretaria Municipal de Saúde',
+       etapas = 'Planejamento → contratação → entrega', "declaracaoVinculo" = true, "quadroViabilidade" = $4, valor = 3000 where id = $1`,
+    [id, JUSTIFICATIVA, "Ampliar a acessibilidade dos pacientes atendidos na unidade.", JSON.stringify({ "EQUIPAMENTOS-0": "Sim", "EQUIPAMENTOS-1": "Não", "EQUIPAMENTOS-2": "Sim" })]
+  );
+  await sql(`insert into "MetaEmenda" (id, "emendaId", ordem, beneficiarios, unidade, quantidade) values ($1 || 'm', $1, 0, 'Pacientes da unidade', 'cadeira', 2)`, [id]);
+  await sql(
+    `insert into "ReferenciaPreco" (id, "emendaId", codigo, tipo, emissor, data, unidade, valor, objeto, procedencia, "fonteId")
+     values ($1 || 'r', $1, 'R1', 'ATA', 'PNCP', now(), 'unidade', 1500, 'Cadeira de rodas', 'INFORMADA', $2)`,
+    [id, fonte.id]
+  );
+  await sql(
+    `insert into "ItemEmenda" (id, "emendaId", ordem, descricao, unidade, quantidade, "valorUnitario", "referenciaId") values ($1 || 'i', $1, 0, 'Cadeira de rodas', 'unidade', 2, 1500, $1 || 'r')`,
+    [id]
+  );
+  await sql(`insert into "ParcelaDesembolso" (id, "emendaId", ordem, valor) values ($1 || 'p', $1, 0, 3000)`, [id]);
+  return id;
+}

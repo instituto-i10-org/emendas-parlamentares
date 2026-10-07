@@ -38,7 +38,13 @@ export default async function EmendaPage({ params }: { params: Promise<{ id: str
       x.status === "EM_DILIGENCIA"
         ? { numero: x.numero, motivo: x.diligenciaMotivo ?? "", ate: x.diligenciaAte ? DATA(x.diligenciaAte) : null }
         : null;
-    return <EditorEmenda ctx={ctx} inicial={paraEstado(x)} aplicado={aplicado} autor={x.autor.nome} diligencia={diligencia} />;
+    // Devolvida pela análise técnica: o último passo do histórico traz o texto.
+    const ultimo = x.historico[x.historico.length - 1];
+    const devolucao =
+      x.status === "RASCUNHO" && ultimo?.de === "INVALIDA" && ultimo.texto?.startsWith("Devolvida ao autor:")
+        ? { texto: ultimo.texto.replace(/^Devolvida ao autor:\s*/, ""), quando: DATA_HORA(ultimo.criadoEm) }
+        : null;
+    return <EditorEmenda ctx={ctx} inicial={paraEstado(x)} aplicado={aplicado} autor={x.autor.nome} diligencia={diligencia} devolucao={devolucao} />;
   }
 
   const checks = (x.validacoes[0]?.itens ?? []) as Checagem[];
