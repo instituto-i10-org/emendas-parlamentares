@@ -42,7 +42,7 @@ export const NAVEGACAO: GrupoNav[] = [
     itens: [
       { id: "inicio", titulo: "Início", href: "/inicio", icone: "inicio", poder: "TRANSVERSAL" },
       { id: "painel", titulo: "Resumo consolidado", href: "/painel", icone: "painel", poder: "TRANSVERSAL" },
-      { id: "tramitacao", titulo: "Tramitação", href: "/tramitacao", icone: "tramitacao", poder: Poder.LEGISLATIVO, permissoes: ["tramitarEmendas"] },
+      { id: "tramitacao", titulo: "Tramitação", href: "/tramitacao", icone: "tramitacao", poder: Poder.LEGISLATIVO, permissoes: ["tramitarEmendas", "consultarTudo"] },
     ],
   },
   {
@@ -64,9 +64,9 @@ export const NAVEGACAO: GrupoNav[] = [
   {
     titulo: "Executivo",
     itens: [
-      { id: "viabilidade", titulo: "Viabilidade técnica", href: "/executivo/viabilidade", icone: "viabilidade", poder: Poder.EXECUTIVO, permissoes: ["analisarViabilidade"] },
-      { id: "execucao", titulo: "Execução", href: "/executivo/execucao", icone: "execucao", poder: Poder.EXECUTIVO, permissoes: ["registrarExecucao"] },
-      { id: "planejamento", titulo: "Planejamento", href: "/executivo/planejamento", icone: "planejamento", poder: Poder.EXECUTIVO, permissoes: ["gerirPlanejamento"], prefixo: true },
+      { id: "viabilidade", titulo: "Viabilidade técnica", href: "/executivo/viabilidade", icone: "viabilidade", poder: Poder.EXECUTIVO, permissoes: ["analisarViabilidade", "consultarTudo"] },
+      { id: "execucao", titulo: "Execução", href: "/executivo/execucao", icone: "execucao", poder: Poder.EXECUTIVO, permissoes: ["registrarExecucao", "consultarTudo"] },
+      { id: "planejamento", titulo: "Planejamento", href: "/executivo/planejamento", icone: "planejamento", poder: Poder.EXECUTIVO, permissoes: ["gerirPlanejamento", "consultarTudo"], prefixo: true },
     ],
   },
   {

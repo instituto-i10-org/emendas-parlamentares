@@ -5,7 +5,7 @@ import { Cartao, TabelaDados } from "@/components/app/pagina";
 import { Campo, Pilulas, Selo } from "@/components/emenda/ui";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { criarUsuario, definirSenha, excluirPerfil, reatribuirPerfil, salvarPerfil, vincularAutor } from "@/lib/actions/config";
+import { alternarUsuarioAtivo, criarUsuario, definirSenha, excluirPerfil, reatribuirPerfil, salvarPerfil, vincularAutor } from "@/lib/actions/config";
 import { PERMISSOES, type Permissao } from "@/lib/authz";
 import { BotaoAcao, useAcao } from "./comum";
 
@@ -29,6 +29,8 @@ export type UsuarioTela = {
   perfilNome: string | null;
   autor: string | null;
   editavel: boolean;
+  poder: string | null;
+  ativo: boolean;
 };
 
 export const ROTULO_PERMISSAO: Record<Permissao, string> = {
@@ -40,6 +42,7 @@ export const ROTULO_PERMISSAO: Record<Permissao, string> = {
   administrarConfiguracoes: "Administra configurações",
   analisarViabilidade: "Analisa viabilidade",
   registrarExecucao: "Registra execução",
+  consultarTudo: "Consulta tudo (somente leitura)",
 };
 
 const poderRotulo = (p: PerfilTela["poder"]) => (p === "LEGISLATIVO" ? "Legislativo" : p === "EXECUTIVO" ? "Executivo" : "Transversal");
@@ -54,24 +57,29 @@ export function AbaUsuarios({ usuarios, perfis, autores }: { usuarios: UsuarioTe
   return (
     <Cartao titulo="Usuários" acoes={<Button size="sm" onClick={() => setNovo(true)}>Novo usuário</Button>}>
       <TabelaDados
-        colunas={[{ titulo: "Nome" }, { titulo: "Perfil" }, { titulo: "Autor (vereador)", className: "max-md:hidden" }, { titulo: "" }]}
+        colunas={[{ titulo: "Nome" }, { titulo: "Poder", className: "max-md:hidden" }, { titulo: "Perfil" }, { titulo: "Autor (vereador)", className: "max-lg:hidden" }, { titulo: "" }]}
         linhas={usuarios.map((u) => ({
           chave: u.id,
           celulas: [
             <div key="n">
               <b>{u.nome}</b>
               <span className="block text-xs text-muted-foreground">{u.email}</span>
+              {!u.ativo ? <Selo tipo="warn">desativado</Selo> : null}
             </div>,
+            <span key="pd" className="max-md:hidden">{poderRotulo(u.poder as PerfilTela["poder"])}</span>,
             u.editavel ? <SeletorPerfil key="p" usuario={u} perfis={atribuiveis} /> : <span key="p">{u.perfilNome ?? "sem perfil"}</span>,
-            <span key="a" className="max-md:hidden">{u.autor ?? <span className="text-muted-foreground">—</span>}</span>,
+            <span key="a" className="max-lg:hidden">{u.autor ?? <span className="text-muted-foreground">—</span>}</span>,
             u.editavel ? (
-              <div key="b" className="flex items-center justify-end gap-1">
+              <div key="b" className="flex flex-wrap items-center justify-end gap-1 max-md:min-w-[110px]">
                 <Button size="xs" variant="ghost" onClick={() => setAutorDe(u)}>
                   Autor
                 </Button>
                 <Button size="xs" variant="ghost" onClick={() => setSenhaDe(u)}>
                   Senha
                 </Button>
+                <BotaoAcao acao={() => alternarUsuarioAtivo(u.id)} confirmar={u.ativo ? `Desativar ${u.nome}? A pessoa não entra mais no sistema.` : undefined}>
+                  {u.ativo ? "Desativar" : "Reativar"}
+                </BotaoAcao>
               </div>
             ) : null,
           ],
@@ -89,7 +97,7 @@ function SeletorPerfil({ usuario, perfis }: { usuario: UsuarioTela; perfis: Perf
   return (
     <select
       aria-label={`Perfil de ${usuario.nome}`}
-      className="campo campo-select h-9 max-w-[260px] pr-9 pl-3"
+      className="campo campo-select h-9 w-full min-w-[150px] max-w-[260px] pr-9 pl-3"
       disabled={pendente}
       value={usuario.perfilId ?? ""}
       onChange={(e) => executar(() => reatribuirPerfil(usuario.id, e.target.value || null))}

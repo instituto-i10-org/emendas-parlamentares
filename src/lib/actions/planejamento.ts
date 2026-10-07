@@ -77,7 +77,7 @@ export async function importarBase(
 ): Promise<{ ok: true; mensagem: string } | { ok: false; erro: string; erros?: ErroLinha[] }> {
   const user = await getCurrentUser();
   if (!podeGerirPlanejamento(user)) return { ok: false, erro: "Sem permissão para gerir o planejamento." };
-  if (!rateLimit(`importacao:${user.id}`, 10, 60_000)) return { ok: false, erro: "Muitas importações seguidas. Aguarde um minuto." };
+  if (!(await rateLimit(`importacao:${user.id}`, 10, 60_000))) return { ok: false, erro: "Muitas importações seguidas. Aguarde um minuto." };
   const arquivo = formData.get("arquivo");
   if (!(arquivo instanceof File) || !arquivo.size) return { ok: false, erro: "Escolha o arquivo." };
   if (!/\.(csv|xlsx|xls)$/i.test(arquivo.name)) return { ok: false, erro: "Use CSV ou XLSX." };

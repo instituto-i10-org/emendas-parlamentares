@@ -1,10 +1,11 @@
+import "dotenv/config";
 import { defineConfig, devices } from "@playwright/test";
 
 // ============================================================================
 // Testes end-to-end.
 //
 // Rodam contra um BUILD DE PRODUÇÃO (`next build && next start`), como a
-// Vercel serve. Cada caso do plano (docs/borborema/PLANO.md, seção 11) tem o
+// Vercel serve. Cada caso do plano (PLANO-MOGI-PROVA.md, fora do repositório) tem o
 // código no nome do teste ("T-1.1-1 ...").
 //
 // Banco: `emendas_test`, no mesmo Postgres local (porta 5440), separado do
@@ -27,8 +28,11 @@ const envServidor = {
   AUTH_SECRET: "e2e-secret-determinista-nao-usar-em-producao",
   AUTH_URL: BASE_URL,
   AUTH_TRUST_HOST: "true",
-  // Sem chave de IA nos testes: o que depende dela é testado com resposta simulada.
-  OPENAI_API_KEY: "",
+  // Chave de IA só quando pedida (E2E_IA=1): a leitura de PDF tem custo.
+  OPENAI_API_KEY: process.env.E2E_IA ? process.env.OPENAI_API_KEY ?? "" : "",
+  // Como em produção: sem acesso rápido de demonstração na tela de login.
+  DEMO_LOGIN: "false",
+  DEMO_SENHA: "",
 };
 
 export default defineConfig({

@@ -2,7 +2,7 @@ import { randomBytes } from "node:crypto";
 import bcrypt from "bcryptjs";
 import type { PrismaClient } from "../../src/generated/prisma/client";
 
-// Os cinco perfis base. Idempotente por nome: reaplicar realinha as permissões
+// Os seis perfis base. Idempotente por nome: reaplicar realinha as permissões
 // sem trocar o id, e os vínculos de usuário continuam valendo.
 const PERFIS = [
   {
@@ -53,6 +53,12 @@ const PERFIS = [
     analisarViabilidade: true,
     registrarExecucao: true,
   },
+  {
+    nome: "Somente consulta",
+    descricao: "Controle interno, auditoria e consulta: vê emendas, tramitação, planejamento, execução e conformidade, sem alterar nada.",
+    poder: null,
+    consultarTudo: true,
+  },
 ] as const;
 
 // Uma conta por perfil, para demonstração e testes. O vereador de exemplo é um
@@ -64,6 +70,7 @@ const USUARIOS = [
   { nome: "Presidente da Câmara", email: "presidente@emendas360.local", perfil: "Presidente da Câmara" },
   { nome: "Comissão de Finanças", email: "comissao@emendas360.local", perfil: "Comissão de Finanças e Orçamento" },
   { nome: "Vereador Exemplo", email: "vereador@emendas360.local", perfil: "Vereador", autor: true },
+  { nome: "Controle Interno", email: "consulta@emendas360.local", perfil: "Somente consulta" },
 ];
 
 // Senha: SEED_SENHA no .env (ambiente local) ou uma aleatória por conta. Só é
@@ -75,7 +82,22 @@ function senhaInicial(): string {
 export async function semearAcesso(prisma: PrismaClient) {
   const perfilId = new Map<string, string>();
   for (const p of PERFIS) {
-    const dados = { ...p, poder: p.poder ?? null, perfilDoSistema: true };
+    // Permissão ausente na lista vale falso: reaplicar o seed realinha tudo.
+    const dados = {
+      apresentarEmendas: false,
+      gerirTodasEmendas: false,
+      tramitarEmendas: false,
+      gerirPlanejamento: false,
+      gerirExercicios: false,
+      administrarConfiguracoes: false,
+      analisarViabilidade: false,
+      registrarExecucao: false,
+      consultarTudo: false,
+      adminGeral: false,
+      ...p,
+      poder: p.poder ?? null,
+      perfilDoSistema: true,
+    };
     const salvo = await prisma.perfilAcesso.upsert({
       where: { nome: p.nome },
       update: dados,

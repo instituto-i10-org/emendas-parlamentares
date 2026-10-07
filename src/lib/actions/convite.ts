@@ -79,7 +79,7 @@ export async function gerarConvite(emendaId: string): Promise<{ ok: true; codigo
   if (!emenda) return { ok: false, erro: "Emenda não encontrada." };
   if (emenda.status !== "RASCUNHO") return { ok: false, erro: "Só emenda em rascunho recebe link para a entidade." };
   if (emenda.execucao !== "INDIRETA") return { ok: false, erro: "O link é para entidade do terceiro setor (execução indireta)." };
-  if (!rateLimit(`convite-gerar:${user.id}`, 10, 60_000)) return { ok: false, erro: "Muitos links gerados seguidos. Aguarde um minuto." };
+  if (!(await rateLimit(`convite-gerar:${user.id}`, 10, 60_000))) return { ok: false, erro: "Muitos links gerados seguidos. Aguarde um minuto." };
 
   const codigo = randomBytes(32).toString("base64url");
   const dias = emenda.exercicio.configuracao?.validadeLinkEntidadeDias ?? 10;
@@ -157,7 +157,7 @@ export type ConvitePublico =
 // Usado pela página pública: diz se o link vale e o que a entidade precisa saber.
 export async function abrirConvite(codigo: string): Promise<ConvitePublico> {
   const ip = await ipDaRequisicao();
-  if (!rateLimit(`convite-abrir:${ip}`, 60, 60_000)) return { ok: false, erro: "Muitas tentativas seguidas. Aguarde um minuto." };
+  if (!(await rateLimit(`convite-abrir:${ip}`, 60, 60_000))) return { ok: false, erro: "Muitas tentativas seguidas. Aguarde um minuto." };
   const c = codigoValido(codigo)
     ? await prisma.conviteEntidade.findUnique({
         where: { codigoHash: resumo(codigo) },
@@ -166,7 +166,7 @@ export async function abrirConvite(codigo: string): Promise<ConvitePublico> {
     : null;
   if (!c) {
     // Código errado: conta como tentativa suspeita.
-    if (!rateLimit(`convite-erro:${ip}`, 20, 600_000)) return { ok: false, erro: "Muitos links inválidos seguidos. Aguarde alguns minutos." };
+    if (!(await rateLimit(`convite-erro:${ip}`, 20, 600_000))) return { ok: false, erro: "Muitos links inválidos seguidos. Aguarde alguns minutos." };
     return { ok: false, erro: "Link inválido. Confira o endereço que o gabinete enviou." };
   }
   const s = situacaoConvite(c, c.emenda.status);
@@ -189,7 +189,7 @@ export async function abrirConvite(codigo: string): Promise<ConvitePublico> {
 // Envio único: na mesma transação confere que o link ainda vale e o marca usado.
 export async function enviarPlanoEntidade(codigo: string, entrada: PlanoEntidade): Promise<{ ok: true } | Falha> {
   const ip = await ipDaRequisicao();
-  if (!rateLimit(`convite-enviar:${ip}`, 10, 60_000)) return { ok: false, erro: "Muitos envios seguidos. Aguarde um minuto." };
+  if (!(await rateLimit(`convite-enviar:${ip}`, 10, 60_000))) return { ok: false, erro: "Muitos envios seguidos. Aguarde um minuto." };
   if (!codigoValido(codigo)) return { ok: false, erro: "Link inválido." };
   const p = planoEntidadeSchema.safeParse(entrada);
   if (!p.success) return { ok: false, erro: p.error.issues[0]?.message ?? "Dados inválidos." };

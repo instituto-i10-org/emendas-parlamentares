@@ -22,7 +22,15 @@ const CONTAS: { grupo: string; contas: { nome: string; papel: string; email: str
   { grupo: "Prefeitura", contas: [{ nome: "Poder Executivo", papel: "planejamento, viabilidade e execução", email: "executivo@emendas360.local", icone: Building2 }] },
 ];
 
-export function LoginForm({ senhaDemo, avisoSemPerfil = false }: { senhaDemo?: string; avisoSemPerfil?: boolean }) {
+export function LoginForm({
+  senhaDemo,
+  avisoSemPerfil = false,
+  avisoInativa = false,
+}: {
+  senhaDemo?: string;
+  avisoSemPerfil?: boolean;
+  avisoInativa?: boolean;
+}) {
   const [erro, action, pending] = useActionState<LoginState, FormData>(entrar, null);
   const [aberto, setAberto] = useState(false);
 
@@ -50,6 +58,11 @@ export function LoginForm({ senhaDemo, avisoSemPerfil = false }: { senhaDemo?: s
 
   return (
     <div className="space-y-5">
+      {avisoInativa && !erro ? (
+        <p role="status" className="rounded-field bg-warn-bg px-3 py-2.5 text-sm font-semibold text-warn">
+          Sua conta está desativada. Procure o administrador do sistema.
+        </p>
+      ) : null}
       {avisoSemPerfil && !erro ? (
         <p role="status" className="rounded-field bg-warn-bg px-3 py-2.5 text-sm font-semibold text-warn">
           Sua conta ainda não tem um perfil de acesso. Procure o administrador do sistema.

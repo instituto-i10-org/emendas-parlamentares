@@ -1,7 +1,7 @@
 import type { PrismaClient } from "../../src/generated/prisma/client";
 import { subfuncaoDoDestino } from "../../src/lib/riep/destino";
 import type { TipoDestino } from "../../src/lib/riep/tipos";
-import { lerDados } from "./dados";
+import { lerDados, lerMunicipio } from "./dados";
 
 type DestinoJson = {
   nome: string;
@@ -22,7 +22,7 @@ type DestinoJson = {
 // Destinos da base oficial (CNES, Censo Escolar, SUAS, Receita Federal). Os
 // cadastrados por usuários não são tocados.
 export async function semearDestinos(prisma: PrismaClient) {
-  const { destinos } = lerDados<{ destinos: DestinoJson[] }>("destinos-2026.json");
+  const { destinos } = lerDados<{ destinos: DestinoJson[] }>(lerMunicipio().destinos);
   const { tiposDestino = [] } = lerDados<{ tiposDestino?: TipoDestino[] }>("biblioteca-objetos.json");
   for (const d of destinos) {
     const dados = {

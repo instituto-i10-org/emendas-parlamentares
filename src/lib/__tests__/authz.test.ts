@@ -47,6 +47,7 @@ function perfil(
     administrarConfiguracoes: permissoes.includes("administrarConfiguracoes"),
     analisarViabilidade: permissoes.includes("analisarViabilidade"),
     registrarExecucao: permissoes.includes("registrarExecucao"),
+    consultarTudo: permissoes.includes("consultarTudo"),
     ...extra,
   };
 }
@@ -297,5 +298,27 @@ describe("menu lateral", () => {
     for (const a of [A.vereador, A.comissao, A.presidente, A.executivo, A.consultaLeg, A.adminGeral]) {
       expect(ids(a)).toContain("emendas");
     }
+  });
+});
+
+describe("Somente consulta (T-0-5)", () => {
+  const consulta = perfil("Somente consulta", null, ["consultarTudo"]);
+  const a = ator(consulta);
+  it("é perfil de consulta: não escreve nada", () => {
+    expect(ehConsulta(a)).toBe(true);
+    expect(podeCriarEmenda(a)).toBe(false);
+    expect(podeGerirEmenda(a, { autorUsuarioId: "u1" })).toBe(false);
+    expect(podeTramitar(a)).toBe(false);
+    expect(podeGerirPlanejamento(a)).toBe(false);
+    expect(podeAnalisarViabilidade(a)).toBe(false);
+    expect(podeRegistrarExecucao(a)).toBe(false);
+    expect(temPermissao(a, "administrarConfiguracoes", "gerirExercicios")).toBe(false);
+  });
+  it("vê todas as emendas e as telas de leitura dos dois Poderes", () => {
+    expect(podeVerTodasEmendas(a)).toBe(true);
+    const ids = navegacaoVisivel(a, { apresenta: false }).flatMap((g) => g.itens.map((i) => i.id));
+    expect(ids).toEqual(expect.arrayContaining(["inicio", "painel", "tramitacao", "emendas", "viabilidade", "execucao", "planejamento", "conformidade"]));
+    expect(ids).not.toContain("nova");
+    expect(ids).not.toContain("config");
   });
 });

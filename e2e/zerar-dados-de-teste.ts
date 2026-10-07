@@ -10,7 +10,7 @@ async function main() {
   await c.connect();
   const tabelas = await c.query("select tablename from pg_tables where schemaname = 'public'");
   const existentes = new Set(tabelas.rows.map((r) => r.tablename as string));
-  const zerar = ["Emenda", "ConviteEntidade", "AuditLog", "ContadorEmenda"].filter((t) => existentes.has(t));
+  const zerar = ["Emenda", "ConviteEntidade", "AuditLog", "ContadorEmenda", "TentativaAcesso", "Arquivo", "UsoIA"].filter((t) => existentes.has(t));
   if (zerar.length) await c.query(`truncate ${zerar.map((t) => `"${t}"`).join(", ")} cascade`);
   if (existentes.has("User")) await c.query(`delete from "User" where email not like '%@emendas360.local'`);
   if (existentes.has("PerfilAcesso")) await c.query(`delete from "PerfilAcesso" where "perfilDoSistema" = false`);

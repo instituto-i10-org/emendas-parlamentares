@@ -1,0 +1,11 @@
+{
+  "nome": "Mogi Guaçu",
+  "uf": "SP",
+  "codigoIbge": "3530706",
+  "nomeCamara": "Câmara Municipal de Mogi Guaçu",
+  "nomePrefeitura": "Prefeitura Municipal de Mogi Guaçu",
+  "anos": [2026, 2027],
+  "destinos": "destinos-2026.json",
+  "emendasImportadas": { "arquivo": "emendas-impositivas-2026.json", "ano": 2026 },
+  "vereadores": null
+}

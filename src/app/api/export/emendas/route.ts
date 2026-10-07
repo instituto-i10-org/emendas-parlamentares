@@ -1,16 +1,15 @@
 import * as XLSX from "xlsx";
-import { auth } from "@/lib/auth";
 import { podeVerTodasEmendas, temPermissao } from "@/lib/authz";
 import { listarEmendas } from "@/lib/emendas/consultas";
 import { PARCELA, STATUS_EMENDA } from "@/lib/emendas/rotulos";
+import { usuarioDaSessao } from "@/lib/session";
 
 // Exportação das emendas do exercício (CSV ou XLSX). Só para quem vê todas as
 // emendas: Comissão, Presidência, Executivo (viabilidade/execução) e admin.
 export async function GET(req: Request) {
-  const sessao = await auth();
-  const ator = { id: sessao?.user?.id ?? "", perfil: sessao?.user?.perfil ?? null };
-  if (!ator.perfil) return new Response("Não autenticado.", { status: 401 });
-  if (!podeVerTodasEmendas(ator) && !temPermissao(ator, "analisarViabilidade", "registrarExecucao")) {
+  const ator = await usuarioDaSessao();
+  if (!ator) return new Response("Não autenticado.", { status: 401 });
+  if (!podeVerTodasEmendas(ator) && !temPermissao(ator, "analisarViabilidade", "registrarExecucao", "consultarTudo")) {
     return new Response("Sem permissão.", { status: 403 });
   }
   const url = new URL(req.url);

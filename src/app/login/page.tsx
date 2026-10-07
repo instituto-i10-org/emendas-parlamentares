@@ -52,7 +52,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         <div className="w-full max-w-[440px] rounded-card bg-surface p-8 shadow-card max-sm:p-6">
           <h1 className="text-2xl font-extrabold tracking-[-0.03em]">Entrar na plataforma</h1>
           <p className="mt-1.5 mb-6 text-sm text-muted-foreground">{SENHA_DEMO ? "Escolha um perfil para entrar." : "Use o e-mail e a senha da sua conta."}</p>
-          <LoginForm senhaDemo={SENHA_DEMO} avisoSemPerfil={erro === "sem-perfil"} />
+          <LoginForm senhaDemo={SENHA_DEMO} avisoSemPerfil={erro === "sem-perfil"} avisoInativa={erro === "inativo"} />
         </div>
       </main>
     </div>

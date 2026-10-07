@@ -208,7 +208,9 @@ export function AppShell({
             {iniciais(usuario.nome)}
           </span>
           <span className={cn("min-w-0 flex-1", recolhido && "md:hidden")}>
-            <span className="block truncate text-xs leading-tight font-bold">{usuario.nome}</span>
+            <Link href="/conta" className="block truncate text-xs leading-tight font-bold hover:underline" title="Minha conta e senha">
+              {usuario.nome}
+            </Link>
             <span className="block truncate text-xs text-on-navy">{usuario.perfil}</span>
           </span>
           <form action={sair}>

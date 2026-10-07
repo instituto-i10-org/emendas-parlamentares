@@ -6,6 +6,7 @@ import { registrarAuditoria } from "@/lib/audit";
 import { podeCriarEmenda, podeGerirEmenda } from "@/lib/authz";
 import { aplicadoDoAutor, carregarContexto } from "@/lib/emendas/contexto";
 import { mesmaEmenda } from "@/lib/emendas/duplicidade";
+import { mudarSituacao } from "@/lib/emendas/historico";
 import { chaveClassificacao, estadoSchema, lerNumero, paraValidacao, type EstadoEmenda } from "@/lib/emendas/estado";
 import { anoDaTela, exercicioHistorico } from "@/lib/exercicio";
 import { prisma } from "@/lib/prisma";
@@ -42,7 +43,7 @@ export async function salvarEmenda(entrada: EstadoEmenda, submeter = false, anoT
   if (!parsed.success) return { ok: false, erro: "Dados inválidos na emenda. Recarregue a página e tente de novo." };
   const e = parsed.data as EstadoEmenda;
 
-  if (submeter && !rateLimit(`submeter:${user.id}`, 10, 60_000)) {
+  if (submeter && !(await rateLimit(`submeter:${user.id}`, 10, 60_000))) {
     return { ok: false, erro: "Muitas submissões seguidas. Aguarde um minuto." };
   }
 
@@ -259,7 +260,14 @@ export async function salvarEmenda(entrada: EstadoEmenda, submeter = false, anoT
     });
     // Reenvio depois de diligência: volta à fila com o número que já tinha.
     if (existente?.status === "EM_DILIGENCIA") {
-      return tx.emenda.update({ where: { id: emenda.id }, data: { status: "SUBMETIDA", reenviadaEm: new Date() } });
+      return mudarSituacao(tx, {
+        emendaId: emenda.id,
+        de: "EM_DILIGENCIA",
+        para: "SUBMETIDA",
+        usuarioId: user.id,
+        texto: "Reenviada após diligência.",
+        dados: { reenviadaEm: new Date() },
+      });
     }
     // Número atribuído na submissão, em transação: nunca por contagem.
     const contador = await tx.contadorEmenda.upsert({
@@ -267,9 +275,12 @@ export async function salvarEmenda(entrada: EstadoEmenda, submeter = false, anoT
       update: { ultimo: { increment: 1 } },
       create: { exercicioId: ctx.exercicioId, ultimo: 1 },
     });
-    return tx.emenda.update({
-      where: { id: emenda.id },
-      data: { status: "SUBMETIDA", numero: contador.ultimo, submetidaEm: new Date() },
+    return mudarSituacao(tx, {
+      emendaId: emenda.id,
+      de: "RASCUNHO",
+      para: "SUBMETIDA",
+      usuarioId: user.id,
+      dados: { numero: contador.ultimo, submetidaEm: new Date() },
     });
   });
 
@@ -331,21 +342,20 @@ export async function excluirRascunho(id: string): Promise<{ ok: boolean; erro?:
 // Apaga uma emenda de teste já submetida — só da conta de demonstração. É o
 // mesmo que `prisma/apagar-emenda.ts` faz pelo terminal: a emenda sai com tudo
 // o que pende dela (metas, itens, referências, parcelas, validações, pareceres,
-// andamentos e a trilha de auditoria); se for a última numerada do exercício,
-// o contador volta um, para o teste não deixar buraco na numeração.
+// andamentos); se for a última numerada do exercício, o contador volta um,
+// para o teste não deixar buraco na numeração. A trilha de auditoria da
+// emenda fica: apagar o teste não apaga o rastro.
 export async function apagarEmendaDeTeste(id: string): Promise<{ ok: boolean; erro?: string }> {
   const user = await getCurrentUser();
   const emenda = await prisma.emenda.findUnique({
     where: { id },
-    include: { autor: true, exercicio: true, pareceres: { select: { id: true } }, andamentos: { select: { id: true } } },
+    include: { autor: true, exercicio: true },
   });
   if (!emenda) return { ok: false, erro: "Emenda não encontrada." };
   if (!podeGerirEmenda(user, { autorUsuarioId: emenda.autor.usuarioId })) return { ok: false, erro: "Sem permissão." };
   if (!emenda.autor.demonstracao) return { ok: false, erro: "Só emendas da conta de demonstração podem ser apagadas." };
 
-  const idsAuditados = [emenda.id, ...emenda.pareceres.map((p) => p.id), ...emenda.andamentos.map((a) => a.id)];
   await prisma.$transaction(async (tx) => {
-    await tx.auditLog.deleteMany({ where: { entidadeId: { in: idsAuditados } } });
     await tx.emenda.delete({ where: { id } });
     if (emenda.numero !== null) {
       // Só volta se ninguém numerou depois: a condição vai no próprio update.

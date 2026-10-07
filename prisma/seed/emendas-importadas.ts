@@ -1,5 +1,5 @@
 import type { PrismaClient } from "../../src/generated/prisma/client";
-import { lerDados } from "./dados";
+import { lerDados, lerMunicipio } from "./dados";
 
 type EmendasJson = {
   fonte: { name: string; url: string };
@@ -37,7 +37,9 @@ function autorDe(rotulo: string) {
 // OCR. Contam para a cota dos 13 vereadores. A marcação de saúde é heurística,
 // então a parcela fica em branco e a cota as divide pela meação legal.
 export async function semearEmendasImportadas(prisma: PrismaClient, exercicioId: string) {
-  const e = lerDados<EmendasJson>("emendas-impositivas-2026.json");
+  const arquivo = lerMunicipio().emendasImportadas?.arquivo;
+  if (!arquivo) return { autores: 0, emendas: 0 };
+  const e = lerDados<EmendasJson>(arquivo);
 
   const autorId = new Map<string, string>();
   for (const v of e.porVereador) {

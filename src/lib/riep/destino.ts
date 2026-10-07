@@ -29,6 +29,23 @@ export const subfuncaoDoDestino = (nome: string, nomeOficial: string | null | un
 export const pistasDoDestino = (nome: string, nomeOficial: string | null | undefined, tipos: TipoDestino[] | undefined) =>
   tipoDoDestino(nome, nomeOficial, tipos)?.pistas ?? [];
 
+// --- código de órgão e de unidade --------------------------------------------
+//
+// O órgão é o código da unidade sem o último segmento: "13.01" é do órgão
+// "13" (Mogi Guaçu, dois níveis); "02.04.02" é do "02.04" (Borborema, em que a
+// unidade executora fica abaixo da unidade orçamentária).
+export function orgaoDaUnidade(uo: string | null | undefined): string {
+  const s = String(uo ?? "");
+  const i = s.lastIndexOf(".");
+  return i > 0 ? s.slice(0, i) : s;
+}
+
+// A unidade pertence ao órgão (ou é ele)? "02.04.02" pertence a "02.04" e a "02".
+export function pertence(uo: string | null | undefined, orgao: string): boolean {
+  const s = String(uo ?? "");
+  return !!orgao && (s === orgao || s.startsWith(orgao + "."));
+}
+
 // --- alcance orçamentário do destino -----------------------------------------
 //
 // O destino aponta para uma unidade orçamentária ("13.01") ou para o órgão
@@ -39,9 +56,11 @@ export const pistasDoDestino = (nome: string, nomeOficial: string | null | undef
 export function unidadesDoDestino(uo: string | null | undefined, codigos: Iterable<string>): string[] {
   if (!uo) return [];
   const existentes = [...new Set(codigos)];
-  if (uo.includes(".") && existentes.includes(uo)) return [uo];
-  const orgao = uo.split(".")[0];
-  const doOrgao = existentes.filter((u) => u.split(".")[0] === orgao).sort();
+  if (existentes.includes(uo)) return [uo];
+  // O destino aponta para um órgão ("20", "02.05"): todas as unidades dele. Se
+  // aponta para unidade que não existe no exercício, vale o órgão da unidade.
+  const prefixo = existentes.some((u) => pertence(u, uo)) ? uo : orgaoDaUnidade(uo);
+  const doOrgao = existentes.filter((u) => pertence(u, prefixo)).sort();
   return doOrgao.length ? doOrgao : [uo];
 }
 

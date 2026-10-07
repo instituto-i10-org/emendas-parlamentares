@@ -1,11 +1,11 @@
 import type { NextAuthConfig } from "next-auth";
-import type { Perfil } from "./authz";
 
 // Configuração EDGE-SAFE (sem Prisma/adapter) — usada pelo middleware e
 // estendida em auth.ts com o provedor de credenciais.
 export const authConfig = {
   pages: { signIn: "/login" },
-  session: { strategy: "jwt" },
+  // Sessão de 8 horas: um expediente.
+  session: { strategy: "jwt", maxAge: 8 * 60 * 60 },
   trustHost: true,
   providers: [],
   callbacks: {
@@ -18,27 +18,22 @@ export const authConfig = {
         pathname === "/login" ||
         pathname === "/publica" ||
         pathname.startsWith("/publica/") ||
-        pathname.startsWith("/api/auth")
+        pathname.startsWith("/api/auth") ||
+        // As rotas de arquivo conferem a permissão elas mesmas: o arquivo
+        // público baixa sem login.
+        pathname.startsWith("/api/arquivos/")
       )
         return true;
       return !!auth?.user;
     },
+    // O token guarda só quem é. O perfil é relido do banco a cada requisição
+    // (src/lib/session.ts): permissão retirada vale na ação seguinte.
     jwt({ token, user }) {
-      // Só no login: o perfil é fotografado aqui e não é relido a cada
-      // requisição. Mudança de perfil vale no PRÓXIMO login do afetado.
-      if (user) {
-        token.id = user.id;
-        token.perfil = user.perfil ?? null;
-      }
+      if (user) token.id = user.id;
       return token;
     },
     session({ session, token }) {
-      if (session.user) {
-        session.user.id = (token.id as string) ?? token.sub ?? "";
-        // Token anterior à implantação não traz perfil: fica nulo e o guard de
-        // sessão devolve ao login com aviso, uma única vez.
-        session.user.perfil = (token.perfil as Perfil | null) ?? null;
-      }
+      if (session.user) session.user.id = (token.id as string) ?? token.sub ?? "";
       return session;
     },
   },

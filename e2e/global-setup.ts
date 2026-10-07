@@ -6,7 +6,7 @@ import { TEST_DATABASE_URL } from "../playwright.config";
 // banco cujo nome contém "emendas_test" — nunca contra desenvolvimento ou
 // produção.
 
-const env = { ...process.env, DATABASE_URL: TEST_DATABASE_URL, DIRECT_URL: TEST_DATABASE_URL, SEED_SENHA: "senha-dos-testes-e2e" };
+const env = { ...process.env, DATABASE_URL: TEST_DATABASE_URL, DIRECT_URL: TEST_DATABASE_URL, SEED_SENHA: "senha-dos-testes-e2e", SEED_MUNICIPIO: process.env.SEED_MUNICIPIO ?? "mogi-guacu" };
 
 function rodar(comando: string, args: string[], titulo: string) {
   process.stdout.write(`  ${titulo}… `);

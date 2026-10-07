@@ -139,6 +139,8 @@ async function usuarios(user: Awaited<ReturnType<typeof requireAccess>>) {
         perfilNome: u.perfil?.nome ?? null,
         autor: u.autor?.nome ?? null,
         editavel: !u.perfil || podeAtribuirPerfil(user, u.perfil),
+        poder: u.perfil?.poder ?? null,
+        ativo: u.ativo,
       }))}
     />
   );

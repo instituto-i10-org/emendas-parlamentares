@@ -19,7 +19,9 @@ export type Permissao =
   | "gerirExercicios"
   | "administrarConfiguracoes"
   | "analisarViabilidade"
-  | "registrarExecucao";
+  | "registrarExecucao"
+  // Leitura de tudo, sem escrita (controle interno, auditoria, consulta).
+  | "consultarTudo";
 
 export const PERMISSOES: Permissao[] = [
   "apresentarEmendas",
@@ -30,7 +32,12 @@ export const PERMISSOES: Permissao[] = [
   "administrarConfiguracoes",
   "analisarViabilidade",
   "registrarExecucao",
+  "consultarTudo",
 ];
+
+// Permissões que escrevem. Perfil que só tem consultarTudo continua sendo de
+// consulta.
+export const PERMISSOES_DE_ESCRITA: Permissao[] = PERMISSOES.filter((p) => p !== "consultarTudo");
 
 export type Perfil = {
   id: string;
@@ -51,7 +58,7 @@ export const ehAdminGeral = (a: Ator): boolean => a.perfil?.adminGeral === true;
 
 // Perfil de consulta: existe, pertence a um Poder, mas não escreve nada.
 export const ehConsulta = (a: Ator): boolean =>
-  !!a.perfil && !a.perfil.adminGeral && PERMISSOES.every((p) => !a.perfil![p]);
+  !!a.perfil && !a.perfil.adminGeral && PERMISSOES_DE_ESCRITA.every((p) => !a.perfil![p]);
 
 // Verificação de permissão. O Administrador Geral ignora a checagem.
 export function temPermissao(a: Ator, ...permissoes: Permissao[]): boolean {
@@ -127,7 +134,7 @@ export function podeGerirEmenda(
 export function podeVerTodasEmendas(a: Ator): boolean {
   return (
     alcancaPoder(a, Poder.LEGISLATIVO) &&
-    temPermissao(a, "gerirTodasEmendas", "tramitarEmendas")
+    temPermissao(a, "gerirTodasEmendas", "tramitarEmendas", "consultarTudo")
   );
 }
 

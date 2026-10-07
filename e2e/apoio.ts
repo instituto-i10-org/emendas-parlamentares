@@ -21,6 +21,16 @@ export const DESTINOS = {
   entidade: "Associação Ágape",
 } as const;
 
+// Abre a tela de login e preenche e-mail e senha (sem enviar).
+export async function preencherLogin(page: Page, email: string, senha: string) {
+  await page.context().clearCookies();
+  await page.goto("/login");
+  const campo = page.getByLabel("E-mail");
+  if (!(await campo.isVisible().catch(() => false))) await page.getByRole("button", { name: "Entrar com e-mail e senha" }).click();
+  await campo.fill(email);
+  await page.getByLabel("Senha").fill(senha);
+}
+
 export async function entrar(page: Page, conta: keyof typeof CONTAS | string, senha = SENHA) {
   const email = conta in CONTAS ? CONTAS[conta as keyof typeof CONTAS] : conta;
   await page.context().clearCookies();

@@ -7,6 +7,8 @@ export default NextAuth(authConfig).auth;
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+    // /api/arquivos fica de fora: as rotas conferem a permissão elas mesmas, e
+    // o proxy limitaria o tamanho do envio local.
+    "/((?!_next/static|_next/image|favicon.ico|api/arquivos/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 };

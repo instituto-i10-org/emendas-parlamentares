@@ -27,7 +27,7 @@ export async function melhorarTexto(entrada: {
   }
   const chave = process.env.OPENAI_API_KEY;
   if (!chave) return { ok: false, erro: "A melhoria de texto aguarda a chave da OpenAI no servidor." };
-  if (!rateLimit(`ia:${user.id}`, 8, 60_000)) return { ok: false, erro: "Aguarde um minuto antes de pedir novas sugestões." };
+  if (!(await rateLimit(`ia:${user.id}`, 8, 60_000))) return { ok: false, erro: "Aguarde um minuto antes de pedir novas sugestões." };
 
   const ano = await anoDaTela(entrada.exercicio);
   const ctx = ano ? await carregarContexto(ano) : null;
@@ -90,7 +90,7 @@ export async function melhorarTexto(entrada: {
 
 export async function buscarCnpj(cnpj: string): Promise<{ ok: true; dados: DadosCnpj } | Falha> {
   const user = await getCurrentUser();
-  if (!rateLimit(`cnpj:${user.id}`, 20, 60_000)) return { ok: false, erro: "Muitas consultas seguidas. Aguarde um minuto." };
+  if (!(await rateLimit(`cnpj:${user.id}`, 20, 60_000))) return { ok: false, erro: "Muitas consultas seguidas. Aguarde um minuto." };
   try {
     return { ok: true, dados: await consultarCnpj(cnpj) };
   } catch (e) {

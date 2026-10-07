@@ -1,6 +1,7 @@
 import type { PrismaClient } from "../../src/generated/prisma/client";
 import type { TipoAcao } from "../../src/generated/prisma/enums";
 import { codigosDeExibicao, NATUREZAS_EMENDAVEIS } from "../../src/lib/orcamento/codigo-dotacao";
+import { orgaoDaUnidade, pertence } from "../../src/lib/riep/destino";
 import { data, lerDados } from "./dados";
 import { lerExercicio } from "./exercicio";
 
@@ -84,9 +85,10 @@ const capitalizar = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowe
 export async function semearLoa(prisma: PrismaClient, exercicioId: string, ano: number) {
   const ex = lerExercicio(ano);
   const loa = lerDados<{ titulo: string; fonte: string | null; dotacoes: LinhaLoa[] }>(`loa-${ano}.json`);
-  const unidadesNomes = lerDados<{ names: Record<string, string> }>(`unidades-${ano}.json`).names;
+  const nomes = lerDados<{ names: Record<string, string>; orgaos?: Record<string, string> }>(`unidades-${ano}.json`);
+  const unidadesNomes = nomes.names;
   const ppa = lerDados<{ acoes: MetaJson[]; programas: string[] }>("metas-ppa-2026-2029.json");
-  const orgaosFora = new Set(ex.excludedOrgans);
+  const foraDasEmendas = (uo: string) => ex.excludedOrgans.some((o) => pertence(uo, o));
 
   // As dotações ficam sempre no projeto de lei: é sobre ele que a emenda incide.
   const { bill, law } = ex.instruments;
@@ -114,7 +116,7 @@ export async function semearLoa(prisma: PrismaClient, exercicioId: string, ano: 
   }
 
   const elegiveis = loa.dotacoes.filter(
-    (d) => NATUREZAS_EMENDAVEIS.has(`${d.gnd}|${d.mod}`) && !orgaosFora.has(d.uo.split(".")[0])
+    (d) => NATUREZAS_EMENDAVEIS.has(`${d.gnd}|${d.mod}`) && !foraDasEmendas(d.uo)
   );
   const demais = loa.dotacoes.filter((d) => !elegiveis.includes(d));
   const usados = new Set<string>();
@@ -158,9 +160,10 @@ export async function semearLoa(prisma: PrismaClient, exercicioId: string, ano: 
 
   for (let i = 0; i < ordenadas.length; i++) {
     const d = ordenadas[i];
-    const codOrgao = d.uo.split(".")[0];
+    // Órgão: a unidade sem o último segmento ("13.01" → "13"; "02.04.02" → "02.04").
+    const codOrgao = orgaoDaUnidade(d.uo);
     const nomeUnidade = unidadesNomes[d.uo] ?? d.unitName;
-    const nomeOrgao = (unidadesNomes[`${codOrgao}.01`] ?? d.orgName).split(" — ")[0];
+    const nomeOrgao = nomes.orgaos?.[codOrgao] ?? (unidadesNomes[`${codOrgao}.01`] ?? d.orgName).split(" — ")[0];
 
     const orgaoId = await uma(orgaos, codOrgao, () =>
       prisma.orgao.upsert({

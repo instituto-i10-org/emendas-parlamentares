@@ -6,6 +6,8 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: import.meta.dirname,
   },
+  // Leitura de PDF no servidor: carregadas do node_modules, sem empacotar.
+  serverExternalPackages: ["pdfjs-dist", "pdf-lib"],
   // Não vaza detalhes de framework.
   poweredByHeader: false,
   async headers() {

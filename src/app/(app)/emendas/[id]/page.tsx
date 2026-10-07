@@ -23,7 +23,7 @@ export default async function EmendaPage({ params }: { params: Promise<{ id: str
   const x = await buscarEmenda(id);
   if (!x) notFound();
   const gere = podeGerirEmenda(user, { autorUsuarioId: x.autor.usuarioId });
-  const ve = gere || podeVerTodasEmendas(user) || temPermissao(user, "analisarViabilidade", "registrarExecucao") || x.autor.usuarioId === user.id;
+  const ve = gere || podeVerTodasEmendas(user) || temPermissao(user, "analisarViabilidade", "registrarExecucao", "consultarTudo") || x.autor.usuarioId === user.id;
   if (!ve) notFound();
 
   if ((x.status === "RASCUNHO" || x.status === "EM_DILIGENCIA") && gere) {

@@ -2,19 +2,21 @@ import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
 import { semearAcesso } from "./seed/acesso";
-import { ANOS_COM_DADOS, semearExercicio } from "./seed/exercicio";
+import { MUNICIPIO_SEED, lerMunicipio } from "./seed/dados";
+import { anosComDados, semearExercicio } from "./seed/exercicio";
 import { semearLoa } from "./seed/loa";
 import { semearCatalogos } from "./seed/catalogos";
 import { semearDestinos } from "./seed/destinos";
 import { semearFontesPreco } from "./seed/fontes-preco";
 import { semearEmendasImportadas } from "./seed/emendas-importadas";
+import { semearVereadores } from "./seed/vereadores";
 
-// Carga inicial: Mogi Guaçu, exercícios 2026 (lei aprovada) e 2027 (projeto em
-// tramitação). Idempotente — rodar de novo realinha os dados sem duplicar e
-// sem trocar senhas já definidas.
+// Carga inicial do município (SEED_MUNICIPIO, padrão mogi-guacu): exercícios,
+// projeto de lei com as dotações, catálogos, destinos, fontes de preço,
+// vereadores e contas. Idempotente — rodar de novo realinha os dados sem
+// duplicar e sem trocar senhas já definidas.
 //
-// Os dados reais ficam em prisma/dados/mogi-guacu/ (JSON extraído por OCR dos
-// anexos da LOA, do PPA e das emendas; destinos do CNES, INEP, SUAS e Receita).
+// Os dados ficam em prisma/dados/<município>/ (ver o FONTES.md da pasta).
 
 const url =
   process.env.Emendas_POSTGRES_URL_NON_POOLING ||
@@ -30,35 +32,33 @@ if (!url) {
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: url }) });
 
 async function main() {
+  const municipio = lerMunicipio();
+  console.log(`Município: ${municipio.nome}/${municipio.uf} (prisma/dados/${MUNICIPIO_SEED})`);
   const acesso = await semearAcesso(prisma);
-  const loa: Record<number, Awaited<ReturnType<typeof semearLoa>>> = {};
+  const resumo: Record<string, number> = { perfis: acesso.perfis, usuarios: acesso.usuarios };
   const exercicios: Record<number, string> = {};
-  for (const ano of ANOS_COM_DADOS) {
+  for (const ano of anosComDados()) {
     const exercicio = await semearExercicio(prisma, ano);
     exercicios[ano] = exercicio.id;
-    loa[ano] = await semearLoa(prisma, exercicio.id, ano);
+    const loa = await semearLoa(prisma, exercicio.id, ano);
+    resumo[`dotacoes${ano}`] = loa.dotacoes;
+    resumo[`metasPpa${ano}`] = loa.metas;
   }
   const catalogos = await semearCatalogos(prisma);
-  const destinos = await semearDestinos(prisma);
-  const fontesPreco = await semearFontesPreco(prisma);
-  // As emendas importadas são as apresentadas ao PL 275/2025 (LOA 2026).
-  const importadas = await semearEmendasImportadas(prisma, exercicios[2026]);
+  resumo.areas = catalogos.areas;
+  resumo.objetos = catalogos.objetos;
+  resumo.destinos = await semearDestinos(prisma);
+  resumo.fontesPreco = await semearFontesPreco(prisma);
+  resumo.vereadores = await semearVereadores(prisma);
+  const imp = municipio.emendasImportadas;
+  if (imp && exercicios[imp.ano]) {
+    const importadas = await semearEmendasImportadas(prisma, exercicios[imp.ano]);
+    resumo.autoresImportados = importadas.autores;
+    resumo.emendasImportadas = importadas.emendas;
+  }
 
   console.log("Seed concluído.");
-  console.table({
-    perfis: acesso.perfis,
-    usuarios: acesso.usuarios,
-    dotacoes2026: loa[2026].dotacoes,
-    metasPpa2026: loa[2026].metas,
-    dotacoes2027: loa[2027].dotacoes,
-    metasPpa2027: loa[2027].metas,
-    areas: catalogos.areas,
-    objetos: catalogos.objetos,
-    destinos,
-    fontesPreco,
-    autores: importadas.autores,
-    emendasImportadas: importadas.emendas,
-  });
+  console.table(resumo);
   if (acesso.senhasNovas.length) {
     console.log("\nContas criadas agora (anote: as senhas não são exibidas de novo):");
     console.table(acesso.senhasNovas);

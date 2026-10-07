@@ -8,7 +8,7 @@ import { PrismaClient } from "../src/generated/prisma/client";
 //   CONFIRMAR=1 npx tsx prisma/apagar-emenda.ts <numero> <email-do-autor> apaga
 //
 // Metas, itens, referências, parcelas, validações, pareceres e andamentos saem
-// em cascata. A trilha de auditoria da emenda sai junto. Se a emenda for a
+// em cascata. A trilha de auditoria da emenda fica. Se a emenda for a
 // última numerada do exercício, o contador volta um, para não deixar buraco.
 
 const url = process.env.DIRECT_URL || process.env.DATABASE_URL;
@@ -57,7 +57,7 @@ async function main() {
   console.log(`  objeto: ${e.objeto.slice(0, 90)}${e.objeto.length > 90 ? "…" : ""}`);
   console.log(`  valor:  R$ ${e.valor.toFixed(2)}`);
   console.log(`  filhos: ${JSON.stringify(e._count)}, pareceres ${e.pareceres.length}, andamentos ${e.andamentos.length}`);
-  console.log(`  auditoria: ${auditoria} registro(s)`);
+  console.log(`  auditoria: ${auditoria} registro(s) — ficam (a trilha não se apaga)`);
   console.log(
     voltaContador
       ? `  contador: ${contador!.ultimo} → ${numero - 1}`
@@ -70,7 +70,6 @@ async function main() {
   }
 
   await prisma.$transaction([
-    prisma.auditLog.deleteMany({ where: { entidadeId: { in: idsAuditados } } }),
     prisma.emenda.delete({ where: { id: e.id } }),
     ...(voltaContador
       ? [prisma.contadorEmenda.update({ where: { exercicioId: e.exercicioId }, data: { ultimo: numero - 1 } })]

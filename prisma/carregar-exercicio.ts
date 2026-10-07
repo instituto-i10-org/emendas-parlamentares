@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
-import { lerDados } from "./seed/dados";
+import { lerDados, lerMunicipio } from "./seed/dados";
 import { lerExercicio, semearExercicio } from "./seed/exercicio";
 import { semearLoa } from "./seed/loa";
 
@@ -44,7 +44,7 @@ async function main() {
   }
   const ex = lerExercicio(ano);
   const loa = lerDados<{ titulo: string; geradoEm?: string; dotacoes: { autorizado: number; uo: string }[] }>(`loa-${ano}.json`);
-  const destinosArquivo = lerDados<{ destinos: { nome: string; execucao: string; unidade?: string }[] }>("destinos-2026.json").destinos;
+  const destinosArquivo = lerDados<{ destinos: { nome: string; execucao: string; unidade?: string }[] }>(lerMunicipio().destinos).destinos;
   const total = loa.dotacoes.reduce((s, d) => s + Math.round(d.autorizado * 100), 0) / 100;
 
   console.log(`Exercício ${ano} · ${loa.titulo}${loa.geradoEm ? ` · gerado em ${loa.geradoEm}` : ""}`);

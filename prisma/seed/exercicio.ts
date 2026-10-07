@@ -1,6 +1,6 @@
 import type { PrismaClient } from "../../src/generated/prisma/client";
 import type { StatusInstrumento, TipoNorma } from "../../src/generated/prisma/enums";
-import { data, lerDados } from "./dados";
+import { data, lerDados, lerMunicipio } from "./dados";
 
 type InstrumentoJson = {
   number: string;
@@ -39,14 +39,15 @@ export type ExercicioJson = {
   deadlines: { what: string; date: string; url: string | null }[];
 };
 
-// Exercícios com dados em prisma/dados/mogi-guacu/ (exercicio-<ano>.json,
+// Exercícios com dados na pasta do município (exercicio-<ano>.json,
 // loa-<ano>.json e unidades-<ano>.json).
-export const ANOS_COM_DADOS = [2026, 2027] as const;
+export const anosComDados = () => lerMunicipio().anos;
 
 export const lerExercicio = (ano: number) => lerDados<ExercicioJson>(`exercicio-${ano}.json`);
 
 function tipoNorma(titulo: string): TipoNorma {
   if (/lei orgânica/i.test(titulo) && !/proposta/i.test(titulo)) return "LOM";
+  if (/regimento interno/i.test(titulo)) return "REGIMENTO_INTERNO";
   if (/^lei n/i.test(titulo)) return "LEI";
   return "OUTRO";
 }
@@ -55,14 +56,9 @@ export async function semearExercicio(prisma: PrismaClient, ano: number) {
   const ex = lerExercicio(ano);
 
   if (!(await prisma.municipio.findFirst())) {
+    const m = lerMunicipio();
     await prisma.municipio.create({
-      data: {
-        nome: "Mogi Guaçu",
-        uf: "SP",
-        codigoIbge: "3530706",
-        nomeCamara: "Câmara Municipal de Mogi Guaçu",
-        nomePrefeitura: "Prefeitura Municipal de Mogi Guaçu",
-      },
+      data: { nome: m.nome, uf: m.uf, codigoIbge: m.codigoIbge, nomeCamara: m.nomeCamara, nomePrefeitura: m.nomePrefeitura },
     });
   }
 
@@ -88,7 +84,7 @@ export async function semearExercicio(prisma: PrismaClient, ano: number) {
     percentualAcessorio: 20,
     fonteAudesp: ex.audespSource,
     fonteAudespNome: ex.audespName,
-    codigoAplicacao: ex.applicationCode,
+    codigoAplicacao: ex.applicationCode || null,
     formatoVariacao: 4,
     variacaoOcupaFonte: false,
     // IC-EP vigora a partir de 2027 (art. 2º da Portaria STN/MF 636/2026).

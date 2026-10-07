@@ -196,6 +196,13 @@ enum ResultadoViabilidade {
 }
 
 // Etapas da despesa pública (Lei 4.320/1964, arts. 58 a 65).
+// Para que um arquivo foi enviado. Define tipo aceito, tamanho e quem lê.
+enum UsoArquivo {
+  PECA_ORCAMENTARIA // PPA, LDO, LOA (projeto ou lei)
+  NORMA // Lei Orgânica, Regimento, demais atos
+  IMPORTACAO // arquivo lido pela importação da base
+}
+
 enum EtapaExecucao {
   EMPENHO
   LIQUIDACAO
@@ -808,6 +815,7 @@ model Emenda {
   pareceres    ParecerViabilidade[]
   andamentos   AndamentoExecucao[]
   convites     ConviteEntidade[]
+  historico    HistoricoEmenda[]
 
   @@unique([exercicioId, numero])
   @@index([exercicioId, status])
@@ -1040,6 +1048,9 @@ model PerfilAcesso {
   administrarConfiguracoes Boolean @default(false)
   analisarViabilidade      Boolean @default(false)
   registrarExecucao        Boolean @default(false)
+  // Lê tudo (emendas, tramitação, planejamento, execução, conformidade,
+  // auditoria) sem escrever nada.
+  consultarTudo            Boolean @default(false)
 
   perfilDoSistema Boolean @default(false)
   adminGeral      Boolean @default(false)
@@ -1058,6 +1069,8 @@ model User {
   image         String?
   passwordHash  String?
   perfilId      String?
+  // Desativado não entra; o histórico e a autoria continuam.
+  ativo         Boolean   @default(true)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -1070,6 +1083,8 @@ model User {
   andamentos        AndamentoExecucao[]
   destinos          Destino[]
   emendasTramitadas Emenda[]             @relation("EmendaTramitada")
+  historicos        HistoricoEmenda[]
+  arquivos          Arquivo[]
 
   @@index([perfilId])
 }
@@ -1128,5 +1143,69 @@ model AuditLog {
 
   @@index([usuarioId])
   @@index([entidade, entidadeId])
+  @@index([criadoEm])
+}
+
+// Cada mudança de situação da emenda, com data, quem e o texto (parecer,
+// pedido de ajuste, devolução). É a base dos relatórios por período.
+model HistoricoEmenda {
+  id        String        @id @default(cuid())
+  emendaId  String
+  de        StatusEmenda?
+  para      StatusEmenda
+  texto     String?
+  usuarioId String?
+  criadoEm  DateTime      @default(now())
+
+  emenda  Emenda @relation(fields: [emendaId], references: [id], onDelete: Cascade)
+  usuario User?  @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
+
+  @@index([emendaId, criadoEm])
+  @@index([criadoEm])
+}
+
+// Arquivo guardado pelo sistema (Vercel Blob privado em produção; disco em
+// ambiente local). O conteúdo nunca passa pelo banco.
+model Arquivo {
+  id           String     @id @default(cuid())
+  nome         String
+  tipo         String
+  tamanho      Int
+  sha256       String
+  // Caminho no armazenamento.
+  chave        String     @unique
+  uso          UsoArquivo
+  // Público: baixa sem login (peça orçamentária e norma publicadas).
+  publico      Boolean    @default(false)
+  enviadoPorId String?
+  criadoEm     DateTime   @default(now())
+
+  enviadoPor User? @relation(fields: [enviadoPorId], references: [id], onDelete: SetNull)
+
+  @@index([uso])
+}
+
+// Tentativas de operações sensíveis (login, link público, importação). O
+// limite vale para todas as instâncias do servidor porque fica no banco.
+model TentativaAcesso {
+  id       String   @id @default(cuid())
+  chave    String
+  criadoEm DateTime @default(now())
+
+  @@index([chave, criadoEm])
+}
+
+// Uso do serviço de IA, para acompanhar custo.
+model UsoIA {
+  id            String   @id @default(cuid())
+  operacao      String
+  modelo        String
+  // Páginas lidas (importação) ou 1 (redação).
+  unidades      Int      @default(1)
+  tokensEntrada Int      @default(0)
+  tokensSaida   Int      @default(0)
+  usuarioId     String?
+  criadoEm      DateTime @default(now())
+
   @@index([criadoEm])
 }

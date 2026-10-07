@@ -3,7 +3,7 @@ import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import { NATUREZAS_EMENDAVEIS } from "@/lib/orcamento/codigo-dotacao";
 import type { Aplicado, Catalogo, ConfigMotor, DestinoMotor, DotacaoMotor, FontePreco, MetaPlanejamento } from "@/lib/riep";
-import { nomeDoAlcance } from "@/lib/riep/destino";
+import { nomeDoAlcance, pertence } from "@/lib/riep/destino";
 
 // ============================================================================
 // Contexto do motor para um exercício: configuração, LOA elegível, catálogos,
@@ -147,12 +147,15 @@ export const carregarContexto = cache(async (ano: number): Promise<ContextoEmend
   // Guardado como 23:59:59 de Brasília; o dia é lido no mesmo fuso.
   const prazoProtocolo = configuracao?.prazoProtocolo ? diaBrasilia(configuracao.prazoProtocolo) : null;
   const unidades = Object.fromEntries(unidadesDb.map((u) => [u.codigo, u.nome]));
-  const fora = new Set(configuracao?.orgaosForaDasEmendas ?? []);
+  // Órgãos fora das emendas (a Câmara, os encargos gerais): códigos de órgão ou
+  // de unidade; a unidade que pertence a um deles fica de fora.
+  const foraLista = configuracao?.orgaosForaDasEmendas ?? [];
+  const foraDasEmendas = (uo: string) => foraLista.some((f) => pertence(uo, f));
 
   const elegiveis = dotacoes.filter(
     (d) =>
       NATUREZAS_EMENDAVEIS.has(`${d.naturezaDespesa.grupo}|${d.naturezaDespesa.modalidadeAplicacao}`) &&
-      !fora.has(d.orgao.codigo)
+      !foraDasEmendas(d.unidadeOrcamentaria.codigo)
   );
 
   const loa: DotacaoMotor[] = elegiveis.map((d) => ({
@@ -218,7 +221,7 @@ export const carregarContexto = cache(async (ano: number): Promise<ContextoEmend
     metas,
     destinos: destinosDb.map((d) => paraDestinoMotor(d, unidades)),
     unidades: unidadesDb
-      .filter((u) => !fora.has(u.codigo.split(".")[0]))
+      .filter((u) => !foraDasEmendas(u.codigo))
       .map((u) => ({ codigo: u.codigo, nome: u.nome })),
     prazoProtocolo,
     prazoEncerrado: !!prazoProtocolo && hojeBrasilia() > prazoProtocolo,

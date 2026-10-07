@@ -9,6 +9,7 @@ import { anoDaTela } from "@/lib/exercicio";
 import { prisma } from "@/lib/prisma";
 import { norm } from "@/lib/riep";
 import { getCurrentUser } from "@/lib/session";
+import { pertence } from "@/lib/riep/destino";
 
 // ============================================================================
 // Cadastro de destino a partir da tela da emenda. Na execução direta, o destino
@@ -51,8 +52,8 @@ async function validarDados(dados: DadosDestino): Promise<{ ok: true; d: z.outpu
     : [];
   const unidades = Object.fromEntries(unidadesDb.map((u) => [u.codigo, u.nome]));
   if (d.execucao === "DIRETA") {
-    // Vale uma unidade do exercício ou o órgão inteiro ("20"), quando ele tem unidades.
-    const orgaoInteiro = !!d.unidadeCodigo && !d.unidadeCodigo.includes(".") && Object.keys(unidades).some((u) => u.split(".")[0] === d.unidadeCodigo);
+    // Vale uma unidade do exercício ou o órgão inteiro ("20", "02.05"), quando ele tem unidades.
+    const orgaoInteiro = !!d.unidadeCodigo && !unidades[d.unidadeCodigo] && Object.keys(unidades).some((u) => pertence(u, d.unidadeCodigo!));
     if (!d.unidadeCodigo || (!unidades[d.unidadeCodigo] && !orgaoInteiro)) return { ok: false, erro: "Selecione a secretaria ou órgão responsável." };
   } else {
     if (!cnpjValido(d.cnpj)) return { ok: false, erro: "CNPJ inválido." };

@@ -2,9 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { registrarAuditoria } from "@/lib/audit";
+import { auditar, registrarAuditoria } from "@/lib/audit";
 import { podeAnalisarViabilidade, podeRegistrarExecucao, podeTramitar } from "@/lib/authz";
 import { conferirLancamento } from "@/lib/emendas/execucao";
+import { mudarSituacao } from "@/lib/emendas/historico";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 
@@ -29,17 +30,23 @@ export async function decidirTramitacao(entrada: z.input<typeof decisaoSchema>):
   const emenda = await prisma.emenda.findUnique({ where: { id: p.data.emendaId } });
   if (!emenda) return { ok: false, erro: "Emenda não encontrada." };
   if (emenda.status !== "SUBMETIDA") return { ok: false, erro: "Apenas emendas submetidas podem ser tramitadas." };
-  const salvo = await prisma.emenda.update({
-    where: { id: emenda.id },
-    data: { status: p.data.decisao, parecerTramitacao: p.data.parecer, tramitadaEm: new Date(), tramitadaPorId: user.id },
-  });
-  await registrarAuditoria({
-    usuarioId: user.id,
-    entidade: "Emenda",
-    entidadeId: emenda.id,
-    acao: p.data.decisao === "APROVADA" ? "APROVAR" : "REJEITAR",
-    dadosAntes: { status: emenda.status },
-    dadosDepois: { status: salvo.status, parecer: p.data.parecer },
+  await prisma.$transaction(async (tx) => {
+    const salvo = await mudarSituacao(tx, {
+      emendaId: emenda.id,
+      de: emenda.status,
+      para: p.data.decisao,
+      usuarioId: user.id,
+      texto: p.data.parecer,
+      dados: { parecerTramitacao: p.data.parecer, tramitadaEm: new Date(), tramitadaPor: { connect: { id: user.id } } },
+    });
+    await auditar(tx, {
+      usuarioId: user.id,
+      entidade: "Emenda",
+      entidadeId: emenda.id,
+      acao: p.data.decisao === "APROVADA" ? "APROVAR" : "REJEITAR",
+      dadosAntes: { status: emenda.status, parecer: emenda.parecerTramitacao },
+      dadosDepois: { status: salvo.status, parecer: salvo.parecerTramitacao },
+    });
   });
   revalidatePath("/tramitacao");
   revalidatePath(`/emendas/${emenda.id}`);
@@ -67,17 +74,23 @@ export async function pedirDiligencia(entrada: z.input<typeof diligenciaSchema>)
   if (emenda.status !== "SUBMETIDA") return { ok: false, erro: "Só emendas na fila da Comissão vão para diligência." };
   const ate = new Date();
   ate.setUTCDate(ate.getUTCDate() + p.data.dias);
-  await prisma.emenda.update({
-    where: { id: emenda.id },
-    data: { status: "EM_DILIGENCIA", diligenciaMotivo: p.data.motivo, diligenciaAte: ate, diligenciaEm: new Date(), reenviadaEm: null },
-  });
-  await registrarAuditoria({
-    usuarioId: user.id,
-    entidade: "Emenda",
-    entidadeId: emenda.id,
-    acao: "PEDIR_DILIGENCIA",
-    dadosAntes: { status: emenda.status },
-    dadosDepois: { status: "EM_DILIGENCIA", motivo: p.data.motivo, dias: p.data.dias },
+  await prisma.$transaction(async (tx) => {
+    await mudarSituacao(tx, {
+      emendaId: emenda.id,
+      de: emenda.status,
+      para: "EM_DILIGENCIA",
+      usuarioId: user.id,
+      texto: p.data.motivo,
+      dados: { diligenciaMotivo: p.data.motivo, diligenciaAte: ate, diligenciaEm: new Date(), reenviadaEm: null },
+    });
+    await auditar(tx, {
+      usuarioId: user.id,
+      entidade: "Emenda",
+      entidadeId: emenda.id,
+      acao: "PEDIR_DILIGENCIA",
+      dadosAntes: { status: emenda.status, diligenciaMotivo: emenda.diligenciaMotivo, diligenciaAte: emenda.diligenciaAte },
+      dadosDepois: { status: "EM_DILIGENCIA", diligenciaMotivo: p.data.motivo, diligenciaAte: ate, dias: p.data.dias },
+    });
   });
   revalidatePath("/tramitacao");
   revalidatePath("/emendas");
@@ -94,17 +107,23 @@ export async function reabrirTramitacao(emendaId: string, motivo: string): Promi
   if (!emenda) return { ok: false, erro: "Emenda não encontrada." };
   if (emenda.status !== "APROVADA" && emenda.status !== "REJEITADA") return { ok: false, erro: "A emenda não foi decidida." };
   if (emenda.andamentos.length) return { ok: false, erro: "A emenda já tem execução lançada: não volta à fila." };
-  await prisma.emenda.update({
-    where: { id: emendaId },
-    data: { status: "SUBMETIDA", parecerTramitacao: null, tramitadaEm: null, tramitadaPorId: null },
-  });
-  await registrarAuditoria({
-    usuarioId: user.id,
-    entidade: "Emenda",
-    entidadeId: emendaId,
-    acao: "REABRIR_TRAMITACAO",
-    dadosAntes: { status: emenda.status, parecer: emenda.parecerTramitacao },
-    dadosDepois: { status: "SUBMETIDA", motivo: motivo.trim() },
+  await prisma.$transaction(async (tx) => {
+    await mudarSituacao(tx, {
+      emendaId,
+      de: emenda.status,
+      para: "SUBMETIDA",
+      usuarioId: user.id,
+      texto: `Reaberta: ${motivo.trim()}`,
+      dados: { parecerTramitacao: null, tramitadaEm: null, tramitadaPor: { disconnect: true } },
+    });
+    await auditar(tx, {
+      usuarioId: user.id,
+      entidade: "Emenda",
+      entidadeId: emendaId,
+      acao: "REABRIR_TRAMITACAO",
+      dadosAntes: { status: emenda.status, parecer: emenda.parecerTramitacao, tramitadaEm: emenda.tramitadaEm },
+      dadosDepois: { status: "SUBMETIDA", parecer: null, tramitadaEm: null, motivo: motivo.trim() },
+    });
   });
   revalidatePath("/tramitacao");
   revalidatePath(`/emendas/${emendaId}`);
@@ -188,7 +207,7 @@ export async function registrarAndamento(entrada: z.input<typeof andamentoSchema
         usuarioId: user.id,
       },
     });
-    await registrarAuditoria({
+    await auditar(tx, {
       usuarioId: user.id,
       entidade: "AndamentoExecucao",
       entidadeId: andamento.id,

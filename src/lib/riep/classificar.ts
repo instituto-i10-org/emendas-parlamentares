@@ -1,4 +1,4 @@
-import { pistasDoDestino, unidadesDoDestino } from "./destino";
+import { orgaoDaUnidade, pertence, pistasDoDestino, unidadesDoDestino } from "./destino";
 import { interpretar } from "./interpretar";
 import { contem, norm } from "./texto";
 import type {
@@ -40,14 +40,13 @@ function area(areas: AreaAplicacao[], nome: string | null) {
 // A unidade pertence a um dos órgãos da área?
 export function naArea(uo: string | null | undefined, nomeArea: string | null, areas: AreaAplicacao[]): boolean {
   const a = area(areas, nomeArea);
-  return !!a && a.orgaos.includes(String(uo ?? "").split(".")[0]);
+  return !!a && a.orgaos.some((o) => pertence(uo, o));
 }
 
 // Área a que a unidade do destino pertence (Saúde para 13.xx e 20.xx).
 export function areaDaUnidade(uo: string | null | undefined, areas: AreaAplicacao[]): string | null {
-  const org = String(uo ?? "").split(".")[0];
-  if (!org) return null;
-  return areas.find((a) => a.orgaos.includes(org))?.nome ?? null;
+  if (!uo) return null;
+  return areas.find((a) => a.orgaos.some((o) => pertence(uo, o)))?.nome ?? null;
 }
 
 export type EntradaClassificacao = {
@@ -143,8 +142,8 @@ export function classificar({ objeto, destino, execucao, pretendido, loa, catalo
   function obraEmOutraSecretaria(): DotacaoMotor[] {
     if (!uoAlvo || !areaDestino || gnd !== "4" || mod !== "90" || obj!.elemento !== "51") return [];
     const obra = (d: DotacaoMotor) => d.gnd === "4" && d.mod === "90" && d.elem === "51";
-    const orgaos = new Set(unidadesAlvo.map((u) => u.split(".")[0]));
-    if (loa.some((d) => obra(d) && orgaos.has(d.uo.split(".")[0]))) return [];
+    const orgaos = new Set(unidadesAlvo.map(orgaoDaUnidade));
+    if (loa.some((d) => obra(d) && orgaos.has(orgaoDaUnidade(d.uo)))) return [];
     const porFuncao = new Map<string, number>();
     for (const d of loa) if (noAlvo(d.uo)) porFuncao.set(d.funcao, (porFuncao.get(d.funcao) ?? 0) + 1);
     const funcao = [...porFuncao].sort((a, b) => b[1] - a[1])[0]?.[0];

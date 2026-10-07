@@ -98,9 +98,7 @@ async function main() {
     return;
   }
 
-  const idsAuditados = emendas.flatMap((e) => [e.id, ...e.pareceres.map((p) => p.id), ...e.andamentos.map((a) => a.id)]);
   await prisma.$transaction([
-    prisma.auditLog.deleteMany({ where: { entidadeId: { in: idsAuditados } } }),
     prisma.emenda.deleteMany({ where: { id: { in: emendas.map((e) => e.id) } } }),
     ...(voltaContador ? [prisma.contadorEmenda.update({ where: { exercicioId }, data: { ultimo: menor - 1 } })] : []),
   ]);

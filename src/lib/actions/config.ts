@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { Prisma } from "@/generated/prisma/client";
-import { registrarAuditoria } from "@/lib/audit";
+import { auditar, registrarAuditoria } from "@/lib/audit";
 import { podeAtribuirPerfil, podeGerirExercicio, podeGerirPerfis, temPermissao, PERMISSOES } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, type SessionUser } from "@/lib/session";
@@ -92,13 +92,27 @@ export async function criarExercicio(ano: number): Promise<Resultado> {
   return { ok: true, mensagem: `Exercício ${ano} criado.` };
 }
 
+// Encerrar o exercício fecha o emendamento: não se cria nem se altera emenda
+// (nem rascunho). A consulta, a tramitação e a execução continuam.
 export async function definirStatusExercicio(id: string, status: "ABERTO" | "ENCERRADO"): Promise<Resultado> {
   const user = await getCurrentUser();
   if (!podeGerirExercicio(user)) return { ok: false, erro: "Sem permissão." };
-  const ex = await prisma.exercicio.update({ where: { id }, data: { status } });
-  await registrarAuditoria({ usuarioId: user.id, entidade: "Exercicio", entidadeId: id, acao: status === "ABERTO" ? "ABRIR" : "ENCERRAR", dadosDepois: { ano: ex.ano } });
+  const antes = await prisma.exercicio.findUnique({ where: { id } });
+  if (!antes) return { ok: false, erro: "Exercício não encontrado." };
+  const ex = await prisma.$transaction(async (tx) => {
+    const depois = await tx.exercicio.update({ where: { id }, data: { status } });
+    await auditar(tx, {
+      usuarioId: user.id,
+      entidade: "Exercicio",
+      entidadeId: id,
+      acao: status === "ABERTO" ? "ABRIR" : "ENCERRAR",
+      dadosAntes: { ano: antes.ano, status: antes.status },
+      dadosDepois: { ano: depois.ano, status: depois.status },
+    });
+    return depois;
+  });
   revalidatePath("/", "layout");
-  return { ok: true };
+  return { ok: true, mensagem: status === "ABERTO" ? `Exercício ${ex.ano} reaberto.` : `Exercício ${ex.ano} encerrado: o emendamento está fechado.` };
 }
 
 const prazoSchema = z.object({
@@ -196,7 +210,8 @@ export async function definirSenha(usuarioId: string, senha: string): Promise<Re
   if (!alvo) return { ok: false, erro: "Usuário não encontrado." };
   if (alvo.perfil && !podeAtribuirPerfil(user, alvo.perfil) && alvo.id !== user.id) return { ok: false, erro: "Você não pode alterar este usuário." };
   await prisma.user.update({ where: { id: usuarioId }, data: { passwordHash: await bcrypt.hash(senha, 10) } });
-  await registrarAuditoria({ usuarioId: user.id, entidade: "User", entidadeId: usuarioId, acao: "DEFINIR_SENHA" });
+  // A senha nunca vai para a trilha: só o fato de ter sido redefinida.
+  await registrarAuditoria({ usuarioId: user.id, entidade: "User", entidadeId: usuarioId, acao: "DEFINIR_SENHA", dadosAntes: { email: alvo.email }, dadosDepois: { email: alvo.email, senha: "redefinida" } });
   return pronto("Senha definida.");
 }
 
@@ -289,7 +304,7 @@ export async function alternarDestinoAtivo(id: string): Promise<Resultado> {
   const d = await prisma.destino.findUnique({ where: { id } });
   if (!d) return { ok: false, erro: "Destino não encontrado." };
   await prisma.destino.update({ where: { id }, data: { ativo: !d.ativo } });
-  await registrarAuditoria({ usuarioId: user.id, entidade: "Destino", entidadeId: id, acao: d.ativo ? "DESATIVAR" : "ATIVAR" });
+  await registrarAuditoria({ usuarioId: user.id, entidade: "Destino", entidadeId: id, acao: d.ativo ? "DESATIVAR" : "ATIVAR", dadosAntes: { nome: d.nome, ativo: d.ativo }, dadosDepois: { nome: d.nome, ativo: !d.ativo } });
   return pronto();
 }
 
@@ -299,8 +314,9 @@ export async function definirSubfuncaoDestino(id: string, subfuncao: string): Pr
   const user = await exigir("administrarConfiguracoes");
   if (falhou(user)) return user;
   const codigo = /^\d{3}$/.test(subfuncao) ? subfuncao : null;
+  const antes = await prisma.destino.findUnique({ where: { id }, select: { subfuncaoSugerida: true } });
   const d = await prisma.destino.update({ where: { id }, data: { subfuncaoSugerida: codigo } });
-  await registrarAuditoria({ usuarioId: user.id, entidade: "Destino", entidadeId: id, acao: "SUBFUNCAO_SUGERIDA", dadosDepois: { subfuncao: codigo, destino: d.nome } });
+  await registrarAuditoria({ usuarioId: user.id, entidade: "Destino", entidadeId: id, acao: "SUBFUNCAO_SUGERIDA", dadosAntes: { subfuncao: antes?.subfuncaoSugerida ?? null, destino: d.nome }, dadosDepois: { subfuncao: codigo, destino: d.nome } });
   return pronto(codigo ? `Subfunção sugerida: ${codigo}.` : "Subfunção sugerida removida: o vereador escolhe entre as da unidade.");
 }
 
@@ -308,8 +324,10 @@ export async function definirPendenciaDestino(id: string, pendencia: string): Pr
   const user = await exigir("administrarConfiguracoes");
   if (falhou(user)) return user;
   const texto = String(pendencia ?? "").trim().slice(0, 500) || null;
-  const antes = await prisma.destino.update({ where: { id }, data: { pendenciaHabilitacao: texto } });
-  await registrarAuditoria({ usuarioId: user.id, entidade: "Destino", entidadeId: id, acao: "PENDENCIA_HABILITACAO", dadosDepois: { pendencia: texto, destino: antes.nome } });
+  const antes = await prisma.destino.findUnique({ where: { id }, select: { nome: true, pendenciaHabilitacao: true } });
+  if (!antes) return { ok: false, erro: "Destino não encontrado." };
+  await prisma.destino.update({ where: { id }, data: { pendenciaHabilitacao: texto } });
+  await registrarAuditoria({ usuarioId: user.id, entidade: "Destino", entidadeId: id, acao: "PENDENCIA_HABILITACAO", dadosAntes: { pendencia: antes.pendenciaHabilitacao, destino: antes.nome }, dadosDepois: { pendencia: texto, destino: antes.nome } });
   return pronto(texto ? "Pendência registrada: bloqueia a submissão de emendas para esta entidade." : "Pendência removida.");
 }
 
@@ -333,10 +351,11 @@ export async function salvarObjeto(entrada: z.input<typeof objetoSchema>): Promi
   if (!p.success) return erro(p.error);
   const { id, subfuncao, ...resto } = p.data;
   const dados = { ...resto, subfuncao: subfuncao || null, termos: resto.termos.map((t) => t.toLowerCase()) };
+  const antes = id ? await prisma.objetoBiblioteca.findUnique({ where: { id } }) : null;
   const salvo = id
     ? await prisma.objetoBiblioteca.update({ where: { id }, data: dados })
     : await prisma.objetoBiblioteca.create({ data: { ...dados, ordem: (await prisma.objetoBiblioteca.count()) + 1 } });
-  await registrarAuditoria({ usuarioId: user.id, entidade: "ObjetoBiblioteca", entidadeId: salvo.id, acao: id ? "ATUALIZAR" : "CRIAR", dadosDepois: salvo });
+  await registrarAuditoria({ usuarioId: user.id, entidade: "ObjetoBiblioteca", entidadeId: salvo.id, acao: id ? "ATUALIZAR" : "CRIAR", dadosAntes: antes ?? undefined, dadosDepois: salvo });
   return pronto("Objeto salvo. Vale para as próximas análises.");
 }
 
@@ -346,7 +365,7 @@ export async function alternarObjetoAtivo(id: string): Promise<Resultado> {
   const o = await prisma.objetoBiblioteca.findUnique({ where: { id } });
   if (!o) return { ok: false, erro: "Objeto não encontrado." };
   await prisma.objetoBiblioteca.update({ where: { id }, data: { ativo: !o.ativo } });
-  await registrarAuditoria({ usuarioId: user.id, entidade: "ObjetoBiblioteca", entidadeId: id, acao: o.ativo ? "DESATIVAR" : "ATIVAR" });
+  await registrarAuditoria({ usuarioId: user.id, entidade: "ObjetoBiblioteca", entidadeId: id, acao: o.ativo ? "DESATIVAR" : "ATIVAR", dadosAntes: { rotulo: o.rotulo, ativo: o.ativo }, dadosDepois: { rotulo: o.rotulo, ativo: !o.ativo } });
   return pronto();
 }
 
@@ -410,7 +429,7 @@ export async function alternarNormaAtiva(id: string): Promise<Resultado> {
   const n = await prisma.documentoNormativo.findUnique({ where: { id } });
   if (!n) return { ok: false, erro: "Norma não encontrada." };
   await prisma.documentoNormativo.update({ where: { id }, data: { ativo: !n.ativo } });
-  await registrarAuditoria({ usuarioId: user.id, entidade: "DocumentoNormativo", entidadeId: id, acao: n.ativo ? "DESATIVAR" : "ATIVAR" });
+  await registrarAuditoria({ usuarioId: user.id, entidade: "DocumentoNormativo", entidadeId: id, acao: n.ativo ? "DESATIVAR" : "ATIVAR", dadosAntes: { titulo: n.titulo, ativo: n.ativo }, dadosDepois: { titulo: n.titulo, ativo: !n.ativo } });
   return pronto();
 }
 
@@ -472,4 +491,34 @@ export async function alternarFontePrecoAtiva(id: string): Promise<Resultado> {
     dadosDepois: depois,
   });
   return pronto(antes.ativo ? "Fonte desativada: deixa de aparecer para o autor." : "Fonte ativada.");
+}
+
+// Desativa ou reativa um usuário: desativado não entra (a sessão aberta cai na
+// próxima requisição, porque o perfil é relido do banco).
+export async function alternarUsuarioAtivo(usuarioId: string): Promise<Resultado> {
+  const user = await exigir("administrarConfiguracoes");
+  if (falhou(user)) return user;
+  if (usuarioId === user.id) return { ok: false, erro: "Você não pode desativar a própria conta." };
+  const alvo = await prisma.user.findUnique({ where: { id: usuarioId }, include: { perfil: true } });
+  if (!alvo) return { ok: false, erro: "Usuário não encontrado." };
+  if (alvo.perfil && !podeAtribuirPerfil(user, alvo.perfil)) return { ok: false, erro: "Você não pode alterar este usuário." };
+  await prisma.$transaction(async (tx) => {
+    await tx.user.update({ where: { id: usuarioId }, data: { ativo: !alvo.ativo } });
+    await auditar(tx, { usuarioId: user.id, entidade: "User", entidadeId: usuarioId, acao: alvo.ativo ? "DESATIVAR" : "REATIVAR", dadosAntes: { email: alvo.email, ativo: alvo.ativo }, dadosDepois: { email: alvo.email, ativo: !alvo.ativo } });
+  });
+  return pronto(alvo.ativo ? "Usuário desativado: não entra mais." : "Usuário reativado.");
+}
+
+// Qualquer usuário troca a própria senha, informando a atual.
+export async function trocarMinhaSenha(atual: string, nova: string): Promise<Resultado> {
+  const user = await getCurrentUser();
+  if (typeof nova !== "string" || nova.length < 10) return { ok: false, erro: "A nova senha precisa de ao menos 10 caracteres." };
+  if (nova === atual) return { ok: false, erro: "A nova senha precisa ser diferente da atual." };
+  const u = await prisma.user.findUnique({ where: { id: user.id } });
+  if (!u?.passwordHash || !(await bcrypt.compare(String(atual ?? ""), u.passwordHash))) return { ok: false, erro: "A senha atual não confere." };
+  await prisma.$transaction(async (tx) => {
+    await tx.user.update({ where: { id: user.id }, data: { passwordHash: await bcrypt.hash(nova, 10) } });
+    await auditar(tx, { usuarioId: user.id, entidade: "User", entidadeId: user.id, acao: "TROCAR_PROPRIA_SENHA", dadosAntes: { email: u.email }, dadosDepois: { email: u.email, senha: "trocada" } });
+  });
+  return { ok: true, mensagem: "Senha trocada. Use a nova no próximo acesso." };
 }

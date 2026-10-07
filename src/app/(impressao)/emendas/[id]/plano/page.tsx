@@ -21,7 +21,7 @@ export default async function PlanoPage({ params }: { params: Promise<{ id: stri
   const ve =
     podeGerirEmenda(user, { autorUsuarioId: x.autor.usuarioId }) ||
     podeVerTodasEmendas(user) ||
-    temPermissao(user, "analisarViabilidade", "registrarExecucao");
+    temPermissao(user, "analisarViabilidade", "registrarExecucao", "consultarTudo");
   if (!ve) notFound();
 
   const m = x.modelo as Modelo | null;
