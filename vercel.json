@@ -4,5 +4,5 @@
   "regions": [
     "gru1"
   ],
-  "buildCommand": "prisma generate && if [ -n \"$Emendas_POSTGRES_URL_NON_POOLING\" ] || [ -n \"$DIRECT_URL\" ]; then prisma migrate deploy; fi && next build"
+  "buildCommand": "prisma generate && if [ \"$VERCEL_ENV\" = \"production\" ] && { [ -n \"$Emendas_POSTGRES_URL_NON_POOLING\" ] || [ -n \"$DIRECT_URL\" ]; }; then prisma migrate deploy; fi && next build"
 }
