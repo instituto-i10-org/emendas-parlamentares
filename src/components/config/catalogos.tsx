@@ -10,12 +10,13 @@ import {
   alternarDestinoAtivo,
   alternarNormaAtiva,
   alternarObjetoAtivo,
-  criarNorma,
+  salvarNorma,
   definirPendenciaDestino,
   definirSubfuncaoDestino,
   salvarArea,
   salvarObjeto,
 } from "@/lib/actions/config";
+import { CampoArquivo, type ArquivoValor } from "@/components/app/campo-arquivo";
 import { formatarCnpj } from "@/lib/cnpj";
 import { norm } from "@/lib/riep";
 import { BotaoAcao, useAcao } from "./comum";
@@ -352,34 +353,83 @@ export type NormaConfig = {
   artigo: string | null;
   trecho: string | null;
   url: string | null;
+  dataAto: string | null;
+  dataVigencia: string | null;
+  vigenciaFim: string | null;
+  arquivo: { id: string; nome: string } | null;
   ativo: boolean;
 };
 
-const TIPOS_NORMA = ["LOM", "REGIMENTO_INTERNO", "LEI", "PORTARIA", "COMUNICADO", "OUTRO"] as const;
+const TIPOS_NORMA = ["LOM", "REGIMENTO_INTERNO", "LEI", "RESOLUCAO", "ATO_DA_MESA", "DECRETO", "PORTARIA", "COMUNICADO", "OUTRO"] as const;
 const ROTULO_NORMA: Record<string, string> = {
   LOM: "Lei Orgânica",
   REGIMENTO_INTERNO: "Regimento Interno",
   LEI: "Lei",
+  RESOLUCAO: "Resolução",
+  ATO_DA_MESA: "Ato da Mesa",
+  DECRETO: "Decreto",
   PORTARIA: "Portaria",
   COMUNICADO: "Comunicado",
   OUTRO: "Outro",
 };
+const dataBR = (d: string | null) => (d ? d.split("-").reverse().join("/") : null);
+const normaVazia = {
+  id: "",
+  tipo: "LEI" as (typeof TIPOS_NORMA)[number],
+  titulo: "",
+  numero: "",
+  artigo: "",
+  trecho: "",
+  url: "",
+  dataAto: "",
+  dataVigencia: "",
+  vigenciaFim: "",
+  arquivo: null as ArquivoValor,
+};
 
+// Repositório normativo: o ato inteiro, com arquivo, vigência e edição.
 export function AbaNormas({ normas }: { normas: NormaConfig[] }) {
-  const [nova, setNova] = useState(false);
-  const [f, setF] = useState({ tipo: "LEI" as (typeof TIPOS_NORMA)[number], titulo: "", numero: "", artigo: "", trecho: "", url: "", dataVigencia: "" });
+  const [f, setF] = useState<typeof normaVazia | null>(null);
   const { pendente, executar } = useAcao();
+  const editar = (n: NormaConfig) =>
+    setF({
+      id: n.id,
+      tipo: n.tipo as (typeof TIPOS_NORMA)[number],
+      titulo: n.titulo,
+      numero: n.numero ?? "",
+      artigo: n.artigo ?? "",
+      trecho: n.trecho ?? "",
+      url: n.url ?? "",
+      dataAto: n.dataAto ?? "",
+      dataVigencia: n.dataVigencia ?? "",
+      vigenciaFim: n.vigenciaFim ?? "",
+      arquivo: n.arquivo,
+    });
   return (
-    <Cartao titulo="Base legal" acoes={<Button size="sm" onClick={() => setNova(true)}>Nova norma</Button>}>
+    <Cartao titulo="Base legal" acoes={<Button size="sm" onClick={() => setF(normaVazia)}>Nova norma</Button>}>
       <div className="grid gap-3">
         {normas.map((n) => (
-          <div key={n.id} className={`rounded-box bg-soft p-4 text-sm ${n.ativo ? "" : "opacity-60"}`}>
+          <div key={n.id} className={`rounded-box bg-soft p-4 text-sm ${n.ativo ? "" : "opacity-60"}`} data-norma={n.id}>
             <div className="flex flex-wrap items-start gap-2">
               <div className="min-w-0 flex-1">
-                <Selo>{ROTULO_NORMA[n.tipo]}</Selo> <b>{n.titulo}</b>
+                <Selo>{ROTULO_NORMA[n.tipo] ?? n.tipo}</Selo>{" "}
+                <b>
+                  {n.titulo}
+                  {n.numero ? ` nº ${n.numero}` : ""}
+                </b>
                 {n.artigo ? <span className="block text-xs text-muted-foreground">{n.artigo}</span> : null}
+                <span className="block text-xs text-muted-foreground">
+                  {n.dataAto ? `de ${dataBR(n.dataAto)} · ` : ""}
+                  {n.dataVigencia ? `vigência desde ${dataBR(n.dataVigencia)}` : "vigência não informada"}
+                  {n.vigenciaFim ? ` até ${dataBR(n.vigenciaFim)}` : ""}
+                </span>
               </div>
-              <div className="flex shrink-0 items-center gap-1">
+              <div className="flex shrink-0 flex-wrap items-center gap-1">
+                {n.arquivo ? (
+                  <Button size="xs" variant="ghost" asChild>
+                    <a href={`/api/arquivos/${n.arquivo.id}`}>Arquivo</a>
+                  </Button>
+                ) : null}
                 {n.url ? (
                   <Button size="xs" variant="ghost" asChild>
                     <a href={n.url} target="_blank" rel="noopener noreferrer">
@@ -387,6 +437,9 @@ export function AbaNormas({ normas }: { normas: NormaConfig[] }) {
                     </a>
                   </Button>
                 ) : null}
+                <Button size="xs" variant="ghost" onClick={() => editar(n)}>
+                  Editar
+                </Button>
                 <BotaoAcao acao={() => alternarNormaAtiva(n.id)}>{n.ativo ? "Desativar" : "Ativar"}</BotaoAcao>
               </div>
             </div>
@@ -394,41 +447,57 @@ export function AbaNormas({ normas }: { normas: NormaConfig[] }) {
           </div>
         ))}
       </div>
-      <Dialog open={nova} onOpenChange={setNova}>
-        <DialogContent
-          titulo="Nova norma"
-          largura="lg"
-          acoes={
-            <Button disabled={pendente} onClick={() => executar(() => criarNorma(f), () => setNova(false))}>
-              Cadastrar
-            </Button>
-          }
-        >
-          <div className="grid grid-cols-2 gap-3.5 max-sm:grid-cols-1">
-            <div className="col-span-full">
-              <p className="mb-1.5 text-sm font-semibold text-label">Tipo</p>
-              <Pilulas rotulo="Tipo" opcoes={TIPOS_NORMA} valor={f.tipo} curto={(v) => ROTULO_NORMA[v]} aoEscolher={(v) => setF({ ...f, tipo: v })} />
+      <Dialog open={!!f} onOpenChange={(a) => !a && setF(null)}>
+        {f ? (
+          <DialogContent
+            titulo={f.id ? "Editar norma" : "Nova norma"}
+            largura="lg"
+            acoes={
+              <Button
+                disabled={pendente}
+                onClick={() => executar(() => salvarNorma({ ...f, id: f.id || undefined, arquivoId: f.arquivo?.id ?? null }), () => setF(null))}
+              >
+                {f.id ? "Salvar" : "Cadastrar"}
+              </Button>
+            }
+          >
+            <div className="grid grid-cols-3 gap-3.5 max-sm:grid-cols-1">
+              <div className="col-span-full">
+                <p className="mb-1.5 text-sm font-semibold text-label">Tipo</p>
+                <Pilulas rotulo="Tipo" opcoes={TIPOS_NORMA} valor={f.tipo} curto={(v) => ROTULO_NORMA[v]} aoEscolher={(v) => setF({ ...f, tipo: v })} />
+              </div>
+              <Campo rotulo="Título" obrigatorio htmlFor="nm-t" className="col-span-full">
+                <input id="nm-t" className="campo h-12 px-3.5" value={f.titulo} onChange={(e) => setF({ ...f, titulo: e.target.value })} />
+              </Campo>
+              <Campo rotulo="Número" htmlFor="nm-n">
+                <input id="nm-n" className="campo h-12 px-3.5" value={f.numero} onChange={(e) => setF({ ...f, numero: e.target.value })} />
+              </Campo>
+              <Campo rotulo="Data do ato" htmlFor="nm-d">
+                <input id="nm-d" type="date" className="campo h-12 px-3.5" value={f.dataAto} onChange={(e) => setF({ ...f, dataAto: e.target.value })} />
+              </Campo>
+              <span />
+              <Campo rotulo="Início da vigência" htmlFor="nm-v">
+                <input id="nm-v" type="date" className="campo h-12 px-3.5" value={f.dataVigencia} onChange={(e) => setF({ ...f, dataVigencia: e.target.value })} />
+              </Campo>
+              <Campo rotulo="Fim da vigência" htmlFor="nm-vf" dica="Em branco: em vigor.">
+                <input id="nm-vf" type="date" className="campo h-12 px-3.5" value={f.vigenciaFim} onChange={(e) => setF({ ...f, vigenciaFim: e.target.value })} />
+              </Campo>
+              <span />
+              <Campo rotulo="Arquivo do ato" htmlFor="nm-arq" className="col-span-full" dica="PDF do ato publicado. Fica disponível no manual público.">
+                <CampoArquivo id="nm-arq" uso="NORMA" publico valor={f.arquivo} aoMudar={(v) => setF({ ...f, arquivo: v })} />
+              </Campo>
+              <Campo rotulo="Artigo (opcional)" htmlFor="nm-a" className="col-span-full" dica="Em branco, a norma vale como o ato inteiro.">
+                <input id="nm-a" className="campo h-12 px-3.5" value={f.artigo} onChange={(e) => setF({ ...f, artigo: e.target.value })} />
+              </Campo>
+              <Campo rotulo="Trecho (opcional)" htmlFor="nm-tr" className="col-span-full">
+                <textarea id="nm-tr" className="campo min-h-[90px] p-3.5" value={f.trecho} onChange={(e) => setF({ ...f, trecho: e.target.value })} />
+              </Campo>
+              <Campo rotulo="Link" htmlFor="nm-u" className="col-span-full">
+                <input id="nm-u" className="campo h-12 px-3.5" value={f.url} onChange={(e) => setF({ ...f, url: e.target.value })} />
+              </Campo>
             </div>
-            <Campo rotulo="Título" obrigatorio htmlFor="nm-t" className="col-span-full">
-              <input id="nm-t" className="campo h-12 px-3.5" value={f.titulo} onChange={(e) => setF({ ...f, titulo: e.target.value })} />
-            </Campo>
-            <Campo rotulo="Número" htmlFor="nm-n">
-              <input id="nm-n" className="campo h-12 px-3.5" value={f.numero} onChange={(e) => setF({ ...f, numero: e.target.value })} />
-            </Campo>
-            <Campo rotulo="Vigência" htmlFor="nm-v">
-              <input id="nm-v" type="date" className="campo h-12 px-3.5" value={f.dataVigencia} onChange={(e) => setF({ ...f, dataVigencia: e.target.value })} />
-            </Campo>
-            <Campo rotulo="Artigo" htmlFor="nm-a" className="col-span-full">
-              <input id="nm-a" className="campo h-12 px-3.5" value={f.artigo} onChange={(e) => setF({ ...f, artigo: e.target.value })} />
-            </Campo>
-            <Campo rotulo="Trecho" htmlFor="nm-tr" className="col-span-full">
-              <textarea id="nm-tr" className="campo min-h-[90px] p-3.5" value={f.trecho} onChange={(e) => setF({ ...f, trecho: e.target.value })} />
-            </Campo>
-            <Campo rotulo="Link" htmlFor="nm-u" className="col-span-full">
-              <input id="nm-u" className="campo h-12 px-3.5" value={f.url} onChange={(e) => setF({ ...f, url: e.target.value })} />
-            </Campo>
-          </div>
-        </DialogContent>
+          </DialogContent>
+        ) : null}
       </Dialog>
     </Cartao>
   );

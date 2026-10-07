@@ -396,34 +396,59 @@ export async function salvarArea(entrada: z.input<typeof areaSchema>): Promise<R
 // Normas
 // ============================================================================
 
+const TIPOS_NORMA = ["LOM", "REGIMENTO_INTERNO", "LEI", "RESOLUCAO", "ATO_DA_MESA", "DECRETO", "PORTARIA", "COMUNICADO", "OUTRO"] as const;
+const dataOpcional = z.union([z.literal(""), z.string().regex(/^\d{4}-\d{2}-\d{2}$/)]).optional();
 const normaSchema = z.object({
-  tipo: z.enum(["LOM", "REGIMENTO_INTERNO", "LEI", "PORTARIA", "COMUNICADO", "OUTRO"]),
+  id: z.string().optional(),
+  tipo: z.enum(TIPOS_NORMA),
   titulo: z.string().trim().min(3, "Informe o título.").max(300),
   numero: z.string().trim().max(60).optional(),
+  // Ato inteiro: artigo e trecho são opcionais.
   artigo: z.string().trim().max(200).optional(),
   trecho: z.string().trim().max(3000).optional(),
   url: z.union([z.literal(""), z.url("Link inválido.")]).optional(),
-  dataVigencia: z.union([z.literal(""), z.string().regex(/^\d{4}-\d{2}-\d{2}$/)]).optional(),
+  dataAto: dataOpcional,
+  dataVigencia: dataOpcional,
+  vigenciaFim: dataOpcional,
+  arquivoId: z.string().max(40).nullable().optional(),
 });
 
-export async function criarNorma(entrada: z.input<typeof normaSchema>): Promise<Resultado> {
+const dia = (v: string | undefined) => (v ? new Date(`${v}T12:00:00Z`) : null);
+
+// Cria ou edita uma norma (ato inteiro, com arquivo e vigência).
+export async function salvarNorma(entrada: z.input<typeof normaSchema>): Promise<Resultado> {
   const user = await exigir("administrarConfiguracoes");
   if (falhou(user)) return user;
   const p = normaSchema.safeParse(entrada);
   if (!p.success) return erro(p.error);
-  const norma = await prisma.documentoNormativo.create({
-    data: {
-      tipo: p.data.tipo,
-      titulo: p.data.titulo,
-      numero: p.data.numero || null,
-      artigo: p.data.artigo || null,
-      trecho: p.data.trecho || null,
-      url: p.data.url || null,
-      dataVigencia: p.data.dataVigencia ? new Date(`${p.data.dataVigencia}T12:00:00Z`) : null,
-    },
+  const d = p.data;
+  if (d.dataVigencia && d.vigenciaFim && d.vigenciaFim < d.dataVigencia) return { ok: false, erro: "O fim da vigência não pode ser antes do início." };
+  if (d.arquivoId) {
+    const a = await prisma.arquivo.findUnique({ where: { id: d.arquivoId } });
+    if (!a || a.uso !== "NORMA") return { ok: false, erro: "Arquivo inválido." };
+  }
+  const dados = {
+    tipo: d.tipo,
+    titulo: d.titulo,
+    numero: d.numero || null,
+    artigo: d.artigo || null,
+    trecho: d.trecho || null,
+    url: d.url || null,
+    dataAto: dia(d.dataAto),
+    dataVigencia: dia(d.dataVigencia),
+    vigenciaFim: dia(d.vigenciaFim),
+    arquivoId: d.arquivoId ?? null,
+  };
+  const antes = d.id ? await prisma.documentoNormativo.findUnique({ where: { id: d.id } }) : null;
+  if (d.id && !antes) return { ok: false, erro: "Norma não encontrada." };
+  const salvo = await prisma.$transaction(async (tx) => {
+    const n = d.id ? await tx.documentoNormativo.update({ where: { id: d.id }, data: dados }) : await tx.documentoNormativo.create({ data: dados });
+    // Arquivo de norma é público (o manual o oferece para baixar).
+    if (d.arquivoId) await tx.arquivo.update({ where: { id: d.arquivoId }, data: { publico: true } });
+    await auditar(tx, { usuarioId: user.id, entidade: "DocumentoNormativo", entidadeId: n.id, acao: d.id ? "ATUALIZAR" : "CRIAR", dadosAntes: antes ?? undefined, dadosDepois: n });
+    return n;
   });
-  await registrarAuditoria({ usuarioId: user.id, entidade: "DocumentoNormativo", entidadeId: norma.id, acao: "CRIAR", dadosDepois: norma });
-  return pronto("Norma cadastrada.");
+  return pronto(d.id ? "Norma atualizada." : `Norma cadastrada: ${salvo.titulo}.`);
 }
 
 export async function alternarNormaAtiva(id: string): Promise<Resultado> {

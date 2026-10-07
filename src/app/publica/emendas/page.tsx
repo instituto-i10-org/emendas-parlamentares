@@ -4,58 +4,33 @@ import { Cartao, TabelaDados } from "@/components/app/pagina";
 import { Selo } from "@/components/emenda/ui";
 import { Button } from "@/components/ui/button";
 import { STATUS_EMENDA } from "@/lib/emendas/rotulos";
+import { PortalDesligado } from "@/components/app/portal-desligado";
+import { consultarPortal, portalAtivo } from "@/lib/portal";
 import { getAnoAtivo } from "@/lib/exercicio";
 import { prisma } from "@/lib/prisma";
-import { BRL, norm } from "@/lib/riep";
+import { BRL } from "@/lib/riep";
 import { NAO_REMETIDAS } from "@/lib/emendas/situacoes";
 
 export const metadata: Metadata = { title: "Emendas — portal público" };
 
 const POR_PAGINA = 25;
 
-type Linha = { chave: string; numero: number | null; autor: string; objeto: string; destino: string; valor: number; situacao: string; href: string | null };
+const SITUACOES_PUBLICAS = ["SUBMETIDA", "EM_TRAMITACAO", "EM_DILIGENCIA", "APROVADA", "REJEITADA", "IMPORTADA"];
 
 // Todas as emendas do exercício já apresentadas: as do sistema (nunca
 // rascunho) e as apresentadas fora dele.
-export default async function EmendasPublicasPage({ searchParams }: { searchParams: Promise<{ q?: string; autor?: string; pagina?: string }> }) {
-  const { q = "", autor = "", pagina = "1" } = await searchParams;
+export default async function EmendasPublicasPage({ searchParams }: { searchParams: Promise<{ q?: string; autor?: string; situacao?: string; pagina?: string }> }) {
+  if (!(await portalAtivo())) return <PortalDesligado />;
+  const { q = "", autor = "", situacao = "", pagina = "1" } = await searchParams;
   const ano = await getAnoAtivo();
-  const [sistema, importadas, autores] = await Promise.all([
-    // Autor de demonstração não aparece no portal: as emendas dele são de teste.
-    prisma.emenda.findMany({ where: { exercicio: { ano: ano ?? -1 }, status: { notIn: NAO_REMETIDAS }, autor: { demonstracao: false } }, include: { autor: true, destino: true } }),
-    prisma.emendaImportada.findMany({ where: { exercicio: { ano: ano ?? -1 }, autor: { demonstracao: false } }, include: { autor: true } }),
+  const [filtradas, autores] = await Promise.all([
+    consultarPortal(ano, { q, autor, situacao }).then((l) => l ?? []),
     prisma.autor.findMany({ orderBy: { nome: "asc" }, where: { demonstracao: false, OR: [{ emendas: { some: { status: { notIn: NAO_REMETIDAS } } } }, { emendasImportadas: { some: {} } }] } }),
   ]);
-  const todas: (Linha & { autorId: string })[] = [
-    ...sistema.map((e) => ({
-      chave: e.id,
-      autorId: e.autorId,
-      numero: e.numero,
-      autor: e.autor.nome,
-      objeto: e.objeto,
-      destino: e.destino?.nome ?? "—",
-      valor: e.valor.toNumber(),
-      situacao: e.status,
-      href: `/publica/emendas/${e.id}`,
-    })),
-    ...importadas.map((i) => ({
-      chave: i.id,
-      autorId: i.autorId,
-      numero: i.numero,
-      autor: i.autor.nome,
-      objeto: i.descricao,
-      destino: "—",
-      valor: i.valor.toNumber(),
-      situacao: "IMPORTADA",
-      href: null,
-    })),
-  ].sort((a, b) => (a.numero ?? 1e9) - (b.numero ?? 1e9));
-  const t = norm(q.trim());
-  const filtradas = todas.filter((l) => (!autor || l.autorId === autor) && (!t || norm(`${l.objeto} ${l.destino} ${l.autor} ${l.numero}`).includes(t)));
   const paginas = Math.max(1, Math.ceil(filtradas.length / POR_PAGINA));
   const p = Math.min(paginas, Math.max(1, Number(pagina) || 1));
   const visiveis = filtradas.slice((p - 1) * POR_PAGINA, p * POR_PAGINA);
-  const link = (n: number) => `/publica/emendas?${new URLSearchParams({ ...(q ? { q } : {}), ...(autor ? { autor } : {}), pagina: String(n) })}`;
+  const link = (n: number) => `/publica/emendas?${new URLSearchParams({ ...(q ? { q } : {}), ...(autor ? { autor } : {}), ...(situacao ? { situacao } : {}), pagina: String(n) })}`;
 
   return (
     <div className="grid gap-5">
@@ -67,6 +42,14 @@ export default async function EmendasPublicasPage({ searchParams }: { searchPara
           {autores.map((a) => (
             <option key={a.id} value={a.id}>
               {a.nome}
+            </option>
+          ))}
+        </select>
+        <select name="situacao" defaultValue={situacao} className="campo campo-select h-11 max-w-[240px] pr-9 pl-3.5" aria-label="Situação">
+          <option value="">Todas as situações</option>
+          {SITUACOES_PUBLICAS.map((s) => (
+            <option key={s} value={s}>
+              {s === "IMPORTADA" ? "Apresentada fora do sistema" : STATUS_EMENDA[s].rotulo}
             </option>
           ))}
         </select>

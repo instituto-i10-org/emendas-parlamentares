@@ -6,6 +6,7 @@ import { AbaAuditoria, AbaBiblioteca, AbaDestinos, AbaNormas } from "@/component
 import { AbaExercicio } from "@/components/config/exercicio";
 import { AbaFontesPreco } from "@/components/config/fontes-preco";
 import { AbaValidacao } from "@/components/config/validacao";
+import { AbaPortal } from "@/components/config/portal";
 import { requireAccess } from "@/lib/access";
 import { PERMISSOES, podeAtribuirPerfil, podeGerirExercicio, podeGerirPerfis, temPermissao } from "@/lib/authz";
 import { diaBrasilia } from "@/lib/emendas/contexto";
@@ -19,6 +20,7 @@ export const metadata: Metadata = { title: "Configurações — Emendas360" };
 const ABAS = [
   { id: "exercicio", titulo: "Exercício e parâmetros" },
   { id: "validacao", titulo: "Validação" },
+  { id: "portal", titulo: "Portal e manual" },
   { id: "usuarios", titulo: "Usuários" },
   { id: "perfis", titulo: "Perfis", adminGeral: true },
   { id: "destinos", titulo: "Destinos" },
@@ -52,6 +54,7 @@ export default async function ConfigPage({ searchParams }: { searchParams: Promi
       </nav>
       {aba === "exercicio" ? await exercicio(podeGerirExercicio(user)) : null}
       {aba === "validacao" ? await validacao(podeGerirExercicio(user)) : null}
+      {aba === "portal" ? await portal(temPermissao(user, "administrarConfiguracoes")) : null}
       {aba === "usuarios" ? await usuarios(user) : null}
       {aba === "perfis" ? await perfis(user) : null}
       {aba === "destinos" ? await destinos() : null}
@@ -201,9 +204,44 @@ async function biblioteca() {
   );
 }
 
+async function portal(podeEditar: boolean) {
+  const [m, atos] = await Promise.all([
+    prisma.municipio.findFirst({ include: { manualPublicadoPor: { select: { name: true, email: true } } } }),
+    prisma.documentoNormativo.findMany({ where: { ativo: true }, orderBy: [{ tipo: "asc" }, { titulo: "asc" }] }),
+  ]);
+  return (
+    <AbaPortal
+      podeEditar={podeEditar}
+      portalPublico={m?.portalPublico ?? true}
+      atoId={m?.manualAtoId ?? null}
+      publicadoEm={m?.manualPublicadoEm ? DATA_HORA(m.manualPublicadoEm) : null}
+      publicadoPor={m?.manualPublicadoPor?.name ?? m?.manualPublicadoPor?.email ?? null}
+      atos={atos.map((a) => ({ id: a.id, rotulo: `${a.titulo}${a.numero ? ` nº ${a.numero}` : ""}${a.artigo ? ` — ${a.artigo}` : ""}`.slice(0, 140) }))}
+    />
+  );
+}
+
 async function normas() {
-  const lista = await prisma.documentoNormativo.findMany({ orderBy: [{ ativo: "desc" }, { tipo: "asc" }, { titulo: "asc" }] });
-  return <AbaNormas normas={lista.map((n) => ({ id: n.id, tipo: n.tipo, titulo: n.titulo, numero: n.numero, artigo: n.artigo, trecho: n.trecho, url: n.url, ativo: n.ativo }))} />;
+  const lista = await prisma.documentoNormativo.findMany({ orderBy: [{ ativo: "desc" }, { tipo: "asc" }, { titulo: "asc" }], include: { arquivo: { select: { id: true, nome: true } } } });
+  const iso = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : null);
+  return (
+    <AbaNormas
+      normas={lista.map((n) => ({
+        id: n.id,
+        tipo: n.tipo,
+        titulo: n.titulo,
+        numero: n.numero,
+        artigo: n.artigo,
+        trecho: n.trecho,
+        url: n.url,
+        dataAto: iso(n.dataAto),
+        dataVigencia: iso(n.dataVigencia),
+        vigenciaFim: iso(n.vigenciaFim),
+        arquivo: n.arquivo,
+        ativo: n.ativo,
+      }))}
+    />
+  );
 }
 
 async function auditoria() {

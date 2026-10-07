@@ -5,6 +5,8 @@ import { Cartao } from "@/components/app/pagina";
 import { Selo } from "@/components/emenda/ui";
 import { somasExecucao } from "@/lib/emendas/execucao";
 import { STATUS_EMENDA } from "@/lib/emendas/rotulos";
+import { PortalDesligado } from "@/components/app/portal-desligado";
+import { portalAtivo } from "@/lib/portal";
 import { prisma } from "@/lib/prisma";
 import { BRL, DATA, MODELOS } from "@/lib/riep";
 import { NAO_REMETIDAS } from "@/lib/emendas/situacoes";
@@ -14,13 +16,14 @@ export const metadata: Metadata = { title: "Emenda — portal público" };
 // Ficha pública da emenda. Rascunhos não existem para o portal.
 export default async function EmendaPublicaPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  if (!(await portalAtivo())) return <PortalDesligado />;
   const e = await prisma.emenda.findFirst({
     where: { id, status: { notIn: NAO_REMETIDAS }, autor: { demonstracao: false } },
     include: {
       autor: true,
       destino: true,
       exercicio: true,
-      dotacao: { include: { acao: true, programa: true, unidadeOrcamentaria: true, naturezaDespesa: true } },
+      dotacao: { include: { acao: true, programa: true, orgao: true, unidadeOrcamentaria: true, funcao: true, subfuncao: true, naturezaDespesa: true, fonteRecurso: true } },
       metas: { orderBy: { ordem: "asc" } },
       parcelas: { orderBy: { ordem: "asc" } },
       andamentos: { orderBy: [{ data: "asc" }, { criadoEm: "asc" }] },
@@ -62,11 +65,7 @@ export default async function EmendaPublicaPage({ params }: { params: Promise<{ 
           <dt className="text-muted-foreground">Área</dt>
           <dd>{e.parcela === "SAUDE" ? "Saúde" : e.parcela === "DEMAIS" ? "Demais áreas" : "—"}</dd>
           <dt className="text-muted-foreground">Dotação</dt>
-          <dd>
-            {e.dotacao
-              ? `${e.dotacao.unidadeOrcamentaria.nome} · ${e.dotacao.programa.nome} · ${e.dotacao.acao.nome} (${e.dotacao.naturezaDespesa.codigo})`
-              : "a definir pela análise técnica"}
-          </dd>
+          <dd>{e.dotacao ? <Classificacao d={e.dotacao} /> : "a definir pela análise técnica"}</dd>
           <dt className="text-muted-foreground">Justificativa</dt>
           <dd className="whitespace-pre-line">{e.justificativa || "—"}</dd>
           <dt className="text-muted-foreground">Meta</dt>
@@ -124,5 +123,38 @@ export default async function EmendaPublicaPage({ params }: { params: Promise<{ 
         </dl>
       </Cartao>
     </div>
+  );
+}
+
+type Codigo = { codigo: string; nome: string | null };
+// A classificação completa, com código e nome de cada componente.
+function Classificacao({ d }: { d: { ficha: string | null; orgao: Codigo; unidadeOrcamentaria: Codigo; funcao: Codigo; subfuncao: Codigo; programa: Codigo; acao: Codigo; naturezaDespesa: Codigo; fonteRecurso: Codigo } }) {
+  const linhas: [string, Codigo][] = [
+    ["Órgão", d.orgao],
+    ["Unidade", d.unidadeOrcamentaria],
+    ["Função", d.funcao],
+    ["Subfunção", d.subfuncao],
+    ["Programa", d.programa],
+    ["Ação", d.acao],
+    ["Natureza", d.naturezaDespesa],
+    ["Fonte", d.fonteRecurso],
+  ];
+  return (
+    <dl className="grid grid-cols-[100px_minmax(0,1fr)] gap-x-3 gap-y-0.5 text-xs">
+      {linhas.map(([k, v]) => (
+        <div key={k} className="contents">
+          <dt className="text-muted-foreground">{k}</dt>
+          <dd>
+            {v.codigo} — {v.nome ?? ""}
+          </dd>
+        </div>
+      ))}
+      {d.ficha ? (
+        <>
+          <dt className="text-muted-foreground">Ficha</dt>
+          <dd>{d.ficha}</dd>
+        </>
+      ) : null}
+    </dl>
   );
 }

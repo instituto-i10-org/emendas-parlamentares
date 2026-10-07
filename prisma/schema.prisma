@@ -71,6 +71,9 @@ enum TipoNorma {
   LOM
   REGIMENTO_INTERNO
   LEI
+  RESOLUCAO
+  ATO_DA_MESA
+  DECRETO
   PORTARIA
   COMUNICADO
   OUTRO
@@ -258,14 +261,23 @@ enum EtapaExecucao {
 
 // O município atendido por este deploy. Uma única linha.
 model Municipio {
-  id             String   @id @default(cuid())
-  nome           String
-  uf             String
-  codigoIbge     String?
-  nomeCamara     String?
-  nomePrefeitura String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id                   String    @id @default(cuid())
+  nome                 String
+  uf                   String
+  codigoIbge           String?
+  nomeCamara           String?
+  nomePrefeitura       String?
+  // Portal público ligado (a conformidade confere com uma consulta real).
+  portalPublico        Boolean   @default(true)
+  // Manual orientativo: instituído por ato cadastrado nas normas e publicado.
+  manualAtoId          String?
+  manualPublicadoEm    DateTime?
+  manualPublicadoPorId String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  manualAto          DocumentoNormativo? @relation("AtoDoManual", fields: [manualAtoId], references: [id], onDelete: SetNull)
+  manualPublicadoPor User?               @relation("ManualPublicado", fields: [manualPublicadoPorId], references: [id], onDelete: SetNull)
 }
 
 // Exercício orçamentário (ano). Contexto de dados de toda a aplicação.
@@ -648,12 +660,19 @@ model DocumentoNormativo {
   artigo       String?
   trecho       String?
   url          String?
+  // Data do ato, início e fim de vigência (sem fim = em vigor).
+  dataAto      DateTime?
   dataVigencia DateTime?
+  vigenciaFim  DateTime?
+  // Arquivo do ato enviado pelo sistema.
+  arquivoId    String?
   ativo        Boolean   @default(true)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
-  regras RegraValidacao[]
+  regras   RegraValidacao[]
+  arquivo  Arquivo?         @relation(fields: [arquivoId], references: [id], onDelete: SetNull)
+  manualDe Municipio[]      @relation("AtoDoManual")
 
   @@index([tipo, ativo])
 }
@@ -1163,6 +1182,7 @@ model User {
   emendasIncorporadas Emenda[]             @relation("EmendaIncorporada")
   historicos          HistoricoEmenda[]
   arquivos            Arquivo[]
+  manuaisPublicados   Municipio[]          @relation("ManualPublicado")
 
   @@index([perfilId])
 }
@@ -1261,6 +1281,7 @@ model Arquivo {
   enviadoPor   User?                     @relation(fields: [enviadoPorId], references: [id], onDelete: SetNull)
   instrumentos InstrumentoPlanejamento[]
   importacoes  Importacao[]
+  normas       DocumentoNormativo[]
 
   @@index([uso])
 }
