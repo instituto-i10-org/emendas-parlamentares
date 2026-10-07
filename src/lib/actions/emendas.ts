@@ -61,11 +61,13 @@ export async function salvarEmenda(entrada: EstadoEmenda, submeter = false, anoT
   if (await exercicioHistorico(ctx.config.exercicio)) {
     return { ok: false, erro: `O exercício ${ctx.config.exercicio} é histórico: não recebe emenda nova nem alteração. Use o exercício em curso.` };
   }
-  // Depois do fim do protocolo, o rascunho ainda se salva; submeter, não. O
-  // reenvio depois de diligência não é protocolo novo: a emenda já foi apresentada.
-  if (submeter && ctx.prazoEncerrado && ctx.prazoProtocolo && existente?.status !== "EM_DILIGENCIA") {
-    const [a, m, d] = ctx.prazoProtocolo.split("-");
-    return { ok: false, erro: `O prazo de protocolo das emendas do exercício ${ctx.config.exercicio} terminou em ${d}/${m}/${a}. A emenda não pode mais ser submetida.` };
+  // Exercício encerrado: nem rascunho. Emendamento fechado (projeto de lei fora
+  // de tramitação, prazo vencido): o rascunho ainda se salva; submeter, não. O
+  // reenvio depois de diligência não é protocolo novo: o prazo não o alcança.
+  const em = ctx.emendamento;
+  if (em.motivo === "EXERCICIO_ENCERRADO") return { ok: false, erro: em.explicacao };
+  if (submeter && !em.aberto && !(em.motivo === "PRAZO_ENCERRADO" && existente?.status === "EM_DILIGENCIA")) {
+    return { ok: false, erro: `${em.explicacao} A emenda não pode ser submetida agora.` };
   }
   let autorId: string;
   if (existente) {

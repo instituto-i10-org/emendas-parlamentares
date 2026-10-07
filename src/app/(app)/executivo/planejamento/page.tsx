@@ -3,14 +3,18 @@ import Link from "next/link";
 import { Cartao, Kpi, Pagina, TabelaDados } from "@/components/app/pagina";
 import { Selo } from "@/components/emenda/ui";
 import { Button } from "@/components/ui/button";
-import { ImportarBase, ListaDotacoes, NovoInstrumento, StatusInstrumento } from "@/components/planejamento/componentes";
+import { FileText } from "lucide-react";
+import { IndicadorEmendamento } from "@/components/emenda/indicador-emendamento";
+import { EditarInstrumento, ExcluirInstrumento, ImportarBase, ListaDotacoes, NovoInstrumento, StatusInstrumento } from "@/components/planejamento/componentes";
 import { Poder } from "@/generated/prisma/enums";
 import { requireAccess } from "@/lib/access";
 import { podeGerirPlanejamento } from "@/lib/authz";
 import { getAnoAtivo } from "@/lib/exercicio";
 import { NATUREZAS_EMENDAVEIS } from "@/lib/orcamento/codigo-dotacao";
 import { prisma } from "@/lib/prisma";
-import { BRL } from "@/lib/riep";
+import { lerEmendamento } from "@/lib/emendas/contexto";
+import { formatarNumero } from "@/lib/emendas/estado";
+import { BRL, DATA } from "@/lib/riep";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Planejamento — Emendas360" };
@@ -32,9 +36,12 @@ export default async function PlanejamentoPage({ searchParams }: { searchParams:
     ? await prisma.instrumentoPlanejamento.findMany({
         where: { exercicioId: exercicio.id },
         orderBy: [{ especie: "asc" }, { createdAt: "asc" }],
-        include: { instrumentoOrigem: true, _count: { select: { dotacoes: true } } },
+        include: { instrumentoOrigem: true, derivados: { select: { numero: true } }, arquivo: { select: { id: true, nome: true } }, _count: { select: { dotacoes: true } } },
       })
     : [];
+
+  const projetos = instrumentos.filter((i) => i.especie === "PROJETO_LEI").map((i) => ({ id: i.id, rotulo: `${i.tipo} · ${i.numero}`, tipo: i.tipo }));
+  const emendamento = ano ? await lerEmendamento(ano) : null;
 
   return (
     <Pagina
@@ -44,7 +51,7 @@ export default async function PlanejamentoPage({ searchParams }: { searchParams:
         podeGerir && exercicio ? (
           <NovoInstrumento
             exercicioId={exercicio.id}
-            projetos={instrumentos.filter((i) => i.especie === "PROJETO_LEI").map((i) => ({ id: i.id, rotulo: `${i.tipo} · ${i.numero}` }))}
+            projetos={projetos}
           />
         ) : null
       }
@@ -64,9 +71,10 @@ export default async function PlanejamentoPage({ searchParams }: { searchParams:
 
       {aba === "instrumentos" ? (
         <Cartao titulo={`Instrumentos do exercício ${ano ?? ""}`}>
+          <IndicadorEmendamento s={emendamento} />
           <TabelaDados
             vazio="Nenhum instrumento cadastrado."
-            colunas={[{ titulo: "Instrumento" }, { titulo: "Dotações", className: "text-right" }, { titulo: "Ciclo de vida" }, { titulo: "" }]}
+            colunas={[{ titulo: "Instrumento" }, { titulo: "Envio / aprovação" }, { titulo: "Dotações", className: "text-right" }, { titulo: "Situação" }, { titulo: "" }]}
             linhas={instrumentos.map((i) => ({
               chave: i.id,
               celulas: [
@@ -76,8 +84,24 @@ export default async function PlanejamentoPage({ searchParams }: { searchParams:
                     {i.tipo} · {i.numero}
                   </b>
                   <span className="block max-w-lg text-xs text-muted-foreground">{i.ementa}</span>
-                  {i.instrumentoOrigem ? <span className="block text-xs text-muted-foreground">origem: {i.instrumentoOrigem.numero}</span> : null}
+                  {i.instrumentoOrigem ? <span className="block text-xs text-muted-foreground">Lei originada do {i.instrumentoOrigem.numero}</span> : null}
+                  {i.derivados.length ? <span className="block text-xs text-muted-foreground">Originou: {i.derivados.map((d) => d.numero).join(", ")}</span> : null}
+                  {i.arquivo ? (
+                    <a href={`/api/arquivos/${i.arquivo.id}`} target="_blank" rel="noopener" className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-navy hover:underline">
+                      <FileText className="size-3.5" aria-hidden /> {i.arquivo.nome}
+                    </a>
+                  ) : i.arquivoUrl ? (
+                    <a href={i.arquivoUrl} target="_blank" rel="noopener noreferrer" className="mt-1 block text-xs font-semibold text-navy hover:underline">
+                      Documento (link externo)
+                    </a>
+                  ) : (
+                    <span className="mt-1 block text-xs text-warn">Sem arquivo da peça</span>
+                  )}
                 </div>,
+                <span key="dt" className="text-xs whitespace-nowrap tnum">
+                  {DATA(i.especie === "LEI_APROVADA" ? i.dataAprovacao : i.dataEnvio)}
+                  {i.totalImpresso ? <span className="block text-muted-foreground">total impresso {BRL(i.totalImpresso.toNumber())}</span> : null}
+                </span>,
                 <span key="d" className="tnum">{i._count.dotacoes}</span>,
                 <StatusInstrumento key="s" id={i.id} status={i.status} podeGerir={podeGerir} />,
                 <div key="a" className="flex items-center justify-end gap-1">
@@ -87,6 +111,24 @@ export default async function PlanejamentoPage({ searchParams }: { searchParams:
                     </Button>
                   ) : null}
                   {podeGerir ? <ImportarBase instrumentoId={i.id} rotulo={i.numero} /> : null}
+                  {podeGerir && exercicio ? (
+                    <EditarInstrumento
+                      exercicioId={exercicio.id}
+                      projetos={projetos}
+                      inicial={{
+                        id: i.id,
+                        especie: i.especie,
+                        tipo: i.tipo,
+                        numero: i.numero,
+                        ementa: i.ementa,
+                        instrumentoOrigemId: i.instrumentoOrigemId ?? "",
+                        arquivo: i.arquivo,
+                        data: (i.especie === "LEI_APROVADA" ? i.dataAprovacao : i.dataEnvio)?.toISOString().slice(0, 10) ?? "",
+                        totalImpresso: i.totalImpresso ? formatarNumero(i.totalImpresso.toNumber(), 2) : "",
+                      }}
+                    />
+                  ) : null}
+                  {podeGerir && !i._count.dotacoes && !i.derivados.length ? <ExcluirInstrumento id={i.id} rotulo={`${i.tipo} · ${i.numero}`} /> : null}
                 </div>,
               ],
             }))}

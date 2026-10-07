@@ -21,8 +21,8 @@ export function SeletorExercicio({
   const router = useRouter();
   const [trocando, iniciar] = useTransition();
 
-  if (anos.length < 2) return <b className={cn("font-bold", className)}>{ativo}</b>;
-
+  // Sempre um seletor, mesmo com um ano só: o exercício ativo fica à vista e
+  // se escolhe no mesmo lugar.
   return (
     <select
       aria-label="Exercício em exibição"

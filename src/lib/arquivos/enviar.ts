@@ -32,7 +32,7 @@ export async function enviarArquivo(
     form.set("uso", uso);
     form.set("arquivo", arquivo);
     const r = await fetch("/api/arquivos/local", { method: "POST", body: form });
-    const j = (await r.json()) as { chave?: string; error?: string };
+    const j = (await r.json().catch(() => ({ error: `Envio recusado pelo servidor (${r.status}).` }))) as { chave?: string; error?: string };
     if (!r.ok || !j.chave) throw new Error(j.error ?? "Não foi possível enviar o arquivo.");
     chave = j.chave;
     opcoes.progresso?.(100);

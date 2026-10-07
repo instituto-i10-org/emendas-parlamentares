@@ -4,10 +4,12 @@ import { FilePlus2 } from "lucide-react";
 import { Pagina } from "@/components/emenda/avisos-pagina";
 import { ApagarEmendaTeste } from "@/components/emenda/apagar-emenda-teste";
 import { DescartarRascunho } from "@/components/emenda/descartar-rascunho";
+import { IndicadorEmendamento } from "@/components/emenda/indicador-emendamento";
 import { Selo } from "@/components/emenda/ui";
 import { Button } from "@/components/ui/button";
 import type { Prisma } from "@/generated/prisma/client";
 import { apresentaEmendas, podeGerirEmenda, podeVerTodasEmendas } from "@/lib/authz";
+import { lerEmendamento } from "@/lib/emendas/contexto";
 import { exercicioHistorico, getAnoAtivo } from "@/lib/exercicio";
 import { prisma } from "@/lib/prisma";
 import { BRL, DATA } from "@/lib/riep";
@@ -62,6 +64,7 @@ export default async function EmendasPage({ searchParams }: { searchParams: Prom
         ) : null
       }
     >
+      <IndicadorEmendamento s={ano ? await lerEmendamento(ano) : null} />
       {erro === "acesso-negado" ? (
         <p role="alert" className="mb-4 rounded-box bg-warn-bg px-4 py-3 text-sm font-semibold text-warn">
           Seu perfil não tem acesso à página solicitada.

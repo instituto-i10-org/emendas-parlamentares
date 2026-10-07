@@ -114,6 +114,9 @@ export function EditorEmenda({
   }, []);
 
   const d = useDerivado(e, ctx, destinos, aplicado);
+  // Remessa liberada com o emendamento aberto; com o prazo vencido, só o
+  // reenvio depois de diligência (a emenda já foi apresentada no prazo).
+  const podeRemeter = ctx.emendamento.aberto || (!!diligencia && ctx.emendamento.motivo === "PRAZO_ENCERRADO");
 
   // Aviso ao sair com alterações não salvas.
   useEffect(() => {
@@ -275,7 +278,7 @@ export function EditorEmenda({
           ) : null}
           <Button
             variant="ok"
-            disabled={!d.resumo.pode || gravando || !!duplicata || ctx.prazoEncerrado}
+            disabled={!d.resumo.pode || gravando || !!duplicata || !podeRemeter}
             onClick={() => gravar(true)}
             className="max-md:flex-[1_1_100%]"
           >
@@ -334,6 +337,14 @@ export function EditorEmenda({
       <div className="mb-2 text-xs font-medium text-muted-foreground">
         Emendas › <b className="font-bold text-ink">{diligencia ? `Emenda nº ${diligencia.numero ?? "—"}/${ctx.config.exercicio} — ajuste pedido pela Comissão` : e.id ? "Editar emenda" : "Nova emenda"}</b>
       </div>
+      {!ctx.emendamento.aberto ? (
+        <div className="mb-5">
+          <Aviso tipo={podeRemeter ? "warn" : "bad"} titulo="Emendamento fechado">
+            {ctx.emendamento.explicacao}{" "}
+            {podeRemeter ? "O reenvio depois de diligência continua permitido." : "O rascunho pode ser salvo, mas não remetido."}
+          </Aviso>
+        </div>
+      ) : null}
       {diligencia ? (
         <div className="mb-5">
           <Aviso tipo="warn" titulo="A Comissão de Finanças pediu ajuste nesta emenda">
@@ -392,7 +403,7 @@ export function EditorEmenda({
           ) : etapa === 2 ? (
             <Etapa2 e={e} d={d} ctx={ctx} atualizar={atualizar} autor={autor} alterado={alterado} />
           ) : (
-            <Etapa3 e={e} d={d} atualizar={atualizar} prazo={ctx.prazoProtocolo ? { data: ctx.prazoProtocolo, encerrado: ctx.prazoEncerrado } : null} />
+            <Etapa3 e={e} d={d} atualizar={atualizar} emendamento={ctx.emendamento} podeRemeter={podeRemeter} />
           )}
           {etapa > 1 ? rodape : <div className="h-7" />}
         </section>

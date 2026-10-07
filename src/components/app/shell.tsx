@@ -118,6 +118,12 @@ export function AppShell({
         <span className="text-lg font-extrabold tracking-[-0.03em]">
           Emendas<b className="text-cyan">360</b>
         </span>
+        {exercicio ? (
+          <span className="ml-auto flex items-center gap-1.5 text-sm">
+            <CalendarDays className="size-4 text-cyan" strokeWidth={1.6} aria-hidden />
+            <SeletorExercicio {...exercicio} destino="/inicio" />
+          </span>
+        ) : null}
       </div>
 
       <div
@@ -194,8 +200,8 @@ export function AppShell({
             className={cn("mx-2.5 mt-auto mb-3 flex items-center gap-2.5 rounded-md bg-white/6 px-3 py-2", recolhido && "md:justify-center md:px-0")}
           >
             <CalendarDays className="size-[18px] shrink-0 text-cyan" strokeWidth={1.6} />
-            <span className={cn("flex items-baseline gap-1.5 text-sm", recolhido && "md:hidden")}>
-              <small className="text-sm font-semibold text-on-navy">{rotuloExercicio(exercicio)}</small>
+            <span className="flex items-baseline gap-1.5 text-sm">
+              <small className={cn("text-sm font-semibold text-on-navy", recolhido && "md:hidden")}>{rotuloExercicio(exercicio)}</small>
               <SeletorExercicio {...exercicio} destino="/inicio" />
             </span>
           </div>

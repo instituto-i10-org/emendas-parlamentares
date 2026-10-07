@@ -297,9 +297,11 @@ model ConfiguracaoExercicio {
 
   // --- contexto --------------------------------------------------------------
   // Como a base aparece para quem elabora ("LOA 2026 (Lei 6.246/2025)").
-  rotuloBase     String?
+  rotuloBase           String?
   // Fim do protocolo de emendas; depois disso não se submete.
-  prazoProtocolo DateTime?
+  prazoProtocolo       DateTime?
+  // Situações do projeto de lei (LOA) em que ele recebe emendas.
+  situacoesEmendamento StatusInstrumento[] @default([EM_TRAMITACAO])
 
   // --- preços e plano da entidade --------------------------------------------
   // Item com preço e sem fonte informada: bloqueia a submissão (verdadeiro) ou
@@ -483,7 +485,11 @@ model InstrumentoPlanejamento {
   ementa              String
   exercicioId         String
   status              StatusInstrumento  @default(EM_ELABORACAO)
+  // Link externo (legado). O arquivo da peça enviado pelo sistema fica em arquivoId.
   arquivoUrl          String?
+  arquivoId           String?
+  // Valor total da despesa impresso na peça: a importação confere contra ele.
+  totalImpresso       Decimal?           @db.Decimal(18, 2)
   dataEnvio           DateTime?
   dataAprovacao       DateTime?
   dataVigencia        DateTime?
@@ -493,6 +499,7 @@ model InstrumentoPlanejamento {
 
   exercicio         Exercicio                 @relation(fields: [exercicioId], references: [id], onDelete: Cascade)
   instrumentoOrigem InstrumentoPlanejamento?  @relation("InstrumentoOrigem", fields: [instrumentoOrigemId], references: [id])
+  arquivo           Arquivo?                  @relation(fields: [arquivoId], references: [id], onDelete: SetNull)
   derivados         InstrumentoPlanejamento[] @relation("InstrumentoOrigem")
   dotacoes          Dotacao[]
 
@@ -1180,7 +1187,8 @@ model Arquivo {
   enviadoPorId String?
   criadoEm     DateTime   @default(now())
 
-  enviadoPor User? @relation(fields: [enviadoPorId], references: [id], onDelete: SetNull)
+  enviadoPor   User?                     @relation(fields: [enviadoPorId], references: [id], onDelete: SetNull)
+  instrumentos InstrumentoPlanejamento[]
 
   @@index([uso])
 }

@@ -84,7 +84,7 @@ const capitalizar = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowe
 
 export async function semearLoa(prisma: PrismaClient, exercicioId: string, ano: number) {
   const ex = lerExercicio(ano);
-  const loa = lerDados<{ titulo: string; fonte: string | null; dotacoes: LinhaLoa[] }>(`loa-${ano}.json`);
+  const loa = lerDados<{ titulo: string; fonte: string | null; total?: number; dotacoes: LinhaLoa[] }>(`loa-${ano}.json`);
   const nomes = lerDados<{ names: Record<string, string>; orgaos?: Record<string, string> }>(`unidades-${ano}.json`);
   const unidadesNomes = nomes.names;
   const ppa = lerDados<{ acoes: MetaJson[]; programas: string[] }>("metas-ppa-2026-2029.json");
@@ -99,6 +99,8 @@ export async function semearLoa(prisma: PrismaClient, exercicioId: string, ano: 
     ementa: bill.summary,
     status: bill.status,
     arquivoUrl: loa.fonte,
+    // Total da despesa impresso na peça: a importação confere contra ele.
+    totalImpresso: loa.total ?? undefined,
     // Data ausente no arquivo não apaga a que foi preenchida em Planejamento.
     dataEnvio: bill.sentAt ? data(bill.sentAt) : undefined,
   });

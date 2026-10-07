@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { NATUREZAS_EMENDAVEIS } from "@/lib/orcamento/codigo-dotacao";
 import type { Aplicado, Catalogo, ConfigMotor, DestinoMotor, DotacaoMotor, FontePreco, MetaPlanejamento } from "@/lib/riep";
 import { nomeDoAlcance, pertence } from "@/lib/riep/destino";
+import { situacaoEmendamento, type SituacaoEmendamento } from "./emendamento";
 
 // ============================================================================
 // Contexto do motor para um exercício: configuração, LOA elegível, catálogos,
@@ -38,6 +39,8 @@ export type ContextoEmenda = {
   fontesPreco: FontePreco[];
   // Dias de validade do link da entidade.
   validadeLinkEntidadeDias: number;
+  // O emendamento está aberto agora? (exercício, projeto de lei e prazo)
+  emendamento: SituacaoEmendamento;
 };
 
 // Dia de hoje em Brasília, no formato aaaa-mm-dd — é assim que o prazo é guardado.
@@ -142,6 +145,7 @@ export const carregarContexto = cache(async (ano: number): Promise<ContextoEmend
     prisma.tipoDestino.findMany({ where: { ativo: true }, orderBy: { ordem: "asc" } }),
     lerFontesPreco(),
   ]);
+  const projeto = await projetoBase(exercicioId);
 
   const config = paraConfigMotor(ano, configuracao);
   // Guardado como 23:59:59 de Brasília; o dia é lido no mesmo fuso.
@@ -227,6 +231,14 @@ export const carregarContexto = cache(async (ano: number): Promise<ContextoEmend
     prazoEncerrado: !!prazoProtocolo && hojeBrasilia() > prazoProtocolo,
     fontesPreco: fontesDb,
     validadeLinkEntidadeDias: configuracao?.validadeLinkEntidadeDias ?? 10,
+    emendamento: situacaoEmendamento({
+      ano,
+      exercicioStatus: exercicio.status,
+      projeto,
+      situacoesQueAdmitem: configuracao?.situacoesEmendamento ?? ["EM_TRAMITACAO"],
+      prazoProtocolo,
+      hoje: hojeBrasilia(),
+    }),
   };
 });
 
@@ -273,4 +285,30 @@ export async function aplicadoDoAutor(
     }
   }
   return { saude: Math.round(aplicado.saude * 100) / 100, demais: Math.round(aplicado.demais * 100) / 100 };
+}
+
+// Situação do emendamento de um exercício, sem carregar a base inteira.
+export const lerEmendamento = cache(async (ano: number): Promise<SituacaoEmendamento | null> => {
+  const ex = await prisma.exercicio.findUnique({ where: { ano }, include: { configuracao: true } });
+  if (!ex) return null;
+  const projeto = await projetoBase(ex.id);
+  return situacaoEmendamento({
+    ano,
+    exercicioStatus: ex.status,
+    projeto,
+    situacoesQueAdmitem: ex.configuracao?.situacoesEmendamento ?? ["EM_TRAMITACAO"],
+    prazoProtocolo: ex.configuracao?.prazoProtocolo ? diaBrasilia(ex.configuracao.prazoProtocolo) : null,
+    hoje: hojeBrasilia(),
+  });
+});
+
+// O projeto de lei orçamentária do exercício que recebe as emendas: o primeiro
+// cadastrado com base de dotações. O mesmo critério na emenda, no indicador de
+// emendamento e no comparativo.
+export async function projetoBase(exercicioId: string) {
+  return prisma.instrumentoPlanejamento.findFirst({
+    where: { exercicioId, tipo: "LOA", especie: "PROJETO_LEI", dotacoes: { some: {} } },
+    orderBy: { createdAt: "asc" },
+    select: { id: true, numero: true, status: true },
+  });
 }

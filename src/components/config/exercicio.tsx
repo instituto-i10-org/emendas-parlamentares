@@ -36,7 +36,15 @@ export type ConfiguracaoTela = {
   prazoProtocolo: string | null;
   fontePrecoObrigatoria: boolean;
   validadeLinkEntidadeDias: number;
+  situacoesEmendamento: string[];
 };
+
+const SITUACOES_PL: [string, string][] = [
+  ["EM_ELABORACAO", "Em elaboração"],
+  ["ENVIADO", "Enviado"],
+  ["EM_TRAMITACAO", "Em tramitação"],
+  ["APROVADO", "Aprovado"],
+];
 
 const txt = (v: string | null | undefined) => v ?? "";
 const nulo = (v: string) => (v.trim() ? v.trim() : null);
@@ -73,7 +81,14 @@ function Exercicios({ exercicios, podeGerir }: { exercicios: { id: string; ano: 
             <Selo tipo={e.status === "ABERTO" ? "ok" : "neutro"}>{e.status === "ABERTO" ? "aberto" : "encerrado"}</Selo>
             {podeGerir ? (
               <span className="ml-auto">
-                <BotaoAcao acao={() => definirStatusExercicio(e.id, e.status === "ABERTO" ? "ENCERRADO" : "ABERTO")}>
+                <BotaoAcao
+                  acao={() => definirStatusExercicio(e.id, e.status === "ABERTO" ? "ENCERRADO" : "ABERTO")}
+                  confirmar={
+                    e.status === "ABERTO"
+                      ? `Encerrar o exercício ${e.ano}? Nenhuma emenda poderá ser criada ou alterada nele, nem em rascunho.`
+                      : `Reabrir o exercício ${e.ano}?`
+                  }
+                >
                   {e.status === "ABERTO" ? "Encerrar" : "Reabrir"}
                 </BotaoAcao>
               </span>
@@ -120,6 +135,7 @@ function FormConfiguracao({ c, podeGerir }: { c: ConfiguracaoTela; podeGerir: bo
     rotuloBase: txt(c.rotuloBase),
     prazoProtocolo: txt(c.prazoProtocolo),
     fontePrecoObrigatoria: c.fontePrecoObrigatoria,
+    situacoesEmendamento: c.situacoesEmendamento,
     validadeLinkEntidadeDias: String(c.validadeLinkEntidadeDias),
   });
   const { pendente, executar } = useAcao();
@@ -162,6 +178,7 @@ function FormConfiguracao({ c, podeGerir }: { c: ConfiguracaoTela; podeGerir: bo
         rotuloBase: nulo(f.rotuloBase),
         prazoProtocolo: nulo(f.prazoProtocolo),
         fontePrecoObrigatoria: f.fontePrecoObrigatoria,
+        situacoesEmendamento: f.situacoesEmendamento,
         validadeLinkEntidadeDias: Number(f.validadeLinkEntidadeDias),
       } as Parameters<typeof salvarConfiguracao>[0])
     );
@@ -248,6 +265,24 @@ function FormConfiguracao({ c, podeGerir }: { c: ConfiguracaoTela; podeGerir: bo
         <Campo rotulo="Fim do protocolo de emendas" htmlFor="c-prazo" dica="Depois dessa data não se submete.">
           <input id="c-prazo" type="date" className="campo h-12 px-3.5" {...m("prazoProtocolo")} />
         </Campo>
+        <fieldset className="col-span-full">
+          <legend className="mb-1.5 text-sm font-semibold text-label">O projeto de lei recebe emendas quando está</legend>
+          <div className="flex flex-wrap gap-x-5 gap-y-2">
+            {SITUACOES_PL.map(([k, rot]) => (
+              <label key={k} className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  disabled={!podeGerir}
+                  checked={f.situacoesEmendamento.includes(k)}
+                  onChange={(e) =>
+                    setF({ ...f, situacoesEmendamento: e.target.checked ? [...f.situacoesEmendamento, k] : f.situacoesEmendamento.filter((x) => x !== k) })
+                  }
+                />
+                {rot}
+              </label>
+            ))}
+          </div>
+        </fieldset>
       </div>
 
       <h3 className="mb-2 antena">Preços e plano da entidade</h3>

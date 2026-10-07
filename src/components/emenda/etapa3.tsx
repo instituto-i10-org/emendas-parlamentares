@@ -1,5 +1,6 @@
 "use client";
 
+import type { SituacaoEmendamento } from "@/lib/emendas/emendamento";
 import type { EstadoEmenda } from "@/lib/emendas/estado";
 import type { Checagem } from "@/lib/riep";
 import type { Atualizar, DerivadoEmenda } from "./editor";
@@ -7,19 +8,30 @@ import { Aviso, Detalhes, MarcaChecagem } from "./ui";
 
 // Pré-checagem das condições de validade. Só as pendências pedem atenção
 // imediata; o que já confere fica recolhido.
-export function Etapa3({ e, d, atualizar, prazo }: { e: EstadoEmenda; d: DerivadoEmenda; atualizar: Atualizar; prazo?: { data: string; encerrado: boolean } | null }) {
+export function Etapa3({
+  e,
+  d,
+  atualizar,
+  emendamento,
+  podeRemeter,
+}: {
+  e: EstadoEmenda;
+  d: DerivadoEmenda;
+  atualizar: Atualizar;
+  emendamento: SituacaoEmendamento;
+  podeRemeter: boolean;
+}) {
   const pendentes = d.checks.filter((c) => c.nivel !== "ok");
   const ok = d.checks.filter((c) => c.nivel === "ok");
-  const dataPrazo = prazo ? prazo.data.split("-").reverse().join("/") : null;
   return (
     <div className="flex flex-col gap-4">
-      {prazo?.encerrado ? (
-        <Aviso tipo="bad" titulo="Prazo de protocolo encerrado">
-          O prazo para apresentar emendas terminou em {dataPrazo}. O rascunho continua salvo, mas não pode mais ser submetido.
+      {!podeRemeter ? (
+        <Aviso tipo="bad" titulo="Remessa indisponível">
+          {emendamento.explicacao} O rascunho continua salvo, mas não pode ser submetido agora.
         </Aviso>
-      ) : prazo ? (
-        <p className="text-xs text-muted-foreground">Prazo de protocolo das emendas: até {dataPrazo}.</p>
-      ) : null}
+      ) : (
+        <p className="text-xs text-muted-foreground">{emendamento.explicacao}</p>
+      )}
       <p className="text-sm text-muted-foreground">
         Pré-checagem das condições de validade. A remessa só é liberada quando nenhum bloqueio resta; alertas não impedem a submissão.
       </p>

@@ -5,11 +5,13 @@ import { useRouter } from "next/navigation";
 import { Upload } from "lucide-react";
 import { toast } from "sonner";
 import { FiltroLista } from "@/components/app/filtro-lista";
-import { Campo, Pilulas, Selo } from "@/components/emenda/ui";
+import { Campo, CampoNumero, Pilulas, Selo } from "@/components/emenda/ui";
 import { Ajuda } from "@/components/ui/ajuda";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { criarInstrumento, definirStatusInstrumento, importarBase } from "@/lib/actions/planejamento";
+import { CampoArquivo, type ArquivoValor } from "@/components/app/campo-arquivo";
+import { criarInstrumento, definirStatusInstrumento, editarInstrumento, excluirInstrumento, importarBase } from "@/lib/actions/planejamento";
+import { lerNumero } from "@/lib/emendas/estado";
 import { BRL } from "@/lib/riep";
 
 const SEQUENCIA = ["EM_ELABORACAO", "ENVIADO", "EM_TRAMITACAO", "APROVADO", "SANCIONADO", "VIGENTE", "ENCERRADO"] as const;
@@ -54,64 +56,112 @@ export function StatusInstrumento({ id, status, podeGerir }: { id: string; statu
   );
 }
 
-export function NovoInstrumento({ exercicioId, projetos }: { exercicioId: string; projetos: { id: string; rotulo: string }[] }) {
+export type InstrumentoForm = {
+  id?: string;
+  especie: "PROJETO_LEI" | "LEI_APROVADA";
+  tipo: "PPA" | "LDO" | "LOA";
+  numero: string;
+  ementa: string;
+  instrumentoOrigemId: string;
+  arquivo: ArquivoValor;
+  data: string;
+  totalImpresso: string;
+};
+
+const vazio: InstrumentoForm = {
+  especie: "PROJETO_LEI",
+  tipo: "LOA",
+  numero: "",
+  ementa: "",
+  instrumentoOrigemId: "",
+  arquivo: null,
+  data: "",
+  totalImpresso: "",
+};
+
+// Cadastro e edição do instrumento: número, ementa, data de envio (ou de
+// aprovação), o arquivo da peça e, na lei aprovada, o projeto de origem.
+export function FormInstrumento({
+  exercicioId,
+  projetos,
+  inicial,
+  gatilho,
+}: {
+  exercicioId: string;
+  projetos: { id: string; rotulo: string; tipo: string }[];
+  inicial?: InstrumentoForm;
+  gatilho: (abrir: () => void) => React.ReactNode;
+}) {
   const router = useRouter();
   const [aberto, setAberto] = useState(false);
-  const [f, setF] = useState({
-    especie: "PROJETO_LEI" as "PROJETO_LEI" | "LEI_APROVADA",
-    tipo: "LOA" as "PPA" | "LDO" | "LOA",
-    numero: "",
-    ementa: "",
-    instrumentoOrigemId: "",
-    arquivoUrl: "",
-    data: "",
-  });
+  const [f, setF] = useState<InstrumentoForm>(inicial ?? vazio);
   const [pendente, iniciar] = useTransition();
+  const editando = !!f.id;
+  const origens = projetos.filter((p) => p.tipo === f.tipo);
+
+  function salvar() {
+    iniciar(async () => {
+      const comum = {
+        numero: f.numero,
+        ementa: f.ementa,
+        instrumentoOrigemId: f.instrumentoOrigemId || undefined,
+        arquivoId: f.arquivo?.id ?? null,
+        data: f.data,
+        totalImpresso: f.totalImpresso ? lerNumero(f.totalImpresso) : null,
+      };
+      const r = editando ? await editarInstrumento({ id: f.id!, ...comum }) : await criarInstrumento({ exercicioId, tipo: f.tipo, especie: f.especie, ...comum });
+      if (!r.ok) return void toast.error(r.erro);
+      toast(r.mensagem ?? "Instrumento salvo.");
+      setAberto(false);
+      router.refresh();
+    });
+  }
+
   return (
     <>
-      <Button size="sm" onClick={() => setAberto(true)}>
-        Novo instrumento
-      </Button>
+      {gatilho(() => {
+        setF(inicial ?? vazio);
+        setAberto(true);
+      })}
       <Dialog open={aberto} onOpenChange={setAberto}>
         <DialogContent
-          titulo="Novo instrumento"
+          titulo={editando ? `Editar ${f.tipo} · ${f.numero}` : "Novo instrumento"}
+          largura="lg"
           acoes={
-            <Button
-              disabled={pendente}
-              onClick={() =>
-                iniciar(async () => {
-                  const r = await criarInstrumento({ exercicioId, ...f });
-                  if (!r.ok) return void toast.error(r.erro);
-                  toast(r.mensagem ?? "Instrumento cadastrado.");
-                  setAberto(false);
-                  router.refresh();
-                })
-              }
-            >
-              Cadastrar
+            <Button disabled={pendente} onClick={salvar}>
+              {editando ? "Salvar" : "Cadastrar"}
             </Button>
           }
         >
           <div className="grid gap-3.5">
-            <Pilulas
-              rotulo="Espécie"
-              opcoes={["PROJETO_LEI", "LEI_APROVADA"] as const}
-              valor={f.especie}
-              curto={(v) => (v === "PROJETO_LEI" ? "Projeto de lei" : "Lei aprovada")}
-              aoEscolher={(v) => setF({ ...f, especie: v })}
-            />
-            <Pilulas rotulo="Tipo" opcoes={["PPA", "LDO", "LOA"] as const} valor={f.tipo} aoEscolher={(v) => setF({ ...f, tipo: v })} />
-            <Campo rotulo="Número" obrigatorio htmlFor="in-num">
-              <input id="in-num" className="campo h-12 px-3.5" placeholder="PL 275/2025" value={f.numero} onChange={(e) => setF({ ...f, numero: e.target.value })} />
-            </Campo>
+            {!editando ? (
+              <>
+                <Pilulas
+                  rotulo="Espécie"
+                  opcoes={["PROJETO_LEI", "LEI_APROVADA"] as const}
+                  valor={f.especie}
+                  curto={(v) => (v === "PROJETO_LEI" ? "Projeto de lei" : "Lei aprovada")}
+                  aoEscolher={(v) => setF({ ...f, especie: v })}
+                />
+                <Pilulas rotulo="Tipo" opcoes={["PPA", "LDO", "LOA"] as const} valor={f.tipo} aoEscolher={(v) => setF({ ...f, tipo: v, instrumentoOrigemId: "" })} />
+              </>
+            ) : null}
+            <div className="grid grid-cols-2 gap-3.5 max-sm:grid-cols-1">
+              <Campo rotulo="Número" obrigatorio htmlFor="in-num">
+                <input id="in-num" className="campo h-12 px-3.5" placeholder="PL 264/2026" value={f.numero} onChange={(e) => setF({ ...f, numero: e.target.value })} />
+              </Campo>
+              <Campo rotulo={f.especie === "LEI_APROVADA" ? "Data de aprovação" : "Data de envio"} htmlFor="in-dt">
+                <input id="in-dt" type="date" className="campo h-12 px-3.5" value={f.data} onChange={(e) => setF({ ...f, data: e.target.value })} />
+              </Campo>
+            </div>
             <Campo rotulo="Ementa" obrigatorio htmlFor="in-em">
               <textarea id="in-em" className="campo min-h-[80px] p-3.5" value={f.ementa} onChange={(e) => setF({ ...f, ementa: e.target.value })} />
             </Campo>
             {f.especie === "LEI_APROVADA" ? (
-              <Campo rotulo="Projeto de lei de origem" obrigatorio htmlFor="in-or">
+              <Campo rotulo="Projeto de lei de origem" obrigatorio htmlFor="in-or" dica={`Só projetos de ${f.tipo} deste exercício.`}>
                 <select id="in-or" className="campo campo-select h-12 pr-9 pl-3.5" value={f.instrumentoOrigemId} onChange={(e) => setF({ ...f, instrumentoOrigemId: e.target.value })}>
                   <option value="">Selecione…</option>
-                  {projetos.map((p) => (
+                  {origens.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.rotulo}
                     </option>
@@ -119,16 +169,74 @@ export function NovoInstrumento({ exercicioId, projetos }: { exercicioId: string
                 </select>
               </Campo>
             ) : null}
-            <Campo rotulo={f.especie === "LEI_APROVADA" ? "Data de aprovação" : "Data de envio"} htmlFor="in-dt">
-              <input id="in-dt" type="date" className="campo h-12 px-3.5" value={f.data} onChange={(e) => setF({ ...f, data: e.target.value })} />
+            <Campo rotulo="Arquivo da peça (PDF)" htmlFor="in-arq">
+              <CampoArquivo id="in-arq" uso="PECA_ORCAMENTARIA" valor={f.arquivo} aoMudar={(arquivo) => setF({ ...f, arquivo })} publico />
             </Campo>
-            <Campo rotulo="Link do documento" htmlFor="in-url">
-              <input id="in-url" className="campo h-12 px-3.5" value={f.arquivoUrl} onChange={(e) => setF({ ...f, arquivoUrl: e.target.value })} />
-            </Campo>
+            {f.tipo === "LOA" ? (
+              <Campo
+                rotulo="Total da despesa impresso na peça (R$)"
+                htmlFor="in-tot"
+                dica="A importação da base confere a soma das dotações contra este valor e para se não bater."
+              >
+                <CampoNumero id="in-tot" valor={f.totalImpresso} aoMudar={(v) => setF({ ...f, totalImpresso: v })} placeholder="0,00" />
+              </Campo>
+            ) : null}
           </div>
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+export function NovoInstrumento({ exercicioId, projetos }: { exercicioId: string; projetos: { id: string; rotulo: string; tipo: string }[] }) {
+  return (
+    <FormInstrumento
+      exercicioId={exercicioId}
+      projetos={projetos}
+      gatilho={(abrir) => (
+        <Button size="sm" onClick={abrir}>
+          Novo instrumento
+        </Button>
+      )}
+    />
+  );
+}
+
+export function EditarInstrumento({ exercicioId, projetos, inicial }: { exercicioId: string; projetos: { id: string; rotulo: string; tipo: string }[]; inicial: InstrumentoForm }) {
+  return (
+    <FormInstrumento
+      exercicioId={exercicioId}
+      projetos={projetos}
+      inicial={inicial}
+      gatilho={(abrir) => (
+        <Button size="xs" variant="ghost" onClick={abrir}>
+          Editar
+        </Button>
+      )}
+    />
+  );
+}
+
+export function ExcluirInstrumento({ id, rotulo }: { id: string; rotulo: string }) {
+  const router = useRouter();
+  const [pendente, iniciar] = useTransition();
+  return (
+    <Button
+      size="xs"
+      variant="ghost"
+      disabled={pendente}
+      onClick={() =>
+        window.confirm(`Excluir ${rotulo}? Só é possível sem base de dotações e sem lei vinculada.`) &&
+        iniciar(async () => {
+          const r = await excluirInstrumento(id);
+          if (!r.ok) return void toast.error(r.erro);
+          toast(r.mensagem ?? "Instrumento excluído.");
+          router.refresh();
+        })
+      }
+    >
+      Excluir
+    </Button>
   );
 }
 

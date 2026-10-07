@@ -57,6 +57,9 @@ const configuracaoSchema = z.object({
   rotuloBase: z.string().max(200).nullable(),
   prazoProtocolo: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
   fontePrecoObrigatoria: z.boolean(),
+  situacoesEmendamento: z
+    .array(z.enum(["EM_ELABORACAO", "ENVIADO", "EM_TRAMITACAO", "APROVADO", "SANCIONADO", "VIGENTE", "ENCERRADO"]))
+    .min(1, "Marque ao menos uma situação do projeto de lei em que ele recebe emendas."),
   validadeLinkEntidadeDias: z.number().int().min(1, "A validade do link vai de 1 a 90 dias.").max(90, "A validade do link vai de 1 a 90 dias."),
 });
 

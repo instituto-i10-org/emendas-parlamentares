@@ -98,6 +98,7 @@ async function exercicio(podeGerir: boolean) {
               // Guardado às 23:59:59 de Brasília: o dia se lê no mesmo fuso.
               prazoProtocolo: c?.prazoProtocolo ? diaBrasilia(c.prazoProtocolo) : null,
               fontePrecoObrigatoria: c?.fontePrecoObrigatoria ?? true,
+              situacoesEmendamento: c?.situacoesEmendamento ?? ["EM_TRAMITACAO"],
               validadeLinkEntidadeDias: c?.validadeLinkEntidadeDias ?? 10,
             }
           : null
