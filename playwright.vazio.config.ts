@@ -43,6 +43,8 @@ export default defineConfig({
       OPENAI_API_KEY: "",
       DEMO_LOGIN: "false",
       DEMO_SENHA: "",
+      // Guias de ajuda não abrem sozinhos nos testes.
+      GUIAS_AUTOMATICOS: "false",
     },
   },
 });

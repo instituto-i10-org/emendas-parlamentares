@@ -33,6 +33,8 @@ const envServidor = {
   // Como em produção: sem acesso rápido de demonstração na tela de login.
   DEMO_LOGIN: "false",
   DEMO_SENHA: "",
+  // Guias de ajuda não abrem sozinhos nos testes (o spec dos guias liga pelo cookie).
+  GUIAS_AUTOMATICOS: "false",
 };
 
 export default defineConfig({

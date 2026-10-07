@@ -19,8 +19,10 @@ import {
   Banknote,
   ClipboardCheck,
   ShieldCheck,
+  CircleHelp,
 } from "lucide-react";
 import type { GrupoNav, Icone } from "@/config/navegacao";
+import { useGuias } from "@/components/app/guias";
 import { SeletorExercicio } from "@/components/app/seletor-exercicio";
 import { LogoEmendas360, MarcaDocumento } from "@/components/logo-emendas360";
 import { sair } from "@/lib/actions/auth";
@@ -65,6 +67,7 @@ export function AppShell({
   const pathname = usePathname();
   const [recolhido, setRecolhido] = useState(false);
   const [gaveta, setGaveta] = useState(false);
+  const guias = useGuias();
 
   useEffect(() => {
     try {
@@ -106,6 +109,7 @@ export function AppShell({
       <div className="sticky top-2 z-30 mx-2 mt-2 flex items-center gap-2.5 rounded-box bg-navy py-1.5 pr-4 pl-1.5 text-white shadow-side md:hidden">
         <button
           type="button"
+          data-guia="menu.celular"
           aria-label="Abrir menu"
           aria-expanded={gaveta}
           aria-controls="menu-lateral"
@@ -119,7 +123,7 @@ export function AppShell({
           Emendas<b className="text-cyan">360</b>
         </span>
         {exercicio ? (
-          <span className="ml-auto flex items-center gap-1.5 text-sm">
+          <span data-guia="menu.exercicio" className="ml-auto flex items-center gap-1.5 text-sm">
             <CalendarDays className="size-4 text-cyan" strokeWidth={1.6} aria-hidden />
             <SeletorExercicio {...exercicio} destino="/inicio" />
           </span>
@@ -196,6 +200,7 @@ export function AppShell({
 
         {exercicio ? (
           <div
+            data-guia="menu.exercicio"
             title={`${rotuloExercicio(exercicio)} ${exercicio.ativo}`}
             className={cn("mx-2.5 mt-auto mb-3 flex items-center gap-2.5 rounded-md bg-white/6 px-3 py-2", recolhido && "md:justify-center md:px-0")}
           >
@@ -209,7 +214,25 @@ export function AppShell({
           <div className="mt-auto" />
         )}
 
-        <div className={cn("flex items-center gap-2.5 border-t border-white/10 px-[18px] py-4", recolhido && "md:flex-col md:px-0")}>
+        <button
+          type="button"
+          data-guia="menu.ajuda"
+          title="Ver ajuda desta tela"
+          onClick={() => {
+            setGaveta(false);
+            // Com a gaveta do celular fechando, o guia mede a tela já sem ela.
+            window.setTimeout(guias.abrir, 250);
+          }}
+          className={cn(
+            "mx-2.5 mb-3 flex items-center gap-2.5 rounded-md px-3 py-[9px] text-left text-sm font-semibold text-[#DCE6F6] transition-colors hover:bg-white/7 hover:text-white focus-visible:outline-2 focus-visible:outline-cyan",
+            recolhido && "md:justify-center md:px-0 md:py-2.5"
+          )}
+        >
+          <CircleHelp className="size-[18px] shrink-0" strokeWidth={1.8} />
+          <span className={cn("truncate", recolhido && "md:hidden")}>Ver ajuda</span>
+        </button>
+
+        <div data-guia="menu.conta" className={cn("flex items-center gap-2.5 border-t border-white/10 px-[18px] py-4", recolhido && "md:flex-col md:px-0")}>
           <span className="grid size-[26px] shrink-0 place-items-center rounded-full bg-ok text-xs font-extrabold text-navy-deep">
             {iniciais(usuario.nome)}
           </span>

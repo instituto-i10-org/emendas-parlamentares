@@ -1190,8 +1190,31 @@ model User {
   historicos          HistoricoEmenda[]
   arquivos            Arquivo[]
   manuaisPublicados   Municipio[]          @relation("ManualPublicado")
+  guiasVistos         GuiaVisto[]
 
   @@index([perfilId])
+}
+
+// Guias de ajuda (balões sobre a tela) que cada pessoa já viu. O guia abre
+// sozinho na primeira visita da pessoa ao módulo; concluir ou pular grava aqui
+// e ele não abre mais — salvo quando o conteúdo muda (a versão do guia sobe) ou
+// a pessoa pede "Rever todos os guias" em Minha conta.
+model GuiaVisto {
+  id          String    @id @default(cuid())
+  usuarioId   String
+  // Identificador do guia em src/config/guias.ts ("inicio", "config.areas").
+  guia        String
+  versao      Int
+  concluidoEm DateTime?
+  puladoEm    DateTime?
+  // Marcado por "Pular todos".
+  pulouTodos  Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  usuario User @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@unique([usuarioId, guia])
 }
 
 model Account {

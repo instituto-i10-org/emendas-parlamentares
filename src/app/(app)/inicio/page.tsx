@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import {
   ArrowRight,
+  Check,
+  ChevronDown,
   Banknote,
   ClipboardCheck,
   FilePlus2,
@@ -17,6 +19,8 @@ import {
 } from "lucide-react";
 import { Barra } from "@/components/app/pagina";
 import { Selo } from "@/components/emenda/ui";
+import type { PassoPrimeiraConfiguracao } from "@/lib/cadastros/primeira-configuracao";
+import { lerPrimeiraConfiguracao } from "@/lib/cadastros/primeira-configuracao-servidor";
 import { Poder } from "@/generated/prisma/enums";
 import {
   alcancaPoder,
@@ -64,10 +68,11 @@ export default async function InicioPage({ searchParams }: { searchParams: Promi
   const { erro } = await searchParams;
   const user = await getCurrentUser();
   const ano = await getAnoAtivo();
-  const [autor, c, emendas] = await Promise.all([
+  const [autor, c, emendas, primeira] = await Promise.all([
     prisma.autor.findUnique({ where: { usuarioId: user.id } }),
     ano ? consolidar(ano) : null,
     ano ? listarEmendas(ano) : [],
+    podeAdministrarConfiguracoes(user) ? lerPrimeiraConfiguracao(ano) : null,
   ]);
 
   const minhas = autor ? emendas.filter((e) => e.autorId === autor.id) : [];
@@ -161,17 +166,19 @@ export default async function InicioPage({ searchParams }: { searchParams: Promi
         </h1>
       </div>
 
+      {primeira ? <PrimeiraConfiguracao passos={primeira} /> : null}
+
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
         {destaque ? <AtalhoDestaque a={destaque} /> : null}
         {c ? (
-          <section className={cn("flex flex-col rounded-card bg-surface p-6 shadow-card", !destaque && "lg:col-span-2")}>
+          <section data-guia="inicio.resumo" className={cn("flex flex-col rounded-card bg-surface p-6 shadow-card", !destaque && "lg:col-span-2")}>
             {meu ? <CotaResumo usado={meu} c={c} /> : <Exercicio c={c} submetidas={submetidas} />}
           </section>
         ) : null}
       </div>
 
       {atalhos.length ? (
-        <div className={cn("mt-4 grid gap-4 sm:grid-cols-2", COLUNAS[atalhos.length])}>
+        <div data-guia="inicio.atalhos" className={cn("mt-4 grid gap-4 sm:grid-cols-2", COLUNAS[atalhos.length])}>
           {atalhos.map((a) => (
             <AtalhoCartao key={a.titulo} a={a} />
           ))}
@@ -185,6 +192,7 @@ function AtalhoDestaque({ a }: { a: Atalho }) {
   return (
     <Link
       href={a.href}
+      data-guia="inicio.destaque"
       className="group relative flex min-h-[220px] flex-col justify-between overflow-hidden rounded-card bg-navy p-8 text-white shadow-side transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-cyan max-md:p-6"
     >
       <div className="pointer-events-none absolute -top-24 -right-24 size-96 rounded-full bg-cyan/30 blur-3xl transition-opacity group-hover:opacity-80" aria-hidden />
@@ -296,5 +304,64 @@ function Faixa({ rotulo, usado, total, tom }: { rotulo: string; usado: number; t
       </div>
       <Barra valor={usado} total={total} tom={usado - total > 0.005 ? "bad" : tom} />
     </div>
+  );
+}
+
+// Quadro da primeira configuração (só para quem administra as configurações):
+// somente leitura, conferido nos dados. Completo, fica recolhido numa linha.
+function PrimeiraConfiguracao({ passos }: { passos: PassoPrimeiraConfiguracao[] }) {
+  const feitos = passos.filter((p) => p.ok).length;
+  const completo = feitos === passos.length;
+  return (
+    <details
+      open={!completo}
+      className="group/pc mb-4 rounded-card bg-surface shadow-card [&_summary::-webkit-details-marker]:hidden"
+    >
+      <summary data-guia="inicio.primeira-configuracao" className="flex cursor-pointer list-none items-center gap-3 rounded-card px-6 py-4 focus-visible:outline-2 focus-visible:outline-cyan">
+        <span className="min-w-0 flex-1">
+          <span className="block text-md font-bold">{completo ? "Configuração completa" : "Primeira configuração"}</span>
+          <span className="block text-xs text-muted-foreground">
+            {completo ? "Os oito passos estão feitos. Abra para conferir." : `${feitos} de ${passos.length} passos feitos. Siga na ordem; cada um leva à tela certa.`}
+          </span>
+        </span>
+        <span className="hidden w-32 sm:block">
+          <Barra valor={feitos} total={passos.length} tom={completo ? "ok" : "cyan"} />
+        </span>
+        <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform group-open/pc:rotate-180" aria-hidden />
+      </summary>
+      <ol className="grid gap-px border-t border-hair">
+        {passos.map((p, i) => (
+          <li key={p.id} data-passo={p.id} className="flex items-center gap-3 px-6 py-3 max-sm:flex-wrap">
+            <span
+              className={cn(
+                "grid size-7 shrink-0 place-items-center rounded-full text-xs font-extrabold",
+                p.ok ? "bg-ok-bg text-ok-ink" : "bg-page text-navy"
+              )}
+              aria-hidden
+            >
+              {p.ok ? <Check className="size-4" strokeWidth={2.6} /> : i + 1}
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-bold">
+                {p.titulo}
+                <span className="sr-only">{p.ok ? " (feito)" : " (pendente)"}</span>
+              </span>
+              <span className="block text-xs text-muted-foreground">{p.texto}</span>
+            </span>
+            {p.ok ? (
+              <Selo tipo="ok">Feito</Selo>
+            ) : (
+              <Link
+                href={`${p.href}${p.href.includes("?") ? "&" : "?"}guia=${p.guia}`}
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-navy px-3.5 py-2 text-xs font-bold text-white transition-colors hover:bg-navy-soft focus-visible:outline-2 focus-visible:outline-cyan max-sm:ml-10"
+              >
+                Mostrar onde
+                <ArrowRight className="size-3.5" aria-hidden />
+              </Link>
+            )}
+          </li>
+        ))}
+      </ol>
+    </details>
   );
 }
