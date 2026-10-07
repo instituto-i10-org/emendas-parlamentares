@@ -6,11 +6,11 @@ import { Upload } from "lucide-react";
 import { toast } from "sonner";
 import { FiltroLista } from "@/components/app/filtro-lista";
 import { Campo, CampoNumero, Pilulas, Selo } from "@/components/emenda/ui";
-import { Ajuda } from "@/components/ui/ajuda";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { CampoArquivo, type ArquivoValor } from "@/components/app/campo-arquivo";
-import { criarInstrumento, definirStatusInstrumento, editarInstrumento, excluirInstrumento, importarBase } from "@/lib/actions/planejamento";
+import { iniciarImportacao } from "@/lib/actions/importacao";
+import { criarInstrumento, definirStatusInstrumento, editarInstrumento, excluirInstrumento } from "@/lib/actions/planejamento";
 import { lerNumero } from "@/lib/emendas/estado";
 import { BRL } from "@/lib/riep";
 
@@ -240,61 +240,72 @@ export function ExcluirInstrumento({ id, rotulo }: { id: string; rotulo: string 
   );
 }
 
-export function ImportarBase({ instrumentoId, rotulo }: { instrumentoId: string; rotulo: string }) {
+// Importação da base: o arquivo (PDF, foto, CSV ou XLSX) vai para a área de
+// conferência, onde nada se grava antes da confirmação.
+export function ImportarBase({ instrumentoId, rotulo, tipo }: { instrumentoId: string; rotulo: string; tipo: "PPA" | "LDO" | "LOA" }) {
   const router = useRouter();
   const [aberto, setAberto] = useState(false);
-  const [erros, setErros] = useState<{ linha: number; motivo: string }[]>([]);
+  const [arquivo, setArquivo] = useState<ArquivoValor>(null);
+  const [faixa, setFaixa] = useState({ de: "", ate: "" });
   const [pendente, iniciar] = useTransition();
+  const carga = tipo === "LOA" ? "DOTACOES" : tipo === "LDO" ? "PRIORIDADES_LDO" : "PROGRAMAS_PPA";
+  const pdf = !!arquivo && /\.pdf$/i.test(arquivo.nome);
   return (
     <>
       <Button size="xs" variant="ghost" onClick={() => setAberto(true)}>
-        <Upload className="size-3.5" /> Importar base
+        <Upload /> Importar base
       </Button>
       <Dialog open={aberto} onOpenChange={setAberto}>
-        <DialogContent titulo={`Importar base de dotações — ${rotulo}`} largura="lg">
-          <form
-            action={(fd) =>
-              iniciar(async () => {
-                setErros([]);
-                const r = await importarBase(instrumentoId, fd);
-                if (!r.ok) {
-                  toast.error(r.erro);
-                  setErros(r.erros ?? []);
-                  return;
-                }
-                toast(r.mensagem);
-                setAberto(false);
-                router.refresh();
-              })
-            }
-            className="grid gap-4"
-          >
-            <p className="flex items-center gap-2 text-sm text-muted-foreground">
-              Planilha CSV ou XLSX, uma linha por dotação.
-              <Ajuda titulo="Colunas da planilha">
-                Obrigatórias: orgao_codigo, orgao_nome, unidade_codigo, unidade_nome, funcao_codigo, subfuncao_codigo, subfuncao_nome,
-                programa_codigo, programa_nome, acao_codigo, acao_nome, natureza_codigo, fonte_codigo, valor_autorizado. Opcionais: funcao_nome,
-                acao_tipo, natureza_nome, fonte_nome, ficha, pagina. Qualquer erro rejeita o arquivo inteiro; dotações já usadas por emendas são
-                preservadas.
-              </Ajuda>
-            </p>
-            <input name="arquivo" type="file" accept=".csv,.xlsx,.xls" className="text-sm" required />
-            <div>
-              <Button type="submit" disabled={pendente}>
-                {pendente ? "Importando…" : "Importar"}
-              </Button>
-            </div>
-            {erros.length ? (
-              <ul className="max-h-60 overflow-y-auto rounded-box bg-bad-bg p-3 text-xs text-bad-ink">
-                {erros.map((e, i) => (
-                  <li key={i}>
-                    {e.linha ? `Linha ${e.linha}: ` : ""}
-                    {e.motivo}
-                  </li>
-                ))}
-              </ul>
+        <DialogContent
+          titulo={`Importar base · ${rotulo}`}
+          descricao={
+            tipo === "LOA"
+              ? "Dotações do orçamento: PDF (digital ou digitalizado), foto, CSV ou XLSX. Nada é gravado antes da conferência."
+              : `${tipo === "LDO" ? "Prioridades e metas da LDO" : "Programas e metas do PPA"} por planilha (CSV ou XLSX).`
+          }
+          largura="lg"
+          acoes={
+            <Button
+              disabled={pendente || !arquivo}
+              onClick={() =>
+                iniciar(async () => {
+                  const r = await iniciarImportacao({
+                    instrumentoId,
+                    arquivoId: arquivo!.id,
+                    paginaInicial: pdf && faixa.de ? Number(faixa.de) : null,
+                    paginaFinal: pdf && faixa.ate ? Number(faixa.ate) : null,
+                  });
+                  if (!r.ok) return void toast.error(r.erro);
+                  router.push(`/executivo/planejamento/importacao/${r.id}`);
+                })
+              }
+            >
+              {pendente ? "Abrindo…" : "Ler e conferir"}
+            </Button>
+          }
+        >
+          <div className="grid gap-3.5">
+            <Campo rotulo="Arquivo" obrigatorio htmlFor="imp-arq">
+              <CampoArquivo id="imp-arq" uso="IMPORTACAO" valor={arquivo} aoMudar={setArquivo} />
+            </Campo>
+            {pdf ? (
+              <div className="grid grid-cols-2 gap-3.5">
+                <Campo rotulo="Quadro de despesa a partir da página (opcional)" htmlFor="imp-de" dica="Sem páginas, o sistema procura o quadro sozinho.">
+                  <input id="imp-de" inputMode="numeric" className="campo h-12 px-3.5 tnum" value={faixa.de} onChange={(e) => setFaixa({ ...faixa, de: e.target.value.replace(/\D/g, "") })} />
+                </Campo>
+                <Campo rotulo="até a página" htmlFor="imp-ate">
+                  <input id="imp-ate" inputMode="numeric" className="campo h-12 px-3.5 tnum" value={faixa.ate} onChange={(e) => setFaixa({ ...faixa, ate: e.target.value.replace(/\D/g, "") })} />
+                </Campo>
+              </div>
             ) : null}
-          </form>
+            <p className="text-xs text-muted-foreground">
+              Planilha em outro formato? Tudo bem: as colunas são reconhecidas pelo nome e o que faltar você liga na tela seguinte.{" "}
+              <a className="font-semibold text-navy underline" href={`/api/importacao/modelo?tipo=${carga}`}>
+                Baixar a planilha-modelo
+              </a>
+              .
+            </p>
+          </div>
         </DialogContent>
       </Dialog>
     </>

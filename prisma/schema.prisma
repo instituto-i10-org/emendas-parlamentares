@@ -195,7 +195,28 @@ enum ResultadoViabilidade {
   INVIAVEL
 }
 
-// Etapas da despesa pública (Lei 4.320/1964, arts. 58 a 65).
+enum TipoCarga {
+  DOTACOES // LOA: dotações
+  PRIORIDADES_LDO // LDO: prioridades e metas
+  PROGRAMAS_PPA // PPA: programas e metas
+}
+
+enum FormatoImportacao {
+  PLANILHA
+  PDF_TEXTO
+  PDF_IMAGEM
+  IMAGEM
+}
+
+enum SituacaoImportacao {
+  MAPEAR // planilha com coluna obrigatória não reconhecida: o usuário liga
+  LENDO // leitura em andamento (PDF ou imagem, por lotes)
+  LIDA // pronta para conferência
+  GRAVADA
+  CANCELADA
+  ERRO
+}
+
 // Para que um arquivo foi enviado. Define tipo aceito, tamanho e quem lê.
 enum UsoArquivo {
   PECA_ORCAMENTARIA // PPA, LDO, LOA (projeto ou lei)
@@ -203,6 +224,7 @@ enum UsoArquivo {
   IMPORTACAO // arquivo lido pela importação da base
 }
 
+// Etapas da despesa pública (Lei 4.320/1964, arts. 58 a 65).
 enum EtapaExecucao {
   EMPENHO
   LIQUIDACAO
@@ -249,6 +271,7 @@ model Exercicio {
   emendas           Emenda[]
   emendasImportadas EmendaImportada[]
   contador          ContadorEmenda?
+  prioridades       PrioridadeLdo[]
 }
 
 // Parâmetros das emendas impositivas no exercício. Campo nulo significa
@@ -410,10 +433,11 @@ model Programa {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  exercicio Exercicio  @relation(fields: [exercicioId], references: [id], onDelete: Cascade)
-  acoes     Acao[]
-  dotacoes  Dotacao[]
-  metas     MetaAcao[]
+  exercicio   Exercicio       @relation(fields: [exercicioId], references: [id], onDelete: Cascade)
+  acoes       Acao[]
+  dotacoes    Dotacao[]
+  metas       MetaAcao[]
+  prioridades PrioridadeLdo[]
 
   @@unique([exercicioId, codigo])
 }
@@ -428,10 +452,11 @@ model Acao {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  programa  Programa   @relation(fields: [programaId], references: [id], onDelete: Cascade)
-  exercicio Exercicio  @relation(fields: [exercicioId], references: [id], onDelete: Cascade)
-  dotacoes  Dotacao[]
-  metas     MetaAcao[]
+  programa    Programa        @relation(fields: [programaId], references: [id], onDelete: Cascade)
+  exercicio   Exercicio       @relation(fields: [exercicioId], references: [id], onDelete: Cascade)
+  dotacoes    Dotacao[]
+  metas       MetaAcao[]
+  prioridades PrioridadeLdo[]
 
   @@unique([exercicioId, programaId, codigo])
   @@index([programaId])
@@ -500,6 +525,8 @@ model InstrumentoPlanejamento {
   exercicio         Exercicio                 @relation(fields: [exercicioId], references: [id], onDelete: Cascade)
   instrumentoOrigem InstrumentoPlanejamento?  @relation("InstrumentoOrigem", fields: [instrumentoOrigemId], references: [id])
   arquivo           Arquivo?                  @relation(fields: [arquivoId], references: [id], onDelete: SetNull)
+  importacoes       Importacao[]
+  prioridades       PrioridadeLdo[]
   derivados         InstrumentoPlanejamento[] @relation("InstrumentoOrigem")
   dotacoes          Dotacao[]
 
@@ -1189,6 +1216,7 @@ model Arquivo {
 
   enviadoPor   User?                     @relation(fields: [enviadoPorId], references: [id], onDelete: SetNull)
   instrumentos InstrumentoPlanejamento[]
+  importacoes  Importacao[]
 
   @@index([uso])
 }
@@ -1216,4 +1244,83 @@ model UsoIA {
   criadoEm      DateTime @default(now())
 
   @@index([criadoEm])
+}
+
+// Importação da base em andamento: o arquivo, como ele foi lido, as linhas
+// (válidas e recusadas) e a conferência. Nada vai para a base antes da
+// confirmação.
+model Importacao {
+  id            String             @id @default(cuid())
+  instrumentoId String
+  arquivoId     String
+  tipoCarga     TipoCarga
+  formato       FormatoImportacao
+  situacao      SituacaoImportacao
+  // Planilha: cabeçalho lido e coluna de cada campo.
+  cabecalho     String[]           @default([])
+  mapa          Json?
+  // PDF: páginas, lotes, cabeçalho em vigor, totais impressos lidos.
+  progresso     Json?
+  paginas       Int?
+  paginasLidas  Int                @default(0)
+  // Faixa de páginas do quadro informada por quem importa (opcional).
+  paginaInicial Int?
+  paginaFinal   Int?
+  totalImpresso Decimal?           @db.Decimal(18, 2)
+  totalLido     Decimal?           @db.Decimal(18, 2)
+  erro          String?
+  resumo        Json?
+  criadoPorId   String?
+  criadoEm      DateTime           @default(now())
+  atualizadoEm  DateTime           @updatedAt
+  gravadaEm     DateTime?
+  gravadaPorId  String?
+
+  instrumento InstrumentoPlanejamento @relation(fields: [instrumentoId], references: [id], onDelete: Cascade)
+  arquivo     Arquivo                 @relation(fields: [arquivoId], references: [id])
+  linhas      LinhaImportada[]
+
+  @@index([instrumentoId, criadoEm])
+}
+
+// Uma linha lida: os campos como vieram (corrigíveis na tela), os motivos de
+// recusa e os avisos de conferência.
+model LinhaImportada {
+  id             String    @id @default(cuid())
+  importacaoId   String
+  // Linha da planilha, ou a ordem da leitura no PDF.
+  numero         Int
+  pagina         Int?
+  campos         Json
+  motivos        String[]  @default([])
+  avisos         String[]  @default([])
+  corrigidaPorId String?
+  corrigidaEm    DateTime?
+  // Incluída à mão na conferência (linha que a leitura não pegou).
+  incluida       Boolean   @default(false)
+
+  importacao Importacao @relation(fields: [importacaoId], references: [id], onDelete: Cascade)
+
+  @@index([importacaoId, numero])
+}
+
+// Prioridade e meta do Anexo de Metas e Prioridades da LDO, por programa (e
+// ação). A verificação de aderência à LDO confere a emenda contra elas.
+model PrioridadeLdo {
+  id            String   @id @default(cuid())
+  exercicioId   String
+  instrumentoId String?
+  programaId    String
+  acaoId        String?
+  descricao     String
+  meta          Decimal? @db.Decimal(18, 4)
+  unidadeMedida String?
+  createdAt     DateTime @default(now())
+
+  exercicio   Exercicio                @relation(fields: [exercicioId], references: [id], onDelete: Cascade)
+  instrumento InstrumentoPlanejamento? @relation(fields: [instrumentoId], references: [id], onDelete: SetNull)
+  programa    Programa                 @relation(fields: [programaId], references: [id], onDelete: Cascade)
+  acao        Acao?                    @relation(fields: [acaoId], references: [id], onDelete: SetNull)
+
+  @@index([exercicioId, programaId])
 }

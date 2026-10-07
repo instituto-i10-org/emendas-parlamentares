@@ -14,7 +14,7 @@ import { NATUREZAS_EMENDAVEIS } from "@/lib/orcamento/codigo-dotacao";
 import { prisma } from "@/lib/prisma";
 import { lerEmendamento } from "@/lib/emendas/contexto";
 import { formatarNumero } from "@/lib/emendas/estado";
-import { BRL, DATA } from "@/lib/riep";
+import { BRL, DATA, DATA_HORA } from "@/lib/riep";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Planejamento — Emendas360" };
@@ -110,7 +110,7 @@ export default async function PlanejamentoPage({ searchParams }: { searchParams:
                       <Link href={`/executivo/planejamento?aba=base&instrumento=${i.id}`}>Ver base</Link>
                     </Button>
                   ) : null}
-                  {podeGerir ? <ImportarBase instrumentoId={i.id} rotulo={i.numero} /> : null}
+                  {podeGerir ? <ImportarBase instrumentoId={i.id} rotulo={i.numero} tipo={i.tipo} /> : null}
                   {podeGerir && exercicio ? (
                     <EditarInstrumento
                       exercicioId={exercicio.id}
@@ -136,6 +136,7 @@ export default async function PlanejamentoPage({ searchParams }: { searchParams:
         </Cartao>
       ) : null}
 
+      {aba === "instrumentos" && exercicio ? await importacoesRecentes(exercicio.id) : null}
       {aba === "base" ? await base(instParam, instrumentos, exercicio?.configuracao?.orgaosForaDasEmendas ?? []) : null}
       {aba === "comparacao" ? await comparacao(instrumentos) : null}
     </Pagina>
@@ -227,5 +228,37 @@ async function comparacao(instrumentos: Instrumentos) {
         </Cartao>
       ))}
     </div>
+  );
+}
+
+async function importacoesRecentes(exercicioId: string) {
+  const lista = await prisma.importacao.findMany({
+    where: { instrumento: { exercicioId } },
+    orderBy: { criadoEm: "desc" },
+    take: 10,
+    include: { instrumento: { select: { tipo: true, numero: true } }, arquivo: { select: { nome: true } }, _count: { select: { linhas: true } } },
+  });
+  if (!lista.length) return null;
+  const situacao: Record<string, string> = { MAPEAR: "colunas a ligar", LENDO: "lendo", LIDA: "em conferência", GRAVADA: "gravada", CANCELADA: "cancelada", ERRO: "parada por erro" };
+  return (
+    <Cartao titulo="Importações recentes" className="mt-5">
+      <TabelaDados
+        vazio="—"
+        colunas={[{ titulo: "Quando" }, { titulo: "Instrumento" }, { titulo: "Arquivo" }, { titulo: "Linhas", className: "text-right" }, { titulo: "Situação" }, { titulo: "" }]}
+        linhas={lista.map((i) => ({
+          chave: i.id,
+          celulas: [
+            <span key="q" className="text-xs whitespace-nowrap tnum">{DATA_HORA(i.criadoEm)}</span>,
+            `${i.instrumento.tipo} · ${i.instrumento.numero}`,
+            <span key="a" className="text-xs">{i.arquivo.nome}</span>,
+            <span key="l" className="tnum">{i._count.linhas}</span>,
+            <Selo key="s" tipo={i.situacao === "GRAVADA" ? "ok" : i.situacao === "ERRO" ? "bad" : i.situacao === "CANCELADA" ? "neutro" : "info"}>{situacao[i.situacao]}</Selo>,
+            <Button key="v" size="xs" variant="ghost" asChild>
+              <Link href={`/executivo/planejamento/importacao/${i.id}`}>Abrir</Link>
+            </Button>,
+          ],
+        }))}
+      />
+    </Cartao>
   );
 }
