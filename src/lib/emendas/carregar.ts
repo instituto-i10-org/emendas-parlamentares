@@ -11,7 +11,7 @@ export async function buscarEmenda(id: string) {
       autor: true,
       destino: true,
       exercicio: true,
-      dotacao: { include: { acao: true, unidadeOrcamentaria: true, naturezaDespesa: true, programa: true, funcao: true, subfuncao: true, fonteRecurso: true } },
+      dotacao: { include: { acao: true, orgao: true, unidadeOrcamentaria: true, naturezaDespesa: true, programa: true, funcao: true, subfuncao: true, fonteRecurso: true } },
       metas: { orderBy: { ordem: "asc" } },
       itens: { orderBy: { ordem: "asc" }, include: { referencia: true } },
       referencias: { orderBy: { codigo: "asc" } },

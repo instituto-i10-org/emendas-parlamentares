@@ -305,7 +305,7 @@ export function AreaTexto({
 }) {
   const gerado = useId();
   const [pedindo, setPedindo] = useState(false);
-  const [sugestao, setSugestao] = useState<{ original: string; texto: string; referencias: { tipo: string; fonte: string; texto: string }[] } | null>(null);
+  const [sugestao, setSugestao] = useState<{ original: string; texto: string } | null>(null);
 
   async function pedir() {
     const original = valor;
@@ -320,7 +320,7 @@ export function AreaTexto({
         toast.error(r.erro);
         return;
       }
-      setSugestao({ original, texto: r.texto, referencias: r.referencias });
+      setSugestao({ original, texto: r.texto });
     } finally {
       setPedindo(false);
     }
@@ -393,23 +393,7 @@ export function AreaTexto({
               onChange={(e) => setSugestao({ ...sugestao, texto: e.target.value })}
               className="campo min-h-[160px] p-3.5 leading-relaxed"
             />
-            {sugestao.referencias.length ? (
-              <div className="mt-4">
-                <Detalhes titulo={`Referências consultadas (${sugestao.referencias.length})`}>
-                  <div className="space-y-2 text-sm">
-                    {sugestao.referencias.map((r, i) => (
-                      <p key={i}>
-                        <b>
-                          {r.tipo} · {r.fonte}
-                        </b>
-                        <br />
-                        {r.texto}
-                      </p>
-                    ))}
-                  </div>
-                </Detalhes>
-              </div>
-            ) : null}
+            <p className="mt-2 text-xs text-muted-foreground">O campo só muda se você aplicar. A sugestão foi conferida: não traz número, data, norma ou fonte que a emenda não tenha.</p>
           </DialogContent>
         ) : null}
       </Dialog>

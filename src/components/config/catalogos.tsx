@@ -1,6 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { DestinoDialog } from "@/components/emenda/destino-dialog";
+import { mesclarDestinos } from "@/lib/actions/destinos";
+import type { DestinoTela } from "@/lib/emendas/contexto";
+import { possiveisDuplicados, type ParDuplicado } from "@/lib/emendas/beneficiarios";
 import { Cartao, TabelaDados } from "@/components/app/pagina";
 import { FiltroLista } from "@/components/app/filtro-lista";
 import { Campo, Pilulas, Selo } from "@/components/emenda/ui";
@@ -18,7 +24,6 @@ import {
 } from "@/lib/actions/config";
 import { CampoArquivo, type ArquivoValor } from "@/components/app/campo-arquivo";
 import { formatarCnpj } from "@/lib/cnpj";
-import { norm } from "@/lib/riep";
 import { BotaoAcao, useAcao } from "./comum";
 
 // ------------------------------------------------------------------ destinos
@@ -35,6 +40,9 @@ export type DestinoConfig = {
   pendencia: string | null;
   subfuncao: string | null;
   emendas: number;
+  apelidos: string[];
+  // Para editar pelo mesmo diálogo da tela da emenda (só os cadastrados).
+  tela: DestinoTela | null;
 };
 
 // Subfunções que um equipamento público costuma sugerir (Portaria MOG 42/1999).
@@ -55,50 +63,163 @@ const SUBFUNCOES_SUGERIDAS: [string, string][] = [
   ["812", "812 · Desporto comunitário"],
 ];
 
-export function AbaDestinos({ destinos }: { destinos: DestinoConfig[] }) {
+export function AbaDestinos({ destinos, unidades, exercicio }: { destinos: DestinoConfig[]; unidades: { codigo: string; nome: string }[]; exercicio: number }) {
+  const router = useRouter();
   const [pend, setPend] = useState<DestinoConfig | null>(null);
+  const [dialogo, setDialogo] = useState<{ execucao: "DIRETA" | "INDIRETA"; editando: DestinoTela | null } | null>(null);
+  const [mescla, setMescla] = useState<ParDuplicado | null>(null);
+  const pares = possiveisDuplicados(destinos.map((d) => ({ id: d.id, nome: d.nome, cnpj: d.cnpj, execucao: d.execucao, ativo: d.ativo, emendas: d.emendas })));
   return (
-    <Cartao ajuda="Para onde as emendas podem ir. Os da base oficial vêm do CNES, Censo Escolar, SUAS e Receita; os demais foram cadastrados na tela da emenda. Pendência de habilitação bloqueia a submissão de emendas para a entidade." titulo={`Destinos (${destinos.length})`}>
-      <FiltroLista
-        itens={destinos}
-        texto={(d) => `${d.nome} ${d.unidade ?? ""} ${d.cnpj ?? ""}`}
-        filtros={{
-          rotulo: "Tipo",
-          opcoes: {
-            Todos: () => true,
-            "Execução direta": (d) => d.execucao === "DIRETA",
-            "Terceiro setor": (d) => d.execucao === "INDIRETA",
-            "Cadastrados no sistema": (d) => d.origem === "CADASTRO",
-            Inativos: (d) => !d.ativo,
-          },
-        }}
-        render={(d) => (
-          <div key={d.id} className="flex flex-wrap items-center gap-3 rounded-box bg-soft px-4 py-3 text-sm">
-            <div className="min-w-0 flex-1">
-              <b>{d.nome}</b>
-              <span className="block text-xs text-muted-foreground">
-                {d.execucao === "DIRETA" ? `Unidade ${d.unidade ?? "—"}` : `CNPJ ${formatarCnpj(d.cnpj)}`} · {d.endereco}
-              </span>
-              <span className="mt-1 flex flex-wrap gap-1">
-                <Selo tipo={d.origem === "CADASTRO" ? "info" : "neutro"}>{d.origem === "CADASTRO" ? "cadastrado" : "base oficial"}</Selo>
-                {!d.ativo ? <Selo tipo="warn">inativo</Selo> : null}
-                {d.pendencia ? <Selo tipo="bad">pendência: {d.pendencia}</Selo> : null}
-                {d.subfuncao ? <Selo tipo="info">subfunção {d.subfuncao}</Selo> : null}
-                {d.emendas ? <Selo>{d.emendas} emenda(s)</Selo> : null}
-              </span>
-            </div>
-            {d.execucao === "DIRETA" ? <SubfuncaoDestino destino={d} /> : null}
-            {d.execucao === "INDIRETA" ? (
-              <Button size="xs" variant="ghost" onClick={() => setPend(d)}>
-                Habilitação
-              </Button>
-            ) : null}
-            <BotaoAcao acao={() => alternarDestinoAtivo(d.id)}>{d.ativo ? "Desativar" : "Ativar"}</BotaoAcao>
+    <div className="grid gap-5">
+      {pares.length ? (
+        <Cartao titulo={`Possíveis duplicados (${pares.length})`} ajuda="Grafias parecidas (acento, caixa, abreviação) ou o mesmo CNPJ. A mesclagem só acontece com confirmação.">
+          <ul className="grid gap-2">
+            {pares.map((p) => (
+              <li key={`${p.a.id}|${p.b.id}`} className="flex flex-wrap items-center gap-2 rounded-box bg-soft px-4 py-3 text-sm" data-par={`${p.a.nome} | ${p.b.nome}`}>
+                <span className="min-w-0 flex-1">
+                  <b>{p.a.nome}</b> e <b>{p.b.nome}</b>
+                  <span className="block text-xs text-muted-foreground">{p.motivo === "CNPJ" ? "mesmo CNPJ" : "nome parecido"}</span>
+                </span>
+                <Button size="xs" variant="surface" onClick={() => setMescla(p)}>
+                  Mesclar
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </Cartao>
+      ) : null}
+      <Cartao
+        ajuda="Para onde as emendas podem ir. Os da base oficial vêm do CNES, Censo Escolar, SUAS e Receita; os demais foram cadastrados aqui ou na tela da emenda. Pendência de habilitação bloqueia a submissão de emendas para a entidade."
+        titulo={`Beneficiários (${destinos.length})`}
+        acoes={
+          <div className="flex gap-1.5">
+            <Button size="sm" variant="surface" onClick={() => setDialogo({ execucao: "DIRETA", editando: null })}>
+              Novo da administração
+            </Button>
+            <Button size="sm" variant="surface" onClick={() => setDialogo({ execucao: "INDIRETA", editando: null })}>
+              Nova entidade
+            </Button>
           </div>
-        )}
-      />
-      <PendenciaDialog destino={pend} aoFechar={() => setPend(null)} />
-    </Cartao>
+        }
+      >
+        <FiltroLista
+          itens={destinos}
+          texto={(d) => `${d.nome} ${d.apelidos.join(" ")} ${d.unidade ?? ""} ${d.cnpj ?? ""}`}
+          filtros={{
+            rotulo: "Tipo",
+            opcoes: {
+              Todos: () => true,
+              "Execução direta": (d) => d.execucao === "DIRETA",
+              "Terceiro setor": (d) => d.execucao === "INDIRETA",
+              "Cadastrados no sistema": (d) => d.origem === "CADASTRO",
+              Inativos: (d) => !d.ativo,
+            },
+          }}
+          render={(d) => (
+            <div key={d.id} className="flex flex-wrap items-center gap-3 rounded-box bg-soft px-4 py-3 text-sm" data-destino={d.nome}>
+              <div className="min-w-0 flex-1">
+                <b>{d.nome}</b>
+                <span className="block text-xs text-muted-foreground">
+                  {d.execucao === "DIRETA" ? `Unidade ${d.unidade ?? "—"}` : `CNPJ ${formatarCnpj(d.cnpj)}`} · {d.endereco}
+                </span>
+                {d.apelidos.length ? <span className="block text-xs text-muted-foreground">Também grafado: {d.apelidos.join("; ")}</span> : null}
+                <span className="mt-1 flex flex-wrap gap-1">
+                  <Selo tipo={d.origem === "CADASTRO" ? "info" : "neutro"}>{d.origem === "CADASTRO" ? "cadastrado" : "base oficial"}</Selo>
+                  {!d.ativo ? <Selo tipo="warn">inativo</Selo> : null}
+                  {d.pendencia ? <Selo tipo="bad">pendência: {d.pendencia}</Selo> : null}
+                  {d.subfuncao ? <Selo tipo="info">subfunção {d.subfuncao}</Selo> : null}
+                  {d.emendas ? <Selo>{d.emendas} emenda(s)</Selo> : null}
+                </span>
+              </div>
+              {d.execucao === "DIRETA" ? <SubfuncaoDestino destino={d} /> : null}
+              {d.execucao === "INDIRETA" ? (
+                <Button size="xs" variant="ghost" onClick={() => setPend(d)}>
+                  Habilitação
+                </Button>
+              ) : null}
+              {d.tela ? (
+                <Button size="xs" variant="ghost" onClick={() => setDialogo({ execucao: d.execucao, editando: d.tela })}>
+                  Editar
+                </Button>
+              ) : null}
+              <BotaoAcao acao={() => alternarDestinoAtivo(d.id)}>{d.ativo ? "Desativar" : "Ativar"}</BotaoAcao>
+            </div>
+          )}
+        />
+        <PendenciaDialog destino={pend} aoFechar={() => setPend(null)} />
+        <DestinoDialog
+          aberto={!!dialogo}
+          execucao={dialogo?.execucao ?? "DIRETA"}
+          nomeInicial={dialogo?.editando?.nome ?? ""}
+          editando={dialogo?.editando ?? null}
+          unidades={unidades}
+          exercicio={exercicio}
+          aoFechar={() => setDialogo(null)}
+          aoSalvar={() => {
+            setDialogo(null);
+            router.refresh();
+          }}
+        />
+      </Cartao>
+      <MesclarDialog par={mescla} destinos={destinos} aoFechar={() => setMescla(null)} />
+    </div>
+  );
+}
+
+// Mesclagem: os dois lado a lado, qual fica e quantas emendas serão reapontadas.
+function MesclarDialog({ par, destinos, aoFechar }: { par: ParDuplicado | null; destinos: DestinoConfig[]; aoFechar: () => void }) {
+  const router = useRouter();
+  const [manter, setManter] = useState<string | null>(null);
+  const [pendente, iniciar] = useTransition();
+  if (!par) return null;
+  const lados = [par.a, par.b].map((x) => destinos.find((d) => d.id === x.id)!);
+  const fica = manter ?? (lados[0].emendas >= lados[1].emendas ? lados[0].id : lados[1].id);
+  const sai = lados.find((d) => d.id !== fica)!;
+  return (
+    <Dialog open onOpenChange={(a) => !a && (setManter(null), aoFechar())}>
+      <DialogContent
+        titulo="Mesclar beneficiários"
+        largura="lg"
+        aviso={`${sai.emendas} emenda(s) de “${sai.nome}” passarão para o beneficiário mantido. A grafia removida vira apelido; a operação fica na auditoria.`}
+        acoes={
+          <>
+            <Button
+              disabled={pendente}
+              onClick={() =>
+                iniciar(async () => {
+                  const r = await mesclarDestinos(fica, sai.id);
+                  if (!r.ok) return void toast.error(r.erro);
+                  toast(r.mensagem);
+                  setManter(null);
+                  aoFechar();
+                  router.refresh();
+                })
+              }
+            >
+              Confirmar mesclagem
+            </Button>
+            <Button variant="ghost" onClick={() => (setManter(null), aoFechar())}>
+              Cancelar
+            </Button>
+          </>
+        }
+      >
+        <div className="grid grid-cols-2 gap-3 max-sm:grid-cols-1">
+          {lados.map((d) => (
+            <label key={d.id} className={`grid cursor-pointer gap-1 rounded-box p-4 text-sm ${fica === d.id ? "bg-info-bg shadow-[inset_0_0_0_2px_var(--cyan)]" : "bg-soft"}`}>
+              <span className="flex items-center gap-2">
+                <input type="radio" name="manter" checked={fica === d.id} onChange={() => setManter(d.id)} />
+                <b>{fica === d.id ? "Fica" : "Sai"}</b>
+              </span>
+              <b>{d.nome}</b>
+              <span className="text-xs text-muted-foreground">{d.execucao === "DIRETA" ? `Unidade ${d.unidade ?? "—"}` : `CNPJ ${formatarCnpj(d.cnpj)}`}</span>
+              <span className="text-xs text-muted-foreground">{d.endereco}</span>
+              <span className="text-xs">{d.emendas} emenda(s)</span>
+            </label>
+          ))}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -505,29 +626,155 @@ export function AbaNormas({ normas }: { normas: NormaConfig[] }) {
 
 // ----------------------------------------------------------------- auditoria
 
-export type AuditoriaLinha = { id: string; quando: string; usuario: string; entidade: string; entidadeId: string; acao: string };
+export type AuditoriaLinha = { id: string; quando: string; usuario: string; entidade: string; entidadeId: string; acao: string; antes: unknown; depois: unknown };
 
-export function AbaAuditoria({ linhas }: { linhas: AuditoriaLinha[] }) {
-  const [q, setQ] = useState("");
-  const visiveis = linhas.filter((l) => !q || norm(`${l.usuario} ${l.entidade} ${l.acao}`).includes(norm(q)));
+// Antes e depois lado a lado, campo a campo; o que mudou fica marcado.
+function Diferenca({ antes, depois }: { antes: unknown; depois: unknown }) {
+  const obj = (x: unknown) => (x && typeof x === "object" && !Array.isArray(x) ? (x as Record<string, unknown>) : x == null ? {} : { valor: x });
+  const a = obj(antes);
+  const d = obj(depois);
+  const chaves = [...new Set([...Object.keys(a), ...Object.keys(d)])].filter((k) => !["createdAt", "updatedAt", "passwordHash"].includes(k));
+  const texto = (v: unknown) => (v === undefined ? "—" : v === null ? "vazio" : typeof v === "object" ? JSON.stringify(v) : String(v));
+  if (!chaves.length) return <p className="text-sm text-muted-foreground">Registro sem dados de antes e depois (evento sem alteração de dado, como entrada no sistema).</p>;
   return (
-    <Cartao titulo="Auditoria (últimos 300 registros)">
-      <input className="campo mb-4 h-11 px-3.5" placeholder="Filtrar por usuário, entidade ou ação" value={q} onChange={(e) => setQ(e.target.value)} />
+    <div className="overflow-x-auto">
+      <table className="w-full text-xs">
+        <thead className="text-left text-muted-foreground">
+          <tr>
+            <th className="py-1.5 pr-3">Campo</th>
+            <th className="py-1.5 pr-3">Antes</th>
+            <th className="py-1.5">Depois</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-hair">
+          {chaves.map((k) => {
+            const mudou = texto(a[k]) !== texto(d[k]);
+            return (
+              <tr key={k} className={mudou ? "bg-warn-bg" : ""}>
+                <td className="py-1.5 pr-3 font-semibold">{k}</td>
+                <td className="py-1.5 pr-3 break-all">{texto(a[k])}</td>
+                <td className="py-1.5 break-all">{texto(d[k])}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+export function AbaAuditoria({
+  linhas,
+  total,
+  pagina,
+  porPagina,
+  filtros,
+  usuarios,
+  entidades,
+}: {
+  linhas: AuditoriaLinha[];
+  total: number;
+  pagina: number;
+  porPagina: number;
+  filtros: { de: string; ate: string; usuario: string; entidade: string; acao: string };
+  usuarios: { id: string; nome: string }[];
+  entidades: string[];
+}) {
+  const [aberto, setAberto] = useState<AuditoriaLinha | null>(null);
+  const paginas = Math.max(1, Math.ceil(total / porPagina));
+  const link = (n: number) => `/config?${new URLSearchParams({ aba: "auditoria", ...Object.fromEntries(Object.entries(filtros).filter(([, v]) => v)), pagina: String(n) })}`;
+  const caixa = "campo h-10 px-2.5 text-sm";
+  return (
+    <Cartao titulo={`Auditoria (${total} registros)`}>
+      <form method="get" action="/config" className="mb-4 grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] items-end gap-2.5">
+        <input type="hidden" name="aba" value="auditoria" />
+        <label className="grid gap-1 text-xs font-semibold text-muted-foreground">
+          De
+          <input type="date" name="de" defaultValue={filtros.de} className={caixa} />
+        </label>
+        <label className="grid gap-1 text-xs font-semibold text-muted-foreground">
+          Até
+          <input type="date" name="ate" defaultValue={filtros.ate} className={caixa} />
+        </label>
+        <label className="grid gap-1 text-xs font-semibold text-muted-foreground">
+          Usuário
+          <select name="usuario" defaultValue={filtros.usuario} className={caixa}>
+            <option value="">Todos</option>
+            {usuarios.map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.nome}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="grid gap-1 text-xs font-semibold text-muted-foreground">
+          Entidade
+          <select name="entidade" defaultValue={filtros.entidade} className={caixa}>
+            <option value="">Todas</option>
+            {entidades.map((e) => (
+              <option key={e} value={e}>
+                {e}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="grid gap-1 text-xs font-semibold text-muted-foreground">
+          Ação
+          <input name="acao" defaultValue={filtros.acao} className={caixa} placeholder="Ex.: ATUALIZAR" />
+        </label>
+        <Button type="submit" size="sm">
+          Filtrar
+        </Button>
+      </form>
       <TabelaDados
         vazio="Nenhum registro."
-        colunas={[{ titulo: "Quando" }, { titulo: "Usuário" }, { titulo: "Entidade" }, { titulo: "Ação" }]}
-        linhas={visiveis.map((l) => ({
+        colunas={[{ titulo: "Quando" }, { titulo: "Usuário", className: "@max-[520px]:hidden" }, { titulo: "Entidade", className: "@max-[680px]:hidden" }, { titulo: "Ação" }, { titulo: "" }]}
+        linhas={linhas.map((l) => ({
           chave: l.id,
           celulas: [
-            <span key="q" className="whitespace-nowrap text-xs tnum">{l.quando}</span>,
+            <span key="q" className="text-xs whitespace-nowrap tnum @max-[520px]:whitespace-normal">
+              {l.quando}
+            </span>,
             l.usuario,
             <span key="e" className="text-xs">
               {l.entidade} <span className="text-muted-foreground">{l.entidadeId.slice(-8)}</span>
             </span>,
             <Selo key="a">{l.acao}</Selo>,
+            <Button key="b" size="xs" variant="ghost" onClick={() => setAberto(l)}>
+              Abrir
+            </Button>,
           ],
         }))}
       />
+      {paginas > 1 ? (
+        <nav aria-label="Paginação" className="mt-4 flex items-center gap-2 text-sm">
+          <span className="text-xs text-muted-foreground">
+            página {pagina} de {paginas}
+          </span>
+          <span className="ml-auto flex gap-1.5">
+            {pagina > 1 ? (
+              <a className="rounded-md bg-soft px-3 py-1.5 font-semibold" href={link(pagina - 1)}>
+                Anterior
+              </a>
+            ) : null}
+            {pagina < paginas ? (
+              <a className="rounded-md bg-soft px-3 py-1.5 font-semibold" href={link(pagina + 1)}>
+                Próxima
+              </a>
+            ) : null}
+          </span>
+        </nav>
+      ) : null}
+      <Dialog open={!!aberto} onOpenChange={(a) => !a && setAberto(null)}>
+        {aberto ? (
+          <DialogContent titulo={`${aberto.acao} — ${aberto.entidade}`} largura="lg">
+            <p className="mb-3 text-xs text-muted-foreground">
+              {aberto.quando} · {aberto.usuario} · registro {aberto.entidadeId}
+            </p>
+            <Diferenca antes={aberto.antes} depois={aberto.depois} />
+          </DialogContent>
+        ) : null}
+      </Dialog>
     </Cartao>
   );
 }

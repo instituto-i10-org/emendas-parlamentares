@@ -6,6 +6,7 @@ import { BRL, DATA, DATA_HORA, EVENTOS, INSTRUMENTOS, MODELOS, QUADROS, TIPOS_RE
 import { RelatorioVerificacoes } from "@/components/emenda/relatorio-verificacoes";
 import { getCurrentUser } from "@/lib/session";
 import { BotaoImprimir } from "@/components/app/botao-imprimir";
+import { STATUS_EMENDA } from "@/lib/emendas/rotulos";
 import { naoRemetida } from "@/lib/emendas/situacoes";
 
 export const metadata: Metadata = { title: "Plano de trabalho — Emendas360" };
@@ -48,7 +49,7 @@ export default async function PlanoPage({ params }: { params: Promise<{ id: stri
           <p className="antena">
             Emendas360 · exercício {x.exercicio.ano}
           </p>
-          <h1 className="mt-1 text-xl font-extrabold">Plano de trabalho de emenda impositiva</h1>
+          <h1 className="mt-1 text-xl font-extrabold">Emenda e plano de trabalho</h1>
           <p className="mt-1 text-sm font-bold text-navy">{M ? `Modelo ${M.numero} — ${M.titulo}` : "Modelo a definir pela análise técnica"}</p>
           <p className="mt-2 text-xs text-muted-foreground">
             {naoRemetida(x.status) ? "Rascunho — prévia para conferência." : `Emenda nº ${x.numero}/${x.exercicio.ano}, submetida em ${DATA(x.submetidaEm)}.`}{" "}
@@ -60,12 +61,19 @@ export default async function PlanoPage({ params }: { params: Promise<{ id: stri
           <Campos
             linhas={[
               ["Emenda nº / ano", x.numero ? `${x.numero}/${x.exercicio.ano}` : pendente("Número atribuído na submissão")],
-              ["Valor total", BRL(total)],
+              ["Situação", STATUS_EMENDA[x.status]?.rotulo ?? x.status],
+              ["Valor da emenda", BRL(x.valor.toNumber())],
+              ["Planilha do plano", BRL(total)],
               ["Autor", x.autor.nome + (x.autor.partido ? ` — ${x.autor.partido}` : "")],
               ["Tipo de despesa", d ? (d.naturezaDespesa.grupo === "4" ? "Investimento (GND 4)" : "Custeio (GND 3)") : pendente("A definir pela análise técnica")],
               ["Parcela da cota", x.parcela === "SAUDE" ? "Saúde — ações e serviços públicos de saúde (IC-CO 1002)" : x.parcela === "DEMAIS" ? "Demais áreas" : pendente()],
             ]}
           />
+        </Secao>
+
+        <Secao numero={prox()} titulo="Dotação">
+          <h3 className="mb-1 text-sm font-bold">Dotação de destino</h3>
+          {d ? <Campos linhas={classificacao(d)} /> : <p className="text-sm">{pendente("A definir pela análise técnica")}</p>}
         </Secao>
 
         <Secao numero={prox()} titulo={M?.executor ?? "Executor e beneficiário"}>
@@ -226,6 +234,22 @@ export default async function PlanoPage({ params }: { params: Promise<{ id: stri
           />
         </Secao>
 
+        <Secao numero={prox()} titulo="Tramitação e pareceres">
+          <Campos
+            linhas={[
+              ["Remetida em", x.submetidaEm ? DATA(x.submetidaEm) : pendente("Não remetida")],
+              ...(x.diligenciaMotivo
+                ? ([["Diligência da Comissão", <span key="dl" className="whitespace-pre-line">{`${DATA(x.diligenciaEm)} · prazo ${DATA(x.diligenciaAte)}\n${x.diligenciaMotivo}`}</span>]] as [string, React.ReactNode][])
+                : []),
+              ["Parecer da Comissão", x.parecerTramitacao ? <span key="pc" className="whitespace-pre-line">{`${STATUS_EMENDA[x.status]?.rotulo ?? ""} em ${DATA(x.tramitadaEm)}\n${x.parecerTramitacao}`}</span> : pendente("Sem decisão")],
+              ...x.pareceres.map(
+                (p, i) => [`Viabilidade técnica${i ? " (anterior)" : ""}`, `${p.resultado === "VIAVEL" ? "Viável" : p.resultado === "INVIAVEL" ? "Inviável" : "Viável com ressalva"} em ${DATA(p.criadoEm)} — ${p.justificativa}`] as [string, React.ReactNode]
+              ),
+              ["Incorporada à lei", x.incorporadaEm ? DATA(x.incorporadaEm) : pendente("Não")],
+            ]}
+          />
+        </Secao>
+
         {(() => {
           const v = x.validacoes.find((y) => Array.isArray(y.verificacoes) && (y.verificacoes as unknown[]).length);
           return v ? (
@@ -286,4 +310,20 @@ function Campos({ linhas }: { linhas: [string, React.ReactNode][] }) {
       </tbody>
     </table>
   );
+}
+
+type Codigo = { codigo: string; nome: string | null };
+function classificacao(d: { ficha: string | null; orgao: Codigo; unidadeOrcamentaria: Codigo; funcao: Codigo; subfuncao: Codigo; programa: Codigo; acao: Codigo; naturezaDespesa: Codigo; fonteRecurso: Codigo }): [string, React.ReactNode][] {
+  const c = (x: Codigo) => `${x.codigo} — ${x.nome ?? ""}`;
+  return [
+    ["Órgão", c(d.orgao)],
+    ["Unidade orçamentária", c(d.unidadeOrcamentaria)],
+    ["Função", c(d.funcao)],
+    ["Subfunção", c(d.subfuncao)],
+    ["Programa", c(d.programa)],
+    ["Ação", c(d.acao)],
+    ["Natureza da despesa", c(d.naturezaDespesa)],
+    ["Fonte de recurso", c(d.fonteRecurso)],
+    ["Ficha", d.ficha ?? "—"],
+  ];
 }

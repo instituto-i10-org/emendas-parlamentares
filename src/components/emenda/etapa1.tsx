@@ -438,7 +438,7 @@ function CampoDestino({
   const lista = useMemo(
     () =>
       destinos
-        .filter((x) => x.execucao === e.execucao && (!q || norm(x.nome).includes(q) || norm(x.unidadeNome).includes(q)))
+        .filter((x) => x.execucao === e.execucao && (!q || norm(x.nome).includes(q) || norm(x.unidadeNome).includes(q) || x.apelidos.some((a) => norm(a).includes(q))))
         .slice(0, 8),
     [destinos, e.execucao, q]
   );

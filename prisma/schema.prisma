@@ -774,6 +774,10 @@ model Destino {
   fonteUrl             String?
   origem               OrigemDestino @default(CADASTRO)
   ativo                Boolean       @default(true)
+  // Grafias de beneficiários mesclados neste (a busca as encontra).
+  apelidos             String[]      @default([])
+  // Mesclado em outro: fica inativo e aponta para o que sobrou.
+  mescladoEmId         String?
   criadoPorId          String?
   createdAt            DateTime      @default(now())
   updatedAt            DateTime      @updatedAt

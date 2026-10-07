@@ -16,6 +16,8 @@ const num = (v: { toNumber(): number } | number | null | undefined) =>
   v == null ? null : typeof v === "number" ? v : v.toNumber();
 
 export type DestinoTela = DestinoMotor & {
+  // Grafias de beneficiários mesclados neste (a busca as encontra).
+  apelidos: string[];
   unidadeNome: string | null;
   unidadeRepasse: string | null;
   telefone: string | null;
@@ -103,6 +105,7 @@ export function paraDestinoMotor(
     origem: "BASE_OFICIAL" | "CADASTRO";
     pendenciaHabilitacao: string | null;
     subfuncaoSugerida?: string | null;
+    apelidos?: string[];
   },
   unidades: Record<string, string>
 ): DestinoTela {
@@ -110,6 +113,7 @@ export function paraDestinoMotor(
     id: d.id,
     nome: d.nome,
     execucao: d.execucao,
+    apelidos: d.apelidos ?? [],
     uo: d.execucao === "DIRETA" ? d.unidadeCodigo : null,
     endereco: d.endereco,
     cnpj: d.cnpj,

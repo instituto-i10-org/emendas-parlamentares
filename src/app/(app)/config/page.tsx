@@ -9,7 +9,7 @@ import { AbaValidacao } from "@/components/config/validacao";
 import { AbaPortal } from "@/components/config/portal";
 import { requireAccess } from "@/lib/access";
 import { PERMISSOES, podeAtribuirPerfil, podeGerirExercicio, podeGerirPerfis, temPermissao } from "@/lib/authz";
-import { diaBrasilia } from "@/lib/emendas/contexto";
+import { diaBrasilia, paraDestinoMotor } from "@/lib/emendas/contexto";
 import { getAnoAtivo, listarExercicios } from "@/lib/exercicio";
 import { prisma } from "@/lib/prisma";
 import { DATA_HORA } from "@/lib/riep";
@@ -32,9 +32,10 @@ const ABAS = [
 
 const num = (v: { toNumber(): number } | null | undefined) => (v == null ? null : v.toNumber());
 
-export default async function ConfigPage({ searchParams }: { searchParams: Promise<{ aba?: string }> }) {
+export default async function ConfigPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const user = await requireAccess({ permissoes: ["administrarConfiguracoes"] });
-  const { aba: abaParam } = await searchParams;
+  const sp = await searchParams;
+  const abaParam = sp.aba;
   const abas = ABAS.filter((a) => !("adminGeral" in a) || podeGerirPerfis(user));
   const aba = abas.find((a) => a.id === abaParam)?.id ?? "exercicio";
 
@@ -61,7 +62,7 @@ export default async function ConfigPage({ searchParams }: { searchParams: Promi
       {aba === "biblioteca" ? await biblioteca() : null}
       {aba === "precos" ? await fontesPreco(temPermissao(user, "administrarConfiguracoes")) : null}
       {aba === "normas" ? await normas() : null}
-      {aba === "auditoria" ? await auditoria() : null}
+      {aba === "auditoria" ? await auditoria(sp) : null}
     </Pagina>
   );
 }
@@ -158,9 +159,16 @@ async function perfis(user: Awaited<ReturnType<typeof requireAccess>>) {
 }
 
 async function destinos() {
-  const lista = await prisma.destino.findMany({ orderBy: [{ execucao: "asc" }, { nome: "asc" }], include: { _count: { select: { emendas: true } } } });
+  const ano = await getAnoAtivo();
+  const [lista, unidadesDb] = await Promise.all([
+    prisma.destino.findMany({ orderBy: [{ execucao: "asc" }, { nome: "asc" }], include: { _count: { select: { emendas: true } } } }),
+    ano ? prisma.unidadeOrcamentaria.findMany({ where: { exercicio: { ano } }, orderBy: { codigo: "asc" }, select: { codigo: true, nome: true } }) : [],
+  ]);
+  const unidades = Object.fromEntries(unidadesDb.map((u) => [u.codigo, u.nome]));
   return (
     <AbaDestinos
+      unidades={unidadesDb}
+      exercicio={ano ?? new Date().getFullYear()}
       destinos={lista.map((d) => ({
         id: d.id,
         nome: d.nome,
@@ -173,6 +181,8 @@ async function destinos() {
         pendencia: d.pendenciaHabilitacao,
         subfuncao: d.subfuncaoSugerida,
         emendas: d._count.emendas,
+        apelidos: d.apelidos,
+        tela: d.origem === "CADASTRO" ? paraDestinoMotor(d, unidades) : null,
       }))}
     />
   );
@@ -244,10 +254,35 @@ async function normas() {
   );
 }
 
-async function auditoria() {
-  const lista = await prisma.auditLog.findMany({ orderBy: { criadoEm: "desc" }, take: 300, include: { usuario: { select: { name: true, email: true } } } });
+const AUDITORIA_POR_PAGINA = 50;
+
+// Trilha com filtro por período, usuário, entidade e ação; paginada.
+async function auditoria(sp: Record<string, string | undefined>) {
+  const data = (v: string | undefined) => (v && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : "");
+  const filtros = { de: data(sp.de), ate: data(sp.ate), usuario: (sp.usuario ?? "").slice(0, 40), entidade: (sp.entidade ?? "").slice(0, 60), acao: (sp.acao ?? "").trim().slice(0, 60) };
+  const pagina = Math.max(1, Number(sp.pagina) || 1);
+  const where = {
+    ...(filtros.de || filtros.ate
+      ? { criadoEm: { ...(filtros.de ? { gte: new Date(`${filtros.de}T00:00:00-03:00`) } : {}), ...(filtros.ate ? { lte: new Date(`${filtros.ate}T23:59:59-03:00`) } : {}) } }
+      : {}),
+    ...(filtros.usuario ? { usuarioId: filtros.usuario } : {}),
+    ...(filtros.entidade ? { entidade: filtros.entidade } : {}),
+    ...(filtros.acao ? { acao: { contains: filtros.acao, mode: "insensitive" as const } } : {}),
+  };
+  const [total, lista, usuarios, entidades] = await Promise.all([
+    prisma.auditLog.count({ where }),
+    prisma.auditLog.findMany({ where, orderBy: { criadoEm: "desc" }, skip: (pagina - 1) * AUDITORIA_POR_PAGINA, take: AUDITORIA_POR_PAGINA, include: { usuario: { select: { name: true, email: true } } } }),
+    prisma.user.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true, email: true } }),
+    prisma.auditLog.findMany({ distinct: ["entidade"], select: { entidade: true }, orderBy: { entidade: "asc" } }),
+  ]);
   return (
     <AbaAuditoria
+      total={total}
+      pagina={pagina}
+      porPagina={AUDITORIA_POR_PAGINA}
+      filtros={filtros}
+      usuarios={usuarios.map((u) => ({ id: u.id, nome: u.name ?? u.email ?? u.id }))}
+      entidades={entidades.map((e) => e.entidade)}
       linhas={lista.map((l) => ({
         id: l.id,
         quando: DATA_HORA(l.criadoEm),
@@ -255,6 +290,8 @@ async function auditoria() {
         entidade: l.entidade,
         entidadeId: l.entidadeId,
         acao: l.acao,
+        antes: l.dadosAntes,
+        depois: l.dadosDepois,
       }))}
     />
   );

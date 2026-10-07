@@ -80,7 +80,7 @@ export default async function EmendaPage({ params }: { params: Promise<{ id: str
           </Button>
           <Button asChild>
             <a href={`/emendas/${x.id}/plano`} target="_blank" rel="noopener">
-              Plano de trabalho
+              Versão para impressão
             </a>
           </Button>
         </div>

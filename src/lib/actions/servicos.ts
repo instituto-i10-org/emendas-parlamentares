@@ -1,11 +1,9 @@
 "use server";
 
-import { anoDaTela } from "@/lib/exercicio";
-import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rate-limit";
-import { carregarContexto } from "@/lib/emendas/contexto";
 import { consultarCnpj, type DadosCnpj } from "@/lib/servicos/cnpj";
-import { LIMITES_CAMPO, payloadRedacao, referenciasDeRedacao, type CampoTexto, type Referencia } from "@/lib/servicos/redacao";
+import { LIMITES_CAMPO, conferirSugestao, payloadRedacao, type CampoTexto } from "@/lib/servicos/redacao";
+import { podeCriarEmenda, temPermissao } from "@/lib/authz";
 import { getCurrentUser } from "@/lib/session";
 
 type Falha = { ok: false; erro: string };
@@ -19,24 +17,18 @@ export async function melhorarTexto(entrada: {
   destino: string;
   execucao: "DIRETA" | "INDIRETA";
   exercicio?: number;
-}): Promise<{ ok: true; texto: string; referencias: Referencia[] } | Falha> {
+}): Promise<{ ok: true; texto: string } | Falha> {
   const user = await getCurrentUser();
+  // Apoio de quem apresenta emendas, não de qualquer conta logada.
+  if (!podeCriarEmenda(user)) return { ok: false, erro: "O apoio à redação é de quem apresenta emendas." };
   const max = LIMITES_CAMPO[entrada.campo];
   if (!max || typeof entrada.texto !== "string" || entrada.texto.trim().length < 8 || entrada.texto.length > max) {
     return { ok: false, erro: "Escreva um texto dentro do limite do campo antes de pedir a melhoria." };
   }
   const chave = process.env.OPENAI_API_KEY;
-  if (!chave) return { ok: false, erro: "A melhoria de texto aguarda a chave da OpenAI no servidor." };
+  if (!chave) return { ok: false, erro: "O apoio à redação está indisponível: falta a chave do serviço de IA no servidor. O resto do sistema funciona normalmente." };
   if (!(await rateLimit(`ia:${user.id}`, 8, 60_000))) return { ok: false, erro: "Aguarde um minuto antes de pedir novas sugestões." };
 
-  const ano = await anoDaTela(entrada.exercicio);
-  const ctx = ano ? await carregarContexto(ano) : null;
-  const programas = ano
-    ? await prisma.programa.findMany({ where: { exercicio: { ano }, constaNoPPA: true }, select: { codigo: true, nome: true } })
-    : [];
-  const acoes = ctx
-    ? ctx.loa.map((d) => ({ funcao: d.funcao, programa: d.prog, programaNome: d.progn, acao: d.codigo.split(/[./]/)[0], acaoNome: d.nome }))
-    : [];
   const c = {
     campo: entrada.campo,
     texto: entrada.texto,
@@ -44,12 +36,6 @@ export async function melhorarTexto(entrada: {
     destino: String(entrada.destino ?? "").slice(0, 500),
     execucao: entrada.execucao === "INDIRETA" ? ("INDIRETA" as const) : ("DIRETA" as const),
   };
-  const referencias = referenciasDeRedacao(c, {
-    programas,
-    acoes,
-    biblioteca: ctx?.catalogo.objetos ?? [],
-    rotuloBase: ctx?.config.rotuloBase ?? "LOA",
-  });
 
   let resposta: Response;
   try {
@@ -57,7 +43,7 @@ export async function melhorarTexto(entrada: {
       method: "POST",
       signal: AbortSignal.timeout(35_000),
       headers: { Authorization: `Bearer ${chave}`, "Content-Type": "application/json" },
-      body: JSON.stringify(payloadRedacao(c, referencias, process.env.OPENAI_MODEL || "gpt-4.1-mini")),
+      body: JSON.stringify(payloadRedacao(c, process.env.OPENAI_MODEL || "gpt-4.1-mini")),
     });
   } catch {
     return { ok: false, erro: "A consulta demorou demais. Tente novamente; seu texto foi preservado." };
@@ -83,13 +69,19 @@ export async function melhorarTexto(entrada: {
   if (!texto || texto.length > max) {
     return { ok: false, erro: "A sugestão não respeitou o tamanho do campo. Tente novamente; seu texto foi preservado." };
   }
-  return { ok: true, texto, referencias };
+  // Conferência no servidor: nada que a emenda não tenha.
+  const problemas = conferirSugestao(`${c.texto} ${c.objeto} ${c.destino}`, texto);
+  if (problemas.length) {
+    return { ok: false, erro: `A sugestão foi recusada porque trazia ${problemas.join("; ")}. Seu texto foi preservado.` };
+  }
+  return { ok: true, texto };
 }
 
 // ------------------------------------------------------------------------ CNPJ
 
 export async function buscarCnpj(cnpj: string): Promise<{ ok: true; dados: DadosCnpj } | Falha> {
   const user = await getCurrentUser();
+  if (!podeCriarEmenda(user) && !temPermissao(user, "administrarConfiguracoes")) return { ok: false, erro: "Sem permissão para consultar CNPJ." };
   if (!(await rateLimit(`cnpj:${user.id}`, 20, 60_000))) return { ok: false, erro: "Muitas consultas seguidas. Aguarde um minuto." };
   try {
     return { ok: true, dados: await consultarCnpj(cnpj) };

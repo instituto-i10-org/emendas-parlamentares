@@ -114,3 +114,32 @@ export async function atualizarDestino(id: string, dados: DadosDestino): Promise
   await registrarAuditoria({ usuarioId: user.id, entidade: "Destino", entidadeId: id, acao: "ATUALIZAR", dadosAntes: atual, dadosDepois: salvo });
   return { ok: true, destino: paraDestinoMotor(salvo, v.unidades) };
 }
+
+// Mescla dois beneficiários: as emendas do removido passam ao mantido, a grafia
+// dele vira apelido e ele fica inativo, apontando para o mantido. Auditado.
+export async function mesclarDestinos(manterId: string, removerId: string): Promise<{ ok: true; mensagem: string } | { ok: false; erro: string }> {
+  const user = await getCurrentUser();
+  if (!temPermissao(user, "administrarConfiguracoes")) return { ok: false, erro: "Sem permissão para mesclar beneficiários." };
+  if (manterId === removerId) return { ok: false, erro: "Escolha dois beneficiários diferentes." };
+  const [manter, remover] = await Promise.all([prisma.destino.findUnique({ where: { id: manterId } }), prisma.destino.findUnique({ where: { id: removerId } })]);
+  if (!manter || !remover) return { ok: false, erro: "Beneficiário não encontrado." };
+  if (manter.execucao !== remover.execucao) return { ok: false, erro: "Só se mesclam beneficiários da mesma forma de execução." };
+  const r = await prisma.$transaction(async (tx) => {
+    const emendas = await tx.emenda.updateMany({ where: { destinoId: removerId }, data: { destinoId: manterId } });
+    const apelidos = [...new Set([...manter.apelidos, remover.nome, ...remover.apelidos])].filter((n) => n !== manter.nome);
+    const mantido = await tx.destino.update({ where: { id: manterId }, data: { apelidos, cnpj: manter.cnpj ?? remover.cnpj } });
+    const removido = await tx.destino.update({ where: { id: removerId }, data: { ativo: false, mescladoEmId: manterId } });
+    await tx.auditLog.create({
+      data: {
+        usuarioId: user.id,
+        entidade: "Destino",
+        entidadeId: manterId,
+        acao: "MESCLAR",
+        dadosAntes: JSON.parse(JSON.stringify({ mantido: manter, removido: remover })),
+        dadosDepois: JSON.parse(JSON.stringify({ mantido, removido, emendasReapontadas: emendas.count })),
+      },
+    });
+    return emendas.count;
+  });
+  return { ok: true, mensagem: `Mesclado: “${remover.nome}” passou a “${manter.nome}”; ${r} emenda(s) reapontada(s).` };
+}
