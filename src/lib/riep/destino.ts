@@ -32,8 +32,8 @@ export const pistasDoDestino = (nome: string, nomeOficial: string | null | undef
 // --- código de órgão e de unidade --------------------------------------------
 //
 // O órgão é o código da unidade sem o último segmento: "13.01" é do órgão
-// "13" (Mogi Guaçu, dois níveis); "02.04.02" é do "02.04" (Borborema, em que a
-// unidade executora fica abaixo da unidade orçamentária).
+// "13" (unidades de dois níveis); "02.04.02" é do "02.04" (unidades de três
+// níveis, em que a unidade executora fica abaixo da unidade orçamentária).
 export function orgaoDaUnidade(uo: string | null | undefined): string {
   const s = String(uo ?? "");
   const i = s.lastIndexOf(".");

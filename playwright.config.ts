@@ -61,6 +61,8 @@ export default defineConfig({
 
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },
+    // Ensaio da prova em celular: só a suíte dos 43 itens, com PROVA_CELULAR=1.
+    ...(process.env.PROVA_CELULAR ? [{ name: "celular", testMatch: /prova\//, use: { ...devices["Pixel 7"] } }] : []),
   ],
 
   webServer: {

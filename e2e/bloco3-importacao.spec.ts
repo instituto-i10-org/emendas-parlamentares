@@ -215,20 +215,21 @@ test.describe("LDO e PPA", () => {
 });
 
 // Leitura de PDF pela IA: só com a chave configurada (E2E_IA=1). PDF com
-// texto: duas páginas do projeto de LOA 2027 de Borborema (outro município,
-// 82 dotações), fechando a aba no meio e voltando. PDF digitalizado: o QDD do
-// PL 264/2026 de Mogi Guaçu.
+// texto: duas páginas do projeto de LOA de outro município (82 dotações),
+// fechando a aba no meio e voltando. PDF digitalizado: o QDD do PL 264/2026.
+// Os PDFs ficam fora do repositório; E2E_PDF_TEXTO aponta outro arquivo.
+const PDF_TEXTO = process.env.E2E_PDF_TEXTO ?? "/Users/diegoramos/better/borborema-fontes/ploa-2027/pl-051-2026-loa-2027.pdf";
 test.describe("Importação de PDF", () => {
   test.skip(!process.env.E2E_IA, "leitura de PDF exige a chave do serviço de IA (E2E_IA=1)");
   test.setTimeout(600_000);
   test("T-2.1-1 (PDF) e T-2.1-9 PDF com texto, páginas 9 e 10: 82 dotações; a leitura retoma depois de sair da tela", async ({ page }) => {
     await novoInstrumento("PL TESTE-PDF", "LOA");
     await entrar(page, "admin");
-    const pdf = readFileSync("/Users/diegoramos/better/borborema-fontes/ploa-2027/pl-051-2026-loa-2027.pdf");
+    const pdf = readFileSync(PDF_TEXTO);
     await page.goto("/executivo/planejamento");
     await page.locator("tr", { hasText: "PL TESTE-PDF" }).getByRole("button", { name: /Importar base/ }).click();
-    await page.locator("#imp-arq").setInputFiles({ name: "pl-51-2026.pdf", mimeType: "application/pdf", buffer: pdf });
-    await expect(page.getByRole("link", { name: "pl-51-2026.pdf" })).toBeVisible({ timeout: 60_000 });
+    await page.locator("#imp-arq").setInputFiles({ name: "outro-municipio.pdf", mimeType: "application/pdf", buffer: pdf });
+    await expect(page.getByRole("link", { name: "outro-municipio.pdf" })).toBeVisible({ timeout: 60_000 });
     await page.locator("#imp-de").fill("9");
     await page.locator("#imp-ate").fill("10");
     await page.getByRole("button", { name: "Ler e conferir" }).click();

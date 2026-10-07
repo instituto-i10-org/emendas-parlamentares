@@ -58,3 +58,6 @@ next-env.d.ts
 
 # Arquivos enviados no ambiente local (sem Blob)
 /.armazenamento/
+
+# Capturas do ensaio da prova (geradas por npm run prova)
+/docs/prova/capturas/
