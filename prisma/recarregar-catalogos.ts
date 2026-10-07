@@ -3,7 +3,8 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
 import { subfuncaoDoDestino } from "../src/lib/riep/destino";
 import type { TipoDestino } from "../src/lib/riep/tipos";
-import { semearCatalogos } from "./seed/catalogos";
+import { descreverProtecao, totalProtegido } from "../src/lib/cadastros/catalogos-protecao";
+import { lerProtecaoCatalogos, semearCatalogos } from "./seed/catalogos";
 import { lerDados } from "./seed/dados";
 
 // Recarrega os catálogos do motor a partir de prisma/dados/mogi-guacu/
@@ -15,7 +16,14 @@ import { lerDados } from "./seed/dados";
 //   npm run db:recarregar-catalogos                 só lista
 //   CONFIRMAR=1 npm run db:recarregar-catalogos     grava
 //
-// A biblioteca é substituída inteira (o arquivo é a fonte). A subfunção
+// O arquivo é a fonte, EXCETO áreas, tipos de destino e objetos editados pela
+// tela (há registro de auditoria feito por uma pessoa: criar, alterar,
+// renomear, excluir, reordenar). Esses ficam como estão e a listagem diz
+// quais são; para regravá-los também a partir do arquivo:
+//
+//   SOBRESCREVER_EDICOES=1 CONFIRMAR=1 npm run db:recarregar-catalogos
+//
+// A subfunção
 // sugerida só é preenchida onde está vazia — quem editou um destino à mão não
 // é sobrescrito. A unidade só muda em destino da base oficial; os cadastrados
 // por usuários não são tocados. Contra banco remoto exige PERMITIR_BANCO_REMOTO=1.
@@ -46,6 +54,7 @@ async function main() {
     const unidade = doArquivo.find((x) => x.execucao === d.execucao && x.nome === d.nome)?.unidade;
     return unidade && unidade !== d.unidadeCodigo ? [{ id: d.id, nome: d.nome, de: d.unidadeCodigo, para: unidade }] : [];
   });
+  const protecao = await lerProtecaoCatalogos(prisma);
   const novos = b.objetos.filter((o) => !objetosDb.some((x) => x.rotulo === o.rotulo)).map((o) => o.rotulo);
   const somem = objetosDb.filter((x) => !b.objetos.some((o) => o.rotulo === x.rotulo)).map((x) => x.rotulo);
   const tipos = b.tiposDestino ?? [];
@@ -59,11 +68,20 @@ async function main() {
   console.log(`Destinos da base oficial que mudam de unidade: ${mudamDeUnidade.length}`);
   for (const m of mudamDeUnidade) console.log(`  ${m.nome}: ${m.de ?? "—"} → ${m.para}`);
 
+  const editados = descreverProtecao(protecao);
+  if (editados.length) {
+    console.log(`\nEstes ${totalProtegido(protecao)} registros foram editados pela tela e NÃO serão regravados pelo arquivo:`);
+    for (const l of editados) console.log(l);
+    console.log("Para sobrescrevê-los também, rode com SOBRESCREVER_EDICOES=1 (o que foi feito pela tela se perde).");
+  } else if (process.env.SOBRESCREVER_EDICOES === "1") {
+    console.log("\nSOBRESCREVER_EDICOES=1: edições feitas pela tela também serão regravadas a partir do arquivo.");
+  }
+
   if (process.env.CONFIRMAR !== "1") {
     console.log("\nNada gravado. Rode de novo com CONFIRMAR=1 para gravar.");
     return;
   }
-  const r = await semearCatalogos(prisma);
+  const r = await semearCatalogos(prisma, protecao);
   let n = 0;
   for (const d of preencher) {
     await prisma.destino.update({ where: { id: d.id }, data: { subfuncaoSugerida: subfuncaoDoDestino(d.nome, d.nomeOficial, tipos) } });
@@ -71,7 +89,10 @@ async function main() {
   }
   for (const m of mudamDeUnidade) await prisma.destino.update({ where: { id: m.id }, data: { unidadeCodigo: m.para } });
   console.log(
-    `\nGravado: ${r.areas} áreas · ${r.objetos} objetos · ${r.tiposDestino} tipos de destino · ${n} destinos com subfunção sugerida · ${mudamDeUnidade.length} com unidade realinhada.`
+    `\nGravado: ${r.areas} áreas · ${r.objetos} objetos · ${r.tiposDestino} tipos de destino · ${n} destinos com subfunção sugerida · ${mudamDeUnidade.length} com unidade realinhada.` +
+      (r.pulados.areas + r.pulados.objetos + r.pulados.tiposDestino
+        ? ` Mantidos por edição pela tela: ${r.pulados.areas} áreas, ${r.pulados.objetos} objetos, ${r.pulados.tiposDestino} tipos.`
+        : "")
   );
 }
 

@@ -48,6 +48,8 @@ async function main() {
   const catalogos = await semearCatalogos(prisma);
   resumo.areas = catalogos.areas;
   resumo.objetos = catalogos.objetos;
+  const mantidos = catalogos.pulados.areas + catalogos.pulados.objetos + catalogos.pulados.tiposDestino;
+  if (mantidos) console.log(`Catálogos: ${mantidos} registro(s) editado(s) pela tela mantido(s) (SOBRESCREVER_EDICOES=1 para regravar).`);
   resumo.destinos = await semearDestinos(prisma);
   resumo.fontesPreco = await semearFontesPreco(prisma);
   resumo.vereadores = await semearVereadores(prisma);

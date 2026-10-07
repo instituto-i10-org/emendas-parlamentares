@@ -64,3 +64,28 @@ do nome e do e-mail. Depois, em **Configurações**:
 
 Opcional: em Exercício e parâmetros, **Importar emendas de anos anteriores**
 (histórico do portal e dos painéis).
+
+## 3. Catálogos editados pela tela e os scripts de carga
+
+Áreas, tipos de destino e objetos da biblioteca podem nascer de um arquivo
+(`prisma/dados/<município>/biblioteca-objetos.json`, pelo seed ou por
+`npm run db:recarregar-catalogos`) e depois ser editados pela tela. Para que
+uma recarga não desfaça o trabalho do administrador, os scripts **não
+regravam o que foi editado pela tela**: todo registro com auditoria feita por
+uma pessoa (criado, alterado, renomeado, excluído ou reordenado em
+Configurações) fica como está, e a listagem diz quais são:
+
+```
+npm run db:recarregar-catalogos            # lista, inclusive "estes N registros foram editados pela tela"
+CONFIRMAR=1 npm run db:recarregar-catalogos  # grava o resto, mantém os editados
+```
+
+Para regravar também os editados a partir do arquivo (o que foi feito pela tela
+se perde), é preciso pedir explicitamente:
+
+```
+SOBRESCREVER_EDICOES=1 CONFIRMAR=1 npm run db:recarregar-catalogos
+```
+
+Em banco novo, sem nenhuma edição pela tela, o arquivo vale inteiro. A regra
+está em `src/lib/cadastros/catalogos-protecao.ts`.
