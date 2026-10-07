@@ -2,9 +2,13 @@
 
 import type { SituacaoEmendamento } from "@/lib/emendas/emendamento";
 import type { EstadoEmenda } from "@/lib/emendas/estado";
-import type { Checagem } from "@/lib/riep";
+import type { Verificacao } from "@/lib/riep";
 import type { Atualizar, DerivadoEmenda } from "./editor";
-import { Aviso, Detalhes, MarcaChecagem } from "./ui";
+import { LinhaChecagem } from "./linha-checagem";
+import { ListaVerificacoes } from "./relatorio-verificacoes";
+import { Aviso, Detalhes } from "./ui";
+
+export { LinhaChecagem };
 
 // Pré-checagem das condições de validade. Só as pendências pedem atenção
 // imediata; o que já confere fica recolhido.
@@ -14,12 +18,15 @@ export function Etapa3({
   atualizar,
   emendamento,
   podeRemeter,
+  recusa = null,
 }: {
   e: EstadoEmenda;
   d: DerivadoEmenda;
   atualizar: Atualizar;
   emendamento: SituacaoEmendamento;
   podeRemeter: boolean;
+  // Remessa recusada pelo servidor: as treze como ele as conferiu.
+  recusa?: { verificacoes: Verificacao[]; erro: string } | null;
 }) {
   const pendentes = d.checks.filter((c) => c.nivel !== "ok");
   const ok = d.checks.filter((c) => c.nivel === "ok");
@@ -32,6 +39,12 @@ export function Etapa3({
       ) : (
         <p className="text-xs text-muted-foreground">{emendamento.explicacao}</p>
       )}
+      {recusa ? (
+        <Aviso tipo="bad" titulo="Remessa recusada na conferência do servidor">
+          {recusa.erro} A tentativa ficou registrada no histórico de validações da emenda.
+        </Aviso>
+      ) : null}
+      <ListaVerificacoes verificacoes={recusa?.verificacoes ?? d.verificacoes} />
       <p className="text-sm text-muted-foreground">
         Pré-checagem das condições de validade. A remessa só é liberada quando nenhum bloqueio resta; alertas não impedem a submissão.
       </p>
@@ -66,18 +79,6 @@ export function Etapa3({
           ou subcontratados, vínculo conjugal, de união estável ou de parentesco até o terceiro grau (ADPF 854).
         </span>
       </label>
-    </div>
-  );
-}
-
-export function LinhaChecagem({ c }: { c: Checagem }) {
-  return (
-    <div className="flex gap-3 py-3">
-      <MarcaChecagem nivel={c.nivel} />
-      <div className="min-w-0">
-        <div className="text-sm font-bold">{c.titulo}</div>
-        <div className="text-xs leading-relaxed break-words text-muted-foreground">{c.detalhe}</div>
-      </div>
     </div>
   );
 }

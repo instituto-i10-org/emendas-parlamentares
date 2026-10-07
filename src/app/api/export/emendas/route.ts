@@ -3,6 +3,7 @@ import { podeVerTodasEmendas, temPermissao } from "@/lib/authz";
 import { listarEmendas } from "@/lib/emendas/consultas";
 import { PARCELA, STATUS_EMENDA } from "@/lib/emendas/rotulos";
 import { usuarioDaSessao } from "@/lib/session";
+import { NAO_REMETIDAS } from "@/lib/emendas/situacoes";
 
 // Exportação das emendas do exercício (CSV ou XLSX). Só para quem vê todas as
 // emendas: Comissão, Presidência, Executivo (viabilidade/execução) e admin.
@@ -17,7 +18,7 @@ export async function GET(req: Request) {
   if (!Number.isInteger(ano) || ano < 2000 || ano > 2100) return new Response("Ano inválido.", { status: 400 });
   const formato = url.searchParams.get("formato") === "xlsx" ? "xlsx" : "csv";
 
-  const emendas = await listarEmendas(ano, { status: { not: "RASCUNHO" } });
+  const emendas = await listarEmendas(ano, { status: { notIn: NAO_REMETIDAS } });
   const linhas = emendas.map((e) => ({
     Numero: e.numero,
     Autor: e.autor.nome,

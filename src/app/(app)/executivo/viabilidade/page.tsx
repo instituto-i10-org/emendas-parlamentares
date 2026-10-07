@@ -7,13 +7,14 @@ import { podeAnalisarViabilidade } from "@/lib/authz";
 import { listarEmendas } from "@/lib/emendas/consultas";
 import { paraLinhaExecutivo } from "@/lib/emendas/linhas-executivo";
 import { getAnoAtivo } from "@/lib/exercicio";
+import { NAO_REMETIDAS } from "@/lib/emendas/situacoes";
 
 export const metadata: Metadata = { title: "Viabilidade técnica — Emendas360" };
 
 export default async function ViabilidadePage() {
   const user = await requireAccess({ poder: Poder.EXECUTIVO, permissoes: ["analisarViabilidade", "consultarTudo"] });
   const ano = await getAnoAtivo();
-  const emendas = ano ? await listarEmendas(ano, { status: { not: "RASCUNHO" } }) : [];
+  const emendas = ano ? await listarEmendas(ano, { status: { notIn: NAO_REMETIDAS } }) : [];
   const linhas = emendas.map((e) => paraLinhaExecutivo(e, ano!));
   const com = linhas.filter((l) => l.parecer);
   return (

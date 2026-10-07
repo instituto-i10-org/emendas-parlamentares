@@ -9,6 +9,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { excluirRascunho, salvarEmenda } from "@/lib/actions/emendas";
 import type { ContextoEmenda, DestinoTela } from "@/lib/emendas/contexto";
 import { chaveClassificacao, lerNumero, paraValidacao, type EstadoEmenda } from "@/lib/emendas/estado";
+import { contextoVerificacao, verificarEmenda } from "@/lib/emendas/verificacao";
 import {
   MODELOS,
   classificacaoValida,
@@ -21,6 +22,7 @@ import {
   validar,
   type Aplicado,
   type Checagem,
+  type Verificacao,
 } from "@/lib/riep";
 import { cn } from "@/lib/utils";
 import { Etapa1 } from "./etapa1";
@@ -37,7 +39,7 @@ export type DerivadoEmenda = ReturnType<typeof useDerivado>;
 
 // O que se deduz do estado: destino, classificação, dotação, modelo, meta,
 // validação. Recalculado a cada mudança — o motor é rápido e puro.
-function useDerivado(e: EstadoEmenda, ctx: ContextoEmenda, destinos: DestinoTela[], aplicado: Aplicado) {
+function useDerivado(e: EstadoEmenda, ctx: ContextoEmenda, destinos: DestinoTela[], aplicado: Aplicado, reenvio: boolean) {
   const destino = useMemo(() => destinos.find((d) => d.id === e.destinoId) ?? null, [destinos, e.destinoId]);
   const chave = chaveClassificacao(e);
   const valida = !!e.classificadoCom && e.classificadoCom === chave;
@@ -70,6 +72,14 @@ function useDerivado(e: EstadoEmenda, ctx: ContextoEmenda, destinos: DestinoTela
       }),
     [e, classificacao, metaPlanejamento, ctx, aplicado]
   );
+  // As treze verificações, sobre as mesmas conferências.
+  const ctxVerificacao = useMemo(() => contextoVerificacao(ctx, aplicado, reenvio), [ctx, aplicado, reenvio]);
+  const treze = useMemo(
+    () => verificarEmenda(e, valor, dotacao, ctxVerificacao, checks),
+    [e, valor, dotacao, ctxVerificacao, checks]
+  );
+  const resumo = resumoValidacao(checks);
+  const falhas = treze.verificacoes.filter((v) => v.estado === "falha").length;
   return {
     destino,
     classificacao,
@@ -79,7 +89,9 @@ function useDerivado(e: EstadoEmenda, ctx: ContextoEmenda, destinos: DestinoTela
     metaPlanejamento,
     valor,
     checks,
-    resumo: resumoValidacao(checks),
+    verificacoes: treze.verificacoes,
+    // Falha numa das treze também conta como bloqueio da remessa.
+    resumo: { ...resumo, bloqueios: resumo.bloqueios + falhas, pode: resumo.pode && falhas === 0 },
     avanca: podeAvancar(classificacao, e.selecao),
     valida: classificacaoValida(classificacao),
   };
@@ -113,7 +125,9 @@ export function EditorEmenda({
     setAlterado(true);
   }, []);
 
-  const d = useDerivado(e, ctx, destinos, aplicado);
+  const d = useDerivado(e, ctx, destinos, aplicado, !!diligencia);
+  // Resultado da remessa recusada pelo servidor (as treze como ele as viu).
+  const [recusa, setRecusa] = useState<{ verificacoes: Verificacao[]; erro: string } | null>(null);
   // Remessa liberada com o emendamento aberto; com o prazo vencido, só o
   // reenvio depois de diligência (a emenda já foi apresentada no prazo).
   const podeRemeter = ctx.emendamento.aberto || (!!diligencia && ctx.emendamento.motivo === "PRAZO_ENCERRADO");
@@ -177,9 +191,18 @@ export function EditorEmenda({
           setDuplicata(r.duplicata);
           return;
         }
+        // Recusada na remessa: o servidor gravou a tentativa e devolveu as treze.
+        if (r.id && r.revisao !== undefined) {
+          const { id, revisao } = r;
+          setE((atual) => ({ ...atual, id, revisao }));
+          setAlterado(false);
+          if (!e.id) router.replace(`/emendas/${id}`, { scroll: false });
+        }
+        if (r.verificacoes) setRecusa({ verificacoes: r.verificacoes, erro: r.erro });
         toast.error(r.erro);
         return;
       }
+      setRecusa(null);
       setDuplicata(null);
       setE((atual) => ({ ...atual, id: r.id, revisao: r.revisao }));
       setAlterado(false);
@@ -403,7 +426,7 @@ export function EditorEmenda({
           ) : etapa === 2 ? (
             <Etapa2 e={e} d={d} ctx={ctx} atualizar={atualizar} autor={autor} alterado={alterado} />
           ) : (
-            <Etapa3 e={e} d={d} atualizar={atualizar} emendamento={ctx.emendamento} podeRemeter={podeRemeter} />
+            <Etapa3 e={e} d={d} atualizar={atualizar} emendamento={ctx.emendamento} podeRemeter={podeRemeter} recusa={recusa} />
           )}
           {etapa > 1 ? rodape : <div className="h-7" />}
         </section>

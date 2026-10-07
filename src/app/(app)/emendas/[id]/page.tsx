@@ -4,7 +4,9 @@ import { notFound } from "next/navigation";
 import { ApagarEmendaTeste } from "@/components/emenda/apagar-emenda-teste";
 import { Pagina } from "@/components/emenda/avisos-pagina";
 import { EditorEmenda } from "@/components/emenda/editor";
-import { LinhaChecagem } from "@/components/emenda/etapa3";
+import { HistoricoValidacoes, type ValidacaoTela } from "@/components/emenda/historico-validacoes";
+import { LinhaChecagem } from "@/components/emenda/linha-checagem";
+import { RelatorioVerificacoes } from "@/components/emenda/relatorio-verificacoes";
 import { Selo } from "@/components/emenda/ui";
 import { Button } from "@/components/ui/button";
 import { podeGerirEmenda, podeVerTodasEmendas, temPermissao } from "@/lib/authz";
@@ -12,7 +14,9 @@ import { buscarEmenda, paraEstado } from "@/lib/emendas/carregar";
 import { aplicadoDoAutor, carregarContexto } from "@/lib/emendas/contexto";
 import { somasExecucao } from "@/lib/emendas/execucao";
 import { ETAPA_EXECUCAO, RESULTADO_VIABILIDADE, STATUS_EMENDA } from "@/lib/emendas/rotulos";
-import { BRL, DATA, DATA_HORA, MODELOS, type Checagem } from "@/lib/riep";
+import { editavelPeloAutor } from "@/lib/emendas/situacoes";
+import { prisma } from "@/lib/prisma";
+import { BRL, DATA, DATA_HORA, MODELOS, type Checagem, type Verificacao } from "@/lib/riep";
 import { getCurrentUser } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Emenda — Emendas360" };
@@ -26,7 +30,7 @@ export default async function EmendaPage({ params }: { params: Promise<{ id: str
   const ve = gere || podeVerTodasEmendas(user) || temPermissao(user, "analisarViabilidade", "registrarExecucao", "consultarTudo") || x.autor.usuarioId === user.id;
   if (!ve) notFound();
 
-  if ((x.status === "RASCUNHO" || x.status === "EM_DILIGENCIA") && gere) {
+  if (editavelPeloAutor(x.status) && gere) {
     const ctx = await carregarContexto(x.exercicio.ano);
     if (!ctx) notFound();
     const aplicado = await aplicadoDoAutor(ctx.exercicioId, x.autorId, ctx.config.percentualSaude, x.id);
@@ -38,6 +42,23 @@ export default async function EmendaPage({ params }: { params: Promise<{ id: str
   }
 
   const checks = (x.validacoes[0]?.itens ?? []) as Checagem[];
+  const quem = new Map(
+    (await prisma.user.findMany({ where: { id: { in: x.validacoes.map((v) => v.usuarioId).filter((u): u is string => !!u) } }, select: { id: true, name: true, email: true } })).map((u) => [
+      u.id,
+      u.name ?? u.email ?? "—",
+    ])
+  );
+  const validacoes: ValidacaoTela[] = x.validacoes.map((v) => ({
+    id: v.id,
+    executadaEm: v.executadaEm,
+    momento: v.momento,
+    valida: v.valida,
+    revisao: v.revisao,
+    quem: v.usuarioId ? quem.get(v.usuarioId) ?? "—" : "—",
+    verificacoes: (v.verificacoes ?? []) as unknown as Verificacao[],
+    complementares: (v.itens ?? []) as unknown as Checagem[],
+  }));
+  const ultima = validacoes.find((v) => v.verificacoes.length) ?? null;
   const exec = somasExecucao(x.andamentos.map((a) => ({ etapa: a.etapa, valor: a.valor.toNumber() })));
   const d = x.dotacao;
   return (
@@ -153,20 +174,55 @@ export default async function EmendaPage({ params }: { params: Promise<{ id: str
             </div>
           ) : null}
         </section>
-        <aside className="rounded-card bg-surface p-[22px] shadow-card">
-          <div className="mb-2 text-md font-bold">Validação na submissão</div>
-          {checks.length ? (
-            <div className="divide-y divide-hair">
-              {checks
-                .filter((c) => c.nivel !== "ok")
-                .map((c, i) => (
-                  <LinhaChecagem key={i} c={c} />
+        <aside className="grid min-w-0 content-start gap-4">
+          <div className="rounded-card bg-surface p-[22px] shadow-card">
+            <h2 className="mb-3 text-md font-bold">Relatório da validação</h2>
+            {ultima ? (
+              <RelatorioVerificacoes
+                verificacoes={ultima.verificacoes}
+                complementares={ultima.complementares}
+                valida={ultima.valida}
+                cabecalho={`${DATA_HORA(ultima.executadaEm)} · ${ultima.quem}`}
+              />
+            ) : checks.length ? (
+              // Remetida antes das treze verificações: só as conferências do motor.
+              <div className="divide-y divide-hair">
+                {checks
+                  .filter((c) => c.nivel !== "ok")
+                  .map((c, i) => (
+                    <LinhaChecagem key={i} c={c} />
+                  ))}
+                <p className="pt-3 text-xs text-muted-foreground">{checks.filter((c) => c.nivel === "ok").length} verificações concluídas sem pendência.</p>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">Ainda não submetida.</p>
+            )}
+          </div>
+          <div className="rounded-card bg-surface p-[22px] shadow-card">
+            <h2 className="mb-3 text-md font-bold">Histórico de validações</h2>
+            <HistoricoValidacoes validacoes={validacoes} />
+          </div>
+          <div className="rounded-card bg-surface p-[22px] shadow-card">
+            <h2 className="mb-3 text-md font-bold">Histórico de situações</h2>
+            {x.historico.length ? (
+              <ol className="grid gap-2 text-sm">
+                {x.historico.map((h) => (
+                  <li key={h.id} className="rounded-md bg-soft px-3 py-2">
+                    <b>
+                      {h.de ? `${STATUS_EMENDA[h.de]?.rotulo ?? h.de} → ` : ""}
+                      {STATUS_EMENDA[h.para]?.rotulo ?? h.para}
+                    </b>
+                    <span className="block text-xs text-muted-foreground">
+                      {DATA_HORA(h.criadoEm)} · {h.usuario?.name ?? h.usuario?.email ?? "sistema"}
+                    </span>
+                    {h.texto ? <span className="mt-0.5 block text-xs whitespace-pre-line">{h.texto}</span> : null}
+                  </li>
                 ))}
-              <p className="pt-3 text-xs text-muted-foreground">{checks.filter((c) => c.nivel === "ok").length} verificações concluídas sem pendência.</p>
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">Ainda não submetida.</p>
-          )}
+              </ol>
+            ) : (
+              <p className="text-sm text-muted-foreground">Nenhuma mudança de situação registrada.</p>
+            )}
+          </div>
         </aside>
       </div>
     </Pagina>

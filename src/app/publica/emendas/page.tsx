@@ -7,6 +7,7 @@ import { STATUS_EMENDA } from "@/lib/emendas/rotulos";
 import { getAnoAtivo } from "@/lib/exercicio";
 import { prisma } from "@/lib/prisma";
 import { BRL, norm } from "@/lib/riep";
+import { NAO_REMETIDAS } from "@/lib/emendas/situacoes";
 
 export const metadata: Metadata = { title: "Emendas — portal público" };
 
@@ -21,9 +22,9 @@ export default async function EmendasPublicasPage({ searchParams }: { searchPara
   const ano = await getAnoAtivo();
   const [sistema, importadas, autores] = await Promise.all([
     // Autor de demonstração não aparece no portal: as emendas dele são de teste.
-    prisma.emenda.findMany({ where: { exercicio: { ano: ano ?? -1 }, status: { not: "RASCUNHO" }, autor: { demonstracao: false } }, include: { autor: true, destino: true } }),
+    prisma.emenda.findMany({ where: { exercicio: { ano: ano ?? -1 }, status: { notIn: NAO_REMETIDAS }, autor: { demonstracao: false } }, include: { autor: true, destino: true } }),
     prisma.emendaImportada.findMany({ where: { exercicio: { ano: ano ?? -1 }, autor: { demonstracao: false } }, include: { autor: true } }),
-    prisma.autor.findMany({ orderBy: { nome: "asc" }, where: { demonstracao: false, OR: [{ emendas: { some: { status: { not: "RASCUNHO" } } } }, { emendasImportadas: { some: {} } }] } }),
+    prisma.autor.findMany({ orderBy: { nome: "asc" }, where: { demonstracao: false, OR: [{ emendas: { some: { status: { notIn: NAO_REMETIDAS } } } }, { emendasImportadas: { some: {} } }] } }),
   ]);
   const todas: (Linha & { autorId: string })[] = [
     ...sistema.map((e) => ({

@@ -8,6 +8,8 @@ import { aplicadoDoAutor, carregarContexto } from "@/lib/emendas/contexto";
 import { mesmaEmenda } from "@/lib/emendas/duplicidade";
 import { mudarSituacao } from "@/lib/emendas/historico";
 import { chaveClassificacao, estadoSchema, lerNumero, paraValidacao, type EstadoEmenda } from "@/lib/emendas/estado";
+import { NAO_REMETIDAS, editavelPeloAutor } from "@/lib/emendas/situacoes";
+import { contextoVerificacao, verificarEmenda } from "@/lib/emendas/verificacao";
 import { anoDaTela, exercicioHistorico } from "@/lib/exercicio";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rate-limit";
@@ -25,12 +27,24 @@ import {
   type Checagem,
   type Classificacao,
   type Selecao,
+  type Verificacao,
 } from "@/lib/riep";
 import { getCurrentUser } from "@/lib/session";
 
 export type ResultadoGravacao =
   | { ok: true; id: string; revisao: number; numero: number | null; status: string }
-  | { ok: false; erro: string; checks?: Checagem[]; duplicata?: { numero: number | null; objeto: string; status: string } };
+  | {
+      ok: false;
+      erro: string;
+      checks?: Checagem[];
+      duplicata?: { numero: number | null; objeto: string; status: string };
+      // Remessa recusada na conferência do servidor: a emenda foi gravada (a
+      // tentativa fica no histórico de validações) e as treze voltam à tela.
+      id?: string;
+      revisao?: number;
+      verificacoes?: Verificacao[];
+      complementares?: Checagem[];
+    };
 
 // ============================================================================
 // Gravação da emenda. O servidor refaz a classificação a partir do banco e só
@@ -74,7 +88,7 @@ export async function salvarEmenda(entrada: EstadoEmenda, submeter = false, anoT
     if (!podeGerirEmenda(user, { autorUsuarioId: existente.autor.usuarioId })) {
       return { ok: false, erro: "Você não pode alterar esta emenda." };
     }
-    if (existente.status !== "RASCUNHO" && existente.status !== "EM_DILIGENCIA") {
+    if (!editavelPeloAutor(existente.status)) {
       return { ok: false, erro: "Emenda já submetida não se altera por aqui." };
     }
     if (existente.revisao !== e.revisao) {
@@ -111,28 +125,38 @@ export async function salvarEmenda(entrada: EstadoEmenda, submeter = false, anoT
   const modelo = modeloDaDotacao(dotacao);
   const valor = Math.round(e.itens.reduce((s, i) => s + lerNumero(i.quantidade) * lerNumero(i.valorUnitario), 0) * 100) / 100;
 
-  let validacao: { checks: Checagem[]; bloqueios: number; alertas: number } | null = null;
+  // Reenvio depois de diligência: a emenda já tem número e volta à fila.
+  const reenvio = existente?.status === "EM_DILIGENCIA";
+  let validacao: { checks: Checagem[]; bloqueios: number; alertas: number; verificacoes: Verificacao[]; valida: boolean } | null = null;
   if (submeter) {
     if (!podeAvancar(classificacao, selecao)) {
       return { ok: false, erro: "A emenda precisa de classificação válida antes de ser submetida." };
     }
+    // O servidor refaz tudo a partir do banco: o que o navegador calculou não vale.
     const aplicado = await aplicadoDoAutor(ctx.exercicioId, autorId, ctx.config.percentualSaude, e.id);
     const checks = validar(
       paraValidacao(e, { classificacao, metaPlanejamento: dotacao ? ctx.metas[dotacao.id] ?? null : null }),
       { config: ctx.config, aplicado, biblioteca: ctx.catalogo.objetos }
     );
+    const treze = verificarEmenda(e, valor, dotacao, contextoVerificacao(ctx, aplicado, reenvio), checks);
     const resumo = resumoValidacao(checks);
-    if (!resumo.pode) {
-      return { ok: false, erro: `A emenda tem ${resumo.bloqueios} bloqueio(s). Revise a validação.`, checks };
-    }
-    validacao = { checks, ...resumo };
-
+    const falhas = treze.verificacoes.filter((v) => v.estado === "falha").length;
+    validacao = {
+      checks,
+      bloqueios: resumo.bloqueios + falhas,
+      alertas: resumo.alertas + treze.verificacoes.filter((v) => v.estado === "alerta").length,
+      verificacoes: treze.verificacoes,
+      valida: treze.valida,
+    };
+  }
+  const recusada = !!validacao && !validacao.valida;
+  if (validacao?.valida) {
     // Duplicidade: mesmo autor, mesmo destino e mesmo objeto de uma emenda já
     // submetida no exercício. Um clique duplo ou uma rotina interrompida não
     // podem numerar a mesma emenda duas vezes; o proponente pode confirmar.
     if (!e.confirmarDuplicata && destino) {
       const parecidas = await prisma.emenda.findMany({
-        where: { exercicioId: ctx.exercicioId, autorId, destinoId: destino.id, status: { not: "RASCUNHO" }, ...(e.id ? { id: { not: e.id } } : {}) },
+        where: { exercicioId: ctx.exercicioId, autorId, destinoId: destino.id, status: { notIn: NAO_REMETIDAS }, ...(e.id ? { id: { not: e.id } } : {}) },
         select: { numero: true, objeto: true, status: true, execucao: true, destinoId: true },
         orderBy: { numero: "asc" },
       });
@@ -244,7 +268,40 @@ export async function salvarEmenda(entrada: EstadoEmenda, submeter = false, anoT
         .map((valor, ordem) => ({ emendaId: emenda.id, ordem, valor })),
     });
 
-    if (!validacao) return emenda;
+    if (!validacao) {
+      // Alterar uma emenda recusada na remessa a devolve a rascunho.
+      if (emenda.status === "INVALIDA" || emenda.status === "VALIDA") {
+        return mudarSituacao(tx, { emendaId: emenda.id, de: emenda.status, para: "RASCUNHO", usuarioId: user.id, texto: "Alterada pelo autor." });
+      }
+      return emenda;
+    }
+
+    // Toda validação feita no servidor fica gravada, inclusive a reprovada.
+    await tx.validacaoEmenda.create({
+      data: {
+        emendaId: emenda.id,
+        bloqueios: validacao.bloqueios,
+        alertas: validacao.alertas,
+        itens: validacao.checks,
+        verificacoes: validacao.verificacoes,
+        valida: validacao.valida,
+        momento: reenvio ? "REENVIO" : "REMESSA",
+        revisao: emenda.revisao,
+        usuarioId: user.id,
+      },
+    });
+    if (recusada) {
+      // Em diligência a emenda segue na diligência, com o número; a nova fica
+      // inválida, com o autor, até ser corrigida.
+      if (reenvio || emenda.status === "INVALIDA") return emenda;
+      return mudarSituacao(tx, {
+        emendaId: emenda.id,
+        de: emenda.status,
+        para: "INVALIDA",
+        usuarioId: user.id,
+        texto: `Remessa recusada: ${validacao.bloqueios} falha(s) na validação do servidor.`,
+      });
+    }
 
     // A emenda sai de rascunho: os links da entidade ainda abertos deixam de valer.
     await tx.conviteEntidade.updateMany({
@@ -252,14 +309,6 @@ export async function salvarEmenda(entrada: EstadoEmenda, submeter = false, anoT
       data: { revogadoEm: new Date(), revogadoPorId: user.id },
     });
 
-    await tx.validacaoEmenda.create({
-      data: {
-        emendaId: emenda.id,
-        bloqueios: validacao.bloqueios,
-        alertas: validacao.alertas,
-        itens: validacao.checks,
-      },
-    });
     // Reenvio depois de diligência: volta à fila com o número que já tinha.
     if (existente?.status === "EM_DILIGENCIA") {
       return mudarSituacao(tx, {
@@ -279,7 +328,7 @@ export async function salvarEmenda(entrada: EstadoEmenda, submeter = false, anoT
     });
     return mudarSituacao(tx, {
       emendaId: emenda.id,
-      de: "RASCUNHO",
+      de: emenda.status,
       para: "SUBMETIDA",
       usuarioId: user.id,
       dados: { numero: contador.ultimo, submetidaEm: new Date() },
@@ -290,11 +339,22 @@ export async function salvarEmenda(entrada: EstadoEmenda, submeter = false, anoT
     usuarioId: user.id,
     entidade: "Emenda",
     entidadeId: salvo.id,
-    acao: submeter ? (existente?.status === "EM_DILIGENCIA" ? "REENVIAR_APOS_DILIGENCIA" : "SUBMETER") : existente ? "ATUALIZAR_RASCUNHO" : "CRIAR_RASCUNHO",
+    acao: recusada ? "REMESSA_RECUSADA" : submeter ? (reenvio ? "REENVIAR_APOS_DILIGENCIA" : "SUBMETER") : existente ? "ATUALIZAR_RASCUNHO" : "CRIAR_RASCUNHO",
     dadosAntes: existente ? { status: existente.status, revisao: existente.revisao, valor: existente.valor } : undefined,
     dadosDepois: { status: salvo.status, revisao: salvo.revisao, valor: salvo.valor, numero: salvo.numero },
   });
   revalidatePath("/emendas");
+  if (recusada && validacao) {
+    return {
+      ok: false,
+      erro: `A conferência do servidor encontrou ${validacao.bloqueios} falha(s): a emenda não foi remetida.`,
+      id: salvo.id,
+      revisao: salvo.revisao,
+      checks: validacao.checks,
+      verificacoes: validacao.verificacoes,
+      complementares: validacao.checks,
+    };
+  }
   return { ok: true, id: salvo.id, revisao: salvo.revisao, numero: salvo.numero, status: salvo.status };
 }
 
@@ -328,7 +388,7 @@ export async function excluirRascunho(id: string): Promise<{ ok: boolean; erro?:
   const emenda = await prisma.emenda.findUnique({ where: { id }, include: { autor: true } });
   if (!emenda) return { ok: false, erro: "Emenda não encontrada." };
   if (!podeGerirEmenda(user, { autorUsuarioId: emenda.autor.usuarioId })) return { ok: false, erro: "Sem permissão." };
-  if (emenda.status !== "RASCUNHO") return { ok: false, erro: "Só rascunhos podem ser excluídos." };
+  if (emenda.status !== "RASCUNHO" && emenda.status !== "INVALIDA") return { ok: false, erro: "Só rascunhos podem ser excluídos." };
   await prisma.emenda.delete({ where: { id } });
   await registrarAuditoria({
     usuarioId: user.id,

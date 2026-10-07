@@ -3,7 +3,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
 import { semearAcesso } from "./seed/acesso";
 import { MUNICIPIO_SEED, lerMunicipio } from "./seed/dados";
-import { anosComDados, semearExercicio } from "./seed/exercicio";
+import { anosComDados, semearExercicio, semearRegras } from "./seed/exercicio";
 import { semearLoa } from "./seed/loa";
 import { semearCatalogos } from "./seed/catalogos";
 import { semearDestinos } from "./seed/destinos";
@@ -43,6 +43,7 @@ async function main() {
     const loa = await semearLoa(prisma, exercicio.id, ano);
     resumo[`dotacoes${ano}`] = loa.dotacoes;
     resumo[`metasPpa${ano}`] = loa.metas;
+    resumo[`regras${ano}`] = await semearRegras(prisma, exercicio.id, ano);
   }
   const catalogos = await semearCatalogos(prisma);
   resumo.areas = catalogos.areas;

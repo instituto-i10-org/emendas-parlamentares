@@ -91,7 +91,7 @@ export const consolidar = cache(async (ano: number, publico = false): Promise<Co
   );
   const porStatus: Consolidado["porStatus"] = {};
   const porDestino = new Map<string, { nome: string; qtd: number; valor: number; saude: number }>();
-  const contam = (s: string) => s === "SUBMETIDA" || s === "EM_DILIGENCIA" || s === "APROVADA";
+  const contam = (s: string) => s === "SUBMETIDA" || s === "EM_TRAMITACAO" || s === "EM_DILIGENCIA" || s === "APROVADA";
 
   for (const e of emendas) {
     const v = e.valor.toNumber();

@@ -10,20 +10,14 @@ import { Button } from "@/components/ui/button";
 import type { Prisma } from "@/generated/prisma/client";
 import { apresentaEmendas, podeGerirEmenda, podeVerTodasEmendas } from "@/lib/authz";
 import { lerEmendamento } from "@/lib/emendas/contexto";
+import { STATUS_EMENDA } from "@/lib/emendas/rotulos";
+import { naoRemetida } from "@/lib/emendas/situacoes";
 import { exercicioHistorico, getAnoAtivo } from "@/lib/exercicio";
 import { prisma } from "@/lib/prisma";
 import { BRL, DATA } from "@/lib/riep";
 import { getCurrentUser } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Emendas — Emendas360" };
-
-const STATUS: Record<string, { rotulo: string; tipo: "ok" | "warn" | "bad" | "info" | "neutro" }> = {
-  RASCUNHO: { rotulo: "Rascunho", tipo: "neutro" },
-  SUBMETIDA: { rotulo: "Submetida", tipo: "info" },
-  EM_DILIGENCIA: { rotulo: "Em diligência", tipo: "warn" },
-  APROVADA: { rotulo: "Aprovada", tipo: "ok" },
-  REJEITADA: { rotulo: "Rejeitada", tipo: "bad" },
-};
 
 export default async function EmendasPage({ searchParams }: { searchParams: Promise<{ erro?: string }> }) {
   const { erro } = await searchParams;
@@ -110,10 +104,10 @@ export default async function EmendasPage({ searchParams }: { searchParams: Prom
                     {todas ? <td className="px-5 py-3.5 max-lg:hidden">{x.autor.nome}</td> : null}
                     <td className="px-5 py-3.5 text-right font-bold whitespace-nowrap tnum">{x.valor.toNumber() > 0 ? BRL(x.valor.toNumber()) : "—"}</td>
                     <td className="px-5 py-3.5">
-                      <Selo tipo={STATUS[x.status].tipo}>{STATUS[x.status].rotulo}</Selo>
+                      <Selo tipo={STATUS_EMENDA[x.status].tipo}>{STATUS_EMENDA[x.status].rotulo}</Selo>
                     </td>
                     <td className="px-3 py-2">
-                      {!podeGerirEmenda(user, { autorUsuarioId: x.autor.usuarioId }) ? null : x.status === "RASCUNHO" ? (
+                      {!podeGerirEmenda(user, { autorUsuarioId: x.autor.usuarioId }) ? null : naoRemetida(x.status) ? (
                         <DescartarRascunho id={x.id} rotulo={x.objeto ? `“${x.objeto.slice(0, 80)}”` : "Este rascunho"} />
                       ) : x.autor.demonstracao ? (
                         <ApagarEmendaTeste id={x.id} rotulo={`Emenda nº ${x.numero ?? "—"}/${ano}`} />

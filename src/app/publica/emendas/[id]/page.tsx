@@ -7,6 +7,7 @@ import { somasExecucao } from "@/lib/emendas/execucao";
 import { STATUS_EMENDA } from "@/lib/emendas/rotulos";
 import { prisma } from "@/lib/prisma";
 import { BRL, DATA, MODELOS } from "@/lib/riep";
+import { NAO_REMETIDAS } from "@/lib/emendas/situacoes";
 
 export const metadata: Metadata = { title: "Emenda — portal público" };
 
@@ -14,7 +15,7 @@ export const metadata: Metadata = { title: "Emenda — portal público" };
 export default async function EmendaPublicaPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const e = await prisma.emenda.findFirst({
-    where: { id, status: { not: "RASCUNHO" }, autor: { demonstracao: false } },
+    where: { id, status: { notIn: NAO_REMETIDAS }, autor: { demonstracao: false } },
     include: {
       autor: true,
       destino: true,

@@ -2,7 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import { NATUREZAS_EMENDAVEIS } from "@/lib/orcamento/codigo-dotacao";
-import type { Aplicado, Catalogo, ConfigMotor, DestinoMotor, DotacaoMotor, FontePreco, MetaPlanejamento } from "@/lib/riep";
+import type { Aplicado, Catalogo, ConfigMotor, DestinoMotor, DotacaoBase, FontePreco, MetaPlanejamento, Regras } from "@/lib/riep";
 import { nomeDoAlcance, pertence } from "@/lib/riep/destino";
 import { situacaoEmendamento, type SituacaoEmendamento } from "./emendamento";
 
@@ -26,7 +26,9 @@ export type ContextoEmenda = {
   exercicioId: string;
   config: ConfigMotor;
   catalogo: Catalogo;
-  loa: DotacaoMotor[];
+  // Base ativa do projeto de lei do exercício (só o que a emenda pode usar),
+  // com o que as treze verificações conferem.
+  loa: DotacaoBase[];
   metas: Record<string, MetaPlanejamento>;
   destinos: DestinoTela[];
   // Unidades orçamentárias do exercício, para o cadastro de destino.
@@ -41,6 +43,16 @@ export type ContextoEmenda = {
   validadeLinkEntidadeDias: number;
   // O emendamento está aberto agora? (exercício, projeto de lei e prazo)
   emendamento: SituacaoEmendamento;
+  // O que as treze verificações leem do exercício, além da base.
+  verificacao: DadosVerificacao;
+};
+
+export type DadosVerificacao = {
+  // O PPA marcou ao menos um programa do exercício.
+  ppaCadastrado: boolean;
+  // Prioridades e metas da LDO: programas inteiros e pares "programa|ação".
+  ldo: { cadastrada: boolean; programas: string[]; acoes: string[] };
+  regras: Regras;
 };
 
 // Dia de hoje em Brasília, no formato aaaa-mm-dd — é assim que o prazo é guardado.
@@ -121,11 +133,15 @@ export const carregarContexto = cache(async (ano: number): Promise<ContextoEmend
   if (!exercicio) return null;
   const exercicioId = exercicio.id;
 
-  const [configuracao, unidadesDb, dotacoes, metasDb, areas, objetos, destinosDb, tiposDestino, fontesDb] = await Promise.all([
+  // A emenda incide sobre o projeto de lei do exercício (o mesmo critério do
+  // indicador de emendamento): a sugestão de dotação e a verificação (iv) usam
+  // a mesma base.
+  const projeto = await projetoBase(exercicioId);
+  const [configuracao, unidadesDb, dotacoes, metasDb, areas, objetos, destinosDb, tiposDestino, fontesDb, prioridades, ppaMarcados, regras] = await Promise.all([
     lerConfiguracao(exercicioId),
     prisma.unidadeOrcamentaria.findMany({ where: { exercicioId }, orderBy: { codigo: "asc" } }),
     prisma.dotacao.findMany({
-      where: { exercicioId, ativo: true, instrumento: { especie: "PROJETO_LEI" } },
+      where: { exercicioId, ativo: true, instrumentoId: projeto?.id ?? "-" },
       orderBy: { ordem: "asc" },
       include: {
         orgao: true,
@@ -133,19 +149,21 @@ export const carregarContexto = cache(async (ano: number): Promise<ContextoEmend
         funcao: true,
         subfuncao: true,
         programa: true,
-        acao: true,
+        acao: { include: { programa: { select: { codigo: true } } } },
         naturezaDespesa: true,
         fonteRecurso: true,
       },
     }),
-    prisma.metaAcao.findMany({ where: { exercicioId } }),
+    prisma.metaAcao.findMany({ where: { exercicioId }, include: { programa: { select: { codigo: true } }, acao: { select: { codigo: true } } } }),
     prisma.areaAplicacao.findMany({ orderBy: { ordem: "asc" } }),
     prisma.objetoBiblioteca.findMany({ where: { ativo: true }, orderBy: { ordem: "asc" }, include: { area: true } }),
     prisma.destino.findMany({ where: { ativo: true }, orderBy: [{ execucao: "asc" }, { nome: "asc" }] }),
     prisma.tipoDestino.findMany({ where: { ativo: true }, orderBy: { ordem: "asc" } }),
     lerFontesPreco(),
+    prisma.prioridadeLdo.findMany({ where: { exercicioId }, select: { programa: { select: { codigo: true } }, acao: { select: { codigo: true } } } }),
+    prisma.programa.count({ where: { exercicioId, constaNoPPA: true } }),
+    lerRegras(exercicioId),
   ]);
-  const projeto = await projetoBase(exercicioId);
 
   const config = paraConfigMotor(ano, configuracao);
   // Guardado como 23:59:59 de Brasília; o dia é lido no mesmo fuso.
@@ -162,7 +180,7 @@ export const carregarContexto = cache(async (ano: number): Promise<ContextoEmend
       !foraDasEmendas(d.unidadeOrcamentaria.codigo)
   );
 
-  const loa: DotacaoMotor[] = elegiveis.map((d) => ({
+  const loa: DotacaoBase[] = elegiveis.map((d) => ({
     id: d.id,
     codigo: d.codigo,
     ficha: d.ficha,
@@ -180,7 +198,25 @@ export const carregarContexto = cache(async (ano: number): Promise<ContextoEmend
     fonte: d.fonteRecurso.codigo,
     fonten: d.fonteRecurso.nome,
     autorizado: d.valorAutorizado.toNumber(),
+    orgao: d.orgao.codigo,
+    acaoCodigo: d.acao.codigo,
+    acaoPrograma: d.acao.programa.codigo,
+    natureza: d.naturezaDespesa.codigo,
+    constaNoPPA: d.programa.constaNoPPA,
+    // As relações da dotação são obrigatórias no banco: os oito componentes
+    // estão sempre presentes.
+    completa: true,
   }));
+
+  // Prioridades e metas da LDO importadas em Planejamento; sem elas, as metas
+  // das ações carregadas das peças fazem as vezes do anexo.
+  const ldo = prioridades.length
+    ? {
+        cadastrada: true,
+        programas: [...new Set(prioridades.filter((p) => !p.acao).map((p) => p.programa.codigo))],
+        acoes: [...new Set(prioridades.filter((p) => p.acao).map((p) => `${p.programa.codigo}|${p.acao!.codigo}`))],
+      }
+    : { cadastrada: metasDb.length > 0, programas: [], acoes: [...new Set(metasDb.map((m) => `${m.programa.codigo}|${m.acao.codigo}`))] };
 
   // Meta da ação, por dotação.
   const metaPorChave = new Map(metasDb.map((m) => [`${m.unidadeId}|${m.programaId}|${m.acaoId}`, m]));
@@ -239,6 +275,7 @@ export const carregarContexto = cache(async (ano: number): Promise<ContextoEmend
       prazoProtocolo,
       hoje: hojeBrasilia(),
     }),
+    verificacao: { ppaCadastrado: ppaMarcados > 0, ldo, regras },
   };
 });
 
@@ -263,7 +300,7 @@ export async function aplicadoDoAutor(
         exercicioId,
         autorId,
         // Em diligência a emenda continua apresentada: a cota segue reservada.
-        status: { in: ["SUBMETIDA", "EM_DILIGENCIA", "APROVADA"] },
+        status: { in: ["SUBMETIDA", "EM_TRAMITACAO", "EM_DILIGENCIA", "APROVADA"] },
         ...(excetoEmendaId ? { id: { not: excetoEmendaId } } : {}),
       },
       _sum: { valor: true },
@@ -311,4 +348,19 @@ export async function projetoBase(exercicioId: string) {
     orderBy: { createdAt: "asc" },
     select: { id: true, numero: true, status: true },
   });
+}
+
+// Regras de validação do exercício: a do exercício prevalece sobre a geral. O
+// fundamento é o escrito na regra ou, na falta, a norma citada.
+export async function lerRegras(exercicioId: string): Promise<Regras> {
+  const linhas = await prisma.regraValidacao.findMany({
+    where: { OR: [{ exercicioId: null }, { exercicioId }] },
+    include: { norma: { select: { titulo: true, artigo: true } } },
+  });
+  const regras: Regras = {};
+  for (const r of linhas.sort((a, b) => (a.exercicioId ? 1 : 0) - (b.exercicioId ? 1 : 0))) {
+    const norma = r.norma ? `${r.norma.titulo}${r.norma.artigo ? `, ${r.norma.artigo}` : ""}` : null;
+    regras[r.codigo] = { modo: r.modo, ativa: r.ativa, fundamento: r.fundamento || norma };
+  }
+  return regras;
 }

@@ -181,12 +181,33 @@ enum ProcedenciaReferencia {
 
 enum StatusEmenda {
   RASCUNHO
+  // Validação em andamento no servidor (transitória).
+  EM_VALIDACAO
+  // Validada sem falha: pode ser remetida.
+  VALIDA
+  // Recusada pelo servidor na remessa (ao menos uma falha): volta ao autor.
+  INVALIDA
   SUBMETIDA
+  // Recebida pela Comissão para análise.
+  EM_TRAMITACAO
   // Devolvida pela Comissão para o autor sanear (Regimento Interno, art.
   // 210-C, § 2º); volta à fila com o mesmo número ao ser reenviada.
   EM_DILIGENCIA
   APROVADA
   REJEITADA
+}
+
+// Como uma verificação se aplica: impede a remessa ou só avisa.
+enum ModoValidacao {
+  BLOQUEANTE
+  ALERTA
+}
+
+// Momento em que a validação foi executada.
+enum MomentoValidacao {
+  VALIDACAO
+  REMESSA
+  REENVIO
 }
 
 enum ResultadoViabilidade {
@@ -272,6 +293,7 @@ model Exercicio {
   emendasImportadas EmendaImportada[]
   contador          ContadorEmenda?
   prioridades       PrioridadeLdo[]
+  regras            RegraValidacao[]
 }
 
 // Parâmetros das emendas impositivas no exercício. Campo nulo significa
@@ -325,6 +347,8 @@ model ConfiguracaoExercicio {
   prazoProtocolo       DateTime?
   // Situações do projeto de lei (LOA) em que ele recebe emendas.
   situacoesEmendamento StatusInstrumento[] @default([EM_TRAMITACAO])
+  // Fundamento normativo por extenso de cada parâmetro: { cotaIndividual: { texto, normaId } }.
+  fundamentos          Json                @default("{}")
 
   // --- preços e plano da entidade --------------------------------------------
   // Item com preço e sem fonte informada: bloqueia a submissão (verdadeiro) ou
@@ -625,6 +649,8 @@ model DocumentoNormativo {
   ativo        Boolean   @default(true)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+
+  regras RegraValidacao[]
 
   @@index([tipo, ativo])
 }
@@ -989,12 +1015,19 @@ model ParcelaDesembolso {
 
 // Resultado da validação no momento da submissão (o que o autor viu).
 model ValidacaoEmenda {
-  id          String   @id @default(cuid())
-  emendaId    String
-  bloqueios   Int
-  alertas     Int
-  itens       Json
-  executadaEm DateTime @default(now())
+  id           String           @id @default(cuid())
+  emendaId     String
+  bloqueios    Int
+  alertas      Int
+  // As conferências do motor RIEP (complementares às treze).
+  itens        Json
+  // As treze, na ordem: [{ codigo, numero, titulo, estado, razao, fundamento, modo }].
+  verificacoes Json             @default("[]")
+  valida       Boolean          @default(false)
+  momento      MomentoValidacao @default(VALIDACAO)
+  revisao      Int?
+  usuarioId    String?
+  executadaEm  DateTime         @default(now())
 
   emenda Emenda @relation(fields: [emendaId], references: [id], onDelete: Cascade)
 
@@ -1323,4 +1356,28 @@ model PrioridadeLdo {
   acao        Acao?                    @relation(fields: [acaoId], references: [id], onDelete: SetNull)
 
   @@index([exercicioId, programaId])
+}
+
+// Regra de validação: modo (bloqueante ou alerta), se está ligada, o
+// fundamento por extenso e a norma citada. Sem exercício, vale para todos;
+// com exercício, prevalece sobre a geral. O motor lê daqui: mudar a regra não
+// exige publicar o sistema.
+model RegraValidacao {
+  id          String        @id @default(cuid())
+  codigo      String
+  exercicioId String?
+  modo        ModoValidacao
+  ativa       Boolean       @default(true)
+  fundamento  String?
+  normaId     String?
+  // Parâmetro da regra, quando houver.
+  parametros  Json?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  exercicio Exercicio?          @relation(fields: [exercicioId], references: [id], onDelete: Cascade)
+  norma     DocumentoNormativo? @relation(fields: [normaId], references: [id], onDelete: SetNull)
+
+  @@unique([codigo, exercicioId])
+  @@index([codigo])
 }

@@ -10,3 +10,5 @@ export * from "./referencias";
 export * from "./itens";
 export * from "./validar";
 export * from "./sugerir";
+export * from "./base";
+export * from "./verificacoes";

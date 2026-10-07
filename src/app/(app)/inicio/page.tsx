@@ -34,6 +34,7 @@ import { prisma } from "@/lib/prisma";
 import { BRL } from "@/lib/riep";
 import { getCurrentUser } from "@/lib/session";
 import { cn } from "@/lib/utils";
+import { naoRemetida } from "@/lib/emendas/situacoes";
 
 export const metadata: Metadata = { title: "Início — Emendas360" };
 
@@ -70,9 +71,9 @@ export default async function InicioPage({ searchParams }: { searchParams: Promi
   ]);
 
   const minhas = autor ? emendas.filter((e) => e.autorId === autor.id) : [];
-  const rascunhos = minhas.filter((e) => e.status === "RASCUNHO").length;
-  const submetidas = emendas.filter((e) => e.status === "SUBMETIDA").length;
-  const semParecer = emendas.filter((e) => e.status !== "RASCUNHO" && !e.pareceres.length).length;
+  const rascunhos = minhas.filter((e) => naoRemetida(e.status)).length;
+  const submetidas = emendas.filter((e) => e.status === "SUBMETIDA" || e.status === "EM_TRAMITACAO").length;
+  const semParecer = emendas.filter((e) => !naoRemetida(e.status) && !e.pareceres.length).length;
   const aExecutar = emendas.filter((e) => e.status === "APROVADA" && e.somasExec.pago < e.valor.toNumber()).length;
 
   // Ações do perfil, na ordem de importância. A primeira vira o destaque.

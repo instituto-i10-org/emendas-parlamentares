@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { TIPOS_REFERENCIA, type FontePreco, type ReferenciaPreco, type TipoReferencia } from "@/lib/riep";
 import { formatarNumero, lerNumero, type EstadoEmenda } from "./estado";
+import { naoRemetida } from "./situacoes";
 
 // ============================================================================
 // Link para a entidade beneficiária preencher o plano de trabalho, sem
@@ -24,7 +25,7 @@ export function situacaoConvite(
 ): SituacaoConvite {
   if (c.usadoEm) return "USADO";
   if (c.revogadoEm) return "REVOGADO";
-  if (statusEmenda !== "RASCUNHO") return "EMENDA_REMETIDA";
+  if (!naoRemetida(statusEmenda)) return "EMENDA_REMETIDA";
   if (c.expiraEm.getTime() <= agora.getTime()) return "VENCIDO";
   return "VALIDO";
 }

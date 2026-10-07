@@ -37,6 +37,11 @@ export type ExercicioJson = {
   councilors: number;
   legalBasis: { norm: string; article: string; excerpt: string; url: string | null }[];
   deadlines: { what: string; date: string; url: string | null }[];
+  // Fundamento por extenso de cada parâmetro ({ cotaIndividual: "LOM art. …" }),
+  // quando a pasta do município o traz com procedência.
+  parameterBasis?: Record<string, string>;
+  // Regras das treze verificações (modo e fundamento), quando o município as fixa.
+  validationRules?: { code: string; mode: "BLOQUEANTE" | "ALERTA"; active?: boolean; basis: string }[];
 };
 
 // Exercícios com dados na pasta do município (exercicio-<ano>.json,
@@ -93,10 +98,12 @@ export async function semearExercicio(prisma: PrismaClient, ano: number) {
     orgaosForaDasEmendas: ex.excludedOrgans,
     rotuloBase: ex.baseLabel,
   };
+  // Fundamentos só quando a pasta os traz: os escritos pela tela ficam.
+  const fundamentos = ex.parameterBasis ? Object.fromEntries(Object.entries(ex.parameterBasis).map(([k, texto]) => [k, { texto, normaId: null }])) : undefined;
   await prisma.configuracaoExercicio.upsert({
     where: { exercicioId: exercicio.id },
-    update: configuracao,
-    create: { ...configuracao, exercicioId: exercicio.id },
+    update: { ...configuracao, ...(fundamentos ? { fundamentos } : {}) },
+    create: { ...configuracao, ...(fundamentos ? { fundamentos } : {}), exercicioId: exercicio.id },
   });
 
   await prisma.prazoExercicio.deleteMany({ where: { exercicioId: exercicio.id } });
@@ -117,4 +124,18 @@ export async function semearExercicio(prisma: PrismaClient, ano: number) {
   }
 
   return exercicio;
+}
+
+// Regras de validação do exercício vindas da pasta do município. Sem
+// validationRules, nada é gravado: valem os padrões do sistema e o que a
+// administração definir em Configurações › Validação.
+export async function semearRegras(prisma: PrismaClient, exercicioId: string, ano: number) {
+  const ex = lerExercicio(ano);
+  for (const r of ex.validationRules ?? []) {
+    const dados = { modo: r.mode, ativa: r.active ?? true, fundamento: r.basis };
+    const existente = await prisma.regraValidacao.findFirst({ where: { codigo: r.code, exercicioId } });
+    if (existente) await prisma.regraValidacao.update({ where: { id: existente.id }, data: dados });
+    else await prisma.regraValidacao.create({ data: { ...dados, codigo: r.code, exercicioId } });
+  }
+  return ex.validationRules?.length ?? 0;
 }

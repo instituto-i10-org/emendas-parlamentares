@@ -12,6 +12,7 @@ import { listarEmendas } from "@/lib/emendas/consultas";
 import { RESULTADO_VIABILIDADE, STATUS_EMENDA } from "@/lib/emendas/rotulos";
 import { getAnoAtivo } from "@/lib/exercicio";
 import { BRL, DATA } from "@/lib/riep";
+import { NAO_REMETIDAS } from "@/lib/emendas/situacoes";
 
 export const metadata: Metadata = { title: "Tramitação — Emendas360" };
 
@@ -20,7 +21,7 @@ export const metadata: Metadata = { title: "Tramitação — Emendas360" };
 export default async function TramitacaoPage() {
   const user = await requireAccess({ poder: Poder.LEGISLATIVO, permissoes: ["tramitarEmendas", "consultarTudo"] });
   const ano = await getAnoAtivo();
-  const emendas = ano ? await listarEmendas(ano, { status: { not: "RASCUNHO" } }) : [];
+  const emendas = ano ? await listarEmendas(ano, { status: { notIn: NAO_REMETIDAS } }) : [];
   const decide = podeTramitar(user);
   const fila = emendas.filter((e) => e.status === "SUBMETIDA");
   const emDiligencia = emendas.filter((e) => e.status === "EM_DILIGENCIA");

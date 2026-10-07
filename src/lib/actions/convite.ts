@@ -19,6 +19,7 @@ import type { EstadoEmenda } from "@/lib/emendas/estado";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rate-limit";
 import { getCurrentUser } from "@/lib/session";
+import { naoRemetida } from "@/lib/emendas/situacoes";
 
 type Falha = { ok: false; erro: string };
 
@@ -77,7 +78,7 @@ export async function listarConvites(emendaId: string): Promise<{ ok: true; conv
 export async function gerarConvite(emendaId: string): Promise<{ ok: true; codigo: string; expiraEm: string } | Falha> {
   const { user, emenda } = await emendaDoGabinete(emendaId);
   if (!emenda) return { ok: false, erro: "Emenda não encontrada." };
-  if (emenda.status !== "RASCUNHO") return { ok: false, erro: "Só emenda em rascunho recebe link para a entidade." };
+  if (!naoRemetida(emenda.status)) return { ok: false, erro: "Só emenda em rascunho recebe link para a entidade." };
   if (emenda.execucao !== "INDIRETA") return { ok: false, erro: "O link é para entidade do terceiro setor (execução indireta)." };
   if (!(await rateLimit(`convite-gerar:${user.id}`, 10, 60_000))) return { ok: false, erro: "Muitos links gerados seguidos. Aguarde um minuto." };
 
@@ -127,7 +128,7 @@ export async function aplicarPlanoEntidade(conviteId: string): Promise<{ ok: tru
   const c = await prisma.conviteEntidade.findUnique({ where: { id: conviteId }, include: { emenda: { include: { autor: true } } } });
   if (!c || !podeGerirEmenda(user, { autorUsuarioId: c.emenda.autor.usuarioId })) return { ok: false, erro: "Envio não encontrado." };
   if (!c.usadoEm || !c.conteudo) return { ok: false, erro: "A entidade ainda não enviou o plano por este link." };
-  if (c.emenda.status !== "RASCUNHO") return { ok: false, erro: "A emenda já foi remetida." };
+  if (!naoRemetida(c.emenda.status)) return { ok: false, erro: "A emenda já foi remetida." };
   const p = planoEntidadeSchema.safeParse(c.conteudo);
   if (!p.success) return { ok: false, erro: "O envio da entidade está ilegível." };
   const parcial = planoEntidadeParaEstado(p.data, await lerFontesPreco());

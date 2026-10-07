@@ -2,7 +2,7 @@ import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
 import { lerDados, lerMunicipio } from "./seed/dados";
-import { lerExercicio, semearExercicio } from "./seed/exercicio";
+import { lerExercicio, semearExercicio, semearRegras } from "./seed/exercicio";
 import { semearLoa } from "./seed/loa";
 
 // Cria um exercício a partir dos arquivos de prisma/dados/mogi-guacu/
@@ -100,11 +100,13 @@ async function main() {
 
   const exercicio = await semearExercicio(prisma, ano);
   if (soParametros) {
-    console.log(`\nGravado: parâmetros, prazos e normas do exercício ${ano}.`);
+    const regras = await semearRegras(prisma, exercicio.id, ano);
+    console.log(`\nGravado: parâmetros, prazos, normas e ${regras} regra(s) de validação do exercício ${ano}.`);
     return;
   }
   const r = await semearLoa(prisma, exercicio.id, ano);
-  console.log(`\nGravado: exercício ${ano} · ${r.criadas} dotações criadas · ${r.atualizadas} atualizadas · ${r.metas} metas do PPA.`);
+  const regras = await semearRegras(prisma, exercicio.id, ano);
+  console.log(`\nGravado: exercício ${ano} · ${r.criadas} dotações criadas · ${r.atualizadas} atualizadas · ${r.metas} metas do PPA · ${regras} regra(s) de validação.`);
 }
 
 main()

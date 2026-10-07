@@ -8,6 +8,7 @@ import { conferirLancamento } from "@/lib/emendas/execucao";
 import { mudarSituacao } from "@/lib/emendas/historico";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
+import { naoRemetida } from "@/lib/emendas/situacoes";
 
 type Resultado = { ok: true } | { ok: false; erro: string };
 
@@ -29,7 +30,7 @@ export async function decidirTramitacao(entrada: z.input<typeof decisaoSchema>):
   if (!p.success) return { ok: false, erro: p.error.issues[0]?.message ?? "Dados inválidos." };
   const emenda = await prisma.emenda.findUnique({ where: { id: p.data.emendaId } });
   if (!emenda) return { ok: false, erro: "Emenda não encontrada." };
-  if (emenda.status !== "SUBMETIDA") return { ok: false, erro: "Apenas emendas submetidas podem ser tramitadas." };
+  if (emenda.status !== "SUBMETIDA" && emenda.status !== "EM_TRAMITACAO") return { ok: false, erro: "Apenas emendas submetidas podem ser tramitadas." };
   await prisma.$transaction(async (tx) => {
     const salvo = await mudarSituacao(tx, {
       emendaId: emenda.id,
@@ -71,7 +72,7 @@ export async function pedirDiligencia(entrada: z.input<typeof diligenciaSchema>)
   if (!p.success) return { ok: false, erro: p.error.issues[0]?.message ?? "Dados inválidos." };
   const emenda = await prisma.emenda.findUnique({ where: { id: p.data.emendaId } });
   if (!emenda) return { ok: false, erro: "Emenda não encontrada." };
-  if (emenda.status !== "SUBMETIDA") return { ok: false, erro: "Só emendas na fila da Comissão vão para diligência." };
+  if (emenda.status !== "SUBMETIDA" && emenda.status !== "EM_TRAMITACAO") return { ok: false, erro: "Só emendas na fila da Comissão vão para diligência." };
   const ate = new Date();
   ate.setUTCDate(ate.getUTCDate() + p.data.dias);
   await prisma.$transaction(async (tx) => {
@@ -148,7 +149,7 @@ export async function registrarParecerViabilidade(entrada: z.input<typeof parece
   if (!p.success) return { ok: false, erro: p.error.issues[0]?.message ?? "Dados inválidos." };
   const emenda = await prisma.emenda.findUnique({ where: { id: p.data.emendaId } });
   if (!emenda) return { ok: false, erro: "Emenda não encontrada." };
-  if (emenda.status === "RASCUNHO") return { ok: false, erro: "A emenda ainda não foi submetida: não cabe parecer nesta fase." };
+  if (naoRemetida(emenda.status)) return { ok: false, erro: "A emenda ainda não foi submetida: não cabe parecer nesta fase." };
   const parecer = await prisma.parecerViabilidade.create({
     data: { emendaId: emenda.id, resultado: p.data.resultado, justificativa: p.data.justificativa, usuarioId: user.id },
   });

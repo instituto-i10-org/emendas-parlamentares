@@ -5,6 +5,7 @@ import { AbaPerfis, AbaUsuarios, type PerfilTela } from "@/components/config/ace
 import { AbaAuditoria, AbaBiblioteca, AbaDestinos, AbaNormas } from "@/components/config/catalogos";
 import { AbaExercicio } from "@/components/config/exercicio";
 import { AbaFontesPreco } from "@/components/config/fontes-preco";
+import { AbaValidacao } from "@/components/config/validacao";
 import { requireAccess } from "@/lib/access";
 import { PERMISSOES, podeAtribuirPerfil, podeGerirExercicio, podeGerirPerfis, temPermissao } from "@/lib/authz";
 import { diaBrasilia } from "@/lib/emendas/contexto";
@@ -17,6 +18,7 @@ export const metadata: Metadata = { title: "Configurações — Emendas360" };
 
 const ABAS = [
   { id: "exercicio", titulo: "Exercício e parâmetros" },
+  { id: "validacao", titulo: "Validação" },
   { id: "usuarios", titulo: "Usuários" },
   { id: "perfis", titulo: "Perfis", adminGeral: true },
   { id: "destinos", titulo: "Destinos" },
@@ -49,6 +51,7 @@ export default async function ConfigPage({ searchParams }: { searchParams: Promi
         ))}
       </nav>
       {aba === "exercicio" ? await exercicio(podeGerirExercicio(user)) : null}
+      {aba === "validacao" ? await validacao(podeGerirExercicio(user)) : null}
       {aba === "usuarios" ? await usuarios(user) : null}
       {aba === "perfis" ? await perfis(user) : null}
       {aba === "destinos" ? await destinos() : null}
@@ -235,6 +238,26 @@ async function fontesPreco(podeEditar: boolean) {
         ativo: f.ativo,
         usos: f._count.referencias,
       }))}
+    />
+  );
+}
+
+async function validacao(podeEditar: boolean) {
+  const ano = await getAnoAtivo();
+  const ex = ano ? await prisma.exercicio.findUnique({ where: { ano }, include: { configuracao: true } }) : null;
+  if (!ex || !ano) return <p className="text-sm text-muted-foreground">Nenhum exercício.</p>;
+  const [regras, normasDb] = await Promise.all([
+    prisma.regraValidacao.findMany({ where: { exercicioId: ex.id } }),
+    prisma.documentoNormativo.findMany({ where: { ativo: true }, orderBy: [{ tipo: "asc" }, { titulo: "asc" }] }),
+  ]);
+  return (
+    <AbaValidacao
+      exercicioId={ex.id}
+      ano={ano}
+      podeEditar={podeEditar}
+      regras={regras.map((r) => ({ codigo: r.codigo, modo: r.modo, ativa: r.ativa, fundamento: r.fundamento ?? "", normaId: r.normaId }))}
+      normas={normasDb.map((n) => ({ id: n.id, rotulo: `${n.titulo}${n.artigo ? `, ${n.artigo}` : ""}`.slice(0, 120) }))}
+      fundamentos={(ex.configuracao?.fundamentos as Record<string, { texto: string; normaId: string | null }> | null) ?? {}}
     />
   );
 }

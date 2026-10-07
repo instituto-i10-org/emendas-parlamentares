@@ -7,6 +7,7 @@ import { getAnoAtivo } from "@/lib/exercicio";
 import { prisma } from "@/lib/prisma";
 import { PCT, referenciaAntiga } from "@/lib/riep";
 import { getCurrentUser } from "@/lib/session";
+import { NAO_REMETIDAS } from "@/lib/emendas/situacoes";
 
 export const metadata: Metadata = { title: "Conformidade — Emendas360" };
 
@@ -23,7 +24,7 @@ export default async function ConformidadePage() {
     ano ? prisma.exercicio.findUnique({ where: { ano }, include: { configuracao: true, prazos: { orderBy: { data: "asc" } } } }) : null,
     prisma.documentoNormativo.findMany({ where: { ativo: true } }),
     ano ? consolidar(ano) : null,
-    ano ? listarEmendas(ano, { status: { not: "RASCUNHO" } }) : [],
+    ano ? listarEmendas(ano, { status: { notIn: NAO_REMETIDAS } }) : [],
   ]);
   const cfg = exercicio?.configuracao;
   const itens: Item[] = [];
@@ -89,7 +90,7 @@ export default async function ConformidadePage() {
   }
 
   const itensEmendas = await prisma.itemEmenda.findMany({
-    where: { emenda: { exercicio: { ano: ano ?? -1 }, status: { not: "RASCUNHO" } } },
+    where: { emenda: { exercicio: { ano: ano ?? -1 }, status: { notIn: NAO_REMETIDAS } } },
     include: { referencia: true },
   });
   const semRef = itensEmendas.filter((i) => !i.referenciaId).length;

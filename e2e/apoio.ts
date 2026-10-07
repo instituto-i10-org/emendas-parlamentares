@@ -82,3 +82,62 @@ export async function criarRascunho(
   await expect(page).toHaveURL(/\/emendas\/c[a-z0-9]+$/, { timeout: 15_000 });
   return page.url().split("/").pop()!;
 }
+
+// Dados da dotação de uma ficha do projeto de lei. A ficha se repete entre
+// unidades em Mogi Guaçu: a unidade decide qual.
+export async function dotacaoDaFicha(ficha: string, unidade: string) {
+  const [d] = await sql<{ id: string; orgao: string; uo: string; prog: string; acao: string; autorizado: string }>(
+    `select d.id, o.codigo orgao, u.codigo uo, p.codigo prog, a.codigo acao, d."valorAutorizado" autorizado
+       from "Dotacao" d
+       join "Orgao" o on o.id = d."orgaoId"
+       join "UnidadeOrcamentaria" u on u.id = d."unidadeOrcamentariaId"
+       join "Programa" p on p.id = d."programaId"
+       join "Acao" a on a.id = d."acaoId"
+       join "InstrumentoPlanejamento" i on i.id = d."instrumentoId"
+       join "Exercicio" e on e.id = d."exercicioId"
+      where d.ficha = $1 and u.codigo = $2 and d.ativo and i.especie = 'PROJETO_LEI'
+      order by e.ano desc, i."createdAt" limit 1`,
+    [ficha, unidade]
+  );
+  if (!d) throw new Error(`ficha ${ficha} da unidade ${unidade} não encontrada`);
+  return d;
+}
+
+export const JUSTIFICATIVA =
+  "A unidade atende a população do município e precisa do recurso para manter o atendimento regular ao longo de todo o exercício.";
+
+// Emenda gravada direto no banco, para os casos de fila, filtro e paginação.
+export async function inserirEmenda(o: {
+  id: string;
+  status: string;
+  autorEmail?: string;
+  autorId?: string;
+  ficha?: { ficha: string; unidade: string };
+  valor?: number;
+  objeto?: string;
+  numero?: number | null;
+  submetidaEm?: string | null;
+  verificacoes?: unknown[];
+  itens?: unknown[];
+}) {
+  const [ex] = await sql<{ id: string }>(`select id from "Exercicio" order by ano desc limit 1`);
+  const [autor] = o.autorId
+    ? [{ id: o.autorId }]
+    : await sql<{ id: string }>(`select a.id from "Autor" a join "User" u on u.id = a."usuarioId" where u.email = $1`, [o.autorEmail ?? "vereador@emendas360.local"]);
+  const dot = o.ficha ? await dotacaoDaFicha(o.ficha.ficha, o.ficha.unidade) : null;
+  await sql(
+    `insert into "Emenda" (id, "exercicioId", "autorId", status, "dotacaoId", valor, objeto, execucao, numero, "submetidaEm", "updatedAt")
+     values ($1, $2, $3, $4, $5, $6, $7, 'DIRETA', $8, $9, now())`,
+    [o.id, ex.id, autor.id, o.status, dot?.id ?? null, o.valor ?? 30000, o.objeto ?? `Emenda de teste ${o.id}`, o.numero ?? null, o.submetidaEm ?? null]
+  );
+  if (o.verificacoes || o.itens) {
+    await sql(
+      `insert into "ValidacaoEmenda" (id, "emendaId", bloqueios, alertas, itens, verificacoes, valida, momento) values ($1, $2, 0, 0, $3, $4, $5, 'VALIDACAO')`,
+      [`v-${o.id}`, o.id, JSON.stringify(o.itens ?? []), JSON.stringify(o.verificacoes ?? []), o.status !== "INVALIDA"]
+    );
+  }
+}
+
+export async function apagarEmendasDeTeste(prefixo: string) {
+  await sql(`delete from "Emenda" where id like $1`, [`${prefixo}%`]);
+}

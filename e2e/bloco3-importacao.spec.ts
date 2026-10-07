@@ -72,6 +72,11 @@ async function importar(page: Page, numero: string, arquivo: { name: string; mim
 // Os instrumentos criados aqui são projetos de lei de 2027: saem no fim para
 // não se somarem à base que as emendas dos outros testes percorrem.
 test.afterAll(async () => {
+  // As prioridades da LDO de teste saem antes do instrumento (a chave dele
+  // ficaria nula e a prioridade valeria para as specs seguintes).
+  await sql(
+    `delete from "PrioridadeLdo" where "instrumentoId" in (select id from "InstrumentoPlanejamento" where numero like 'PL TESTE-%' or numero in ('PL LDO-TESTE', 'PL PPA-TESTE'))`
+  );
   await sql(`delete from "InstrumentoPlanejamento" where numero like 'PL TESTE-%' or numero in ('PL LDO-TESTE', 'PL PPA-TESTE')`);
 });
 

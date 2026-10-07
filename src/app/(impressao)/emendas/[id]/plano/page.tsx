@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { podeGerirEmenda, podeVerTodasEmendas, temPermissao } from "@/lib/authz";
 import { buscarEmenda } from "@/lib/emendas/carregar";
-import { BRL, DATA, EVENTOS, INSTRUMENTOS, MODELOS, QUADROS, TIPOS_REFERENCIA, chaveQuadro, rotuloReferencia, type Modelo } from "@/lib/riep";
+import { BRL, DATA, DATA_HORA, EVENTOS, INSTRUMENTOS, MODELOS, QUADROS, TIPOS_REFERENCIA, chaveQuadro, rotuloReferencia, type Checagem, type Modelo, type Verificacao } from "@/lib/riep";
+import { RelatorioVerificacoes } from "@/components/emenda/relatorio-verificacoes";
 import { getCurrentUser } from "@/lib/session";
 import { BotaoImprimir } from "@/components/app/botao-imprimir";
+import { naoRemetida } from "@/lib/emendas/situacoes";
 
 export const metadata: Metadata = { title: "Plano de trabalho — Emendas360" };
 
@@ -49,7 +51,7 @@ export default async function PlanoPage({ params }: { params: Promise<{ id: stri
           <h1 className="mt-1 text-xl font-extrabold">Plano de trabalho de emenda impositiva</h1>
           <p className="mt-1 text-sm font-bold text-navy">{M ? `Modelo ${M.numero} — ${M.titulo}` : "Modelo a definir pela análise técnica"}</p>
           <p className="mt-2 text-xs text-muted-foreground">
-            {x.status === "RASCUNHO" ? "Rascunho — prévia para conferência." : `Emenda nº ${x.numero}/${x.exercicio.ano}, submetida em ${DATA(x.submetidaEm)}.`}{" "}
+            {naoRemetida(x.status) ? "Rascunho — prévia para conferência." : `Emenda nº ${x.numero}/${x.exercicio.ano}, submetida em ${DATA(x.submetidaEm)}.`}{" "}
             A aprovação e as assinaturas permanecem pendentes.
           </p>
         </header>
@@ -223,6 +225,20 @@ export default async function PlanoPage({ params }: { params: Promise<{ id: stri
             ]}
           />
         </Secao>
+
+        {(() => {
+          const v = x.validacoes.find((y) => Array.isArray(y.verificacoes) && (y.verificacoes as unknown[]).length);
+          return v ? (
+            <Secao numero={prox()} titulo="Validação">
+              <RelatorioVerificacoes
+                verificacoes={v.verificacoes as unknown as Verificacao[]}
+                complementares={v.itens as unknown as Checagem[]}
+                valida={v.valida}
+                cabecalho={`Executada em ${DATA_HORA(v.executadaEm)}`}
+              />
+            </Secao>
+          ) : null;
+        })()}
 
         <section className="mt-10 grid grid-cols-2 gap-10 text-center text-xs max-sm:grid-cols-1">
           <div className="border-t border-ink pt-2">
