@@ -136,15 +136,22 @@ test.describe("Grupo 12 — configuração", () => {
     await expect(linha).toContainText("Somente consulta");
     await expect(linha).toContainText(/Transversal|Legislativo|Executivo/);
 
-    // A própria usuária troca a senha.
+    // Primeiro acesso: troca obrigatória da senha temporária dada pelo admin.
     await entrar(page, email, SENHA);
+    await expect(page.getByRole("dialog", { name: "Bem-vindo ao Emendas360" })).toBeVisible();
+    await page.locator("#pa-nova").fill("primeira-senha-t10-123");
+    await page.locator("#pa-conf").fill("primeira-senha-t10-123");
+    await page.getByRole("button", { name: "Concluir" }).click();
+    await expect(page.getByRole("dialog", { name: "Bem-vindo ao Emendas360" })).toBeHidden();
+
+    // A própria usuária troca a senha.
     await page.goto("/conta");
-    await page.locator("#s-atual").fill(SENHA);
+    await page.locator("#s-atual").fill("primeira-senha-t10-123");
     await page.locator("#s-nova").fill("nova-senha-t10-123");
     await page.locator("#s-conf").fill("nova-senha-t10-123");
     await page.getByRole("button", { name: "Trocar senha" }).click();
     await expect(page.getByText(/Senha trocada/)).toBeVisible();
-    await preencherLogin(page, email, SENHA);
+    await preencherLogin(page, email, "primeira-senha-t10-123");
     await page.getByRole("button", { name: "Entrar", exact: true }).click();
     await expect(page.getByText("E-mail ou senha inválidos.")).toBeVisible();
     await entrar(page, email, "nova-senha-t10-123");

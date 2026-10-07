@@ -4,7 +4,7 @@ import type { PrismaClient } from "../../src/generated/prisma/client";
 
 // Os seis perfis base. Idempotente por nome: reaplicar realinha as permissões
 // sem trocar o id, e os vínculos de usuário continuam valendo.
-const PERFIS = [
+export const PERFIS = [
   {
     nome: "Administrador Geral",
     descricao: "Acesso total ao sistema. Único perfil que compõe novos perfis de acesso.",
@@ -79,7 +79,9 @@ function senhaInicial(): string {
   return process.env.SEED_SENHA || randomBytes(9).toString("base64url");
 }
 
-export async function semearAcesso(prisma: PrismaClient) {
+// Os seis perfis base, sem nenhum usuário. Usado também pelo comando que inicia
+// o sistema vazio para um município novo.
+export async function semearPerfis(prisma: PrismaClient): Promise<Map<string, string>> {
   const perfilId = new Map<string, string>();
   for (const p of PERFIS) {
     // Permissão ausente na lista vale falso: reaplicar o seed realinha tudo.
@@ -105,6 +107,11 @@ export async function semearAcesso(prisma: PrismaClient) {
     });
     perfilId.set(p.nome, salvo.id);
   }
+  return perfilId;
+}
+
+export async function semearAcesso(prisma: PrismaClient) {
+  const perfilId = await semearPerfis(prisma);
 
   const senhasNovas: { email: string; senha: string }[] = [];
   for (const u of USUARIOS) {

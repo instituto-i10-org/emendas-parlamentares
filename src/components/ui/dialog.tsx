@@ -30,6 +30,7 @@ function DialogContent({
   aviso,
   acoes,
   largura = "md",
+  fixo = false,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   titulo: React.ReactNode
@@ -40,6 +41,9 @@ function DialogContent({
   // Botões do rodapé.
   acoes?: React.ReactNode
   largura?: "sm" | "md" | "lg" | "xl"
+  // Obrigatório (primeiro acesso): sem botão de fechar, não fecha no Esc nem
+  // no clique fora.
+  fixo?: boolean
 }) {
   return (
     <DialogPrimitive.Portal>
@@ -57,18 +61,21 @@ function DialogContent({
           largura === "xl" && "max-w-[960px]",
           className
         )}
+        {...(fixo ? { onEscapeKeyDown: (e: Event) => e.preventDefault(), onInteractOutside: (e: Event) => e.preventDefault() } : {})}
         {...props}
       >
         <div className="flex items-center gap-3 border-b border-hair px-6 py-4">
           <DialogPrimitive.Title className="min-w-0 text-lg font-bold tracking-tight">{titulo}</DialogPrimitive.Title>
           {descricao ? <Ajuda>{descricao}</Ajuda> : null}
           <span className="flex-1" />
-          <DialogPrimitive.Close
-            aria-label="Fechar"
-            className="grid size-9 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-page hover:text-ink focus-visible:outline-2 focus-visible:outline-cyan"
-          >
-            <XIcon className="size-4" />
-          </DialogPrimitive.Close>
+          {fixo ? null : (
+            <DialogPrimitive.Close
+              aria-label="Fechar"
+              className="grid size-9 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-page hover:text-ink focus-visible:outline-2 focus-visible:outline-cyan"
+            >
+              <XIcon className="size-4" />
+            </DialogPrimitive.Close>
+          )}
         </div>
         {aviso ? (
           <DialogPrimitive.Description className="px-6 pt-4 text-sm text-muted-foreground">{aviso}</DialogPrimitive.Description>

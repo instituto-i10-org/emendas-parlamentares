@@ -1,6 +1,6 @@
 "use server";
 
-import { podeGerirPlanejamento, temPermissao } from "@/lib/authz";
+import { ehAdminGeral, podeGerirPlanejamento, temPermissao } from "@/lib/authz";
 import { calcularImpacto, type PedidoImpacto } from "@/lib/impacto/servidor";
 import type { Impacto } from "@/lib/impacto/tipos";
 import { getCurrentUser } from "@/lib/session";
@@ -19,6 +19,9 @@ export async function consultarImpacto(pedido: PedidoImpacto): Promise<{ ok: tru
       case "statusInstrumento":
       case "gerarLei":
         return podeGerirPlanejamento(user);
+      // Cadastros que só o Administrador Geral altera.
+      case "area":
+        return ehAdminGeral(user);
       default:
         return temPermissao(user, "administrarConfiguracoes");
     }

@@ -37,6 +37,8 @@ const envServidor = {
 
 export default defineConfig({
   testDir: "./e2e",
+  // O sistema vazio tem configuração própria (playwright.vazio.config.ts).
+  testIgnore: /vazio\//,
   // O banco é preparado por `npm run test:e2e` antes do servidor subir (e2e/preparar.ts).
   // As specs compartilham um único banco: rodar em paralelo tornaria os
   // resultados dependentes de ordem.

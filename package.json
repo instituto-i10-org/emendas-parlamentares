@@ -21,7 +21,9 @@
     "db:recarregar-catalogos": "tsx prisma/recarregar-catalogos.ts",
     "db:apagar-emendas": "tsx prisma/apagar-emendas-lote.ts",
     "db:marcar-demonstracao": "tsx prisma/marcar-demonstracao.ts",
+    "db:iniciar-vazio": "tsx prisma/iniciar-vazio.ts",
     "test:e2e": "tsx e2e/preparar.ts && playwright test",
+    "test:e2e:vazio": "tsx e2e/vazio/preparar.ts && playwright test -c playwright.vazio.config.ts",
     "prova": "tsx e2e/preparar.ts && playwright test e2e/prova && playwright test e2e/prova"
   },
   "dependencies": {

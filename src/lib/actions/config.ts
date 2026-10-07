@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { Prisma } from "@/generated/prisma/client";
 import { auditar, registrarAuditoria } from "@/lib/audit";
-import { podeAtribuirPerfil, podeGerirExercicio, podeGerirPerfis, temPermissao, PERMISSOES } from "@/lib/authz";
+import { ehAdminGeral, podeAtribuirPerfil, podeGerirExercicio, podeGerirPerfis, temPermissao, PERMISSOES } from "@/lib/authz";
 import { recusaPorImpacto } from "@/lib/impacto/servidor";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, type SessionUser } from "@/lib/session";
@@ -177,6 +177,9 @@ export async function criarUsuario(entrada: z.input<typeof usuarioSchema>): Prom
         email: p.data.email.toLowerCase(),
         perfilId: perfil.id,
         passwordHash: await bcrypt.hash(p.data.senha, 10),
+        // A senha dada pelo administrador é temporária: no primeiro login, a
+        // pessoa troca a senha e confere os dados.
+        primeiroAcesso: true,
       },
     });
     if (p.data.autorNome) await vincular(criado.id, p.data.autorNome);
@@ -386,8 +389,9 @@ const areaSchema = z.object({
 });
 
 export async function salvarArea(entrada: z.input<typeof areaSchema>, ciente = false): Promise<Resultado> {
-  const user = await exigir("administrarConfiguracoes");
-  if (falhou(user)) return user;
+  const user = await getCurrentUser();
+  // Áreas: só o Administrador Geral altera (Configurações › Áreas).
+  if (!ehAdminGeral(user)) return { ok: false, erro: "Só o Administrador Geral altera este cadastro." };
   const p = areaSchema.safeParse(entrada);
   if (!p.success) return erro(p.error);
   const recusa = await recusaPorImpacto({ tipo: "area", id: p.data.id, orgaos: p.data.orgaos, unidadePadrao: p.data.unidadePadrao }, ciente);
@@ -558,4 +562,44 @@ export async function trocarMinhaSenha(atual: string, nova: string): Promise<Res
     await auditar(tx, { usuarioId: user.id, entidade: "User", entidadeId: user.id, acao: "TROCAR_PROPRIA_SENHA", dadosAntes: { email: u.email }, dadosDepois: { email: u.email, senha: "trocada" } });
   });
   return { ok: true, mensagem: "Senha trocada. Use a nova no próximo acesso." };
+}
+
+// Primeiro acesso de conta criada pelo administrador: troca obrigatória da
+// senha temporária e conferência de nome e e-mail. Sem a senha atual (a pessoa
+// acabou de entrar com ela), mas a nova não pode ser igual à temporária.
+const primeiroAcessoSchema = z.object({
+  nome: z.string().trim().min(2, "Informe o seu nome.").max(200),
+  email: z.email("E-mail inválido.").max(200),
+  nova: z.string().min(10, "A nova senha precisa de ao menos 10 caracteres.").max(200),
+  confirmacao: z.string(),
+});
+
+export async function concluirPrimeiroAcesso(entrada: z.input<typeof primeiroAcessoSchema>): Promise<Resultado> {
+  const user = await getCurrentUser();
+  const p = primeiroAcessoSchema.safeParse(entrada);
+  if (!p.success) return erro(p.error);
+  if (p.data.nova !== p.data.confirmacao) return { ok: false, erro: "A confirmação não confere com a nova senha." };
+  const u = await prisma.user.findUnique({ where: { id: user.id } });
+  if (!u) return { ok: false, erro: "Conta não encontrada." };
+  if (!u.primeiroAcesso) return { ok: true };
+  if (u.passwordHash && (await bcrypt.compare(p.data.nova, u.passwordHash))) return { ok: false, erro: "A nova senha precisa ser diferente da senha temporária." };
+  const email = p.data.email.toLowerCase();
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.user.update({ where: { id: user.id }, data: { name: p.data.nome, email, passwordHash: await bcrypt.hash(p.data.nova, 10), primeiroAcesso: false } });
+      await auditar(tx, {
+        usuarioId: user.id,
+        entidade: "User",
+        entidadeId: user.id,
+        acao: "PRIMEIRO_ACESSO",
+        dadosAntes: { nome: u.name, email: u.email },
+        dadosDepois: { nome: p.data.nome, email, senha: "trocada" },
+      });
+    });
+  } catch (e) {
+    if (duplicado(e)) return { ok: false, erro: "Já existe outra conta com este e-mail." };
+    throw e;
+  }
+  revalidatePath("/", "layout");
+  return { ok: true, mensagem: "Tudo certo. Use a nova senha nos próximos acessos." };
 }

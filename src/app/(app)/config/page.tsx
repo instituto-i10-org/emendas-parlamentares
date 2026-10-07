@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Pagina } from "@/components/app/pagina";
+import { Cartao, Pagina, TabelaDados } from "@/components/app/pagina";
+import { AbaAreas } from "@/components/config/areas";
+import { ImportarPlanilha } from "@/components/config/importar-planilha";
+import { AbaMunicipio } from "@/components/config/municipio";
+import { AbaTiposDestino } from "@/components/config/tipos-destino";
 import { AbaPerfis, AbaUsuarios, type PerfilTela } from "@/components/config/acesso";
 import { AbaAuditoria, AbaBiblioteca, AbaDestinos, AbaNormas } from "@/components/config/catalogos";
 import { AbaExercicio } from "@/components/config/exercicio";
@@ -8,7 +12,7 @@ import { AbaFontesPreco } from "@/components/config/fontes-preco";
 import { AbaValidacao } from "@/components/config/validacao";
 import { AbaPortal } from "@/components/config/portal";
 import { requireAccess } from "@/lib/access";
-import { PERMISSOES, podeAtribuirPerfil, podeGerirExercicio, podeGerirPerfis, temPermissao } from "@/lib/authz";
+import { ehAdminGeral, PERMISSOES, podeAtribuirPerfil, podeGerirExercicio, podeGerirPerfis, temPermissao } from "@/lib/authz";
 import { diaBrasilia, paraDestinoMotor } from "@/lib/emendas/contexto";
 import { getAnoAtivo, listarExercicios } from "@/lib/exercicio";
 import { prisma } from "@/lib/prisma";
@@ -18,11 +22,14 @@ import { cn } from "@/lib/utils";
 export const metadata: Metadata = { title: "Configurações — Emendas360" };
 
 const ABAS = [
+  { id: "municipio", titulo: "Município" },
   { id: "exercicio", titulo: "Exercício e parâmetros" },
   { id: "validacao", titulo: "Validação" },
   { id: "portal", titulo: "Portal e manual" },
   { id: "usuarios", titulo: "Usuários" },
   { id: "perfis", titulo: "Perfis", adminGeral: true },
+  { id: "areas", titulo: "Áreas" },
+  { id: "tipos-destino", titulo: "Tipos de destino" },
   { id: "destinos", titulo: "Destinos" },
   { id: "biblioteca", titulo: "Biblioteca de objetos" },
   { id: "precos", titulo: "Fontes de preço" },
@@ -53,12 +60,16 @@ export default async function ConfigPage({ searchParams }: { searchParams: Promi
           </Link>
         ))}
       </nav>
+      {aba === "municipio" ? await municipio(ehAdminGeral(user)) : null}
       {aba === "exercicio" ? await exercicio(podeGerirExercicio(user)) : null}
+      {aba === "exercicio" ? await historico(ehAdminGeral(user)) : null}
       {aba === "validacao" ? await validacao(podeGerirExercicio(user)) : null}
       {aba === "portal" ? await portal(temPermissao(user, "administrarConfiguracoes")) : null}
       {aba === "usuarios" ? await usuarios(user) : null}
       {aba === "perfis" ? await perfis(user) : null}
-      {aba === "destinos" ? await destinos() : null}
+      {aba === "areas" ? await areas(ehAdminGeral(user)) : null}
+      {aba === "tipos-destino" ? await tiposDestino(ehAdminGeral(user)) : null}
+      {aba === "destinos" ? await destinos(ehAdminGeral(user)) : null}
       {aba === "biblioteca" ? await biblioteca() : null}
       {aba === "precos" ? await fontesPreco(temPermissao(user, "administrarConfiguracoes")) : null}
       {aba === "normas" ? await normas() : null}
@@ -158,7 +169,7 @@ async function perfis(user: Awaited<ReturnType<typeof requireAccess>>) {
   return <AbaPerfis perfis={await listaPerfis(user)} />;
 }
 
-async function destinos() {
+async function destinos(podeImportar: boolean) {
   const ano = await getAnoAtivo();
   const [lista, unidadesDb] = await Promise.all([
     prisma.destino.findMany({ orderBy: [{ execucao: "asc" }, { nome: "asc" }], include: { _count: { select: { emendas: true } } } }),
@@ -167,6 +178,7 @@ async function destinos() {
   const unidades = Object.fromEntries(unidadesDb.map((u) => [u.codigo, u.nome]));
   return (
     <AbaDestinos
+      importar={podeImportar}
       unidades={unidadesDb}
       exercicio={ano ?? new Date().getFullYear()}
       destinos={lista.map((d) => ({
@@ -335,5 +347,68 @@ async function validacao(podeEditar: boolean) {
       prazoDiligenciaDias={ex.configuracao?.prazoDiligenciaDias ?? 5}
       fundamentos={(ex.configuracao?.fundamentos as Record<string, { texto: string; normaId: string | null }> | null) ?? {}}
     />
+  );
+}
+
+async function municipio(podeEditar: boolean) {
+  const m = await prisma.municipio.findFirst();
+  return (
+    <AbaMunicipio
+      podeEditar={podeEditar}
+      dados={{ nome: m?.nome ?? "", uf: (m?.uf ?? "") as "SP", codigoIbge: m?.codigoIbge ?? "", nomeCamara: m?.nomeCamara ?? "", nomePrefeitura: m?.nomePrefeitura ?? "" }}
+    />
+  );
+}
+
+async function areas(podeEditar: boolean) {
+  const ano = await getAnoAtivo();
+  const [lista, unidades] = await Promise.all([
+    prisma.areaAplicacao.findMany({ orderBy: [{ ordem: "asc" }, { nome: "asc" }], include: { _count: { select: { objetos: true } } } }),
+    ano ? prisma.unidadeOrcamentaria.findMany({ where: { exercicio: { ano } }, select: { codigo: true } }) : [],
+  ]);
+  return (
+    <AbaAreas
+      podeEditar={podeEditar}
+      unidades={unidades.map((u) => u.codigo)}
+      areas={lista.map((a) => ({ id: a.id, nome: a.nome, orgaos: a.orgaos, unidadePadrao: a.unidadePadrao, objetos: a._count.objetos }))}
+    />
+  );
+}
+
+async function tiposDestino(podeEditar: boolean) {
+  const lista = await prisma.tipoDestino.findMany({ orderBy: [{ ordem: "asc" }, { nome: "asc" }] });
+  return <AbaTiposDestino podeEditar={podeEditar} tipos={lista.map((t) => ({ id: t.id, nome: t.nome, padrao: t.padrao, pistas: t.pistas, subfuncao: t.subfuncao, ativo: t.ativo }))} />;
+}
+
+// Emendas apresentadas antes do sistema (histórico do portal e dos painéis).
+async function historico(podeImportar: boolean) {
+  const porAno = await prisma.emendaImportada.groupBy({ by: ["exercicioId"], _count: { _all: true }, _sum: { valor: true } });
+  const exercicios = await prisma.exercicio.findMany({ where: { id: { in: porAno.map((p) => p.exercicioId) } }, select: { id: true, ano: true } });
+  const ano = new Map(exercicios.map((e) => [e.id, e.ano]));
+  const linhas = porAno
+    .map((p) => ({ ano: ano.get(p.exercicioId) ?? 0, qtd: p._count._all, valor: p._sum.valor?.toNumber() ?? 0 }))
+    .sort((a, b) => b.ano - a.ano);
+  return (
+    <div className="mt-5">
+      <Cartao
+        titulo="Emendas de anos anteriores"
+        ajuda="Emendas apresentadas fora do sistema (antes de ele existir). Entram no portal público e nos painéis como “apresentadas fora do sistema”. A importação por planilha é opcional."
+        acoes={podeImportar ? <ImportarPlanilha tipo="historico" /> : null}
+      >
+        <TabelaDados
+          vazio="Nenhuma emenda de anos anteriores cadastrada."
+          colunas={[{ titulo: "Exercício" }, { titulo: "Emendas", className: "text-right" }, { titulo: "Valor", className: "text-right" }]}
+          linhas={linhas.map((l) => ({
+            chave: String(l.ano),
+            celulas: [
+              <b key="a">{l.ano}</b>,
+              <span key="q" className="tnum">{l.qtd}</span>,
+              <span key="v" className="whitespace-nowrap tnum">{l.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>,
+            ],
+          }))}
+        />
+        {!podeImportar ? <p className="mt-3 text-sm text-muted-foreground">Somente o Administrador Geral importa emendas de anos anteriores.</p> : null}
+      </Cartao>
+    </div>
   );
 }

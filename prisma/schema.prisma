@@ -1171,6 +1171,9 @@ model User {
   perfilId      String?
   // Desativado não entra; o histórico e a autoria continuam.
   ativo         Boolean   @default(true)
+  // Conta criada pelo administrador (ou pelo comando do sistema vazio): no
+  // primeiro login, troca a senha temporária e confere nome e e-mail.
+  primeiroAcesso Boolean  @default(false)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 

@@ -8,6 +8,7 @@ import { consolidar } from "@/lib/emendas/consultas";
 import { getAnoAtivo } from "@/lib/exercicio";
 import { prisma } from "@/lib/prisma";
 import { BRL } from "@/lib/riep";
+import { municipioConfigurado } from "@/lib/cadastros/municipio";
 
 export const metadata: Metadata = { title: "Emendas360 — emendas impositivas do pedido à execução" };
 
@@ -90,7 +91,7 @@ export default async function Landing() {
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
             <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/85 backdrop-blur">
               <Sparkles className="size-3.5 text-cyan" aria-hidden />
-              {municipio ? `${municipio.nome}/${municipio.uf}` : "Orçamento municipal"}
+              {municipioConfigurado(municipio) ? `${municipio.nome}/${municipio.uf}` : municipio ? "Município não configurado" : "Orçamento municipal"}
               {ano ? ` · exercício ${ano}` : ""}
             </span>
             <h1 className="mt-6 text-[clamp(34px,5.2vw,58px)] leading-[1.04] font-extrabold tracking-[-0.04em]">

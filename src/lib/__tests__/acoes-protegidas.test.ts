@@ -13,7 +13,8 @@ const PUBLICAS: Record<string, string> = {
 };
 // Chamadas que contam como conferência de permissão.
 // gravar(): a gravação da emenda, que confere quem a chama.
-const GUARDAS = /getCurrentUser\(\)|exigir\(|gestor\(\)|emendaDoGabinete\(|usuarioDaSessao\(\)|requireAccess\(|return gravar\(/;
+// exigirAdmin(): cadastros que só o Administrador Geral altera.
+const GUARDAS = /getCurrentUser\(\)|exigir\(|exigirAdmin\(\)|gestor\(\)|emendaDoGabinete\(|usuarioDaSessao\(\)|requireAccess\(|return gravar\(/;
 
 const dir = path.resolve("src/lib/actions");
 const arquivos = readdirSync(dir).filter((f) => f.endsWith(".ts"));

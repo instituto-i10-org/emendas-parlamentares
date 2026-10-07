@@ -7,7 +7,7 @@ import { DestinoDialog } from "@/components/emenda/destino-dialog";
 import { mesclarDestinos } from "@/lib/actions/destinos";
 import { consultarImpacto } from "@/lib/actions/impacto";
 import { exigeCiencia, type Impacto } from "@/lib/impacto/tipos";
-import { CorpoImpacto, useConfirmarImpacto } from "@/components/app/confirmar-impacto";
+import { CorpoImpacto } from "@/components/app/confirmar-impacto";
 import type { DestinoTela } from "@/lib/emendas/contexto";
 import { possiveisDuplicados, type ParDuplicado } from "@/lib/emendas/beneficiarios";
 import { Cartao, TabelaDados } from "@/components/app/pagina";
@@ -22,12 +22,12 @@ import {
   salvarNorma,
   definirPendenciaDestino,
   definirSubfuncaoDestino,
-  salvarArea,
   salvarObjeto,
 } from "@/lib/actions/config";
 import { CampoArquivo, type ArquivoValor } from "@/components/app/campo-arquivo";
 import { formatarCnpj } from "@/lib/cnpj";
 import { BotaoAcao, useAcao } from "./comum";
+import { ImportarPlanilha } from "./importar-planilha";
 
 // ------------------------------------------------------------------ destinos
 
@@ -49,7 +49,7 @@ export type DestinoConfig = {
 };
 
 // Subfunções que um equipamento público costuma sugerir (Portaria MOG 42/1999).
-const SUBFUNCOES_SUGERIDAS: [string, string][] = [
+export const SUBFUNCOES_SUGERIDAS: [string, string][] = [
   ["", "Sem sugestão — o vereador escolhe"],
   ["301", "301 · Atenção básica"],
   ["302", "302 · Assistência hospitalar e ambulatorial"],
@@ -66,7 +66,7 @@ const SUBFUNCOES_SUGERIDAS: [string, string][] = [
   ["812", "812 · Desporto comunitário"],
 ];
 
-export function AbaDestinos({ destinos, unidades, exercicio }: { destinos: DestinoConfig[]; unidades: { codigo: string; nome: string }[]; exercicio: number }) {
+export function AbaDestinos({ destinos, unidades, exercicio, importar = false }: { destinos: DestinoConfig[]; unidades: { codigo: string; nome: string }[]; exercicio: number; importar?: boolean }) {
   const router = useRouter();
   const [pend, setPend] = useState<DestinoConfig | null>(null);
   const [dialogo, setDialogo] = useState<{ execucao: "DIRETA" | "INDIRETA"; editando: DestinoTela | null } | null>(null);
@@ -95,7 +95,8 @@ export function AbaDestinos({ destinos, unidades, exercicio }: { destinos: Desti
         ajuda="Para onde as emendas podem ir. Os da base oficial vêm do CNES, Censo Escolar, SUAS e Receita; os demais foram cadastrados aqui ou na tela da emenda. Pendência de habilitação bloqueia a submissão de emendas para a entidade."
         titulo={`Beneficiários (${destinos.length})`}
         acoes={
-          <div className="flex gap-1.5">
+          <div className="flex flex-wrap gap-1.5">
+            {importar ? <ImportarPlanilha tipo="destinos" /> : null}
             <Button size="sm" variant="surface" onClick={() => setDialogo({ execucao: "DIRETA", editando: null })}>
               Novo da administração
             </Button>
@@ -326,13 +327,6 @@ export function AbaBiblioteca({ areas, objetos }: { areas: AreaConfig[]; objetos
   const [editando, setEditando] = useState<ObjetoConfig | "novo" | null>(null);
   return (
     <div className="grid gap-5">
-      <Cartao ajuda="Quais órgãos orçamentários atendem cada área. É o que permite ao motor dizer que um objeto de área estrita não cabe num destino de outra área, e escolher a secretaria do repasse no terceiro setor." titulo="Áreas de aplicação">
-        <div className="grid gap-2">
-          {areas.map((a) => (
-            <LinhaArea key={a.id} area={a} />
-          ))}
-        </div>
-      </Cartao>
       <Cartao ajuda="O vocabulário que o motor reconhece no objeto da emenda. O termo mais longo define a natureza e o elemento; verbos de obra e marcadores de custeio podem prevalecer." titulo={`Biblioteca de objetos (${objetos.length})`} acoes={<Button size="sm" onClick={() => setEditando("novo")}>Novo objeto</Button>}>
         <TabelaDados
           colunas={[{ titulo: "Objeto" }, { titulo: "Natureza" }, { titulo: "Área", className: "max-md:hidden" }, { titulo: "" }]}
@@ -362,41 +356,6 @@ export function AbaBiblioteca({ areas, objetos }: { areas: AreaConfig[]; objetos
         />
       </Cartao>
       <EditorObjeto objeto={editando} areas={areas} aoFechar={() => setEditando(null)} />
-    </div>
-  );
-}
-
-function LinhaArea({ area }: { area: AreaConfig }) {
-  const [orgaos, setOrgaos] = useState(area.orgaos.join(", "));
-  const [unidade, setUnidade] = useState(area.unidadePadrao ?? "");
-  const conf = useConfirmarImpacto();
-  const pendente = conf.pendente;
-  const entrada = { id: area.id, orgaos: orgaos.split(/[,\s]+/).filter(Boolean), unidadePadrao: unidade.trim() };
-  return (
-    <div className="grid grid-cols-[160px_1fr_140px_auto] items-end gap-2 rounded-md bg-soft p-3 max-md:grid-cols-1">
-      {conf.janela}
-      <b className="self-center text-sm">{area.nome}</b>
-      <Campo rotulo="Órgãos" htmlFor={`ar-o-${area.id}`}>
-        <input id={`ar-o-${area.id}`} className="campo h-10 px-3" value={orgaos} onChange={(e) => setOrgaos(e.target.value)} />
-      </Campo>
-      <Campo rotulo="Unidade padrão" htmlFor={`ar-u-${area.id}`}>
-        <input id={`ar-u-${area.id}`} className="campo h-10 px-3" value={unidade} onChange={(e) => setUnidade(e.target.value)} />
-      </Campo>
-      <Button
-        size="sm"
-        variant="ghost"
-        disabled={pendente}
-        onClick={() =>
-          conf.pedir({
-            titulo: `Salvar a área ${area.nome}`,
-            impacto: { tipo: "area", ...entrada },
-            rotulo: "Salvar área",
-            acao: (ciente) => salvarArea(entrada, ciente),
-          })
-        }
-      >
-        Salvar
-      </Button>
     </div>
   );
 }

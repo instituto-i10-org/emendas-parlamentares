@@ -4,6 +4,7 @@ import { SeletorExercicio } from "@/components/app/seletor-exercicio";
 import { LogoEmendas360 } from "@/components/logo-emendas360";
 import { rotuloExercicio } from "@/lib/ciclo";
 import { getSeletorExercicio } from "@/lib/exercicio";
+import { municipioConfigurado } from "@/lib/cadastros/municipio";
 import { prisma } from "@/lib/prisma";
 
 // Portal público: consulta sem login (transparência ativa — ADPF 854, art.
@@ -17,7 +18,7 @@ export default async function LayoutPublico({ children }: { children: ReactNode 
           <Link href="/">
             <LogoEmendas360 />
           </Link>
-          <span className="text-sm text-on-navy">{municipio ? `${municipio.nome}/${municipio.uf}` : ""} · Portal das emendas impositivas</span>
+          <span className="text-sm text-on-navy">{municipioConfigurado(municipio) ? `${municipio.nome}/${municipio.uf}` : "Município não configurado"} · Portal das emendas impositivas</span>
           <nav className="ml-auto flex flex-wrap items-center gap-1 text-sm font-semibold">
             {exercicio && exercicio.anos.length > 1 ? (
               <label className="mr-1 flex items-center gap-1.5 rounded-md bg-white/6 px-3 py-1.5 text-on-navy">
