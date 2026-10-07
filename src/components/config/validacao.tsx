@@ -6,7 +6,7 @@ import { Selo } from "@/components/emenda/ui";
 import { Button } from "@/components/ui/button";
 import { salvarParametrosValidacao, salvarRegras } from "@/lib/actions/validacao";
 import { VERIFICACOES } from "@/lib/riep/verificacoes";
-import { useAcao } from "./comum";
+import { useConfirmarImpacto } from "@/components/app/confirmar-impacto";
 
 export type RegraTela = { codigo: string; modo: "BLOQUEANTE" | "ALERTA"; ativa: boolean; fundamento: string; normaId: string | null };
 export type NormaTela = { id: string; rotulo: string };
@@ -44,7 +44,8 @@ export function AbaValidacao({
     regras.find((r) => r.codigo === codigo) ?? { codigo, modo: padrao, ativa: true, fundamento: "", normaId: null };
   const [lista, setLista] = useState<RegraTela[]>(() => VERIFICACOES.filter((v) => v.configuravel).map((v) => inicial(v.codigo, v.padrao)));
   const [fund, setFund] = useState(fundamentos);
-  const { pendente, executar } = useAcao();
+  const conf = useConfirmarImpacto();
+  const pendente = conf.pendente;
   const mudar = (codigo: string, parcial: Partial<RegraTela>) => setLista((l) => l.map((r) => (r.codigo === codigo ? { ...r, ...parcial } : r)));
   const regra = (codigo: string) => lista.find((r) => r.codigo === codigo)!;
 
@@ -68,6 +69,7 @@ export function AbaValidacao({
 
   return (
     <div className="grid gap-5">
+      {conf.janela}
       <Cartao
         titulo={`As treze verificações — exercício ${ano}`}
         ajuda="Bloqueante: a falha torna a emenda inválida. Alerta: aparece no relatório e não impede a remessa. A mudança vale na próxima validação, sem publicação nova."
@@ -135,9 +137,12 @@ export function AbaValidacao({
             <Button
               disabled={pendente}
               onClick={() =>
-                executar(() =>
-                  salvarRegras(exercicioId, lista)
-                )
+                conf.pedir({
+                  titulo: `Salvar as regras de validação de ${ano}`,
+                  impacto: { tipo: "regras", exercicioId, regras: lista },
+                  rotulo: "Salvar regras",
+                  acao: (ciente) => salvarRegras(exercicioId, lista, ciente),
+                })
               }
             >
               Salvar regras
@@ -176,7 +181,12 @@ export function AbaValidacao({
             <Button
               disabled={pendente}
               onClick={() =>
-                executar(() => salvarParametrosValidacao(exercicioId, { prazoDiligenciaDias: Number(dias), fundamentos: fund }))
+                conf.pedir({
+                  titulo: `Salvar os parâmetros da validação de ${ano}`,
+                  impacto: { tipo: "parametrosValidacao", exercicioId, prazoDiligenciaDias: Number(dias), fundamentos: fund },
+                  rotulo: "Salvar parâmetros",
+                  acao: (ciente) => salvarParametrosValidacao(exercicioId, { prazoDiligenciaDias: Number(dias), fundamentos: fund }, ciente),
+                })
               }
             >
               Salvar parâmetros da validação

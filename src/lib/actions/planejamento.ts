@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { auditar } from "@/lib/audit";
 import { podeGerirPlanejamento } from "@/lib/authz";
+import { recusaPorImpacto } from "@/lib/impacto/servidor";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 import { dadosComparativo } from "@/lib/orcamento/comparativo-servidor";
@@ -15,7 +16,7 @@ type Resultado = { ok: true; mensagem?: string } | { ok: false; erro: string };
 const SEQUENCIA = ["EM_ELABORACAO", "ENVIADO", "EM_TRAMITACAO", "APROVADO", "SANCIONADO", "VIGENTE", "ENCERRADO"] as const;
 type Status = (typeof SEQUENCIA)[number];
 
-export async function definirStatusInstrumento(id: string, status: Status): Promise<Resultado> {
+export async function definirStatusInstrumento(id: string, status: Status, ciente = false): Promise<Resultado> {
   const user = await getCurrentUser();
   if (!podeGerirPlanejamento(user)) return { ok: false, erro: "Sem permissão para gerir o planejamento." };
   const inst = await prisma.instrumentoPlanejamento.findUnique({ where: { id } });
@@ -23,6 +24,8 @@ export async function definirStatusInstrumento(id: string, status: Status): Prom
   const de = SEQUENCIA.indexOf(inst.status as Status);
   const para = SEQUENCIA.indexOf(status);
   if (para < 0 || Math.abs(para - de) !== 1) return { ok: false, erro: "O status só avança ou volta um passo por vez." };
+  const recusa = await recusaPorImpacto({ tipo: "statusInstrumento", id, status }, ciente);
+  if (recusa) return { ok: false, erro: recusa };
   await prisma.$transaction(async (tx) => {
     await tx.instrumentoPlanejamento.update({ where: { id }, data: { status } });
     await auditar(tx, { usuarioId: user.id, entidade: "InstrumentoPlanejamento", entidadeId: id, acao: "STATUS", dadosAntes: { status: inst.status }, dadosDepois: { status } });

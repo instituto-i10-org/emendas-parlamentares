@@ -6,6 +6,7 @@ import { podeCriarEmenda, temPermissao } from "@/lib/authz";
 import { cnpjValido, somenteDigitos } from "@/lib/cnpj";
 import { paraDestinoMotor, type DestinoTela } from "@/lib/emendas/contexto";
 import { anoDaTela } from "@/lib/exercicio";
+import { recusaPorImpacto } from "@/lib/impacto/servidor";
 import { prisma } from "@/lib/prisma";
 import { norm } from "@/lib/riep";
 import { getCurrentUser } from "@/lib/session";
@@ -117,13 +118,15 @@ export async function atualizarDestino(id: string, dados: DadosDestino): Promise
 
 // Mescla dois beneficiários: as emendas do removido passam ao mantido, a grafia
 // dele vira apelido e ele fica inativo, apontando para o mantido. Auditado.
-export async function mesclarDestinos(manterId: string, removerId: string): Promise<{ ok: true; mensagem: string } | { ok: false; erro: string }> {
+export async function mesclarDestinos(manterId: string, removerId: string, ciente = false): Promise<{ ok: true; mensagem: string } | { ok: false; erro: string }> {
   const user = await getCurrentUser();
   if (!temPermissao(user, "administrarConfiguracoes")) return { ok: false, erro: "Sem permissão para mesclar beneficiários." };
   if (manterId === removerId) return { ok: false, erro: "Escolha dois beneficiários diferentes." };
   const [manter, remover] = await Promise.all([prisma.destino.findUnique({ where: { id: manterId } }), prisma.destino.findUnique({ where: { id: removerId } })]);
   if (!manter || !remover) return { ok: false, erro: "Beneficiário não encontrado." };
   if (manter.execucao !== remover.execucao) return { ok: false, erro: "Só se mesclam beneficiários da mesma forma de execução." };
+  const recusa = await recusaPorImpacto({ tipo: "mesclar", manterId, removerId }, ciente);
+  if (recusa) return { ok: false, erro: recusa };
   const r = await prisma.$transaction(async (tx) => {
     const emendas = await tx.emenda.updateMany({ where: { destinoId: removerId }, data: { destinoId: manterId } });
     const apelidos = [...new Set([...manter.apelidos, remover.nome, ...remover.apelidos])].filter((n) => n !== manter.nome);

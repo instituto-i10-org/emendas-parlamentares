@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { apagarEmendasDeTeste, entrar, inserirEmenda, sql } from "./apoio";
+import { apagarEmendasDeTeste, entrar, inserirEmenda, sql, confirmarJanela } from "./apoio";
 
 // Itens 7.1, 7.2, 7.3, 8.1 e 8.2: painel geral, visão do gabinete, resumo por
 // autor, comparativo projeto × lei e execução por dotação.
@@ -94,6 +94,7 @@ test.describe("Grupo 8 — projeto e lei", () => {
       await entrar(page, "admin");
       await page.goto("/comparativo");
       await page.getByRole("button", { name: "Gerar base da lei" }).click();
+      await confirmarJanela(page);
       await expect(page.getByText(/Lei gerada/)).toBeVisible({ timeout: 30_000 });
       const [lei] = await sql<{ total: string }>(
         `select sum("valorAutorizado") total from "Dotacao" d join "InstrumentoPlanejamento" i on i.id = d."instrumentoId" where i.especie = 'LEI_APROVADA' and d."exercicioId" = $1`,

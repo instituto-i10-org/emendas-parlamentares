@@ -6,6 +6,7 @@ import { z } from "zod";
 import { Prisma } from "@/generated/prisma/client";
 import { auditar, registrarAuditoria } from "@/lib/audit";
 import { podeAtribuirPerfil, podeGerirExercicio, podeGerirPerfis, temPermissao, PERMISSOES } from "@/lib/authz";
+import { recusaPorImpacto } from "@/lib/impacto/servidor";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, type SessionUser } from "@/lib/session";
 
@@ -63,11 +64,13 @@ const configuracaoSchema = z.object({
   validadeLinkEntidadeDias: z.number().int().min(1, "A validade do link vai de 1 a 90 dias.").max(90, "A validade do link vai de 1 a 90 dias."),
 });
 
-export async function salvarConfiguracao(entrada: z.input<typeof configuracaoSchema>): Promise<Resultado> {
+export async function salvarConfiguracao(entrada: z.input<typeof configuracaoSchema>, ciente = false): Promise<Resultado> {
   const user = await exigir("gerirExercicios");
   if (falhou(user)) return user;
   const p = configuracaoSchema.safeParse(entrada);
   if (!p.success) return erro(p.error);
+  const recusa = await recusaPorImpacto({ tipo: "configuracao", entrada: p.data }, ciente);
+  if (recusa) return { ok: false, erro: recusa };
   const { exercicioId, prazoProtocolo, ...campos } = p.data;
   const dados = { ...campos, prazoProtocolo: prazoProtocolo ? new Date(`${prazoProtocolo}T23:59:59-03:00`) : null };
   const antes = await prisma.configuracaoExercicio.findUnique({ where: { exercicioId } });
@@ -97,9 +100,11 @@ export async function criarExercicio(ano: number): Promise<Resultado> {
 
 // Encerrar o exercício fecha o emendamento: não se cria nem se altera emenda
 // (nem rascunho). A consulta, a tramitação e a execução continuam.
-export async function definirStatusExercicio(id: string, status: "ABERTO" | "ENCERRADO"): Promise<Resultado> {
+export async function definirStatusExercicio(id: string, status: "ABERTO" | "ENCERRADO", ciente = false): Promise<Resultado> {
   const user = await getCurrentUser();
   if (!podeGerirExercicio(user)) return { ok: false, erro: "Sem permissão." };
+  const recusa = await recusaPorImpacto({ tipo: "statusExercicio", id, status }, ciente);
+  if (recusa) return { ok: false, erro: recusa };
   const antes = await prisma.exercicio.findUnique({ where: { id } });
   if (!antes) return { ok: false, erro: "Exercício não encontrado." };
   const ex = await prisma.$transaction(async (tx) => {
@@ -301,9 +306,11 @@ export async function excluirPerfil(id: string): Promise<Resultado> {
 // Destinos, biblioteca de objetos e áreas
 // ============================================================================
 
-export async function alternarDestinoAtivo(id: string): Promise<Resultado> {
+export async function alternarDestinoAtivo(id: string, ciente = false): Promise<Resultado> {
   const user = await exigir("administrarConfiguracoes");
   if (falhou(user)) return user;
+  const recusa = await recusaPorImpacto({ tipo: "destinoAtivo", id }, ciente);
+  if (recusa) return { ok: false, erro: recusa };
   const d = await prisma.destino.findUnique({ where: { id } });
   if (!d) return { ok: false, erro: "Destino não encontrado." };
   await prisma.destino.update({ where: { id }, data: { ativo: !d.ativo } });
@@ -378,11 +385,13 @@ const areaSchema = z.object({
   unidadePadrao: z.union([z.literal(""), z.string().regex(/^\d{1,4}\.\d{1,4}$/, "Unidade no formato 13.01.")]),
 });
 
-export async function salvarArea(entrada: z.input<typeof areaSchema>): Promise<Resultado> {
+export async function salvarArea(entrada: z.input<typeof areaSchema>, ciente = false): Promise<Resultado> {
   const user = await exigir("administrarConfiguracoes");
   if (falhou(user)) return user;
   const p = areaSchema.safeParse(entrada);
   if (!p.success) return erro(p.error);
+  const recusa = await recusaPorImpacto({ tipo: "area", id: p.data.id, orgaos: p.data.orgaos, unidadePadrao: p.data.unidadePadrao }, ciente);
+  if (recusa) return { ok: false, erro: recusa };
   const antes = await prisma.areaAplicacao.findUnique({ where: { id: p.data.id } });
   const salvo = await prisma.areaAplicacao.update({
     where: { id: p.data.id },

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { alternarUsuarioAtivo, criarUsuario, definirSenha, excluirPerfil, reatribuirPerfil, salvarPerfil, vincularAutor } from "@/lib/actions/config";
 import { PERMISSOES, type Permissao } from "@/lib/authz";
+import { useConfirmarImpacto } from "@/components/app/confirmar-impacto";
 import { BotaoAcao, useAcao } from "./comum";
 
 export type PerfilTela = {
@@ -77,7 +78,7 @@ export function AbaUsuarios({ usuarios, perfis, autores }: { usuarios: UsuarioTe
                 <Button size="xs" variant="ghost" onClick={() => setSenhaDe(u)}>
                   Senha
                 </Button>
-                <BotaoAcao acao={() => alternarUsuarioAtivo(u.id)} confirmar={u.ativo ? `Desativar ${u.nome}? A pessoa não entra mais no sistema.` : undefined}>
+                <BotaoAcao acao={() => alternarUsuarioAtivo(u.id)} impacto={{ tipo: "usuarioAtivo", id: u.id }} titulo={`${u.ativo ? "Desativar" : "Reativar"} ${u.nome}`} rotulo={u.ativo ? "Desativar" : "Reativar"}>
                   {u.ativo ? "Desativar" : "Reativar"}
                 </BotaoAcao>
               </div>
@@ -93,22 +94,34 @@ export function AbaUsuarios({ usuarios, perfis, autores }: { usuarios: UsuarioTe
 }
 
 function SeletorPerfil({ usuario, perfis }: { usuario: UsuarioTela; perfis: PerfilTela[] }) {
-  const { pendente, executar } = useAcao();
+  const conf = useConfirmarImpacto();
+  const pendente = conf.pendente;
   return (
-    <select
-      aria-label={`Perfil de ${usuario.nome}`}
-      className="campo campo-select h-9 w-full min-w-[150px] max-w-[260px] pr-9 pl-3"
-      disabled={pendente}
-      value={usuario.perfilId ?? ""}
-      onChange={(e) => executar(() => reatribuirPerfil(usuario.id, e.target.value || null))}
-    >
-      <option value="">Sem perfil (sem acesso)</option>
-      {perfis.map((p) => (
-        <option key={p.id} value={p.id}>
-          {p.nome} · {poderRotulo(p.poder)}
-        </option>
-      ))}
-    </select>
+    <>
+      {conf.janela}
+      <select
+        aria-label={`Perfil de ${usuario.nome}`}
+        className="campo campo-select h-9 w-full min-w-[150px] max-w-[260px] pr-9 pl-3"
+        disabled={pendente}
+        value={usuario.perfilId ?? ""}
+        onChange={(e) => {
+          const perfilId = e.target.value || null;
+          conf.pedir({
+            titulo: `Trocar o perfil de ${usuario.nome}`,
+            impacto: { tipo: "perfilUsuario", usuarioId: usuario.id, perfilId },
+            rotulo: "Trocar perfil",
+            acao: () => reatribuirPerfil(usuario.id, perfilId),
+          });
+        }}
+      >
+        <option value="">Sem perfil (sem acesso)</option>
+        {perfis.map((p) => (
+          <option key={p.id} value={p.id}>
+            {p.nome} · {poderRotulo(p.poder)}
+          </option>
+        ))}
+      </select>
+    </>
   );
 }
 
@@ -272,7 +285,7 @@ export function AbaPerfis({ perfis }: { perfis: PerfilTela[] }) {
                 <Button size="xs" variant="ghost" onClick={() => setEditando(p)}>
                   Editar
                 </Button>
-                <BotaoAcao acao={() => excluirPerfil(p.id)} confirmar={`Excluir o perfil ${p.nome}?`} desabilitado={p.usuarios > 0}>
+                <BotaoAcao acao={() => excluirPerfil(p.id)} confirmar={`Excluir o perfil ${p.nome}?`} titulo="Excluir perfil" rotulo="Excluir" destrutiva desabilitado={p.usuarios > 0}>
                   Excluir
                 </BotaoAcao>
               </div>

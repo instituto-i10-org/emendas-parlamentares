@@ -164,3 +164,13 @@ export async function emendaValida(page: Page, objeto: string): Promise<string> 
   await sql(`insert into "ParcelaDesembolso" (id, "emendaId", ordem, valor) values ($1 || 'p', $1, 0, 3000)`, [id]);
   return id;
 }
+
+// Janela de confirmação com impacto: espera o cálculo, marca a ciência quando
+// ela é pedida (há emenda enviada alcançada) e confirma pelo botão principal.
+export async function confirmarJanela(page: Page) {
+  const janela = page.getByRole("dialog");
+  await expect(janela.locator("[data-impacto]")).toBeVisible({ timeout: 15_000 });
+  const ciencia = janela.getByRole("checkbox", { name: /Entendo que esta alteração afeta/ });
+  if (await ciencia.isVisible()) await ciencia.check();
+  await janela.locator(":scope > div:last-child button").first().click();
+}

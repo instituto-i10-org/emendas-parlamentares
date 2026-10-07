@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { auditar } from "@/lib/audit";
 import { temPermissao } from "@/lib/authz";
+import { recusaPorImpacto } from "@/lib/impacto/servidor";
 import { prisma } from "@/lib/prisma";
 import { VERIFICACOES } from "@/lib/riep/verificacoes";
 import { getCurrentUser } from "@/lib/session";
@@ -24,7 +25,7 @@ const regraSchema = z.object({
   normaId: z.string().max(40).nullable(),
 });
 
-export async function salvarRegras(exercicioId: string, regras: z.input<typeof regraSchema>[]): Promise<Resultado> {
+export async function salvarRegras(exercicioId: string, regras: z.input<typeof regraSchema>[], ciente = false): Promise<Resultado> {
   const user = await getCurrentUser();
   if (!temPermissao(user, "gerirExercicios")) return { ok: false, erro: "Sem permissão para alterar as regras de validação." };
   const p = z.array(regraSchema).max(40).safeParse(regras);
@@ -37,6 +38,8 @@ export async function salvarRegras(exercicioId: string, regras: z.input<typeof r
     if (!def.desligavel && !r.ativa) return { ok: false, erro: "Só a (xii) pode ser desligada." };
   }
   if (!(await prisma.exercicio.findUnique({ where: { id: exercicioId }, select: { id: true } }))) return { ok: false, erro: "Exercício não encontrado." };
+  const recusa = await recusaPorImpacto({ tipo: "regras", exercicioId, regras: p.data }, ciente);
+  if (recusa) return { ok: false, erro: recusa };
   await prisma.$transaction(async (tx) => {
     for (const r of p.data) {
       const antes = await tx.regraValidacao.findFirst({ where: { codigo: r.codigo, exercicioId } });
@@ -59,7 +62,7 @@ const parametrosSchema = z.object({
 });
 
 // Fundamento por extenso de cada parâmetro do exercício (item 12.1).
-export async function salvarParametrosValidacao(exercicioId: string, entrada: z.input<typeof parametrosSchema>): Promise<Resultado> {
+export async function salvarParametrosValidacao(exercicioId: string, entrada: z.input<typeof parametrosSchema>, ciente = false): Promise<Resultado> {
   const user = await getCurrentUser();
   if (!temPermissao(user, "gerirExercicios")) return { ok: false, erro: "Sem permissão para alterar os parâmetros." };
   const p = parametrosSchema.safeParse(entrada);
@@ -75,6 +78,8 @@ export async function salvarParametrosValidacao(exercicioId: string, entrada: z.
   ];
   const semFundamento = definidos.filter(([k, , definido]) => definido && !p.data.fundamentos[k]?.texto?.trim()).map(([, rotulo]) => rotulo);
   if (semFundamento.length) return { ok: false, erro: `Informe o fundamento de: ${semFundamento.join(", ")}.` };
+  const recusa = await recusaPorImpacto({ tipo: "parametrosValidacao", exercicioId, prazoDiligenciaDias: p.data.prazoDiligenciaDias, fundamentos: p.data.fundamentos }, ciente);
+  if (recusa) return { ok: false, erro: recusa };
   await prisma.$transaction(async (tx) => {
     const depois = await tx.configuracaoExercicio.update({ where: { exercicioId }, data: { fundamentos: p.data.fundamentos, ...(p.data.prazoDiligenciaDias !== undefined ? { prazoDiligenciaDias: p.data.prazoDiligenciaDias } : {}) } });
     await auditar(tx, {

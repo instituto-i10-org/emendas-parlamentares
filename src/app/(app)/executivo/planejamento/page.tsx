@@ -103,7 +103,7 @@ export default async function PlanejamentoPage({ searchParams }: { searchParams:
                   {i.totalImpresso ? <span className="block text-muted-foreground">total impresso {BRL(i.totalImpresso.toNumber())}</span> : null}
                 </span>,
                 <span key="d" className="tnum">{i._count.dotacoes}</span>,
-                <StatusInstrumento key="s" id={i.id} status={i.status} podeGerir={podeGerir} />,
+                <StatusInstrumento key="s" id={i.id} status={i.status} podeGerir={podeGerir} rotulo={i.numero} />,
                 <div key="a" className="flex items-center justify-end gap-1">
                   {i._count.dotacoes ? (
                     <Button size="xs" variant="ghost" asChild>

@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { expect, test, type Page } from "@playwright/test";
-import { DESTINOS, criarRascunho, entrar, sql } from "./apoio";
+import { DESTINOS, criarRascunho, entrar, sql, confirmarJanela } from "./apoio";
 
 // Pedidos do Dr. Emerson: preço informado pelo autor a partir de fonte oficial
 // (sem pesquisa automática) e o link para a entidade preencher o plano.
@@ -56,6 +56,7 @@ test.describe("Preço manual com fontes oficiais", () => {
     await page.goto("/config?aba=exercicio");
     await page.getByRole("button", { name: "Impede a submissão" }).click();
     await page.getByRole("button", { name: "Salvar parâmetros" }).click();
+    await confirmarJanela(page);
     await expect(page.getByText("Parâmetros do exercício salvos.")).toBeVisible();
 
     await entrar(page, "vereador");
@@ -72,6 +73,7 @@ test.describe("Preço manual com fontes oficiais", () => {
     await page.goto("/config?aba=exercicio");
     await page.getByRole("button", { name: "Só alerta" }).click();
     await page.getByRole("button", { name: "Salvar parâmetros" }).click();
+    await confirmarJanela(page);
     await expect(page.getByText("Parâmetros do exercício salvos.")).toBeVisible();
     const cfg = await sql<{ fontePrecoObrigatoria: boolean }>(
       `select c."fontePrecoObrigatoria" from "ConfiguracaoExercicio" c join "Exercicio" e on e.id = c."exercicioId" order by e.ano desc limit 1`
@@ -80,6 +82,8 @@ test.describe("Preço manual com fontes oficiais", () => {
     // Volta ao padrão para os demais testes.
     await page.getByRole("button", { name: "Impede a submissão" }).click();
     await page.getByRole("button", { name: "Salvar parâmetros" }).click();
+    await confirmarJanela(page);
+    await expect(page.getByText("Parâmetros do exercício salvos.")).toBeVisible();
   });
 
   test("T-P-5 administração edita o endereço de uma fonte e a tela da emenda muda", async ({ page }) => {
@@ -203,6 +207,8 @@ test.describe("Link da entidade", () => {
     await page.context().clearCookies();
     await page.goto(url);
     await expect(page.getByText(/a emenda já foi remetida/)).toBeVisible();
+    // A remessa foi forjada no banco: volta a rascunho para não pesar nos testes seguintes.
+    await sql(`update "Emenda" set status = 'RASCUNHO' where id = $1`, [emendaId]);
   });
 
   test("T-L-7 código errado repetido bloqueia o endereço por um tempo", async ({ page }) => {

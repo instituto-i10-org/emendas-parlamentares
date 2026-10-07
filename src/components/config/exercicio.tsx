@@ -7,6 +7,7 @@ import { Campo, CampoNumero, Pilulas, Selo } from "@/components/emenda/ui";
 import { Button } from "@/components/ui/button";
 import { adicionarPrazo, criarExercicio, definirStatusExercicio, excluirPrazo, salvarConfiguracao } from "@/lib/actions/config";
 import { formatarNumero, lerNumero } from "@/lib/emendas/estado";
+import { useConfirmarImpacto } from "@/components/app/confirmar-impacto";
 import { BotaoAcao, useAcao } from "./comum";
 
 export type ConfiguracaoTela = {
@@ -82,12 +83,10 @@ function Exercicios({ exercicios, podeGerir }: { exercicios: { id: string; ano: 
             {podeGerir ? (
               <span className="ml-auto">
                 <BotaoAcao
-                  acao={() => definirStatusExercicio(e.id, e.status === "ABERTO" ? "ENCERRADO" : "ABERTO")}
-                  confirmar={
-                    e.status === "ABERTO"
-                      ? `Encerrar o exercício ${e.ano}? Nenhuma emenda poderá ser criada ou alterada nele, nem em rascunho.`
-                      : `Reabrir o exercício ${e.ano}?`
-                  }
+                  acao={(ciente) => definirStatusExercicio(e.id, e.status === "ABERTO" ? "ENCERRADO" : "ABERTO", ciente)}
+                  impacto={{ tipo: "statusExercicio", id: e.id, status: e.status === "ABERTO" ? "ENCERRADO" : "ABERTO" }}
+                  titulo={e.status === "ABERTO" ? `Encerrar o exercício ${e.ano}` : `Reabrir o exercício ${e.ano}`}
+                  rotulo={e.status === "ABERTO" ? "Encerrar" : "Reabrir"}
                 >
                   {e.status === "ABERTO" ? "Encerrar" : "Reabrir"}
                 </BotaoAcao>
@@ -138,7 +137,8 @@ function FormConfiguracao({ c, podeGerir }: { c: ConfiguracaoTela; podeGerir: bo
     situacoesEmendamento: c.situacoesEmendamento,
     validadeLinkEntidadeDias: String(c.validadeLinkEntidadeDias),
   });
-  const { pendente, executar } = useAcao();
+  const conf = useConfirmarImpacto();
+  const pendente = conf.pendente;
   const m = (k: keyof typeof f) => ({
     value: f[k] as string,
     onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setF({ ...f, [k]: e.target.value }),
@@ -151,8 +151,7 @@ function FormConfiguracao({ c, podeGerir }: { c: ConfiguracaoTela; podeGerir: bo
       : null;
 
   function salvar() {
-    executar(() =>
-      salvarConfiguracao({
+    const entrada = {
         exercicioId: c.exercicioId,
         cotaIndividual: f.cotaIndividual ? lerNumero(f.cotaIndividual) : null,
         percentualRcl: f.percentualRcl ? lerNumero(f.percentualRcl) : null,
@@ -180,8 +179,13 @@ function FormConfiguracao({ c, podeGerir }: { c: ConfiguracaoTela; podeGerir: bo
         fontePrecoObrigatoria: f.fontePrecoObrigatoria,
         situacoesEmendamento: f.situacoesEmendamento,
         validadeLinkEntidadeDias: Number(f.validadeLinkEntidadeDias),
-      } as Parameters<typeof salvarConfiguracao>[0])
-    );
+      } as Parameters<typeof salvarConfiguracao>[0];
+    conf.pedir({
+      titulo: `Salvar os parâmetros de ${c.ano}`,
+      impacto: { tipo: "configuracao", entrada: entrada as unknown as Record<string, unknown> & { exercicioId: string } },
+      rotulo: "Salvar parâmetros",
+      acao: (ciente) => salvarConfiguracao(entrada, ciente),
+    });
   }
 
   return (
@@ -196,6 +200,7 @@ function FormConfiguracao({ c, podeGerir }: { c: ConfiguracaoTela; podeGerir: bo
         ) : null
       }
     >
+      {conf.janela}
       <h3 className="mb-2 antena">Cota individual</h3>
       <div className="mb-5 grid grid-cols-3 gap-3.5 max-md:grid-cols-1">
         <Campo rotulo="RCL base (R$)" htmlFor="c-rcl">
@@ -355,7 +360,7 @@ function Prazos({
               ) : null}
             </span>
             {podeGerir ? (
-              <BotaoAcao acao={() => excluirPrazo(p.id)} confirmar="Excluir este prazo?">
+              <BotaoAcao acao={() => excluirPrazo(p.id)} confirmar="Excluir este prazo?" titulo="Excluir prazo" rotulo="Excluir" destrutiva>
                 <Trash2 className="size-4" />
               </BotaoAcao>
             ) : null}

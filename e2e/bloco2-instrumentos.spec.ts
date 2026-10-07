@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { expect, test, type Page } from "@playwright/test";
-import { entrar, sql } from "./apoio";
+import { entrar, sql, confirmarJanela } from "./apoio";
 
 // Instrumentos de planejamento e exercícios (itens 1.1, 1.2 e 1.3), com o
 // envio e o download de arquivo da fundação (T-0-6, T-0-7).
@@ -77,6 +77,7 @@ test.describe("Instrumentos de planejamento", () => {
     const aud = await sql(`select 1 from "AuditLog" where entidade = 'InstrumentoPlanejamento' and acao = 'ATUALIZAR' and "dadosAntes"::text like '%Ementa original%'`);
     expect(aud.length).toBe(1);
     await linha.getByRole("button", { name: "Excluir" }).click();
+    await confirmarJanela(page);
     await expect(page.getByText("Instrumento excluído.")).toBeVisible();
     await expect(page.locator("tr", { hasText: "PL 97/2026" })).toHaveCount(0);
     // O projeto com base de dotações não oferece exclusão.
@@ -129,6 +130,7 @@ test.describe("Emendamento aberto e fechado", () => {
     await page.goto("/config?aba=exercicio");
     const linha = page.locator("li", { hasText: "2027" }).first();
     await linha.getByRole("button", { name: "Encerrar" }).click();
+    await confirmarJanela(page);
     await expect(page.getByText(/encerrado: o emendamento está fechado/)).toBeVisible();
     try {
       await entrar(page, "vereador");

@@ -1,10 +1,13 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { DestinoDialog } from "@/components/emenda/destino-dialog";
 import { mesclarDestinos } from "@/lib/actions/destinos";
+import { consultarImpacto } from "@/lib/actions/impacto";
+import { exigeCiencia, type Impacto } from "@/lib/impacto/tipos";
+import { CorpoImpacto, useConfirmarImpacto } from "@/components/app/confirmar-impacto";
 import type { DestinoTela } from "@/lib/emendas/contexto";
 import { possiveisDuplicados, type ParDuplicado } from "@/lib/emendas/beneficiarios";
 import { Cartao, TabelaDados } from "@/components/app/pagina";
@@ -142,7 +145,7 @@ export function AbaDestinos({ destinos, unidades, exercicio }: { destinos: Desti
                   Editar
                 </Button>
               ) : null}
-              <BotaoAcao acao={() => alternarDestinoAtivo(d.id)}>{d.ativo ? "Desativar" : "Ativar"}</BotaoAcao>
+              <BotaoAcao acao={(ciente) => alternarDestinoAtivo(d.id, ciente)} impacto={{ tipo: "destinoAtivo", id: d.id }} titulo={`${d.ativo ? "Desativar" : "Ativar"} o destino`} rotulo={d.ativo ? "Desativar" : "Ativar"}>{d.ativo ? "Desativar" : "Ativar"}</BotaoAcao>
             </div>
           )}
         />
@@ -171,10 +174,25 @@ function MesclarDialog({ par, destinos, aoFechar }: { par: ParDuplicado | null; 
   const router = useRouter();
   const [manter, setManter] = useState<string | null>(null);
   const [pendente, iniciar] = useTransition();
-  if (!par) return null;
-  const lados = [par.a, par.b].map((x) => destinos.find((d) => d.id === x.id)!);
-  const fica = manter ?? (lados[0].emendas >= lados[1].emendas ? lados[0].id : lados[1].id);
-  const sai = lados.find((d) => d.id !== fica)!;
+  const [impacto, setImpacto] = useState<{ chave: string; valor: Impacto } | null>(null);
+  const [ciente, setCiente] = useState(false);
+  const lados = par ? [par.a, par.b].map((x) => destinos.find((d) => d.id === x.id)!) : [];
+  const fica = par ? manter ?? (lados[0].emendas >= lados[1].emendas ? lados[0].id : lados[1].id) : null;
+  const sai = lados.find((d) => d.id !== fica) ?? null;
+  const chave = fica && sai ? `${fica}>${sai.id}` : null;
+  useEffect(() => {
+    if (!fica || !sai || !chave) return;
+    let vivo = true;
+    consultarImpacto({ tipo: "mesclar", manterId: fica, removerId: sai.id }).then((r) => {
+      if (vivo && r.ok) setImpacto({ chave, valor: { ...r.impacto, mudancas: [] } });
+    });
+    return () => {
+      vivo = false;
+    };
+  }, [chave, fica, sai]);
+  if (!par || !fica || !sai) return null;
+  const atual = impacto?.chave === chave ? impacto.valor : null;
+  const exige = atual ? exigeCiencia(atual) : false;
   return (
     <Dialog open onOpenChange={(a) => !a && (setManter(null), aoFechar())}>
       <DialogContent
@@ -184,13 +202,14 @@ function MesclarDialog({ par, destinos, aoFechar }: { par: ParDuplicado | null; 
         acoes={
           <>
             <Button
-              disabled={pendente}
+              disabled={pendente || !atual || (exige && !ciente)}
               onClick={() =>
                 iniciar(async () => {
-                  const r = await mesclarDestinos(fica, sai.id);
+                  const r = await mesclarDestinos(fica, sai.id, ciente);
                   if (!r.ok) return void toast.error(r.erro);
                   toast(r.mensagem);
                   setManter(null);
+                  setCiente(false);
                   aoFechar();
                   router.refresh();
                 })
@@ -218,6 +237,13 @@ function MesclarDialog({ par, destinos, aoFechar }: { par: ParDuplicado | null; 
             </label>
           ))}
         </div>
+        {atual ? (
+          <div className="mt-4">
+            <CorpoImpacto impacto={atual} consultado exige={exige} ciente={ciente} aoMarcar={setCiente} />
+          </div>
+        ) : (
+          <p className="mt-4 text-sm text-muted-foreground">Calculando o que esta mesclagem muda…</p>
+        )}
       </DialogContent>
     </Dialog>
   );
@@ -329,7 +355,7 @@ export function AbaBiblioteca({ areas, objetos }: { areas: AreaConfig[]; objetos
                 <Button size="xs" variant="ghost" onClick={() => setEditando(o)}>
                   Editar
                 </Button>
-                <BotaoAcao acao={() => alternarObjetoAtivo(o.id)}>{o.ativo ? "Desativar" : "Ativar"}</BotaoAcao>
+                <BotaoAcao acao={() => alternarObjetoAtivo(o.id)} impacto={{ tipo: "objetoAtivo", id: o.id }} titulo={`${o.ativo ? "Desativar" : "Ativar"} o objeto`} rotulo={o.ativo ? "Desativar" : "Ativar"}>{o.ativo ? "Desativar" : "Ativar"}</BotaoAcao>
               </div>,
             ],
           }))}
@@ -343,9 +369,12 @@ export function AbaBiblioteca({ areas, objetos }: { areas: AreaConfig[]; objetos
 function LinhaArea({ area }: { area: AreaConfig }) {
   const [orgaos, setOrgaos] = useState(area.orgaos.join(", "));
   const [unidade, setUnidade] = useState(area.unidadePadrao ?? "");
-  const { pendente, executar } = useAcao();
+  const conf = useConfirmarImpacto();
+  const pendente = conf.pendente;
+  const entrada = { id: area.id, orgaos: orgaos.split(/[,\s]+/).filter(Boolean), unidadePadrao: unidade.trim() };
   return (
     <div className="grid grid-cols-[160px_1fr_140px_auto] items-end gap-2 rounded-md bg-soft p-3 max-md:grid-cols-1">
+      {conf.janela}
       <b className="self-center text-sm">{area.nome}</b>
       <Campo rotulo="Órgãos" htmlFor={`ar-o-${area.id}`}>
         <input id={`ar-o-${area.id}`} className="campo h-10 px-3" value={orgaos} onChange={(e) => setOrgaos(e.target.value)} />
@@ -357,7 +386,14 @@ function LinhaArea({ area }: { area: AreaConfig }) {
         size="sm"
         variant="ghost"
         disabled={pendente}
-        onClick={() => executar(() => salvarArea({ id: area.id, orgaos: orgaos.split(/[,\s]+/).filter(Boolean), unidadePadrao: unidade.trim() }))}
+        onClick={() =>
+          conf.pedir({
+            titulo: `Salvar a área ${area.nome}`,
+            impacto: { tipo: "area", ...entrada },
+            rotulo: "Salvar área",
+            acao: (ciente) => salvarArea(entrada, ciente),
+          })
+        }
       >
         Salvar
       </Button>
@@ -561,7 +597,7 @@ export function AbaNormas({ normas }: { normas: NormaConfig[] }) {
                 <Button size="xs" variant="ghost" onClick={() => editar(n)}>
                   Editar
                 </Button>
-                <BotaoAcao acao={() => alternarNormaAtiva(n.id)}>{n.ativo ? "Desativar" : "Ativar"}</BotaoAcao>
+                <BotaoAcao acao={() => alternarNormaAtiva(n.id)} impacto={{ tipo: "normaAtiva", id: n.id }} titulo={`${n.ativo ? "Desativar" : "Ativar"} a norma`} rotulo={n.ativo ? "Desativar" : "Ativar"}>{n.ativo ? "Desativar" : "Ativar"}</BotaoAcao>
               </div>
             </div>
             {n.trecho ? <p className="mt-2 text-xs leading-relaxed text-muted-foreground">“{n.trecho}”</p> : null}

@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { JUSTIFICATIVA, SENHA, apagarEmendasDeTeste, dotacaoDaFicha, emendaValida, entrar, inserirEmenda, preencherLogin, sql } from "./apoio";
+import { JUSTIFICATIVA, SENHA, apagarEmendasDeTeste, dotacaoDaFicha, emendaValida, entrar, inserirEmenda, preencherLogin, sql, confirmarJanela } from "./apoio";
 
 // Itens 12.1 a 12.4, 13.1, 13.3, 14.1, 14.2 e 15.1: normas com arquivo e
 // vigência, beneficiários e mesclagem, usuários, auditoria com antes e depois,
@@ -104,7 +104,7 @@ test.describe("Grupo 12 — configuração", () => {
 
       await par.getByRole("button", { name: "Mesclar" }).click();
       await page.getByRole("dialog").locator("label", { hasText: "Associação Beneficente X t10" }).click();
-      await page.getByRole("button", { name: "Confirmar mesclagem" }).click();
+      await confirmarJanela(page);
       await expect(page.getByText(/Mesclado/)).toBeVisible();
       const [e] = await sql<{ destinoId: string }>(`select "destinoId" from "Emenda" where id = 't10-em'`);
       expect(e.destinoId).toBe("t10-d2");
@@ -153,6 +153,7 @@ test.describe("Grupo 12 — configuração", () => {
     await entrar(page, "admin");
     await page.goto("/config?aba=usuarios");
     await page.locator("tr", { hasText: email }).getByRole("button", { name: "Desativar" }).click();
+    await confirmarJanela(page);
     await expect(page.getByText(/Usuário desativado/)).toBeVisible();
     await preencherLogin(page, email, "nova-senha-t10-123");
     await page.getByRole("button", { name: "Entrar", exact: true }).click();

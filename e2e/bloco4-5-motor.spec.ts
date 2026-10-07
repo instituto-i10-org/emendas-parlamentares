@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { DESTINOS, criarRascunho, emendaValida as emendaValidaApoio, entrar, sql } from "./apoio";
+import { DESTINOS, criarRascunho, emendaValida as emendaValidaApoio, entrar, sql, confirmarJanela } from "./apoio";
 
 // Itens 4.1 a 4.5 e 12.1 (motor das treze verificações), no fluxo de três
 // etapas de Mogi Guaçu: as treze aparecem na etapa 3, acima das conferências
@@ -63,6 +63,7 @@ test.describe("Grupo 4 — motor das treze verificações", () => {
     }
     await page.locator("#modo-ADERENCIA_LDO").selectOption("ALERTA");
     await page.getByRole("button", { name: "Salvar regras" }).click();
+    await confirmarJanela(page);
     await expect(page.getByText("Regras de validação salvas")).toBeVisible();
     const regra = await sql<{ modo: string }>(`select modo from "RegraValidacao" where codigo = 'ADERENCIA_LDO' and "exercicioId" = $1`, [await exercicioAtual()]);
     expect(regra[0].modo).toBe("ALERTA");
@@ -164,13 +165,17 @@ test.describe("Grupo 4 — motor das treze verificações", () => {
     await page.goto("/config?aba=validacao");
     await page.getByLabel("Fundamento: Cota individual").fill("");
     await page.getByRole("button", { name: "Salvar parâmetros da validação" }).click();
-    await expect(page.getByText(/Informe o fundamento de: cota individual/)).toBeVisible();
+    // A recusa aparece na janela, antes de gravar; nada se grava.
+    const janela = page.getByRole("dialog");
+    await expect(janela.getByText(/Informe o fundamento de: cota individual/)).toBeVisible();
+    await janela.getByRole("button", { name: "Fechar" }).last().click();
 
     await page.getByLabel("Fundamento: Cota individual").fill("Lei Orgânica, art. 140");
     await page.getByLabel("Fundamento: Percentual da saúde").fill("Lei Orgânica, art. 140");
     await page.getByLabel("Fundamento: Prazo de protocolo das emendas").fill("Regimento Interno, art. 210");
     await page.getByLabel("Fundamento: Prazo da diligência").fill("Regimento Interno, art. 210-C, § 2º");
     await page.getByRole("button", { name: "Salvar parâmetros da validação" }).click();
+    await confirmarJanela(page);
     await expect(page.getByText("Parâmetros da validação salvos.")).toBeVisible();
     const [c] = await sql<{ fundamentos: Record<string, { texto: string }> }>(`select fundamentos from "ConfiguracaoExercicio" where "exercicioId" = $1`, [await exercicioAtual()]);
     expect(c.fundamentos.cotaIndividual.texto).toBe("Lei Orgânica, art. 140");

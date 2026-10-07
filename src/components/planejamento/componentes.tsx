@@ -12,6 +12,7 @@ import { CampoArquivo, type ArquivoValor } from "@/components/app/campo-arquivo"
 import { iniciarImportacao } from "@/lib/actions/importacao";
 import { criarInstrumento, definirStatusInstrumento, editarInstrumento, excluirInstrumento } from "@/lib/actions/planejamento";
 import { lerNumero } from "@/lib/emendas/estado";
+import { useConfirmarImpacto } from "@/components/app/confirmar-impacto";
 import { BRL } from "@/lib/riep";
 
 const SEQUENCIA = ["EM_ELABORACAO", "ENVIADO", "EM_TRAMITACAO", "APROVADO", "SANCIONADO", "VIGENTE", "ENCERRADO"] as const;
@@ -26,18 +27,20 @@ export const ROTULO_STATUS: Record<string, string> = {
 };
 
 // Avança ou volta um passo no ciclo de vida do instrumento.
-export function StatusInstrumento({ id, status, podeGerir }: { id: string; status: string; podeGerir: boolean }) {
-  const router = useRouter();
-  const [pendente, iniciar] = useTransition();
+export function StatusInstrumento({ id, status, podeGerir, rotulo }: { id: string; status: string; podeGerir: boolean; rotulo?: string }) {
+  const conf = useConfirmarImpacto();
+  const pendente = conf.pendente;
   const i = SEQUENCIA.indexOf(status as (typeof SEQUENCIA)[number]);
   const mover = (para: (typeof SEQUENCIA)[number]) =>
-    iniciar(async () => {
-      const r = await definirStatusInstrumento(id, para);
-      if (!r.ok) return void toast.error(r.erro);
-      router.refresh();
+    conf.pedir({
+      titulo: `Mudar a situação${rotulo ? ` do ${rotulo}` : ""}`,
+      impacto: { tipo: "statusInstrumento", id, status: para },
+      rotulo: `Mudar para ${ROTULO_STATUS[para].toLowerCase()}`,
+      acao: (ciente) => definirStatusInstrumento(id, para, ciente),
     });
   return (
     <div className="flex flex-wrap items-center gap-1.5">
+      {conf.janela}
       {/* Largura fixa: as setas ficam na mesma coluna em todas as linhas. */}
       <span className="w-[120px]">
         <Selo tipo={status === "EM_TRAMITACAO" ? "info" : status === "VIGENTE" ? "ok" : "neutro"}>{ROTULO_STATUS[status]}</Selo>
@@ -218,25 +221,27 @@ export function EditarInstrumento({ exercicioId, projetos, inicial }: { exercici
 }
 
 export function ExcluirInstrumento({ id, rotulo }: { id: string; rotulo: string }) {
-  const router = useRouter();
-  const [pendente, iniciar] = useTransition();
+  const conf = useConfirmarImpacto();
   return (
-    <Button
-      size="xs"
-      variant="ghost"
-      disabled={pendente}
-      onClick={() =>
-        window.confirm(`Excluir ${rotulo}? Só é possível sem base de dotações e sem lei vinculada.`) &&
-        iniciar(async () => {
-          const r = await excluirInstrumento(id);
-          if (!r.ok) return void toast.error(r.erro);
-          toast(r.mensagem ?? "Instrumento excluído.");
-          router.refresh();
-        })
-      }
-    >
-      Excluir
-    </Button>
+    <>
+      {conf.janela}
+      <Button
+        size="xs"
+        variant="ghost"
+        disabled={conf.pendente}
+        onClick={() =>
+          conf.pedir({
+            titulo: `Excluir ${rotulo}`,
+            mensagem: `Excluir ${rotulo}? Só é possível sem base de dotações e sem lei vinculada.`,
+            rotulo: "Excluir",
+            destrutiva: true,
+            acao: () => excluirInstrumento(id),
+          })
+        }
+      >
+        Excluir
+      </Button>
+    </>
   );
 }
 
