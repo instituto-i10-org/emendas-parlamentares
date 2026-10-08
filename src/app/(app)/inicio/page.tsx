@@ -2,8 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import {
   ArrowRight,
-  Check,
-  ChevronDown,
   Banknote,
   ClipboardCheck,
   FilePlus2,
@@ -19,7 +17,7 @@ import {
 } from "lucide-react";
 import { Barra } from "@/components/app/pagina";
 import { Selo } from "@/components/emenda/ui";
-import type { PassoPrimeiraConfiguracao } from "@/lib/cadastros/primeira-configuracao";
+import { PrimeiraConfiguracao } from "@/components/inicio/primeira-configuracao";
 import { lerPrimeiraConfiguracao } from "@/lib/cadastros/primeira-configuracao-servidor";
 import { Poder } from "@/generated/prisma/enums";
 import {
@@ -307,61 +305,3 @@ function Faixa({ rotulo, usado, total, tom }: { rotulo: string; usado: number; t
   );
 }
 
-// Quadro da primeira configuração (só para quem administra as configurações):
-// somente leitura, conferido nos dados. Completo, fica recolhido numa linha.
-function PrimeiraConfiguracao({ passos }: { passos: PassoPrimeiraConfiguracao[] }) {
-  const feitos = passos.filter((p) => p.ok).length;
-  const completo = feitos === passos.length;
-  return (
-    <details
-      open={!completo}
-      className="group/pc mb-4 rounded-card bg-surface shadow-card [&_summary::-webkit-details-marker]:hidden"
-    >
-      <summary data-guia="inicio.primeira-configuracao" className="flex cursor-pointer list-none items-center gap-3 rounded-card px-6 py-4 focus-visible:outline-2 focus-visible:outline-cyan">
-        <span className="min-w-0 flex-1">
-          <span className="block text-md font-bold">{completo ? "Configuração completa" : "Primeira configuração"}</span>
-          <span className="block text-xs text-muted-foreground">
-            {completo ? "Os oito passos estão feitos. Abra para conferir." : `${feitos} de ${passos.length} passos feitos. Siga na ordem; cada um leva à tela certa.`}
-          </span>
-        </span>
-        <span className="hidden w-32 sm:block">
-          <Barra valor={feitos} total={passos.length} tom={completo ? "ok" : "cyan"} />
-        </span>
-        <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform group-open/pc:rotate-180" aria-hidden />
-      </summary>
-      <ol className="grid gap-px border-t border-hair">
-        {passos.map((p, i) => (
-          <li key={p.id} data-passo={p.id} className="flex items-center gap-3 px-6 py-3 max-sm:flex-wrap">
-            <span
-              className={cn(
-                "grid size-7 shrink-0 place-items-center rounded-full text-xs font-extrabold",
-                p.ok ? "bg-ok-bg text-ok-ink" : "bg-page text-navy"
-              )}
-              aria-hidden
-            >
-              {p.ok ? <Check className="size-4" strokeWidth={2.6} /> : i + 1}
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-sm font-bold">
-                {p.titulo}
-                <span className="sr-only">{p.ok ? " (feito)" : " (pendente)"}</span>
-              </span>
-              <span className="block text-xs text-muted-foreground">{p.texto}</span>
-            </span>
-            {p.ok ? (
-              <Selo tipo="ok">Feito</Selo>
-            ) : (
-              <Link
-                href={`${p.href}${p.href.includes("?") ? "&" : "?"}guia=${p.guia}`}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-navy px-3.5 py-2 text-xs font-bold text-white transition-colors hover:bg-navy-soft focus-visible:outline-2 focus-visible:outline-cyan max-sm:ml-10"
-              >
-                Mostrar onde
-                <ArrowRight className="size-3.5" aria-hidden />
-              </Link>
-            )}
-          </li>
-        ))}
-      </ol>
-    </details>
-  );
-}

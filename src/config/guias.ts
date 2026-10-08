@@ -27,7 +27,7 @@ const GUIAS_LISTA: Guia[] = [
   {
     id: "inicio",
     titulo: "Início",
-    versao: 1,
+    versao: 2,
     passos: [
       {
         titulo: "Bem-vindo ao Emendas360",
@@ -38,7 +38,7 @@ const GUIAS_LISTA: Guia[] = [
         ancora: "inicio.primeira-configuracao",
         titulo: "Primeira configuração",
         texto:
-          "Aqui estão os passos para deixar o sistema pronto, na ordem, e o que já foi feito. Em cada passo pendente, “Mostrar onde” leva à tela certa e abre o guia dela.",
+          "Esta barra mostra quantos passos para deixar o sistema pronto já foram feitos. Clique nela para ver os passos, na ordem; em cada pendente, “Mostrar onde” leva à tela certa e abre o guia dela.",
       },
       {
         ancora: "inicio.destaque",

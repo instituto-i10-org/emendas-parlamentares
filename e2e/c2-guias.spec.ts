@@ -135,8 +135,12 @@ test.describe("C2 — guias de ajuda", () => {
   test("T-G-6 primeira configuração: oito passos conferidos nos dados, só para quem administra", async ({ page }) => {
     await entrar(page, "admin");
     await page.goto("/inicio");
-    const quadro = page.locator("details", { has: page.locator('[data-guia="inicio.primeira-configuracao"]') });
-    await expect(quadro).toBeVisible();
+    // Na página, só a barra; os passos abrem numa janela.
+    const barra = page.locator('[data-guia="inicio.primeira-configuracao"]');
+    await expect(barra).toContainText(/de 8 passos feitos/);
+    await expect(page.locator("li[data-passo]")).toHaveCount(0);
+    await barra.click();
+    const quadro = page.getByRole("dialog");
     await expect(quadro.locator("li[data-passo]")).toHaveCount(8);
     // Na base de testes: município, exercício, orçamento, áreas, destinos e usuários feitos.
     for (const id of ["municipio", "exercicio", "loa", "areas", "destinos", "usuarios"]) {
@@ -145,7 +149,12 @@ test.describe("C2 — guias de ajuda", () => {
     const validacao = quadro.locator('li[data-passo="validacao"]');
     const fundamentos = await sql<{ f: unknown }>(`select c.fundamentos f from "ConfiguracaoExercicio" c join "Exercicio" e on e.id = c."exercicioId" order by e.ano desc limit 1`);
     if (!fundamentos[0] || !Object.keys(fundamentos[0].f as object).length) {
-      await expect(validacao.getByRole("link", { name: "Mostrar onde" })).toHaveAttribute("href", /\/config\?aba=validacao&guia=config\.validacao/);
+      const mostrar = validacao.getByRole("link", { name: "Mostrar onde" });
+      await expect(mostrar).toHaveAttribute("href", /\/config\?aba=validacao&guia=config\.validacao/);
+      // Mostrar onde fecha a janela e leva à tela.
+      await mostrar.click();
+      await expect(page).toHaveURL(/\/config\?aba=validacao/);
+      await expect(page.locator("li[data-passo]")).toHaveCount(0);
     }
     // Quem não administra não vê o quadro.
     await entrar(page, "vereador");

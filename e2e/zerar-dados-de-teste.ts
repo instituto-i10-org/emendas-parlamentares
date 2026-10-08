@@ -4,7 +4,7 @@ import { Client } from "pg";
 // fora do seed), para cada rodada partir do mesmo estado. Só no emendas_test.
 async function main() {
   const url = process.env.DATABASE_URL ?? "";
-  if (!/\/emendas_test(\?|$)/.test(url)) throw new Error("Só zera o banco emendas_test.");
+  if (!/\/emendas_test(_[a-z0-9]+)?(\?|$)/.test(url)) throw new Error("Só zera o banco emendas_test.");
 
   const c = new Client({ connectionString: url });
   await c.connect();
