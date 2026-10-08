@@ -12,7 +12,9 @@ import { defineConfig, devices } from "@playwright/test";
 // banco de desenvolvimento e preparado pelo global setup a cada execução.
 // ============================================================================
 
-const PORTA = 3210;
+// E2E_PORTA permite rodar duas cópias do repositório ao mesmo tempo, cada uma
+// com sua porta e seu TEST_DATABASE_URL.
+const PORTA = Number(process.env.E2E_PORTA ?? 3210);
 export const BASE_URL = `http://localhost:${PORTA}`;
 
 export const TEST_DATABASE_URL =
