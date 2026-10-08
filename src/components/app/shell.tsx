@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import {
   CalendarDays,
+  ChevronDown,
   ChevronLeft,
   FilePlus2,
   Folder,
@@ -203,13 +204,30 @@ export function AppShell({
           <div
             data-guia="menu.exercicio"
             title={`${rotuloExercicio(exercicio)} ${exercicio.ativo}`}
-            className={cn("mx-2.5 mt-auto mb-3 flex items-center gap-2.5 rounded-md bg-white/6 px-3 py-2", recolhido && "md:justify-center md:px-0")}
+            className={cn(
+              "relative mx-2.5 mt-auto mb-3 flex items-center gap-2.5 rounded-md bg-white/6 px-3 py-2",
+              recolhido && "md:flex-col md:justify-center md:gap-1 md:px-0 md:py-2.5"
+            )}
           >
             <CalendarDays className="size-[18px] shrink-0 text-cyan" strokeWidth={1.6} />
             <span className="flex items-baseline gap-1.5 text-sm">
               <small className={cn("text-sm font-semibold text-on-navy", recolhido && "md:hidden")}>{rotuloExercicio(exercicio)}</small>
-              <SeletorExercicio {...exercicio} destino="/inicio" />
+              {/* Menu recolhido: ícone, ano e seta empilhados; o seletor, invisível,
+                  cobre o bloco inteiro para abrir com um clique em qualquer ponto. */}
+              <SeletorExercicio
+                {...exercicio}
+                destino="/inicio"
+                className={cn(recolhido && "md:absolute md:inset-0 md:size-full md:opacity-0")}
+              />
             </span>
+            {recolhido ? (
+              <>
+                <span className="hidden text-sm font-bold text-white md:block" aria-hidden>
+                  {exercicio.ativo}
+                </span>
+                <ChevronDown className="hidden size-4 text-on-navy md:block" strokeWidth={1.8} aria-hidden />
+              </>
+            ) : null}
           </div>
         ) : (
           <div className="mt-auto" />
