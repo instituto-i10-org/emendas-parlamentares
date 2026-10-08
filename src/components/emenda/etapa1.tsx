@@ -191,7 +191,7 @@ export function Etapa1({
           </Campo>
         </div>
         <div data-guia="nova-emenda.valor" className="max-w-sm">
-          <Campo rotulo="Valor da emenda" obrigatorio htmlFor="f-pre" ajuda="É o valor da emenda. A planilha do plano de trabalho comprova esse valor." dica="Digite só os números; o sistema formata em reais.">
+          <Campo rotulo="Valor previsto" obrigatorio htmlFor="f-pre" ajuda="É o valor da emenda. A planilha do plano de trabalho comprova esse valor." dica="Digite só os números; o sistema formata em reais.">
             <CampoNumero id="f-pre" valor={e.pretendido} aoMudar={(v) => atualizar({ pretendido: v })} prefixo="R$ " placeholder="R$ 0,00" />
           </Campo>
         </div>
