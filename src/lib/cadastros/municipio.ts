@@ -12,6 +12,9 @@ export const municipioSchema = z.object({
   codigoIbge: z.union([z.literal(""), z.string().trim().regex(/^\d{7}$/, "O código IBGE tem 7 dígitos.")]),
   nomeCamara: z.string().trim().max(200),
   nomePrefeitura: z.string().trim().max(200),
+  // Documentos da Câmara: endereço na capa do processo e rodapé das páginas.
+  enderecoCamara: z.string().trim().max(200).default(""),
+  rodapeDocumentos: z.string().trim().max(400).default(""),
 });
 
 export type DadosMunicipio = z.input<typeof municipioSchema>;

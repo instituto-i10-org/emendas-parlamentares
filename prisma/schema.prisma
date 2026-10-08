@@ -267,6 +267,9 @@ model Municipio {
   codigoIbge           String?
   nomeCamara           String?
   nomePrefeitura       String?
+  // Documentos da Câmara: endereço na capa do processo e rodapé das páginas.
+  enderecoCamara       String?
+  rodapeDocumentos     String?
   // Portal público ligado (a conformidade confere com uma consulta real).
   portalPublico        Boolean   @default(true)
   // Manual orientativo: instituído por ato cadastrado nas normas e publicado.
@@ -372,6 +375,14 @@ model ConfiguracaoExercicio {
   custoM2Url          String?
   // Prazo padrão da diligência, em dias (RI, art. 210-C, § 2º: 5 dias).
   prazoDiligenciaDias Int      @default(5)
+
+  // --- documento da emenda ---------------------------------------------------
+  // Ficha da dotação que o Art. 2º do documento anula parcialmente para cobrir
+  // a emenda (ex.: a Reserva de Contingência). Procurada no projeto de lei do
+  // exercício. Vazia: o documento mostra a pendência.
+  fichaReserva        String?
+  // "Fundamento legal" do documento, uma norma por linha.
+  fundamentoDocumento String?
 
   // --- preços e plano da entidade --------------------------------------------
   // Item com preço e sem fonte informada: bloqueia a submissão (verdadeiro) ou

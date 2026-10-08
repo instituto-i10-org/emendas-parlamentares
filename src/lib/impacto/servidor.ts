@@ -79,6 +79,8 @@ export const CAMPOS_CONFIGURACAO: Record<string, CampoRotulado> = {
   custoM2Competencia: { rotulo: "Competência do custo do m²" },
   custoM2Fonte: { rotulo: "Fonte do custo do m²" },
   custoM2Url: { rotulo: "Link do custo do m²" },
+  fichaReserva: { rotulo: "Dotação de reserva das emendas (ficha)" },
+  fundamentoDocumento: { rotulo: "Fundamento legal do documento da emenda" },
   memoriaCota: { rotulo: "Memória de cálculo da cota" },
   rclObservacao: { rotulo: "Observação da RCL" },
   observacaoSaude: { rotulo: "Observação da saúde" },

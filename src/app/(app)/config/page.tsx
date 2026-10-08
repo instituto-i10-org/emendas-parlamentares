@@ -125,6 +125,8 @@ async function exercicio(podeGerir: boolean) {
               custoM2Competencia: c?.custoM2Competencia ?? null,
               custoM2Fonte: c?.custoM2Fonte ?? null,
               custoM2Url: c?.custoM2Url ?? null,
+              fichaReserva: c?.fichaReserva ?? null,
+              fundamentoDocumento: c?.fundamentoDocumento ?? null,
             }
           : null
       }
@@ -396,7 +398,7 @@ async function municipio(podeEditar: boolean) {
   return (
     <AbaMunicipio
       podeEditar={podeEditar}
-      dados={{ nome: m?.nome ?? "", uf: (m?.uf ?? "") as "SP", codigoIbge: m?.codigoIbge ?? "", nomeCamara: m?.nomeCamara ?? "", nomePrefeitura: m?.nomePrefeitura ?? "" }}
+      dados={{ nome: m?.nome ?? "", uf: (m?.uf ?? "") as "SP", codigoIbge: m?.codigoIbge ?? "", nomeCamara: m?.nomeCamara ?? "", nomePrefeitura: m?.nomePrefeitura ?? "", enderecoCamara: m?.enderecoCamara ?? "", rodapeDocumentos: m?.rodapeDocumentos ?? "" }}
     />
   );
 }

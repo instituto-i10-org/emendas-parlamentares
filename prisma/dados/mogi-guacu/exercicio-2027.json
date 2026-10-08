@@ -71,5 +71,10 @@
   "period": "ago/2026",
   "source": "Custo médio do m² SINAPI/IBGE — São Paulo, com desoneração",
   "url": "https://ftp.ibge.gov.br/Precos_Custos_e_Indices_da_Construcao_Civil/Fasciculo_Indicadores_IBGE/sinapi_202608caderno.pdf"
- }
+ },
+ "reserveFicha": "1208",
+ "documentBasis": [
+  "Art. 166, § 9º da Constituição Federal.",
+  "Art. 140, § 6º da Lei Orgânica do Município (redação da Emenda à Lei Orgânica nº 60/2026)."
+ ]
 }

@@ -16,7 +16,7 @@ import { buscarEmenda, paraEstado } from "@/lib/emendas/carregar";
 import { aplicadoDoAutor, carregarContexto } from "@/lib/emendas/contexto";
 import { somasExecucao } from "@/lib/emendas/execucao";
 import { ETAPA_EXECUCAO, RESULTADO_VIABILIDADE, STATUS_EMENDA } from "@/lib/emendas/rotulos";
-import { editavelPeloAutor } from "@/lib/emendas/situacoes";
+import { editavelPeloAutor, naoRemetida } from "@/lib/emendas/situacoes";
 import { prisma } from "@/lib/prisma";
 import { BRL, DATA, DATA_HORA, MODELOS, type Checagem, type Verificacao } from "@/lib/riep";
 import { getCurrentUser } from "@/lib/session";
@@ -96,9 +96,14 @@ export default async function EmendaPage({ params, searchParams }: { params: Pro
           <Button variant="ghost" asChild>
             <Link href="/emendas">Voltar</Link>
           </Button>
-          <Button asChild>
+          <Button variant="ghost" asChild>
             <a href={`/emendas/${x.id}/plano`} target="_blank" rel="noopener">
               Versão para impressão
+            </a>
+          </Button>
+          <Button asChild>
+            <a href={`/emendas/${x.id}/documento`} target="_blank" rel="noopener">
+              {naoRemetida(x.status) ? "Minuta do documento" : "Documento da emenda"}
             </a>
           </Button>
         </div>
