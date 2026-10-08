@@ -1,7 +1,7 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import type { Evento, Instrumento, ReferenciaPreco } from "@/lib/riep";
-import { chaveClassificacao, estadoInicial, formatarNumero, type EstadoEmenda } from "./estado";
+import { chaveClassificacao, chaveInformada, estadoInicial, formatarNumero, type DotacaoInformadaForm, type EstadoEmenda } from "./estado";
 
 // Emenda gravada, com tudo o que a tela e o plano de trabalho precisam.
 export async function buscarEmenda(id: string) {
@@ -93,8 +93,20 @@ export function paraEstado(x: EmendaCompleta): EstadoEmenda {
     evento: x.evento as Evento | null,
     declaracao: x.declaracaoVinculo,
     declaracaoPrecos: x.declaracaoPrecos,
+    dotacaoInformada: informadaDoBanco(x.dotacaoInformada),
+    declaracaoDotacao: x.declaracaoDotacao,
   };
   // Só volta classificada se foi classificada quando gravou.
   e.classificadoCom = x.situacao ? chaveClassificacao(e) : null;
   return e;
+}
+
+// A dotação informada volta conferida: foi conferida quando gravou, e a
+// gravação confere de novo contra a LOA.
+function informadaDoBanco(j: unknown): DotacaoInformadaForm | null {
+  if (!j || typeof j !== "object") return null;
+  const o = j as Record<string, unknown>;
+  const t = (k: string) => (typeof o[k] === "string" ? (o[k] as string) : "");
+  const d = { unidade: t("unidade"), funcional: t("funcional"), natureza: t("natureza"), fonte: t("fonte"), ficha: t("ficha") };
+  return { ...d, conferidaCom: chaveInformada(d) };
 }

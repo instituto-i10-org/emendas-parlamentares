@@ -9,6 +9,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { excluirRascunho, salvarEmenda } from "@/lib/actions/emendas";
 import type { ContextoEmenda, DestinoTela } from "@/lib/emendas/contexto";
 import { chaveClassificacao, lerNumero, paraValidacao, type EstadoEmenda } from "@/lib/emendas/estado";
+import { aplicarDotacaoInformada } from "@/lib/emendas/dotacao-informada";
 import { contextoVerificacao, verificarEmenda } from "@/lib/emendas/verificacao";
 import {
   MODELOS,
@@ -46,7 +47,7 @@ function useDerivado(e: EstadoEmenda, ctx: ContextoEmenda, destinos: DestinoTela
   const chave = chaveClassificacao(e);
   const valida = !!e.classificadoCom && e.classificadoCom === chave;
   const obsoleta = !!e.classificadoCom && !valida;
-  const classificacao = useMemo(
+  const motor = useMemo(
     () =>
       valida && destino
         ? classificar({
@@ -61,6 +62,9 @@ function useDerivado(e: EstadoEmenda, ctx: ContextoEmenda, destinos: DestinoTela
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [valida, destino, chave, ctx, e.pretendido]
   );
+  // A dotação informada à mão, conferida na LOA, toma o lugar da escolhida.
+  const informada = useMemo(() => aplicarDotacaoInformada(e, motor, destino, ctx.loa), [e, motor, destino, ctx.loa]);
+  const classificacao = informada.classificacao;
   const dotacao = dotacaoDe(classificacao, e.selecao);
   const modelo = modeloDaDotacao(dotacao);
   const metaPlanejamento = dotacao ? ctx.metas[dotacao.id] ?? null : null;
@@ -70,24 +74,27 @@ function useDerivado(e: EstadoEmenda, ctx: ContextoEmenda, destinos: DestinoTela
   const planilha = conferirPlanilha(lerNumero(e.pretendido), somaPlanilha, ctx.config.toleranciaValorPct);
   const checks: Checagem[] = useMemo(
     () =>
-      validar(paraValidacao(e, { classificacao, metaPlanejamento }), {
+      validar(paraValidacao(e, { classificacao, metaPlanejamento, dotacaoInformada: informada.informada }), {
         config: ctx.config,
         aplicado,
         biblioteca: ctx.catalogo.objetos,
       }),
-    [e, classificacao, metaPlanejamento, ctx, aplicado]
+    [e, classificacao, metaPlanejamento, informada.informada, ctx, aplicado]
   );
   // As treze verificações, sobre as mesmas conferências.
   const ctxVerificacao = useMemo(() => contextoVerificacao(ctx, aplicado, reenvio), [ctx, aplicado, reenvio]);
   const treze = useMemo(
-    () => verificarEmenda(e, valor, dotacao, ctxVerificacao, checks),
-    [e, valor, dotacao, ctxVerificacao, checks]
+    () => verificarEmenda(e, valor, dotacao, ctxVerificacao, checks, informada.informada === "FORA"),
+    [e, valor, dotacao, ctxVerificacao, checks, informada.informada]
   );
   const resumo = resumoValidacao(checks);
   const falhas = treze.verificacoes.filter((v) => v.estado === "falha").length;
   return {
     destino,
     classificacao,
+    // A da análise, sem a dotação informada (o passo 1 mostra as duas).
+    motor,
+    informada: informada.informada,
     obsoleta,
     dotacao,
     modelo,

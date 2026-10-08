@@ -53,6 +53,10 @@ export type EstadoValidacao = {
   declaracaoPrecos: boolean;
   // Meta da ação da dotação, nas peças de planejamento.
   metaPlanejamento: MetaPlanejamento | null;
+  // Dotação informada à mão: achada na LOA ou fora dela (null: da análise).
+  dotacaoInformada?: "LOA" | "FORA" | null;
+  // "A classificação foi informada por mim e é de minha responsabilidade."
+  declaracaoDotacao?: boolean;
 };
 
 export type ContextoValidacao = {
@@ -77,7 +81,16 @@ export function validar(e: EstadoValidacao, ctx: ContextoValidacao): Checagem[] 
   const v = valorDaEmenda(e.pretendido, soma);
   const manual = e.selecao.escolha === "PROPONENTE" && sit === "OK" && c?.situacao === "VALIDAR";
 
-  if (c && d) {
+  if (c && d && e.dotacaoInformada === "FORA") {
+    add(
+      "warn",
+      "Dotação informada pelo vereador",
+      `${d.uo} · ${d.funcao}.${d.subf}.${d.prog} · ação ${d.codigo.split(".")[0]} · ${c.base}.${d.elem} · fonte ${d.fonte} — não encontrada na LOA; ` +
+        "as conferências que dependem dela ficam como não conferíveis."
+    );
+  } else if (c && d && e.dotacaoInformada === "LOA") {
+    add("ok", "Classificação orçamentária definida", `${d.codigo} — ${d.nome} · ${c.base}.${d.elem} · informada pelo vereador e encontrada na LOA`);
+  } else if (c && d) {
     add(
       sit === "OK" ? "ok" : "warn",
       "Classificação orçamentária definida",
@@ -313,7 +326,9 @@ export function validar(e: EstadoValidacao, ctx: ContextoValidacao): Checagem[] 
   if (e.etapas.trim()) add("ok", "Etapas informadas", e.etapas.trim());
   else add("warn", "Etapas em branco", "A sequência sugerida pelo modelo foi apagada — descreva as etapas ou restaure a sugestão.");
 
-  if (sit === "OK" && d) {
+  if (sit === "OK" && d && e.dotacaoInformada === "FORA") {
+    add("warn", "Valor autorizado não conferível", "A dotação informada não está na LOA: não há valor autorizado a comparar.");
+  } else if (sit === "OK" && d) {
     if (v > 0 && v <= d.autorizado) {
       add(
         "ok",
@@ -440,6 +455,11 @@ export function validar(e: EstadoValidacao, ctx: ContextoValidacao): Checagem[] 
 
   if (e.declaracao) add("ok", "Declaração de inexistência de vedação", "Assinada pelo proponente");
   else add("warn", "Declaração pendente", "Marque a declaração de inexistência de vínculo até o 3º grau.");
+
+  if (e.dotacaoInformada === "FORA") {
+    if (e.declaracaoDotacao) add("ok", "Declaração da dotação", "O proponente declarou que informou a classificação e responde por ela");
+    else add("bad", "Declaração da dotação pendente", "Marque «A classificação foi informada por mim e é de minha responsabilidade» para enviar.");
+  }
 
   if (e.declaracaoPrecos) add("ok", "Declaração dos preços", "O proponente declarou que pesquisou e informou os preços");
   else add("bad", "Declaração dos preços pendente", "Marque «Declaro que pesquisei e informei os preços desta emenda» para enviar.");

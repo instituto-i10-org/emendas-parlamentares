@@ -9,6 +9,7 @@ import { HistoricoValidacoes, type ValidacaoTela } from "@/components/emenda/his
 import { LinhaChecagem } from "@/components/emenda/linha-checagem";
 import { RelatorioVerificacoes } from "@/components/emenda/relatorio-verificacoes";
 import { Selo } from "@/components/emenda/ui";
+import { informadaGravada, textoInformada } from "@/lib/emendas/dotacao-informada";
 import { Button } from "@/components/ui/button";
 import { podeGerirEmenda, podeVerTodasEmendas, temPermissao } from "@/lib/authz";
 import { buscarEmenda, paraEstado } from "@/lib/emendas/carregar";
@@ -80,6 +81,7 @@ export default async function EmendaPage({ params, searchParams }: { params: Pro
   const ultima = validacoes.find((v) => v.verificacoes.length) ?? null;
   const exec = somasExecucao(x.andamentos.map((a) => ({ etapa: a.etapa, valor: a.valor.toNumber() })));
   const d = x.dotacao;
+  const inf = informadaGravada(x.dotacaoInformada);
   return (
     <Pagina
       titulo={x.numero ? `Emenda nº ${x.numero}/${x.exercicio.ano}` : "Emenda"}
@@ -103,6 +105,7 @@ export default async function EmendaPage({ params, searchParams }: { params: Pro
         <section data-guia="emenda.dados" className="rounded-card bg-surface p-7 shadow-card max-md:px-4">
           <div className="mb-4 flex flex-wrap items-center gap-2">
             <Selo tipo={STATUS_EMENDA[x.status].tipo}>{STATUS_EMENDA[x.status].rotulo}</Selo>
+            {inf ? <Selo tipo={inf.naLoa ? "info" : "warn"}>dotação informada pelo vereador</Selo> : null}
             {x.modelo ? <Selo>Modelo {MODELOS[x.modelo].numero} — {MODELOS[x.modelo].titulo}</Selo> : null}
             {x.submetidaEm ? <span className="text-xs text-muted-foreground">submetida em {DATA_HORA(x.submetidaEm)}</span> : null}
           </div>
@@ -120,9 +123,20 @@ export default async function EmendaPage({ params, searchParams }: { params: Pro
             <dd>
               {d
                 ? `${d.codigo} — ${d.acao.nome} · ${d.unidadeOrcamentaria.codigo} · ${d.naturezaDespesa.codigo}`
-                : x.escolhaDotacao === "ANALISE_TECNICA"
-                  ? "a definir pela análise técnica"
-                  : "—"}
+                : inf
+                  ? textoInformada(inf)
+                  : x.escolhaDotacao === "ANALISE_TECNICA"
+                    ? "a definir pela análise técnica"
+                    : "—"}
+              {inf ? (
+                <span className="block text-xs text-muted-foreground">
+                  Informada por {inf.porNome || "vereador"}
+                  {inf.em ? ` em ${DATA_HORA(new Date(inf.em))}` : ""}
+                  {inf.naLoa
+                    ? " · encontrada na LOA."
+                    : ` · não encontrada na LOA. Declaração: «A classificação foi informada por mim e é de minha responsabilidade.» — ${x.declaracaoDotacao ? "confirmada" : "não confirmada"}.`}
+                </span>
+              ) : null}
             </dd>
             <dt className="text-muted-foreground">Parcela da cota</dt>
             <dd>{x.parcela === "SAUDE" ? "Saúde (IC-CO 1002)" : x.parcela === "DEMAIS" ? "Demais áreas" : "—"}</dd>

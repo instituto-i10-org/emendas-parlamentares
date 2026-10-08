@@ -39,7 +39,8 @@ export function verificarEmenda(
   valor: number,
   dotacao: DotacaoMotor | null,
   ctx: ContextoVerificacao,
-  complementares: Checagem[]
+  complementares: Checagem[],
+  informadaForaDaLoa = false
 ) {
-  return verificar({ objeto: e.objeto, justificativa: e.justificativa, valor, destino: destinoNaBase(dotacao, ctx.base) }, ctx, complementares);
+  return verificar({ objeto: e.objeto, justificativa: e.justificativa, valor, destino: destinoNaBase(dotacao, ctx.base), informadaForaDaLoa }, ctx, complementares);
 }

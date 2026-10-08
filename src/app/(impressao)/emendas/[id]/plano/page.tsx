@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { podeGerirEmenda, podeVerTodasEmendas, temPermissao } from "@/lib/authz";
 import { buscarEmenda } from "@/lib/emendas/carregar";
+import { informadaGravada, textoInformada } from "@/lib/emendas/dotacao-informada";
 import { BRL, DATA, DATA_HORA, EVENTOS, INSTRUMENTOS, MODELOS, QUADROS, TIPOS_REFERENCIA, chaveQuadro, rotuloReferencia, type Checagem, type Modelo, type Verificacao } from "@/lib/riep";
 import { RelatorioVerificacoes } from "@/components/emenda/relatorio-verificacoes";
 import { getCurrentUser } from "@/lib/session";
@@ -73,7 +74,17 @@ export default async function PlanoPage({ params }: { params: Promise<{ id: stri
 
         <Secao numero={prox()} titulo="Dotação">
           <h3 className="mb-1 text-sm font-bold">Dotação de destino</h3>
-          {d ? <Campos linhas={classificacao(d)} /> : <p className="text-sm">{pendente("A definir pela análise técnica")}</p>}
+          {d ? <Campos linhas={classificacao(d)} /> : null}
+          {informadaGravada(x.dotacaoInformada) && !informadaGravada(x.dotacaoInformada)!.naLoa ? (
+            <Campos
+              linhas={[
+                ["Classificação informada", textoInformada(informadaGravada(x.dotacaoInformada)!)],
+                ["Situação", "Informada pelo vereador, não encontrada na LOA — sob a responsabilidade declarada do autor"],
+              ]}
+            />
+          ) : !d ? (
+            <p className="text-sm">{pendente("A definir pela análise técnica")}</p>
+          ) : null}
         </Secao>
 
         <Secao numero={prox()} titulo={M?.executor ?? "Executor e beneficiário"}>
@@ -231,6 +242,9 @@ export default async function PlanoPage({ params }: { params: Promise<{ id: stri
                 x.declaracaoVinculo ? "Confirmada" : pendente("Ainda não confirmada"),
               ],
               ["Pesquisei e informei os preços desta emenda", x.declaracaoPrecos ? "Confirmada" : pendente("Ainda não confirmada")],
+              ...(informadaGravada(x.dotacaoInformada) && !informadaGravada(x.dotacaoInformada)!.naLoa
+                ? ([["A classificação foi informada por mim e é de minha responsabilidade", x.declaracaoDotacao ? "Confirmada" : pendente("Ainda não confirmada")]] as [string, React.ReactNode][])
+                : []),
             ]}
           />
         </Secao>

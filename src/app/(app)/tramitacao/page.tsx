@@ -6,6 +6,7 @@ import { FormFiltros } from "@/components/app/form-filtros";
 import { dadosRelatorioTramitacao, periodoDoRelatorio } from "@/lib/emendas/relatorio-tramitacao-servidor";
 import { Cartao, Kpi, Pagina, TabelaDados } from "@/components/app/pagina";
 import { Selo } from "@/components/emenda/ui";
+import { informadaGravada, textoInformada } from "@/lib/emendas/dotacao-informada";
 import { DecidirEmenda, DevolverAoAutor, MarcarIncorporada, PedirAjuste, ReabrirEmenda, ReceberEmenda } from "@/components/tramitacao/acoes";
 import { Button } from "@/components/ui/button";
 import type { StatusEmenda } from "@/generated/prisma/enums";
@@ -85,11 +86,15 @@ export default async function TramitacaoPage({ searchParams }: { searchParams: P
         {e.objeto || "(sem objeto)"}
       </Link>
       <span className="block text-xs text-muted-foreground">
-        {e.autor.nome} · {e.destino?.nome ?? "—"} · {e.dotacao ? e.dotacao.codigo : "dotação a definir pela análise técnica"}
+        {e.autor.nome} · {e.destino?.nome ?? "—"} ·{" "}
+        {e.dotacao ? e.dotacao.codigo : informadaGravada(e.dotacaoInformada) ? textoInformada(informadaGravada(e.dotacaoInformada)!) : "dotação a definir pela análise técnica"}
         {e.reenviadaEm ? ` · reenviada após diligência em ${DATA(e.reenviadaEm)}` : ""}
       </span>
       <span className="mt-1 flex flex-wrap gap-1">
         <Selo tipo={STATUS_EMENDA[e.status].tipo}>{STATUS_EMENDA[e.status].rotulo}</Selo>
+        {informadaGravada(e.dotacaoInformada) ? (
+          <Selo tipo={informadaGravada(e.dotacaoInformada)!.naLoa ? "info" : "warn"}>dotação informada pelo vereador</Selo>
+        ) : null}
       </span>
       {extra}
     </div>

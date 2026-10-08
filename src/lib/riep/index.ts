@@ -14,3 +14,4 @@ export * from "./base";
 export * from "./verificacoes";
 export * from "./obra-m2";
 export * from "./valor";
+export * from "./dotacao-informada";

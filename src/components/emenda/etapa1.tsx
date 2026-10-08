@@ -7,12 +7,14 @@ import { Ajuda } from "@/components/ui/ajuda";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { ContextoEmenda, DestinoTela } from "@/lib/emendas/contexto";
-import { chaveClassificacao, formatarNumero, lerNumero, type EstadoEmenda } from "@/lib/emendas/estado";
+import { chaveClassificacao, chaveInformada, formatarNumero, informadaConferida, lerNumero, type EstadoEmenda } from "@/lib/emendas/estado";
 import {
   BRL,
+  DOTACAO_INFORMADA_VAZIA,
   audesp,
   derivaIcCo,
   derivaIcEp,
+  lerDotacaoInformada,
   norm,
   parcelaDaDotacao,
   precisaAjuste,
@@ -23,6 +25,7 @@ import {
   type Aplicado,
   type Candidata,
   type Classificacao,
+  type DotacaoInformada,
   type DotacaoMotor,
   type SugestaoDestino,
   type SugestaoTexto,
@@ -138,7 +141,9 @@ export function Etapa1({
   }
 
   const c = d.classificacao;
-  const pronto = !!c && d.avanca;
+  // Dotação informada à mão: o painel toma o lugar do resultado da análise.
+  const manual = e.dotacaoInformada !== null;
+  const pronto = manual ? !!d.informada && d.avanca : !!c && d.avanca;
   const bloqueado = !!c && !d.avanca && (c.situacao === "OBICE" || c.situacao === "CONFLITO" || c.situacao === "INDETERMINADO");
 
   return (
@@ -189,7 +194,8 @@ export function Etapa1({
       {analisando !== null ? <Processando passo={analisando} rotuloBase={ctx.config.rotuloBase ?? "LOA"} /> : null}
 
       <div ref={resultadoRef} data-guia="nova-emenda.resultado" className="scroll-mt-4">
-        {d.obsoleta && analisando === null ? (
+        {manual ? <DotacaoManual e={e} d={d} atualizar={atualizar} /> : null}
+        {!manual && d.obsoleta && analisando === null ? (
           <div className="flex flex-wrap items-center gap-3 rounded-box bg-warn-bg px-4 py-3.5 text-sm text-warn">
             <span className="flex-1">
               <b className="block">A classificação anterior não vale mais</b>
@@ -197,8 +203,8 @@ export function Etapa1({
             </span>
           </div>
         ) : null}
-        {c && analisando === null ? <ResultadoClassificacao c={c} e={e} d={d} ctx={ctx} aplicado={aplicado} atualizar={atualizar} /> : null}
-        {c && analisando === null && precisaAjuste(c) && situacaoEfetiva(c, e.selecao) !== "OK" && e.selecao.escolha !== "ANALISE_TECNICA" ? (
+        {!manual && c && analisando === null ? <ResultadoClassificacao c={c} e={e} d={d} ctx={ctx} aplicado={aplicado} atualizar={atualizar} /> : null}
+        {!manual && c && analisando === null && precisaAjuste(c) && situacaoEfetiva(c, e.selecao) !== "OK" && e.selecao.escolha !== "ANALISE_TECNICA" ? (
           <AjusteAutomatico
             key={chaveClassificacao(e)}
             c={c}
@@ -213,14 +219,26 @@ export function Etapa1({
             }}
           />
         ) : null}
+        {!manual && d.destino && analisando === null ? (
+          <p className="mt-3 text-sm text-muted-foreground">
+            Já sabe a dotação?{" "}
+            <button
+              type="button"
+              className="font-bold text-navy underline underline-offset-2"
+              onClick={() => atualizar({ dotacaoInformada: { ...DOTACAO_INFORMADA_VAZIA, conferidaCom: null }, declaracaoDotacao: false })}
+            >
+              Informar a dotação manualmente
+            </button>
+          </p>
+        ) : null}
       </div>
 
       <div data-guia="nova-emenda.avancar" className="@container/acoes1 sticky bottom-0 z-10 -mx-7 rounded-b-card flex flex-wrap items-center gap-2 bg-surface px-7 py-4 shadow-[0_-12px_16px_var(--surface)] max-md:-mx-4 max-md:px-4">
-        {pronto && !d.obsoleta ? (
+        {pronto && (manual || !d.obsoleta) ? (
           <Button onClick={irParaPlano} className="max-md:flex-[1_1_100%]">
             Ir para o plano de trabalho →
           </Button>
-        ) : bloqueado && !d.obsoleta ? (
+        ) : manual ? null : bloqueado && !d.obsoleta ? (
           <Button
             onClick={() => {
               objetoRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -249,6 +267,96 @@ export function Etapa1({
         {descartar}
       </div>
     </div>
+  );
+}
+
+// ------------------------------------------------- dotação informada à mão
+
+const CAMPOS_DOTACAO: { k: keyof DotacaoInformada; rotulo: string; ex: string; dica?: string }[] = [
+  { k: "unidade", rotulo: "Unidade orçamentária", ex: "02.01" },
+  { k: "funcional", rotulo: "Funcional", ex: "10.301.0010.2001", dica: "função.subfunção.programa.ação" },
+  { k: "natureza", rotulo: "Natureza da despesa", ex: "3.3.90.30" },
+  { k: "fonte", rotulo: "Fonte de recurso", ex: "01.1100000" },
+  { k: "ficha", rotulo: "Ficha (opcional)", ex: "559" },
+];
+
+// O vereador digita a classificação; "Conferir na LOA" procura a combinação.
+// Fora da LOA, a emenda segue sob a declaração de responsabilidade dele.
+function DotacaoManual({ e, d, atualizar }: { e: EstadoEmenda; d: DerivadoEmenda; atualizar: Atualizar }) {
+  const inf = e.dotacaoInformada!;
+  const conferida = informadaConferida(inf);
+  const dot = d.dotacao;
+  const mudar = (k: keyof DotacaoInformada, v: string) => atualizar({ dotacaoInformada: { ...inf, [k]: v } });
+
+  function conferir() {
+    const { faltas } = lerDotacaoInformada(inf);
+    if (faltas.length) return toast(`Confira: ${faltas.join("; ")}.`);
+    atualizar({ dotacaoInformada: { ...inf, conferidaCom: chaveInformada(inf) } });
+  }
+
+  const parcela = parcelaDaDotacao(dot);
+  return (
+    <section data-teste="dotacao-manual" className="rounded-box border border-line p-4">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-md font-bold">Informar a dotação manualmente</h3>
+        <Button variant="ghost" size="sm" onClick={() => atualizar({ dotacaoInformada: null, declaracaoDotacao: false })}>
+          Voltar à análise automática
+        </Button>
+      </div>
+      <div className="grid grid-cols-2 gap-3.5 max-sm:grid-cols-1">
+        {CAMPOS_DOTACAO.map((f) => (
+          <Campo key={f.k} rotulo={f.rotulo} htmlFor={`f-dot-${f.k}`} dica={f.dica}>
+            <input
+              id={`f-dot-${f.k}`}
+              className="campo h-12 px-3.5 tnum"
+              maxLength={f.k === "funcional" ? 40 : 20}
+              placeholder={`Ex.: ${f.ex}`}
+              value={inf[f.k]}
+              onChange={(ev) => mudar(f.k, ev.target.value)}
+            />
+          </Campo>
+        ))}
+      </div>
+      <div className="mt-3.5 flex flex-wrap items-center gap-2">
+        <Button variant="surface" onClick={conferir} className="max-sm:w-full">
+          Conferir na LOA
+        </Button>
+        {!conferida && inf.conferidaCom ? <span className="text-sm text-muted-foreground">Os campos mudaram: confira de novo.</span> : null}
+      </div>
+
+      {conferida && d.informada === "LOA" && dot ? (
+        <div className="mt-3.5">
+          <Aviso tipo="info" titulo="Encontrada na LOA">
+            <b>
+              {dot.codigo} — {dot.nome}
+            </b>
+            {dot.ficha ? ` · ficha ${dot.ficha}` : ""} · {BRL(dot.autorizado)} autorizados ·{" "}
+            {parcela === "SAUDE" ? "parcela da saúde" : "parcela das demais áreas"}. A emenda segue com esta dotação.
+          </Aviso>
+        </div>
+      ) : null}
+      {conferida && d.informada === "FORA" ? (
+        <div className="mt-3.5 grid gap-3">
+          <Aviso tipo="warn" titulo="Não encontrada na LOA">
+            Esta combinação não está entre as dotações que recebem emenda. A emenda pode seguir com a classificação informada, sob sua responsabilidade:
+            as verificações que dependem da LOA ficam como não conferíveis e a Comissão vê a declaração. Parcela pela funcional informada:{" "}
+            <b>{parcela === "SAUDE" ? "saúde" : "demais áreas"}</b>.
+          </Aviso>
+          <label className="flex cursor-pointer gap-3 rounded-box bg-soft p-4 text-sm leading-relaxed">
+            <input
+              type="checkbox"
+              className="mt-1 size-4 shrink-0"
+              checked={e.declaracaoDotacao}
+              onChange={(ev) => atualizar({ declaracaoDotacao: ev.target.checked })}
+            />
+            <span>
+              <b>Declaração da dotação.</b> A classificação foi informada por mim e é de minha responsabilidade.{" "}
+              <span className="text-muted-foreground">Obrigatória para enviar.</span>
+            </span>
+          </label>
+        </div>
+      ) : null}
+    </section>
   );
 }
 

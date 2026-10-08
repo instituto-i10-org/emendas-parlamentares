@@ -889,6 +889,12 @@ model Emenda {
   declaracaoVinculo Boolean   @default(false)
   // O autor declara que pesquisou e informou os preços (responsabilidade dele).
   declaracaoPrecos  Boolean   @default(false)
+  // Dotação informada à mão pelo vereador (pedido do Dr. Emerson): os campos
+  // digitados, se foi achada na LOA, e quem informou e quando. Achada, a
+  // dotacaoId aponta para ela; fora da LOA, vale a declaração abaixo.
+  dotacaoInformada  Json?
+  // "A classificação foi informada por mim e é de minha responsabilidade."
+  declaracaoDotacao Boolean   @default(false)
   submetidaEm       DateTime?
 
   // --- tramitação (Comissão) -------------------------------------------------

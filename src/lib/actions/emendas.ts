@@ -9,6 +9,7 @@ import { mesmaEmenda } from "@/lib/emendas/duplicidade";
 import { mudarSituacao } from "@/lib/emendas/historico";
 import { chaveClassificacao, estadoSchema, lerNumero, paraValidacao, type EstadoEmenda } from "@/lib/emendas/estado";
 import { NAO_REMETIDAS, editavelPeloAutor } from "@/lib/emendas/situacoes";
+import { aplicarDotacaoInformada } from "@/lib/emendas/dotacao-informada";
 import { contextoVerificacao, verificarEmenda } from "@/lib/emendas/verificacao";
 import { anoDaTela, exercicioHistorico } from "@/lib/exercicio";
 import { prisma } from "@/lib/prisma";
@@ -29,6 +30,7 @@ import {
   type Selecao,
   type Verificacao,
   valorDaEmenda,
+  ID_INFORMADA,
 } from "@/lib/riep";
 import { getCurrentUser } from "@/lib/session";
 
@@ -109,9 +111,9 @@ export async function salvarEmenda(entrada: EstadoEmenda, submeter = false, anoT
     return { ok: false, erro: "O destino escolhido não vale para esta forma de execução." };
   }
   const pretendido = lerNumero(e.pretendido);
-  let classificacao: Classificacao | null = null;
+  let motor: Classificacao | null = null;
   if (destino && e.objeto.trim() && e.classificadoCom && e.classificadoCom === chaveClassificacao(e)) {
-    classificacao = classificar({
+    motor = classificar({
       objeto: e.objeto,
       destino,
       execucao: e.execucao,
@@ -120,7 +122,10 @@ export async function salvarEmenda(entrada: EstadoEmenda, submeter = false, anoT
       catalogo: ctx.catalogo,
     });
   }
-  const selecao = selecaoValida(classificacao, e.selecao);
+  // A dotação informada à mão, conferida aqui de novo contra a LOA.
+  const inf = aplicarDotacaoInformada(e, motor, destino, ctx.loa);
+  const classificacao = inf.classificacao;
+  const selecao: Selecao = inf.informada ? { escolha: "PROPONENTE", dotacaoId: inf.achada?.id ?? null } : selecaoValida(classificacao, e.selecao);
   const dotacao = dotacaoDe(classificacao, selecao);
   const situacao = situacaoEfetiva(classificacao, selecao);
   const modelo = modeloDaDotacao(dotacao);
@@ -137,10 +142,10 @@ export async function salvarEmenda(entrada: EstadoEmenda, submeter = false, anoT
     // O servidor refaz tudo a partir do banco: o que o navegador calculou não vale.
     const aplicado = await aplicadoDoAutor(ctx.exercicioId, autorId, ctx.config.percentualSaude, e.id);
     const checks = validar(
-      paraValidacao(e, { classificacao, metaPlanejamento: dotacao ? ctx.metas[dotacao.id] ?? null : null }),
+      paraValidacao(e, { classificacao, metaPlanejamento: dotacao ? ctx.metas[dotacao.id] ?? null : null, dotacaoInformada: inf.informada }),
       { config: ctx.config, aplicado, biblioteca: ctx.catalogo.objetos }
     );
-    const treze = verificarEmenda(e, valor, dotacao, contextoVerificacao(ctx, aplicado, reenvio), checks);
+    const treze = verificarEmenda(e, valor, dotacao, contextoVerificacao(ctx, aplicado, reenvio), checks, inf.informada === "FORA");
     const resumo = resumoValidacao(checks);
     const falhas = treze.verificacoes.filter((v) => v.estado === "falha").length;
     validacao = {
@@ -181,7 +186,7 @@ export async function salvarEmenda(entrada: EstadoEmenda, submeter = false, anoT
     valorPretendido: pretendido > 0 ? pretendido : null,
     endereco: e.endereco.trim(),
     situacao: classificacao ? situacao : null,
-    dotacaoId: dotacao && situacao === "OK" ? dotacao.id : null,
+    dotacaoId: dotacao && situacao === "OK" && dotacao.id !== ID_INFORMADA ? dotacao.id : null,
     escolhaDotacao: selecao.escolha,
     classificacao: classificacao ? fotografia(classificacao, selecao) : Prisma.DbNull,
     parcela: parcelaDaDotacao(dotacao),
@@ -199,6 +204,21 @@ export async function salvarEmenda(entrada: EstadoEmenda, submeter = false, anoT
     valor,
     declaracaoVinculo: e.declaracao,
     declaracaoPrecos: e.declaracaoPrecos,
+    dotacaoInformada: inf.informada
+      ? ({
+          unidade: e.dotacaoInformada!.unidade.trim(),
+          funcional: e.dotacaoInformada!.funcional.trim(),
+          natureza: e.dotacaoInformada!.natureza.trim(),
+          fonte: e.dotacaoInformada!.fonte.trim(),
+          ficha: e.dotacaoInformada!.ficha.trim(),
+          naLoa: inf.informada === "LOA",
+          dotacaoCodigo: inf.achada?.codigo ?? null,
+          porId: user.id,
+          porNome: user.nome,
+          em: new Date().toISOString(),
+        } as Prisma.InputJsonValue)
+      : Prisma.DbNull,
+    declaracaoDotacao: inf.informada === "FORA" && e.declaracaoDotacao,
   };
 
   const salvo = await prisma.$transaction(async (tx) => {

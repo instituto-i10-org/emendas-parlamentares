@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { EstadoValidacao, Evento, Execucao, Instrumento, ReferenciaPreco, Selecao, TipoReferencia } from "@/lib/riep";
+import type { DotacaoInformada, EstadoValidacao, Evento, Execucao, Instrumento, ReferenciaPreco, Selecao, TipoReferencia } from "@/lib/riep";
 
 // ============================================================================
 // Estado do formulário da emenda — o mesmo objeto no navegador, na gravação e
@@ -9,6 +9,16 @@ import type { EstadoValidacao, Evento, Execucao, Instrumento, ReferenciaPreco, S
 
 export type MetaForm = { beneficiarios: string; unidade: string; quantidade: string };
 export type ItemForm = { descricao: string; unidade: string; quantidade: string; valorUnitario: string; referencia: string | null };
+
+// Dotação digitada pelo vereador. Só vale depois de "Conferir na LOA" com os
+// mesmos campos (conferidaCom = chave dos campos na hora da conferência).
+export type DotacaoInformadaForm = DotacaoInformada & { conferidaCom: string | null };
+
+export const chaveInformada = (d: DotacaoInformada) =>
+  JSON.stringify([d.unidade, d.funcional, d.natureza, d.fonte, d.ficha].map((x) => x.replace(/\s/g, "")));
+
+export const informadaConferida = (d: DotacaoInformadaForm | null): boolean =>
+  !!d && d.conferidaCom === chaveInformada(d);
 
 export type EstadoEmenda = {
   id: string | null;
@@ -37,6 +47,10 @@ export type EstadoEmenda = {
   evento: Evento | null;
   declaracao: boolean;
   declaracaoPrecos: boolean;
+  // Dotação informada à mão (null: a dotação vem da análise).
+  dotacaoInformada: DotacaoInformadaForm | null;
+  // "A classificação foi informada por mim e é de minha responsabilidade."
+  declaracaoDotacao: boolean;
   // O proponente viu o aviso de possível duplicata e mandou seguir.
   confirmarDuplicata?: boolean;
 };
@@ -66,6 +80,8 @@ export const estadoInicial = (): EstadoEmenda => ({
   evento: null,
   declaracao: false,
   declaracaoPrecos: false,
+  dotacaoInformada: null,
+  declaracaoDotacao: false,
 });
 
 // "R$ 1.234,56" → 1234.56. Aceita também número já sem máscara.
@@ -92,9 +108,10 @@ export const chaveClassificacao = (e: Pick<EstadoEmenda, "execucao" | "destinoId
 // Parte do estado que o motor confere na etapa 3.
 export function paraValidacao(
   e: EstadoEmenda,
-  extra: Pick<EstadoValidacao, "classificacao" | "metaPlanejamento">
+  extra: Pick<EstadoValidacao, "classificacao" | "metaPlanejamento"> & Partial<Pick<EstadoValidacao, "dotacaoInformada">>
 ): EstadoValidacao {
   return {
+    dotacaoInformada: null,
     ...extra,
     selecao: e.selecao,
     pretendido: lerNumero(e.pretendido),
@@ -123,6 +140,7 @@ export function paraValidacao(
     evento: e.evento,
     declaracao: e.declaracao,
     declaracaoPrecos: e.declaracaoPrecos,
+    declaracaoDotacao: e.declaracaoDotacao,
   };
 }
 
@@ -202,5 +220,17 @@ export const estadoSchema = z.object({
     .nullable(),
   declaracao: z.boolean(),
   declaracaoPrecos: z.boolean().default(false),
+  dotacaoInformada: z
+    .object({
+      unidade: texto(20),
+      funcional: texto(40),
+      natureza: texto(20),
+      fonte: texto(30),
+      ficha: texto(12),
+      conferidaCom: z.string().max(300).nullable(),
+    })
+    .nullable()
+    .default(null),
+  declaracaoDotacao: z.boolean().default(false),
   confirmarDuplicata: z.boolean().optional(),
 });

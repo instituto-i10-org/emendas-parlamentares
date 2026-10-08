@@ -145,6 +145,12 @@ export async function apagarEmendasDeTeste(prefixo: string) {
 // Rascunho pela tela e plano completo pelo banco: uma emenda válida.
 export async function emendaValida(page: Page, objeto: string): Promise<string> {
   const id = await criarRascunho(page, { execucao: "DIRETA", destino: DESTINOS.saude, objeto, valor: "3000" });
+  await completarPlano(id);
+  return id;
+}
+
+// Plano de trabalho completo pelo banco (R$ 3.000, duas cadeiras de rodas).
+export async function completarPlano(id: string) {
   const [fonte] = await sql<{ id: string }>(`select id from "FontePrecoOficial" where ativo order by ordem limit 1`);
   await sql(
     `update "Emenda" set justificativa = $2, "metaFinalistica" = $3, "agenteExecutor" = 'Secretaria Municipal de Saúde',
@@ -162,7 +168,6 @@ export async function emendaValida(page: Page, objeto: string): Promise<string> 
     [id]
   );
   await sql(`insert into "ParcelaDesembolso" (id, "emendaId", ordem, valor) values ($1 || 'p', $1, 0, 3000)`, [id]);
-  return id;
 }
 
 // Janela de confirmação com impacto: espera o cálculo, marca a ciência quando

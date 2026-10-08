@@ -83,6 +83,9 @@ export type EntradaVerificacao = {
   // Valor da emenda: o informado no passo 1 (sem ele, a soma da planilha).
   valor: number;
   destino: DotacaoBase | null;
+  // Dotação informada pelo vereador fora da LOA: o que depende dela não se
+  // confere (alerta), nunca passa como conforme.
+  informadaForaDaLoa?: boolean;
 };
 
 export type ContextoVerificacao = {
@@ -137,8 +140,11 @@ export function verificar(e: EntradaVerificacao, ctx: ContextoVerificacao, compl
     const m = ctx.emendamento.motivo;
     res.set("INSTRUMENTO_ABERTO", m === "INSTRUMENTO_FECHADO" || m === "SEM_PROJETO" ? { estado: "falha", razao: ctx.emendamento.explicacao } : { estado: "conforme", razao: "O projeto de lei está em situação que recebe emendas." });
   }
+  const fora = !!e.informadaForaDaLoa && !!d;
+  const naoConferivel = { estado: "alerta" as const, razao: "Não conferível: dotação informada pelo vereador, não encontrada na LOA." };
   // (iv) dotação existe no projeto e no exercício
-  res.set(
+  if (fora) res.set("DOTACAO_EXISTE", { estado: "alerta", razao: "Dotação informada pelo vereador, não encontrada na LOA. A classificação é de responsabilidade dele (declaração na emenda)." });
+  else res.set(
     "DOTACAO_EXISTE",
     !d
       ? { estado: "falha", razao: "A emenda ainda não tem dotação: rode a análise no passo 1 e escolha entre as opções, se houver." }
@@ -150,6 +156,7 @@ export function verificar(e: EntradaVerificacao, ctx: ContextoVerificacao, compl
   {
     const r = regra("PROGRAMA_NO_PPA");
     if (!d) res.set("PROGRAMA_NO_PPA", { estado: "falha", razao: "Sem dotação, não há programa a conferir." });
+    else if (fora) res.set("PROGRAMA_NO_PPA", naoConferivel);
     else if (!ctx.ppaCadastrado) res.set("PROGRAMA_NO_PPA", { estado: "alerta", razao: "O PPA do exercício não foi carregado: não há como conferir o programa. Carregue o PPA em Planejamento." });
     else if (d.constaNoPPA) res.set("PROGRAMA_NO_PPA", { estado: "conforme", razao: `O programa ${d.prog} consta do PPA.` });
     else res.set("PROGRAMA_NO_PPA", { estado: problema(r.modo), razao: `O programa ${d.prog} — ${d.progn} não consta do PPA vigente.` });
@@ -158,11 +165,13 @@ export function verificar(e: EntradaVerificacao, ctx: ContextoVerificacao, compl
   {
     const r = regra("ACAO_NO_PROGRAMA");
     if (!d) res.set("ACAO_NO_PROGRAMA", { estado: "falha", razao: "Sem dotação, não há ação a conferir." });
+    else if (fora) res.set("ACAO_NO_PROGRAMA", naoConferivel);
     else if (d.acaoPrograma === d.prog) res.set("ACAO_NO_PROGRAMA", { estado: "conforme", razao: `A ação ${d.acaoCodigo} pertence ao programa ${d.prog}.` });
     else res.set("ACAO_NO_PROGRAMA", { estado: problema(r.modo), razao: `A ação ${d.acaoCodigo} é do programa ${d.acaoPrograma}, e a dotação está no programa ${d.prog}.` });
   }
   // (vii) classificação completa
-  res.set(
+  if (fora) res.set("CLASSIFICACAO_COMPLETA", naoConferivel);
+  else res.set(
     "CLASSIFICACAO_COMPLETA",
     !d
       ? { estado: "falha", razao: "Sem dotação, não há classificação a conferir." }
@@ -174,6 +183,7 @@ export function verificar(e: EntradaVerificacao, ctx: ContextoVerificacao, compl
   {
     const r = regra("ADERENCIA_LDO");
     if (!d) res.set("ADERENCIA_LDO", { estado: "falha", razao: "Sem dotação, não há programa a conferir." });
+    else if (fora) res.set("ADERENCIA_LDO", naoConferivel);
     else if (!ctx.ldo.cadastrada) res.set("ADERENCIA_LDO", { estado: "alerta", razao: "As prioridades e metas da LDO não foram carregadas: não há como conferir a aderência. Carregue a LDO em Planejamento." });
     else if (ctx.ldo.acoes.has(`${d.prog}|${d.acaoCodigo}`) || ctx.ldo.programas.has(d.prog)) res.set("ADERENCIA_LDO", { estado: "conforme", razao: `O programa ${d.prog} está entre as prioridades e metas da LDO.` });
     else res.set("ADERENCIA_LDO", { estado: problema(r.modo), razao: `O programa ${d.prog} — ${d.progn} não está entre as prioridades e metas da LDO.` });
@@ -216,6 +226,11 @@ export function verificar(e: EntradaVerificacao, ctx: ContextoVerificacao, compl
       } else {
         res.set("LIMITE_DEMAIS_AREAS", { estado: "conforme", razao: `${BRL(ap)} de ${BRL(tp)} nas demais áreas · a parcela mínima da saúde segue resguardada.` });
       }
+      // Dentro do limite, mas a parcela saiu da funcional digitada, sem a LOA.
+      const x = res.get("LIMITE_DEMAIS_AREAS")!;
+      if (fora && x.estado === "conforme") {
+        res.set("LIMITE_DEMAIS_AREAS", { estado: "alerta", razao: `Não conferível na LOA: parcela de ${p === "SAUDE" ? "saúde" : "demais áreas"} pela funcional informada. ${x.razao}` });
+      }
     }
   }
   // (x) coerência do tipo: toda emenda é impositiva, sem origem a conferir.
@@ -225,6 +240,7 @@ export function verificar(e: EntradaVerificacao, ctx: ContextoVerificacao, compl
     const r = regra("SAUDE_SEM_PESSOAL");
     if (!r.ativa) res.set("SAUDE_SEM_PESSOAL", { estado: "conforme", razao: "Vedação não prevista na Lei Orgânica (regra desligada em Configurações)." });
     else if (d && parcelaDaDotacao(d) === "SAUDE" && d.gnd === "1") res.set("SAUDE_SEM_PESSOAL", { estado: problema(r.modo), razao: `A dotação ${d.codigo} é de pessoal e encargos sociais (${d.natureza}) e a parcela da saúde não pode pagá-los.` });
+    else if (fora) res.set("SAUDE_SEM_PESSOAL", naoConferivel);
     else res.set("SAUDE_SEM_PESSOAL", { estado: "conforme", razao: d && parcelaDaDotacao(d) === "SAUDE" ? "Dotação de saúde fora de pessoal e encargos." : "A dotação não é da parcela de saúde." });
   }
   // (xiii) plano de trabalho, exigido de todo beneficiário
