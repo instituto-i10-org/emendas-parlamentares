@@ -114,7 +114,8 @@ test.describe("C0 — confirmação com impacto", () => {
     await entrar(page, "executivo");
     await page.goto("/executivo/planejamento");
     const linha = page.locator("tr", { hasText: "PL 264/2026" });
-    await linha.getByTitle("Voltar para Enviado").click();
+    await linha.getByRole("button", { name: "Mudar situação" }).click();
+    await page.getByRole("menuitem", { name: "Voltar para Enviado" }).click();
     const janela = page.getByRole("dialog");
     await expect(janela.locator("[data-impacto]")).toBeVisible({ timeout: 15_000 });
     await expect(janela).toContainText("passa de aberto para fechado");

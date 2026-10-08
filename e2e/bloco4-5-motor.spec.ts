@@ -136,7 +136,7 @@ test.describe("Grupo 4 — motor das treze verificações", () => {
     await irParaEtapa3(page, id);
     await botaoRemeter(page).click();
     await expect(page).toHaveURL(new RegExp(`/emendas/${id}$`));
-    await expect(page.getByRole("heading", { name: "Relatório da validação" })).toBeVisible();
+    await expect(page.getByRole("tab", { name: "Validação", exact: true })).toBeVisible();
     const [e] = await sql<{ status: string; numero: number | null }>(`select status, numero from "Emenda" where id = $1`, [id]);
     expect(e.status).toBe("SUBMETIDA");
     expect(e.numero).not.toBeNull();
@@ -146,8 +146,10 @@ test.describe("Grupo 4 — motor das treze verificações", () => {
     );
     expect(v).toEqual({ valida: true, n: 13, momento: "REMESSA" });
     await expect(page.locator("aside").getByText("Válida").first()).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Histórico de validações" })).toBeVisible();
+    // Lateral em abas: validações anteriores e situações.
+    await page.getByRole("tab", { name: "Validações anteriores" }).click();
     await expect(page.locator("aside details summary", { hasText: "Remessa" })).toBeVisible();
+    await page.getByRole("tab", { name: "Situações" }).click();
     await expect(page.locator("aside").getByText("Rascunho → Submetida")).toBeVisible();
 
     await entrar(page, "comissao");

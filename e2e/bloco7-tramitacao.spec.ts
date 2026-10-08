@@ -32,7 +32,7 @@ test.describe("Grupo 6 — tramitação", () => {
     await page.getByRole("button", { name: /Ir para a validação/ }).click();
     await page.getByRole("button", { name: /^Submeter/ }).click();
     await expect(page).toHaveURL(new RegExp(`/emendas/${id}$`));
-    await expect(page.getByRole("heading", { name: "Histórico de validações" })).toBeVisible();
+    await expect(page.getByRole("tab", { name: "Validações anteriores" })).toBeVisible();
     const [{ numero }] = await sql<{ numero: number }>(`select numero from "Emenda" where id = $1`, [id]);
 
     try {
@@ -60,6 +60,7 @@ test.describe("Grupo 6 — tramitação", () => {
       expect(passos[0].de).toBe("RASCUNHO");
       expect(passos.every((p) => p.usuario)).toBe(true);
       await page.goto(`/emendas/${id}`);
+      await page.getByRole("tab", { name: "Situações" }).click();
       for (const t of ["Rascunho → Submetida", "Submetida → Em tramitação", "Em tramitação → Aprovada"]) await expect(page.locator("aside").getByText(t)).toBeVisible();
     } finally {
       await sql(`delete from "Emenda" where id = $1`, [id]);
@@ -78,13 +79,18 @@ test.describe("Grupo 6 — tramitação", () => {
     await page.goto(`/tramitacao?aba=parecer&situacao=SUBMETIDA&autor=${vereador.id}&area=${saude.id}&q=Filtro`);
     await expect(page.getByText("Filtro A")).toBeVisible();
     for (const t of ["Filtro B", "Filtro C", "Filtro D"]) await expect(page.getByText(t)).toHaveCount(0);
-    // Pela própria barra de filtros (formulário GET).
+    // Pela própria barra de filtros: filtra sozinha ao mudar cada campo, sem
+    // botão "Filtrar", e a URL acompanha.
     await page.goto("/tramitacao?aba=parecer");
+    await expect(page.getByRole("button", { name: "Filtrar" })).toHaveCount(0);
     await page.getByLabel("Buscar").fill("Filtro");
+    await expect(page).toHaveURL(/q=Filtro/);
     await page.getByLabel("Situação").selectOption("SUBMETIDA");
+    await expect(page).toHaveURL(/situacao=SUBMETIDA/);
     await page.getByLabel("Autor").selectOption(vereador.id);
+    await expect(page).toHaveURL(new RegExp(`autor=${vereador.id}`));
     await page.getByLabel("Área").selectOption(saude.id);
-    await page.getByRole("button", { name: "Filtrar" }).click();
+    await expect(page).toHaveURL(new RegExp(`area=${saude.id}`));
     await expect(page.getByText("Filtro A")).toBeVisible();
     await expect(page.getByText("Filtro C")).toHaveCount(0);
   });
@@ -122,6 +128,7 @@ test.describe("Grupo 6 — tramitação", () => {
     await decidir(page, page.locator("tr", { hasText: "Parecer duplo" }), "Aprovar", "Segundo parecer: corrigido o erro material, a emenda é aprovada.");
     await expect(page.getByText("Emenda aprovada.")).toBeVisible();
     await page.goto("/emendas/t7-r");
+    await page.getByRole("tab", { name: "Situações" }).click();
     await expect(page.getByText(/Primeiro parecer/)).toBeVisible();
     await expect(page.getByText(/Segundo parecer/).first()).toBeVisible();
   });

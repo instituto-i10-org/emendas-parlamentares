@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { BASE_URL } from "../playwright.config";
-import { CONTAS, entrar, sql } from "./apoio";
+import { CONTAS, entrar, sql, abrirMinhaConta } from "./apoio";
 
 // Etapa C2 (PLANO-MOGI-CONFIG.md): guias de ajuda em balões, "Ver ajuda" no
 // menu, abertura na primeira visita, "Pular este guia" / "Pular todos",
@@ -124,7 +124,7 @@ test.describe("C2 — guias de ajuda", () => {
     await page.goto("/inicio");
     await balao(page).getByRole("button", { name: "Pular este guia" }).click();
     await expect.poll(async () => (await vistos("admin")).length).toBeGreaterThan(0);
-    await page.goto("/conta");
+    await abrirMinhaConta(page);
     await page.getByRole("button", { name: "Rever todos os guias" }).click();
     await expect(page.getByText("cada guia abre de novo")).toBeVisible();
     expect(await vistos("admin")).toHaveLength(0);

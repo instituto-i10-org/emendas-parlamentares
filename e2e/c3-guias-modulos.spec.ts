@@ -68,7 +68,6 @@ const POR_PERFIL: { conta: keyof typeof CONTAS; alvos: () => Alvo[] }[] = [
       { guia: "painel", url: "/painel" },
       { guia: "comparativo", url: "/comparativo" },
       { guia: "conformidade", url: "/conformidade" },
-      { guia: "conta", url: "/conta" },
       ...configs.map((a) => ({ guia: `config.${a}`, url: `/config?aba=${a}` })),
     ],
   },
@@ -179,6 +178,10 @@ test.describe("C3 — um guia por módulo", () => {
     await page.goto("/emendas");
     await expect(balao(page)).toContainText(GUIAS.emendas.passos[0].titulo);
     await balao(page).getByRole("button", { name: "Pular este guia" }).click();
+    // A gravação do "pular" é assíncrona: espera chegar ao banco antes de recarregar.
+    await expect
+      .poll(async () => (await sql(`select 1 from "GuiaVisto" where guia = 'emendas' and "usuarioId" = (select id from "User" where email = $1)`, [CONTAS.vereador])).length, { timeout: 10_000 })
+      .toBe(1);
     await page.reload();
     await page.waitForTimeout(1500);
     await expect(balao(page)).toBeHidden();
@@ -217,6 +220,9 @@ test.describe("C3 — um guia por módulo", () => {
     await page.goto("/tramitacao");
     await expect(balao(page)).toContainText(GUIAS.tramitacao.passos[0].titulo);
     await balao(page).getByRole("button", { name: "Fechar o guia" }).click();
+    await expect
+      .poll(async () => (await sql<{ versao: number }>(`select versao from "GuiaVisto" where guia = 'tramitacao' and "usuarioId" = (select id from "User" where email = $1)`, [CONTAS.comissao]))[0]?.versao, { timeout: 10_000 })
+      .toBe(GUIAS.tramitacao.versao);
     await page.reload();
     await page.waitForTimeout(1500);
     await expect(balao(page)).toBeHidden();

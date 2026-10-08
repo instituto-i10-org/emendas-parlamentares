@@ -174,3 +174,18 @@ export async function confirmarJanela(page: Page) {
   if (await ciencia.isVisible()) await ciencia.check();
   await janela.locator(":scope > div:last-child button").first().click();
 }
+
+// Confirmação simples na janela do sistema (no lugar da do navegador):
+// confirma pelo botão de ação da janela.
+export async function confirmarNaJanela(page: Page, rotulo: string | RegExp) {
+  const janela = page.getByRole("dialog");
+  await expect(janela).toBeVisible();
+  await janela.getByRole("button", { name: rotulo, exact: typeof rotulo === "string" }).click();
+  await expect(janela).toBeHidden();
+}
+
+// "Minha conta" é uma janela aberta pelo nome no menu.
+export async function abrirMinhaConta(page: Page) {
+  await page.locator('button[title="Minha conta e senha"]').first().click();
+  await expect(page.getByRole("dialog", { name: "Minha conta" })).toBeVisible();
+}

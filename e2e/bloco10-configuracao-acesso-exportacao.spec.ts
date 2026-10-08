@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { JUSTIFICATIVA, SENHA, apagarEmendasDeTeste, dotacaoDaFicha, emendaValida, entrar, inserirEmenda, preencherLogin, sql, confirmarJanela } from "./apoio";
+import { JUSTIFICATIVA, SENHA, apagarEmendasDeTeste, dotacaoDaFicha, emendaValida, entrar, inserirEmenda, preencherLogin, sql, confirmarJanela, abrirMinhaConta } from "./apoio";
 
 // Itens 12.1 a 12.4, 13.1, 13.3, 14.1, 14.2 e 15.1: normas com arquivo e
 // vigência, beneficiários e mesclagem, usuários, auditoria com antes e depois,
@@ -39,9 +39,9 @@ test.describe("Grupo 12 — configuração", () => {
       await expect(linha).toContainText("Falha");
       // Sem a regra do exercício, vale a geral: só alerta.
       await sql(`delete from "RegraValidacao" where id = 't10-e'`);
+      // Recarregar mantém a etapa em que a pessoa estava (a validação).
       await page.reload();
-      await page.getByRole("button", { name: /Ir para o plano de trabalho/ }).click();
-      await page.getByRole("button", { name: /Ir para a validação/ }).click();
+      await expect(page).toHaveURL(/etapa=3/);
       await expect(linha).toContainText("Alerta");
     } finally {
       await sql(`update "Programa" set "constaNoPPA" = true where id = $1`, [d.programaId]);
@@ -144,8 +144,9 @@ test.describe("Grupo 12 — configuração", () => {
     await page.getByRole("button", { name: "Concluir" }).click();
     await expect(page.getByRole("dialog", { name: "Bem-vindo ao Emendas360" })).toBeHidden();
 
-    // A própria usuária troca a senha.
-    await page.goto("/conta");
+    // A própria usuária troca a senha (janela "Minha conta", pelo nome no menu).
+    await page.goto("/inicio");
+    await abrirMinhaConta(page);
     await page.locator("#s-atual").fill("primeira-senha-t10-123");
     await page.locator("#s-nova").fill("nova-senha-t10-123");
     await page.locator("#s-conf").fill("nova-senha-t10-123");
@@ -171,12 +172,14 @@ test.describe("Grupo 12 — configuração", () => {
     const [admin] = await sql<{ id: string }>(`select id from "User" where email = 'admin@emendas360.local'`);
     const hoje = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
     await page.goto(`/config?aba=auditoria&de=${hoje}&ate=${hoje}&usuario=${admin.id}&entidade=User`);
-    const registro = page.locator("tr", { hasText: "DESATIVAR" }).first();
+    // Em linguagem simples: ação e campo em português, Sim/Não, sem id.
+    const registro = page.locator("tr", { hasText: "Desativação" }).first();
     await registro.getByRole("button", { name: "Abrir" }).click();
     const dialogo = page.getByRole("dialog");
     await expect(dialogo.getByRole("columnheader", { name: "Antes" })).toBeVisible();
-    await expect(dialogo.locator("tr", { hasText: "ativo" })).toContainText("true");
-    await expect(dialogo.locator("tr", { hasText: "ativo" })).toContainText("false");
+    await expect(dialogo.locator("tr", { hasText: "Ativo" })).toContainText("Sim");
+    await expect(dialogo.locator("tr", { hasText: "Ativo" })).toContainText("Não");
+    await expect(dialogo).not.toContainText(/"id"|createdAt|passwordHash|registro c[a-z0-9]{20}/);
     const [{ hash }] = await sql<{ hash: string }>(`select "passwordHash" hash from "User" where email = $1`, [email]);
     expect(hash).toMatch(/^\$2[aby]\$/);
     await sql(`delete from "User" where email = $1`, [email]);

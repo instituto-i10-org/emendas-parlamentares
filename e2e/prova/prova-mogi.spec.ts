@@ -1,7 +1,7 @@
 import { mkdirSync } from "node:fs";
 import path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
-import { DESTINOS, apagarEmendasDeTeste, criarRascunho, emendaValida, entrar, inserirEmenda, preencherLogin, sql } from "../apoio";
+import { DESTINOS, apagarEmendasDeTeste, criarRascunho, emendaValida, entrar, inserirEmenda, preencherLogin, sql, confirmarNaJanela, abrirMinhaConta } from "../apoio";
 
 // ============================================================================
 // Ensaio da prova de conceito em Mogi Guaçu: um teste por item do formulário
@@ -150,6 +150,7 @@ test.describe("Grupo 2 — Importação", () => {
     expect(Number(antes[0].n)).toBe(0);
     await captura(page, "2.3");
     await page.getByRole("button", { name: "Confirmar carga" }).click();
+    await confirmarNaJanela(page, "Confirmar carga");
     await expect(page.getByText(/2 dotações gravadas/)).toBeVisible({ timeout: 60_000 });
   });
 });
@@ -214,7 +215,8 @@ test.describe("Grupo 4 — Motor", () => {
     criadas.push(id);
     await irParaEtapa3(page, id);
     await page.getByRole("button", { name: /^Submeter/ }).click();
-    await expect(page.getByRole("heading", { name: "Histórico de validações" })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("tab", { name: "Validações anteriores" })).toBeVisible({ timeout: 15_000 });
+    await page.getByRole("tab", { name: "Validações anteriores" }).click();
     const v = await sql<{ n: number; momento: string }>(`select jsonb_array_length(verificacoes) n, momento from "ValidacaoEmenda" where "emendaId" = $1 order by "executadaEm" desc limit 1`, [id]);
     expect(v[0]).toEqual({ n: 13, momento: "REMESSA" });
     await captura(page, "4.4");
@@ -444,7 +446,8 @@ test.describe("Grupos 12 a 15 — Configuração, acesso, exportação e redaç�
 
   test("Item 13.1 — perfis, inclusive somente consulta, e troca da própria senha", async ({ page }) => {
     await entrar(page, "consulta@emendas360.local");
-    await page.goto("/conta");
+    await page.goto("/inicio");
+    await abrirMinhaConta(page);
     await expect(page.getByRole("heading", { name: "Trocar a senha" })).toBeVisible();
     await page.goto("/tramitacao");
     await expect(page.getByRole("button", { name: "Decidir" })).toHaveCount(0);

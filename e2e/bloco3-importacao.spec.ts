@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 import * as XLSX from "xlsx";
-import { entrar, sql } from "./apoio";
+import { entrar, sql, confirmarNaJanela } from "./apoio";
 
 // Importação da base (itens 2.1, 2.2 e 2.3): planilhas em vários formatos,
 // mapeamento de colunas, LDO e PPA, conferência de totais, correção e recarga.
@@ -96,6 +96,7 @@ test.describe("Importação por planilha", () => {
     const antes = await sql<{ n: string }>(`select count(*) n from "Dotacao" d join "InstrumentoPlanejamento" i on i.id = d."instrumentoId" where i.numero = 'PL TESTE-ACENTO'`);
     expect(Number(antes[0].n)).toBe(0);
     await page.getByRole("button", { name: "Confirmar carga" }).click();
+    await confirmarNaJanela(page, "Confirmar carga");
     await expect(page.getByText(/2 dotações gravadas/)).toBeVisible({ timeout: 60_000 });
     const u = await sql<{ nome: string }>(`select nome from "UnidadeOrcamentaria" where codigo = '02.92'`);
     expect(u[0].nome).toBe("Educação Básica");
@@ -176,6 +177,7 @@ test.describe("Importação por planilha", () => {
     // Sem a emenda, a primeira importação confirma e a base continua com 803 fichas e o mesmo total.
     await page.goto(`/executivo/planejamento/importacao/${id}`);
     await page.getByRole("button", { name: "Confirmar carga" }).click();
+    await confirmarNaJanela(page, "Confirmar carga");
     await expect(page.getByText(/803 dotações gravadas/)).toBeVisible({ timeout: 120_000 });
     const t = await sql<{ n: string; s: string }>(`select count(*) n, sum("valorAutorizado") s from "Dotacao" d join "InstrumentoPlanejamento" i on i.id = d."instrumentoId" where i.numero = 'PL 264/2026' and d.ativo`);
     expect([Number(t[0].n), Number(t[0].s)]).toEqual([803, 1083895132]);
@@ -195,6 +197,7 @@ test.describe("LDO e PPA", () => {
     await importar(page, "PL LDO-TESTE", { name: "ldo.csv", mimeType: "text/csv", buffer: Buffer.from([cab, ...linhas].map((l) => l.join(";")).join("\n") + "\n") });
     await expect(page.getByText("O programa 8888 não existe na base do exercício.")).toBeVisible();
     await page.getByRole("button", { name: "Confirmar carga" }).click();
+    await confirmarNaJanela(page, "Confirmar carga");
     await expect(page.getByText("2 prioridades da LDO gravadas.")).toBeVisible();
     const p = await sql<{ n: string }>(`select count(*) n from "PrioridadeLdo" p join "InstrumentoPlanejamento" i on i.id = p."instrumentoId" where i.numero = 'PL LDO-TESTE'`);
     expect(Number(p[0].n)).toBe(2);
@@ -208,6 +211,7 @@ test.describe("LDO e PPA", () => {
     const progs = await sql<{ codigo: string; nome: string }>(`select distinct p.codigo, p.nome from "Programa" p join "Exercicio" e on e.id = p."exercicioId" where e.ano = 2027`);
     await importar(page, "PL PPA-TESTE", { name: "ppa.csv", mimeType: "text/csv", buffer: Buffer.from([cab.join(";"), ...progs.map((p) => [p.codigo, p.nome, "", ""].join(";"))].join("\n") + "\n") });
     await page.getByRole("button", { name: "Confirmar carga" }).click();
+    await confirmarNaJanela(page, "Confirmar carga");
     await expect(page.getByText(/programas do PPA marcados/)).toBeVisible();
     const p = await sql<{ consta: boolean }>(`select "constaNoPPA" consta from "Programa" p join "Exercicio" e on e.id = p."exercicioId" where e.ano = 2027 and p.codigo = '1001'`);
     expect(p[0].consta).toBe(true);

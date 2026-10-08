@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { expect, test, type Page } from "@playwright/test";
-import { DESTINOS, criarRascunho, entrar, sql, confirmarJanela } from "./apoio";
+import { DESTINOS, criarRascunho, entrar, sql, confirmarJanela, confirmarNaJanela } from "./apoio";
 
 // Pedidos do Dr. Emerson: preço informado pelo autor a partir de fonte oficial
 // (sem pesquisa automática) e o link para a entidade preencher o plano.
@@ -14,7 +14,9 @@ test.beforeEach(({ page }) => {
 });
 
 // Primeira linha da memória de cálculo (a tabela que tem a coluna "Fonte do preço").
-const linhaItem = (page: Page) => page.locator("table", { has: page.getByRole("columnheader", { name: /Fonte do preço/ }) }).locator("tbody tr").first();
+// A tabela da memória de cálculo vira cartões no espaço estreito (o cabeçalho
+// some); por isso é localizada pelo nome, não pelo título da coluna.
+const linhaItem = (page: Page) => page.locator('[data-tabela="itens"] tbody tr').first();
 
 async function irParaPlano(page: Page) {
   await page.getByRole("button", { name: /Ir para o plano de trabalho/ }).click();
@@ -148,6 +150,7 @@ test.describe("Link da entidade", () => {
     await page.locator("#pe-if-0").selectOption({ index: 1 });
     await page.locator("#pe-pa-0").fill("3.596,00");
     await page.getByRole("button", { name: "Enviar plano ao gabinete" }).click();
+    await confirmarNaJanela(page, "Enviar plano");
   }
 
   test("T-L-1 gabinete gera o link; o código não fica no banco", async ({ page }) => {
@@ -195,6 +198,7 @@ test.describe("Link da entidade", () => {
   test("T-L-5 link revogado pelo gabinete não abre", async ({ page }) => {
     const { url } = await gerarLink(page);
     await page.getByRole("button", { name: "Cancelar link" }).click();
+    await confirmarNaJanela(page, "Cancelar link");
     await expect(page.getByText("Link cancelado.")).toBeVisible();
     await page.context().clearCookies();
     await page.goto(url);
@@ -233,6 +237,7 @@ test.describe("Link da entidade", () => {
     await page.getByRole("button", { name: /Gerar link para a entidade|Gerar novo link/ }).click();
     const segundo = await page.getByLabel("Link para a entidade").inputValue();
     await page.getByRole("button", { name: "Gerar novo link" }).click();
+    await confirmarNaJanela(page, "Gerar novo link");
     await expect(page.getByLabel("Link para a entidade")).not.toHaveValue(segundo);
     const terceiro = await page.getByLabel("Link para a entidade").inputValue();
     await page.context().clearCookies();
