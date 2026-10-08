@@ -36,10 +36,18 @@ export function FontesPreco({ fontes, orientacao }: { fontes: FontePreco[]; orie
       {fontes.length ? (
         <ul className="grid gap-2 sm:grid-cols-2">
           {ordenarFontes(fontes).map((f) => (
-            <li key={f.id} className={cn("rounded-field bg-surface px-3.5 py-3", f.destaque && "ring-2 ring-navy/30 sm:col-span-2")}>
+            <li
+              key={f.id}
+              title={f.orientacao || undefined}
+              className={cn("rounded-field bg-surface px-3.5 py-3", f.destaque && "border-2 border-cyan bg-info-bg sm:col-span-2")}
+            >
               {f.destaque || f.assinaturaPaga ? (
                 <div className="mb-1 flex flex-wrap gap-1">
-                  {f.destaque ? <Selo tipo="ok">Recomendado</Selo> : null}
+                  {f.destaque ? (
+                    <span className="inline-block rounded-full bg-cyan px-2 py-0.5 text-2xs font-bold tracking-[0.04em] whitespace-nowrap text-white uppercase">
+                      Recomendado
+                    </span>
+                  ) : null}
                   {f.assinaturaPaga ? <Selo tipo="warn">assinatura paga</Selo> : null}
                 </div>
               ) : null}
@@ -53,7 +61,6 @@ export function FontesPreco({ fontes, orientacao }: { fontes: FontePreco[]; orie
                 <ExternalLink className="size-3.5" aria-hidden />
                 <span className="sr-only">(abre em nova aba)</span>
               </a>
-              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{f.orientacao}</p>
             </li>
           ))}
         </ul>
