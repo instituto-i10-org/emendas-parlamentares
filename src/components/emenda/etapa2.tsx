@@ -35,6 +35,7 @@ import {
   rotuloReferencia,
   type Instrumento,
   type ReferenciaPreco,
+  type ConferenciaPlanilha as ConferenciaPlanilhaMotor,
 } from "@/lib/riep";
 import { cn } from "@/lib/utils";
 import type { Atualizar, DerivadoEmenda } from "./editor";
@@ -116,7 +117,7 @@ export function Etapa2({
               </dd>
             </>
           ) : null}
-          <dt className="text-muted-foreground">Valor pretendido</dt>
+          <dt className="text-muted-foreground">Valor da emenda</dt>
           <dd>{lerNumero(e.pretendido) > 0 ? BRL(lerNumero(e.pretendido)) : "não informado"}</dd>
         </dl>
         <p className="mt-3 text-xs text-muted-foreground">Para mudar qualquer linha deste quadro, volte ao passo 1 e reclassifique.</p>
@@ -366,7 +367,7 @@ function ContaSugestao({ mq }: { mq: NonNullable<ReturnType<typeof metodoQuantid
                 </b>
               </>
             ) : (
-              <i>Informe o valor pretendido ou lance a memória de cálculo para o sistema sugerir a quantidade.</i>
+              <i>Informe o valor da emenda no passo 1 para o sistema sugerir a quantidade.</i>
             )}
             <span className="mt-1.5 block text-muted-foreground">Custo unitário médio da ação — não é preço do item, e não entra na memória de cálculo.</span>
           </>
@@ -421,8 +422,6 @@ function MemoriaCalculo({
   });
   const resultadoLinha = (i: number) => ac?.linhas.find((l) => l.indice === i) ?? null;
   const ref = (cod: string | null) => (cod ? e.referencias.find((r) => r.codigo === cod) ?? null : null);
-  const pretendido = lerNumero(e.pretendido);
-
   const mudarItem = (i: number, parcial: Partial<ItemForm>) =>
     atualizar((x) => ({ itens: x.itens.map((it, j) => (j === i ? { ...it, ...parcial } : it)) }));
 
@@ -445,8 +444,7 @@ function MemoriaCalculo({
   const problemas = ac?.linhas.filter((l) => bloqueia(l.resultado)) ?? [];
   const acessorios = ac?.linhas.filter((l) => l.resultado === "acessorio") ?? [];
   const mudos = ac?.linhas.filter((l) => !l.resultado) ?? [];
-  const divergencia = pretendido > 0 && d.valor > 0 ? d.valor - pretendido : 0;
-  const foraTolerancia = pretendido > 0 && d.valor > 0 && (Math.abs(divergencia) / pretendido) * 100 > ctx.config.toleranciaValorPct;
+  const cp = d.planilha;
 
   return (
     <Secao guia="nova-emenda.memoria" titulo="Memória de cálculo" ajuda="As mesmas linhas das metas, agora com preço. Toda linha precisa dizer de qual fonte veio o valor.">
@@ -570,7 +568,7 @@ function MemoriaCalculo({
             Quadro de origem ({e.referencias.length})
           </Button>
         ) : null}
-        <span className={cn("text-lg font-extrabold tnum", !e.referencias.length && "ml-auto")}>{BRL(d.valor)}</span>
+        <span className={cn("text-lg font-extrabold tnum", !e.referencias.length && "ml-auto")}>{BRL(d.somaPlanilha)}</span>
       </div>
 
       {problemas.length ? (
@@ -598,50 +596,7 @@ function MemoriaCalculo({
         </div>
       ) : null}
 
-      <div className="mt-3 text-xs text-muted-foreground">
-        {!pretendido ? (
-          "Nenhum valor pretendido informado no passo 1."
-        ) : !d.valor ? (
-          <>
-            Valor pretendido no passo 1: <b className="text-ink">{BRL(pretendido)}</b>. Lance a memória de cálculo para o sistema reconciliar.
-          </>
-        ) : foraTolerancia ? (
-          <div className="flex flex-wrap items-center gap-2 rounded-box bg-warn-bg p-3 text-sm text-warn">
-            <span className="flex-1">
-              {divergencia < 0 ? (
-                <>
-                  Faltam <b>{BRL(-divergencia)}</b> para chegar ao valor pretendido ({BRL(pretendido)}). Amplie o atendimento ou ajuste o valor.
-                </>
-              ) : (
-                <>
-                  A soma ficou <b>{BRL(divergencia)}</b> acima do valor pretendido ({BRL(pretendido)}).
-                </>
-              )}
-            </span>
-            {divergencia < 0 ? (
-              <Button
-                variant="surface"
-                size="sm"
-                onClick={() => atualizar((x) => ({ itens: [...x.itens, { descricao: "", unidade: "", quantidade: "1", valorUnitario: "", referencia: null }] }))}
-              >
-                <Plus /> Adicionar item
-              </Button>
-            ) : null}
-            <Button
-              variant="surface"
-              size="sm"
-              onClick={() => {
-                atualizar({ pretendido: formatarNumero(d.valor, 2, "R$ ") });
-                toast("Valor pretendido atualizado.");
-              }}
-            >
-              Ajustar valor pretendido para {BRL(d.valor)}
-            </Button>
-          </div>
-        ) : (
-          `Dentro da tolerância de ${ctx.config.toleranciaValorPct}% em relação ao valor pretendido (${BRL(pretendido)}).`
-        )}
-      </div>
+      <ConferenciaPlanilha cp={cp} tolerancia={ctx.config.toleranciaValorPct} atualizar={atualizar} />
 
       <ReferenciaDialog
         aberto={novaRefPara !== null}
@@ -884,6 +839,64 @@ function Etapas({ e, atualizar, sugestao }: { e: EstadoEmenda; atualizar: Atuali
   );
 }
 
+// --------------------------------------------- planilha × valor da emenda
+
+// O valor da emenda é o do passo 1; a planilha o comprova. Até a tolerância,
+// a diferença só avisa; acima, trava o envio, com o atalho de usar o total.
+function ConferenciaPlanilha({ cp, tolerancia, atualizar }: { cp: ConferenciaPlanilhaMotor; tolerancia: number; atualizar: Atualizar }) {
+  const usarTotal = (
+    <Button
+      variant="surface"
+      size="sm"
+      onClick={() => {
+        atualizar({ pretendido: formatarNumero(cp.soma, 2, "R$ ") });
+        toast("Valor da emenda igualado ao total da planilha.");
+      }}
+    >
+      Usar o total da planilha como valor da emenda
+    </Button>
+  );
+  const texto =
+    cp.diferenca < 0 ? (
+      <>
+        A planilha soma <b>{BRL(cp.soma)}</b>, <b>{BRL(-cp.diferenca)}</b> abaixo do valor da emenda ({BRL(cp.valor)}) — {cp.pct.toFixed(1)}%.
+      </>
+    ) : (
+      <>
+        A planilha soma <b>{BRL(cp.soma)}</b>, <b>{BRL(cp.diferenca)}</b> acima do valor da emenda ({BRL(cp.valor)}) — {cp.pct.toFixed(1)}%.
+      </>
+    );
+  return (
+    <div data-teste="conferencia-planilha" data-estado={cp.estado} className="mt-3 text-xs text-muted-foreground">
+      {cp.estado === "sem-valor" ? (
+        "Nenhum valor da emenda informado no passo 1: vale o total da planilha."
+      ) : cp.estado === "vazia" ? (
+        <>
+          Valor da emenda: <b className="text-ink">{BRL(cp.valor)}</b>. Lance a planilha para comprovar esse valor.
+        </>
+      ) : cp.estado === "igual" ? (
+        <>
+          A planilha confere com o valor da emenda (<b className="text-ink">{BRL(cp.valor)}</b>).
+        </>
+      ) : cp.estado === "dentro" ? (
+        <div className="flex flex-wrap items-center gap-2 rounded-box bg-warn-bg p-3 text-sm text-warn">
+          <span className="flex-1">
+            {texto} Dentro da tolerância de {tolerancia}%: não impede o envio.
+          </span>
+          {usarTotal}
+        </div>
+      ) : (
+        <div role="alert" className="flex flex-wrap items-center gap-2 rounded-box border border-bad-line bg-bad-bg p-3 text-sm text-bad-ink">
+          <span className="flex-1">
+            {texto} Acima da tolerância de {tolerancia}%: ajuste a planilha ou o valor para enviar a emenda.
+          </span>
+          {usarTotal}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ------------------------------------------------------------- cronograma
 
 function Cronograma({ e, valor, atualizar }: { e: EstadoEmenda; valor: number; atualizar: Atualizar }) {
@@ -894,7 +907,7 @@ function Cronograma({ e, valor, atualizar }: { e: EstadoEmenda; valor: number; a
   function distribuir() {
     const n = Number(quantidade);
     const centavos = Math.round(valor * 100);
-    if (centavos <= 0) return toast("Preencha a memória de cálculo para definir o valor da emenda.");
+    if (centavos <= 0) return toast("Informe o valor da emenda no passo 1.");
     if (!Number.isInteger(n) || n < 1 || n > 100) return toast("Informe de 1 a 100 parcelas.");
     if (n > centavos) return toast("Cada parcela precisa ter pelo menos R$ 0,01.");
     const base = Math.floor(centavos / n);

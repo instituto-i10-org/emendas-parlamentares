@@ -274,7 +274,7 @@ function FormConfiguracao({ c, podeGerir }: { c: ConfiguracaoTela; podeGerir: bo
 
       <h3 className="mb-2 antena">Motor de classificação</h3>
       <div className="mb-5 grid grid-cols-3 gap-3.5 max-md:grid-cols-1">
-        <Campo rotulo="Tolerância pretendido × definitivo (%)" htmlFor="c-tol">
+        <Campo rotulo="Tolerância planilha × valor da emenda (%)" htmlFor="c-tol">
           <CampoNumero id="c-tol" valor={f.toleranciaValorPct} aoMudar={(v) => setF({ ...f, toleranciaValorPct: v })} disabled={!podeGerir} />
         </Campo>
         <Campo rotulo="Validade da referência de preço (meses)" htmlFor="c-val">

@@ -144,6 +144,28 @@ describe("T-4.5 cada verificação", () => {
   });
 });
 
+describe("D3 valor da emenda = valor informado; a planilha comprova", () => {
+  it("planilha igual ao valor: conforme", () => {
+    const r = rodar();
+    expect(r.complementares.find((c) => c.titulo === "Planilha confere com o valor da emenda")?.nivel).toBe("ok");
+    expect(r.estado.xiii).toBe("conforme");
+  });
+  it("diferença até a tolerância: aviso, não trava", () => {
+    // 278.000 na planilha contra 300.000 de valor: 7,3%, tolerância de 10%.
+    const r = rodar({ valor: 300000 }, {}, undefined, { pretendido: 300000, parcelas: [300000] });
+    expect(r.complementares.find((c) => c.titulo === "Planilha diferente do valor da emenda")?.nivel).toBe("warn");
+    expect(r.estado.xiii).toBe("conforme");
+    expect(r.valida).toBe(true);
+  });
+  it("acima da tolerância: a (xiii) aponta e a emenda não segue", () => {
+    const r = rodar({ valor: 400000 }, {}, undefined, { pretendido: 400000, parcelas: [400000] });
+    expect(r.complementares.find((c) => c.titulo === "Planilha fora da tolerância")?.nivel).toBe("bad");
+    expect(r.estado.xiii).toBe("falha");
+    expect(r.v("xiii").razao).toContain("fora da tolerância do valor da emenda");
+    expect(r.valida).toBe(false);
+  });
+});
+
 describe("T-4.3 modo das verificações", () => {
   it("T-4.3-2 verificações fixas ignoram a regra", () => {
     for (const c of ["CAMPOS_PREENCHIDOS", "EXERCICIO_ABERTO", "INSTRUMENTO_ABERTO", "DOTACAO_EXISTE", "CLASSIFICACAO_COMPLETA", "TIPO_COERENTE"]) {

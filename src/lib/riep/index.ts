@@ -13,3 +13,4 @@ export * from "./sugerir";
 export * from "./base";
 export * from "./verificacoes";
 export * from "./obra-m2";
+export * from "./valor";

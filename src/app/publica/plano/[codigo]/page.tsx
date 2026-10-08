@@ -40,7 +40,7 @@ export default async function PlanoEntidadePage({ params }: { params: Promise<{ 
           <dd>{e.exercicio}</dd>
           {e.valorPretendido ? (
             <>
-              <dt className="text-muted-foreground">Valor pretendido</dt>
+              <dt className="text-muted-foreground">Valor da emenda</dt>
               <dd>{BRL(e.valorPretendido)}</dd>
             </>
           ) : null}
@@ -50,6 +50,7 @@ export default async function PlanoEntidadePage({ params }: { params: Promise<{ 
         codigo={codigo}
         etapasSugeridas={e.etapasSugeridas}
         valorPretendido={e.valorPretendido}
+        tolerancia={e.tolerancia}
         indicadas={fontesParaEmenda(fontes, e.modelo, false)}
         todas={fontes}
       />

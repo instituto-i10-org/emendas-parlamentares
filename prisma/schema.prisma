@@ -330,7 +330,8 @@ model ConfiguracaoExercicio {
   observacaoSaude String?
 
   // --- tolerâncias do motor --------------------------------------------------
-  // Divergência aceita entre o valor pretendido e o definitivo (só alerta).
+  // Diferença aceita entre a planilha e o valor da emenda: até ela, avisa;
+  // acima, trava o envio.
   toleranciaValorPct      Decimal @default(10) @db.Decimal(5, 2)
   // Referência de preço mais antiga que isto acende alerta.
   validadeReferenciaMeses Int     @default(12)
@@ -847,7 +848,8 @@ model Emenda {
   destinoId       String?
   objeto          String        @default("")
   quantidade      String?
-  // Estimativa de planejamento. O valor da emenda sai da memória de cálculo.
+  // Valor da emenda informado no passo 1 (rótulo "Valor da emenda"). Ao
+  // gravar, `valor` recebe este número; a planilha o comprova.
   valorPretendido Decimal?      @db.Decimal(18, 2)
   endereco        String        @default("")
 

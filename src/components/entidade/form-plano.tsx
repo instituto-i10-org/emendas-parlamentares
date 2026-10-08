@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { enviarPlanoEntidade } from "@/lib/actions/convite";
 import { totalPlanoEntidade, type ItemEntidade, type PlanoEntidade } from "@/lib/emendas/convite";
 import { lerNumero } from "@/lib/emendas/estado";
-import { BRL, ordenarFontes, urlDaFonte, type FontePreco } from "@/lib/riep";
+import { BRL, conferirPlanilha, ordenarFontes, urlDaFonte, type FontePreco } from "@/lib/riep";
 import { hojeIso } from "@/lib/utils";
 
 const OUTRA = "__outra";
@@ -30,12 +30,14 @@ export function FormPlanoEntidade({
   codigo,
   etapasSugeridas,
   valorPretendido,
+  tolerancia,
   indicadas,
   todas,
 }: {
   codigo: string;
   etapasSugeridas: string;
   valorPretendido: number | null;
+  tolerancia: number;
   indicadas: FontePreco[];
   todas: FontePreco[];
 }) {
@@ -264,7 +266,7 @@ export function FormPlanoEntidade({
           </Button>
           <p className="text-right text-md font-extrabold tnum">
             Total do plano: {BRL(total)}
-            {valorPretendido ? <span className="block text-xs font-normal text-muted-foreground">Valor pretendido pelo vereador: {BRL(valorPretendido)}</span> : null}
+            {valorPretendido ? <ConferenciaEntidade valor={valorPretendido} soma={total} tolerancia={tolerancia} /> : null}
           </p>
         </div>
       </div>
@@ -318,5 +320,24 @@ export function FormPlanoEntidade({
         <span className="text-xs text-muted-foreground">O que você digitou fica salvo neste navegador até o envio.</span>
       </div>
     </section>
+  );
+}
+
+// A mesma conferência do gabinete: a planilha comprova o valor da emenda.
+function ConferenciaEntidade({ valor, soma, tolerancia }: { valor: number; soma: number; tolerancia: number }) {
+  const cp = conferirPlanilha(valor, soma, tolerancia);
+  const base = `Valor da emenda: ${BRL(valor)}.`;
+  const texto =
+    cp.estado === "vazia" || cp.estado === "sem-valor"
+      ? base
+      : cp.estado === "igual"
+        ? `${base} O plano confere com esse valor.`
+        : cp.estado === "dentro"
+          ? `${base} O plano difere ${cp.pct.toFixed(1)}%, dentro da tolerância de ${tolerancia}%.`
+          : `${base} O plano difere ${cp.pct.toFixed(1)}%, acima da tolerância de ${tolerancia}%. Ajuste os itens ou combine o valor com o gabinete.`;
+  return (
+    <span data-teste="conferencia-entidade" data-estado={cp.estado} className={`block text-xs font-normal ${cp.estado === "fora" ? "text-bad-ink" : "text-muted-foreground"}`}>
+      {texto}
+    </span>
   );
 }

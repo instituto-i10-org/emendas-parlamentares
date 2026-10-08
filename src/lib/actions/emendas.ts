@@ -28,6 +28,7 @@ import {
   type Classificacao,
   type Selecao,
   type Verificacao,
+  valorDaEmenda,
 } from "@/lib/riep";
 import { getCurrentUser } from "@/lib/session";
 
@@ -123,7 +124,8 @@ export async function salvarEmenda(entrada: EstadoEmenda, submeter = false, anoT
   const dotacao = dotacaoDe(classificacao, selecao);
   const situacao = situacaoEfetiva(classificacao, selecao);
   const modelo = modeloDaDotacao(dotacao);
-  const valor = Math.round(e.itens.reduce((s, i) => s + lerNumero(i.quantidade) * lerNumero(i.valorUnitario), 0) * 100) / 100;
+  // O valor da emenda é o informado no passo 1; sem ele, a soma da planilha.
+  const valor = valorDaEmenda(pretendido, e.itens.reduce((s, i) => s + lerNumero(i.quantidade) * lerNumero(i.valorUnitario), 0));
 
   // Reenvio depois de diligência: a emenda já tem número e volta à fila.
   const reenvio = existente?.status === "EM_DILIGENCIA";

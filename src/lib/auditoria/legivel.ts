@@ -165,7 +165,7 @@ const CAMPOS: Record<string, string> = {
   portalPublico: "Portal público ligado",
   prazoDiligenciaDias: "Prazo padrão do ajuste (dias)",
   prazoProtocolo: "Fim do protocolo",
-  pretendido: "Valor pretendido",
+  pretendido: "Valor da emenda",
   publico: "Público",
   removido: "Removido",
   responsavelCargo: "Cargo do responsável",

@@ -149,6 +149,8 @@ export type ConvitePublico =
         autor: string;
         exercicio: number;
         valorPretendido: number | null;
+        // Tolerância planilha × valor da emenda, do exercício.
+        tolerancia: number;
         modelo: string | null;
         etapasSugeridas: string;
       };
@@ -162,7 +164,7 @@ export async function abrirConvite(codigo: string): Promise<ConvitePublico> {
   const c = codigoValido(codigo)
     ? await prisma.conviteEntidade.findUnique({
         where: { codigoHash: resumo(codigo) },
-        include: { emenda: { include: { autor: true, destino: true, exercicio: true } } },
+        include: { emenda: { include: { autor: true, destino: true, exercicio: { include: { configuracao: true } } } } },
       })
     : null;
   if (!c) {
@@ -180,6 +182,7 @@ export async function abrirConvite(codigo: string): Promise<ConvitePublico> {
       autor: c.emenda.autor.nome,
       exercicio: c.emenda.exercicio.ano,
       valorPretendido: c.emenda.valorPretendido?.toNumber() ?? null,
+      tolerancia: c.emenda.exercicio.configuracao?.toleranciaValorPct.toNumber() ?? 10,
       modelo: c.emenda.modelo,
       etapasSugeridas: c.emenda.etapas,
     },

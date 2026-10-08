@@ -26,7 +26,7 @@ async function passo1(page: Page, o: { execucao: "DIRETA" | "INDIRETA"; destino:
 }
 
 test.describe("Ajustes de interface (prints)", () => {
-  test("Print 2 — pretendido acima do autorizado: botão ajusta o valor", async ({ page }) => {
+  test("Print 2 — valor acima do autorizado: botão ajusta o valor", async ({ page }) => {
     await entrar(page, "vereador");
     await passo1(page, { execucao: "DIRETA", destino: DESTINOS.escola, objeto: "UI-PRINT Aquisição de mobiliário escolar para as salas de aula", valor: "999999999" });
     const ajustar = page.getByRole("button", { name: /Ajustar ao autorizado/ });
@@ -36,7 +36,7 @@ test.describe("Ajustes de interface (prints)", () => {
     expect(valor).toBeTruthy();
     await ajustar.click();
     await expect(page.locator("#f-pre")).toHaveValue(new RegExp(valor!.replace(/\./g, "\\.")));
-    await expect(page.getByText("Valor pretendido ajustado ao autorizado da dotação.")).toBeVisible();
+    await expect(page.getByText("Valor da emenda ajustado ao autorizado da dotação.")).toBeVisible();
   });
 
   test("Print 5 — salvar rascunho mantém a etapa, inclusive ao recarregar", async ({ page }) => {

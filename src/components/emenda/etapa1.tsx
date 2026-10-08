@@ -46,8 +46,8 @@ export const ELEMENTOS: Record<string, string> = {
 
 // Rótulo curto de cada sinalização do motor; o texto inteiro fica no balão.
 function rotuloSinal(texto: string): string {
-  if (texto.includes("excede o valor autorizado")) return "Pretendido acima do autorizado";
-  if (texto.includes("candidatas têm valor autorizado abaixo")) return "Candidatas abaixo do pretendido";
+  if (texto.includes("excede o valor autorizado")) return "Valor acima do autorizado";
+  if (texto.includes("candidatas têm valor autorizado abaixo")) return "Candidatas abaixo do valor";
   if (texto.includes("instrumento da parceria não definido")) return "Instrumento da parceria pendente";
   if (texto.includes("fonte AUDESP")) return "AUDESP não parametrizado";
   if (texto.includes("Cota individual não parametrizada")) return "Cota não parametrizada";
@@ -57,7 +57,7 @@ function rotuloSinal(texto: string): string {
 }
 
 // Sinalizações: alertam, não bloqueiam. Selos curtos; o detalhe fica no balão.
-// O pretendido acima do autorizado vem com o atalho para igualar os dois.
+// O valor acima do autorizado vem com o atalho para igualar os dois.
 function Sinalizacoes({ sinais, ajustarAoAutorizado }: { sinais: string[]; ajustarAoAutorizado?: { valor: number; aplicar: () => void } }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -124,7 +124,7 @@ export function Etapa1({
   function analisar() {
     if (!d.destino) return toast("Escolha para onde vai a emenda.");
     if (!e.objeto.trim()) return toast("Descreva o objeto da emenda.");
-    if (!(lerNumero(e.pretendido) > 0)) return toast("Informe o valor pretendido.");
+    if (!(lerNumero(e.pretendido) > 0)) return toast("Informe o valor da emenda.");
     if (!e.endereco.trim()) return toast("Informe o endereço do local.");
     const concluir = () => {
       setAnalisando(null);
@@ -155,10 +155,10 @@ export function Etapa1({
       <div data-guia="nova-emenda.destino" className="grid grid-cols-2 gap-3.5 max-sm:grid-cols-1">
         <CampoDestino e={e} destino={d.destino} destinos={destinos} ctx={ctx} atualizar={atualizar} aoCadastrar={aoCadastrarDestino} />
         <Campo
-          rotulo="Valor pretendido"
+          rotulo="Valor da emenda"
           obrigatorio
           htmlFor="f-pre"
-          ajuda="Estimativa inicial para conferir saldo e cota. O valor final da emenda será a soma dos itens da memória de cálculo."
+          ajuda="É o valor da emenda. A planilha do plano de trabalho comprova esse valor."
         >
           <CampoNumero id="f-pre" valor={e.pretendido} aoMudar={(v) => atualizar({ pretendido: v })} prefixo="R$ " placeholder="R$ 0,00" />
         </Campo>
@@ -714,7 +714,7 @@ function LinhaDotacao({
         </div>
         {abaixo ? (
           <div className="mt-1.5">
-            <Selo tipo="warn">autorizado abaixo do pretendido</Selo>
+            <Selo tipo="warn">autorizado abaixo do valor da emenda</Selo>
           </div>
         ) : null}
         {children}
@@ -989,7 +989,7 @@ function ResultadoClassificacao({
                   valor: d.dotacao.autorizado,
                   aplicar: () => {
                     atualizar({ pretendido: formatarNumero(d.dotacao!.autorizado, 2, "R$ ") });
-                    toast("Valor pretendido ajustado ao autorizado da dotação.");
+                    toast("Valor da emenda ajustado ao autorizado da dotação.");
                   },
                 }
               : undefined
@@ -1045,9 +1045,9 @@ function ResultadoClassificacao({
             </Par>
           ) : null}
           {lerNumero(e.pretendido) > 0 ? (
-            <Par k="Valor pretendido">
+            <Par k="Valor da emenda">
               {BRL(lerNumero(e.pretendido))}
-              <Mini>estimativa do passo 1 — o valor da emenda é a soma da memória de cálculo, no passo 2</Mini>
+              <Mini>informado no passo 1 — a planilha do passo 2 comprova esse valor</Mini>
             </Par>
           ) : null}
           {c.situacao === "OK" ? <Par k="Aderência">{c.porQue}</Par> : null}

@@ -395,11 +395,11 @@ const GUIAS_LISTA: Guia[] = [
   {
     id: "nova-emenda.etapa1",
     titulo: "Nova emenda › Descrever",
-    versao: 1,
+    versao: 2,
     passos: [
       { ancora: "nova-emenda.etapas", titulo: "Três etapas", texto: "Descrever a emenda, preencher o plano de trabalho e validar. Pode salvar o rascunho a qualquer momento e voltar depois." },
       { ancora: "nova-emenda.execucao", titulo: "Quem executa", texto: "Direta: a Prefeitura contrata e paga. Indireta: o recurso é repassado a uma entidade sem fins lucrativos." },
-      { ancora: "nova-emenda.destino", titulo: "Destino e valor", texto: "Escolha para onde vai o recurso e informe uma estimativa do valor. O valor final será a soma dos itens do plano de trabalho." },
+      { ancora: "nova-emenda.destino", titulo: "Destino e valor", texto: "Escolha para onde vai o recurso e informe o valor da emenda. A planilha do plano de trabalho comprova esse valor." },
       { ancora: "nova-emenda.objeto", titulo: "Objeto", texto: "Descreva em linguagem comum o que será feito ou comprado. “Melhorar texto” sugere uma redação usando só o que você escreveu." },
       { ancora: "nova-emenda.avancar", titulo: "Analisar", texto: "O sistema procura no orçamento a dotação que comporta o objeto. Depois de escolhida, siga para o plano de trabalho." },
       { ancora: "nova-emenda.resumo", titulo: "Resumo e cota", texto: "O que já foi definido e quanto da sua cota está disponível." },
@@ -408,14 +408,14 @@ const GUIAS_LISTA: Guia[] = [
   {
     id: "nova-emenda.etapa2",
     titulo: "Nova emenda › Plano de trabalho",
-    versao: 2,
+    versao: 3,
     passos: [
       { ancora: "nova-emenda.modelo", titulo: "Modelo do plano", texto: "O modelo vem do tipo de despesa escolhido na etapa anterior e define o que o plano precisa ter." },
       { ancora: "nova-emenda.entidade", titulo: "Preenchimento pela entidade", texto: "Na execução indireta, gere um link para a própria entidade preencher o plano, sem precisar de login." },
       { ancora: "nova-emenda.justificativa", titulo: "Justificativa", texto: "Por que a emenda é necessária." },
       { ancora: "nova-emenda.metas", titulo: "Metas", texto: "Quem é beneficiado, a unidade e a quantidade, e a meta finalística." },
       { ancora: "nova-emenda.responsabilidade", titulo: "Os preços são seus", texto: "O sistema indica onde pesquisar, com o banco de preços i10 em destaque, mas não preenche nem confere valores." },
-      { ancora: "nova-emenda.memoria", titulo: "Memória de cálculo", texto: "Os itens com quantidade e preço, e a fonte de onde veio cada preço. \"Ver referência\" mostra a mediana de compras públicas do item, só para consulta." },
+      { ancora: "nova-emenda.memoria", titulo: "Memória de cálculo", texto: "Os itens com quantidade e preço, e a fonte de onde veio cada preço. O total precisa bater com o valor da emenda, dentro da tolerância. \"Ver referência\" mostra a mediana de compras públicas do item, só para consulta." },
       { ancora: "nova-emenda.cronograma", titulo: "Cronograma", texto: "Como o valor será desembolsado. A soma das parcelas tem de bater com o valor da emenda." },
       { ancora: "nova-emenda.rodape", titulo: "Seguir", texto: "Vá para a validação, volte, salve o rascunho ou visualize o plano." },
     ],

@@ -14,12 +14,14 @@ import {
   MODELOS,
   classificacaoValida,
   classificar,
+  conferirPlanilha,
   dotacaoDe,
   eventoEfetivo,
   modeloDaDotacao,
   podeAvancar,
   resumoValidacao,
   validar,
+  valorDaEmenda,
   type Aplicado,
   type Checagem,
   type Verificacao,
@@ -62,7 +64,10 @@ function useDerivado(e: EstadoEmenda, ctx: ContextoEmenda, destinos: DestinoTela
   const dotacao = dotacaoDe(classificacao, e.selecao);
   const modelo = modeloDaDotacao(dotacao);
   const metaPlanejamento = dotacao ? ctx.metas[dotacao.id] ?? null : null;
-  const valor = e.itens.reduce((s, i) => s + lerNumero(i.quantidade) * lerNumero(i.valorUnitario), 0);
+  // A soma da planilha comprova o valor da emenda, que é o informado no passo 1.
+  const somaPlanilha = e.itens.reduce((s, i) => s + lerNumero(i.quantidade) * lerNumero(i.valorUnitario), 0);
+  const valor = valorDaEmenda(lerNumero(e.pretendido), somaPlanilha);
+  const planilha = conferirPlanilha(lerNumero(e.pretendido), somaPlanilha, ctx.config.toleranciaValorPct);
   const checks: Checagem[] = useMemo(
     () =>
       validar(paraValidacao(e, { classificacao, metaPlanejamento }), {
@@ -88,6 +93,8 @@ function useDerivado(e: EstadoEmenda, ctx: ContextoEmenda, destinos: DestinoTela
     modelo,
     metaPlanejamento,
     valor,
+    somaPlanilha,
+    planilha,
     checks,
     verificacoes: treze.verificacoes,
     // Falha numa das treze também conta como bloqueio da remessa.

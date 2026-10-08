@@ -1,6 +1,7 @@
 import { classificacaoValida, dotacaoDe, situacaoEfetiva } from "./classificar";
 import { audesp, nomeParcela, parcelaDaDotacao, parcelaSaude, restanteParcela, totalParcela } from "./cota";
 import { analisaItens, bloqueia, totalItens, type ItemCalculo } from "./itens";
+import { conferirPlanilha, valorDaEmenda } from "./valor";
 import {
   EVENTOS,
   INSTRUMENTOS,
@@ -71,7 +72,9 @@ export function validar(e: EstadoValidacao, ctx: ContextoValidacao): Checagem[] 
   const c = classificacaoValida(e.classificacao);
   const sit = situacaoEfetiva(c, e.selecao);
   const d = dotacaoDe(c, e.selecao);
-  const v = totalItens(e.itens);
+  // O valor da emenda é o informado no passo 1; a planilha o comprova.
+  const soma = totalItens(e.itens);
+  const v = valorDaEmenda(e.pretendido, soma);
   const manual = e.selecao.escolha === "PROPONENTE" && sit === "OK" && c?.situacao === "VALIDAR";
 
   if (c && d) {
@@ -110,7 +113,7 @@ export function validar(e: EstadoValidacao, ctx: ContextoValidacao): Checagem[] 
   const refPorCodigo = (cod: string | null) => (cod ? e.referencias.find((r) => r.codigo === cod) ?? null : null);
   // Linha sem preço não é cobrada.
   const incompletas = e.itens.filter((i) => i.valorUnitario > 0 && !refPorCodigo(i.referencia));
-  if (v > 0) {
+  if (soma > 0) {
     if (incompletas.length) {
       add(
         cfg.fontePrecoObrigatoria ? "bad" : "warn",
@@ -119,10 +122,10 @@ export function validar(e: EstadoValidacao, ctx: ContextoValidacao): Checagem[] 
           "é a fonte que permite conferir o preço."
       );
     } else {
-      add("ok", "Memória de cálculo completa", `Valor da emenda: ${BRL(v)}, com a fonte do preço informada em todas as linhas`);
+      add("ok", "Memória de cálculo completa", `Total da planilha: ${BRL(soma)}, com a fonte do preço informada em todas as linhas`);
     }
   } else {
-    add("bad", "Memória de cálculo vazia", "O valor da emenda nasce da memória de cálculo — lance ao menos um item com preço.");
+    add("bad", "Memória de cálculo vazia", "A planilha comprova o valor da emenda — lance ao menos um item com preço.");
   }
 
   // Compatibilidade entre os itens e o objeto da emenda.
@@ -242,7 +245,7 @@ export function validar(e: EstadoValidacao, ctx: ContextoValidacao): Checagem[] 
         add(
           "warn",
           "Valor acima da dotação autorizada",
-          `A emenda soma ${BRL(v)} e a ação tem ${BRL(mq.dotacao.autorizado)} autorizados no exercício.`
+          `O valor da emenda é ${BRL(v)} e a ação tem ${BRL(mq.dotacao.autorizado)} autorizados no exercício.`
         );
       }
     }
@@ -318,35 +321,30 @@ export function validar(e: EstadoValidacao, ctx: ContextoValidacao): Checagem[] 
         `${BRL(v)} de ${BRL(d.autorizado)} autorizados na LOA · o saldo de execução não está disponível`
       );
     } else if (v > 0) {
-      add("bad", "Acima do valor autorizado", `A dotação tem ${BRL(d.autorizado)} autorizados e a emenda soma ${BRL(v)}.`);
+      add("bad", "Acima do valor autorizado", `A dotação tem ${BRL(d.autorizado)} autorizados e o valor da emenda é ${BRL(v)}.`);
     } else {
-      add("warn", "Valor não conferido", "Informe o valor na memória de cálculo.");
+      add("warn", "Valor não conferido", "Informe o valor da emenda no passo 1.");
     }
   }
 
-  // Reconciliação pretendido × definitivo: divergir é o resultado normal de
-  // uma pesquisa de preço bem-feita. Alerta; quem bloqueia é saldo e cota.
-  if (e.pretendido > 0 && v > 0) {
-    const pc = (Math.abs(v - e.pretendido) / e.pretendido) * 100;
-    if (pc <= cfg.toleranciaValorPct) {
-      add(
-        "ok",
-        "Valor definitivo compatível com o pretendido",
-        `${BRL(v)} contra ${BRL(e.pretendido)} — divergência de ${pc.toFixed(1)}%, dentro da tolerância de ${cfg.toleranciaValorPct}%`
-      );
-    } else {
-      add(
-        "warn",
-        "Divergência entre o pretendido e o definitivo",
-        `${BRL(e.pretendido)} no passo 1 e ${BRL(v)} na memória de cálculo — ${pc.toFixed(1)}%. ` +
-          "Saldo e cota foram reconferidos abaixo com o valor definitivo."
-      );
-    }
-  } else if (e.pretendido > 0 && v === 0) {
+  // Planilha × valor da emenda: até a tolerância é aviso; acima, trava.
+  const cp = conferirPlanilha(e.pretendido, soma, cfg.toleranciaValorPct);
+  if (cp.estado === "sem-valor" && soma > 0) {
+    add("warn", "Valor da emenda não informado", `Sem valor no passo 1, vale o total da planilha: ${BRL(soma)}.`);
+  } else if (cp.estado === "igual") {
+    add("ok", "Planilha confere com o valor da emenda", `${BRL(cp.soma)} na planilha e ${BRL(cp.valor)} de valor da emenda`);
+  } else if (cp.estado === "dentro") {
     add(
       "warn",
-      "Valor definitivo ausente",
-      `Há valor pretendido de ${BRL(e.pretendido)}, mas a memória de cálculo está vazia — é dela que sai o valor da emenda.`
+      "Planilha diferente do valor da emenda",
+      `${BRL(cp.soma)} na planilha e ${BRL(cp.valor)} de valor da emenda — ${cp.pct.toFixed(1)}%, dentro da tolerância de ${cfg.toleranciaValorPct}%. Não impede o envio.`
+    );
+  } else if (cp.estado === "fora") {
+    add(
+      "bad",
+      "Planilha fora da tolerância",
+      `${BRL(cp.soma)} na planilha e ${BRL(cp.valor)} de valor da emenda — ${cp.pct.toFixed(1)}%, acima da tolerância de ${cfg.toleranciaValorPct}%. ` +
+        "Ajuste a planilha ou use o total da planilha como valor da emenda."
     );
   }
 
@@ -477,15 +475,15 @@ export function sinaisValor(args: {
 
   if (sit === "OK" && d?.abaixoDoPretendido) {
     avisos.push(
-      `O valor pretendido, **${BRL(vp)}**, excede o valor autorizado da dotação ${d.codigo}, de **${BRL(d.autorizado)}**. ` +
-        "A dotação continua válida — quem define o valor da emenda é a memória de cálculo do passo 2."
+      `O valor da emenda, **${BRL(vp)}**, excede o valor autorizado da dotação ${d.codigo}, de **${BRL(d.autorizado)}**. ` +
+        "Reduza o valor ou escolha outra dotação: acima do autorizado, a emenda não pode ser enviada."
     );
   }
   if (sit === "VALIDAR" && r.opcoes.length) {
     const k = r.opcoes.filter((x) => x.abaixoDoPretendido).length;
     if (k) {
       avisos.push(
-        `${k} das ${r.opcoes.length} candidatas têm valor autorizado abaixo do pretendido. Ficam marcadas na lista e seguem disponíveis para escolha.`
+        `${k} das ${r.opcoes.length} candidatas têm valor autorizado abaixo do valor da emenda. Ficam marcadas na lista e seguem disponíveis para escolha.`
       );
     }
   }
@@ -511,7 +509,7 @@ export function sinaisValor(args: {
   if (p && rest !== null && vp > rest) {
     avisos.push(
       `Esta emenda consome a parcela de **${nomeParcela(p)}** (IC-CO ${p === "SAUDE" ? "1002" : "diferente de 1002"}), ` +
-        `onde restam **${BRL(Math.max(0, rest))}**. O valor pretendido é de ${BRL(vp)}. ` +
+        `onde restam **${BRL(Math.max(0, rest))}**. O valor da emenda é de ${BRL(vp)}. ` +
         "Saldo de outra parcela não cobre esta — a reserva da saúde não é intercambiável."
     );
   }

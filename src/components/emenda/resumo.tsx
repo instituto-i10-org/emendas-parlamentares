@@ -2,7 +2,7 @@
 
 import { Check, ChevronDown } from "lucide-react";
 import type { ContextoEmenda } from "@/lib/emendas/contexto";
-import { lerNumero, type EstadoEmenda } from "@/lib/emendas/estado";
+import type { EstadoEmenda } from "@/lib/emendas/estado";
 import { BRL, audesp, parcelaDaDotacao, parcelaDemais, parcelaSaude, situacaoEfetiva, type Aplicado } from "@/lib/riep";
 import { cn } from "@/lib/utils";
 import type { DerivadoEmenda } from "./editor";
@@ -22,7 +22,6 @@ export function Resumo({
 }) {
   const c = d.valida;
   const sit = situacaoEfetiva(c, e.selecao);
-  const pretendido = lerNumero(e.pretendido);
   const parcela = parcelaDaDotacao(d.dotacao);
   const au = audesp(ctx.config);
   const linhas: [string, string | null][] = [
@@ -37,15 +36,13 @@ export function Resumo({
           ? `${c.base} · ação em definição`
           : null,
     ],
-    ["Pretendido", pretendido > 0 ? BRL(pretendido) : null],
-    ["Valor", d.valor > 0 ? BRL(d.valor) : null],
+    ["Valor da emenda", d.valor > 0 ? BRL(d.valor) : null],
     ["Parcela", parcela ? (parcela === "SAUDE" ? "Saúde — IC-CO 1002" : "Demais áreas") : null],
     ["AUDESP", d.dotacao ? (au ? `fonte ${au.fonte} · aplicação ${au.aplicacaoExibicao}` : "pendente de parametrização") : null],
   ];
   const definidos = linhas.filter(([, v]) => v).length;
 
-  // O valor definitivo, quando existe, substitui a estimativa.
-  const vigente = d.valor > 0 ? d.valor : pretendido;
+  const vigente = d.valor;
   const cfg = ctx.config;
 
   return (

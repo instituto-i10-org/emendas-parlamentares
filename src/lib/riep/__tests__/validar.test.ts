@@ -12,6 +12,7 @@ import {
 import { fontesParaEmenda, referenciaAntiga, referenciaCombina, referenciaCompleta, rotuloReferencia, type ReferenciaPreco } from "../referencias";
 import type { Selecao } from "../tipos";
 import { resumoValidacao, sinaisValor, validar, type EstadoValidacao } from "../validar";
+import { conferirPlanilha, valorDaEmenda } from "../valor";
 import { catalogo, config, destino, loa } from "./dados-reais";
 
 const semAplicado = { saude: 0, demais: 0 };
@@ -64,7 +65,7 @@ function estadoAmbulancia(): EstadoValidacao {
     metas: [{ beneficiarios: "Pacientes da rede municipal", unidade: "veículo", quantidade: 1 }],
     itens: [{ descricao: "Ambulância tipo A — simples remoção", quantidade: 1, valorUnitario: 278000, referencia: "R1" }],
     referencias: [ref()],
-    parcelas: [278000],
+    parcelas: [280000],
     quadro: { "EQUIPAMENTOS-0": "Sim", "EQUIPAMENTOS-1": "Não", "EQUIPAMENTOS-2": "Sim" },
     instrumento: null,
     instrumentoOutro: "",
@@ -78,6 +79,26 @@ function estadoAmbulancia(): EstadoValidacao {
 const ctx = { config, aplicado: semAplicado, biblioteca: catalogo.objetos, hoje: new Date("2026-09-28") };
 const titulo = (checks: ReturnType<typeof validar>, nivel: string) =>
   checks.filter((c) => c.nivel === nivel).map((c) => c.titulo);
+
+describe("valor da emenda", () => {
+  it("é o valor informado; sem ele, a soma da planilha", () => {
+    expect(valorDaEmenda(280000, 278000)).toBe(280000);
+    expect(valorDaEmenda(0, 278000)).toBe(278000);
+  });
+  it("a planilha é conferida contra o valor, com a tolerância", () => {
+    expect(conferirPlanilha(280000, 280000, 10).estado).toBe("igual");
+    expect(conferirPlanilha(280000, 278000, 10).estado).toBe("dentro");
+    expect(conferirPlanilha(280000, 308000, 10).estado).toBe("dentro");
+    expect(conferirPlanilha(280000, 308000.01, 10).estado).toBe("fora");
+    expect(conferirPlanilha(280000, 0, 10).estado).toBe("vazia");
+    expect(conferirPlanilha(0, 5000, 10).estado).toBe("sem-valor");
+    expect(conferirPlanilha(100000, 80000, 10)).toMatchObject({ estado: "fora", diferenca: -20000, pct: 20 });
+  });
+  it("o cronograma confere contra o valor informado, não contra a soma", () => {
+    const e = { ...estadoAmbulancia(), parcelas: [278000] };
+    expect(titulo(validar(e, ctx), "bad")).toContain("Cronograma não confere");
+  });
+});
 
 describe("cota em duas parcelas", () => {
   it("divide a cota pela reserva da saúde", () => {

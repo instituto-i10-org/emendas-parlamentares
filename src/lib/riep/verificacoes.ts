@@ -80,7 +80,7 @@ export type Regras = Partial<Record<string, RegraEfetiva>>;
 export type EntradaVerificacao = {
   objeto: string;
   justificativa: string;
-  // Valor da emenda: a soma da planilha.
+  // Valor da emenda: o informado no passo 1 (sem ele, a soma da planilha).
   valor: number;
   destino: DotacaoBase | null;
 };
@@ -249,6 +249,7 @@ function pendenciasPlano(checks: Checagem[]): string[] {
     ["Metas incompletas", "metas físicas"],
     ["Meta finalística ausente", "meta finalística"],
     ["Memória de cálculo vazia", "planilha orçamentária"],
+    ["Planilha fora da tolerância", "total da planilha fora da tolerância do valor da emenda"],
     ["Linha sem fonte de preço", "fonte do preço em cada item"],
     ["Agente executor ausente", "agente executor"],
     ["Cronograma não confere", "cronograma igual ao valor"],
