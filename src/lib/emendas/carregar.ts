@@ -92,6 +92,7 @@ export function paraEstado(x: EmendaCompleta): EstadoEmenda {
     instrumentoOutro: x.instrumentoOutro,
     evento: x.evento as Evento | null,
     declaracao: x.declaracaoVinculo,
+    declaracaoPrecos: x.declaracaoPrecos,
   };
   // Só volta classificada se foi classificada quando gravou.
   e.classificadoCom = x.situacao ? chaveClassificacao(e) : null;

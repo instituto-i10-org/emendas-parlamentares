@@ -62,6 +62,10 @@ const configuracaoSchema = z.object({
     .array(z.enum(["EM_ELABORACAO", "ENVIADO", "EM_TRAMITACAO", "APROVADO", "SANCIONADO", "VIGENTE", "ENCERRADO"]))
     .min(1, "Marque ao menos uma situação do projeto de lei em que ele recebe emendas."),
   validadeLinkEntidadeDias: z.number().int().min(1, "A validade do link vai de 1 a 90 dias.").max(90, "A validade do link vai de 1 a 90 dias."),
+  custoM2Referencia: z.preprocess((v) => (v === "" || v == null ? null : Number(v)), z.number().positive("O custo do m² precisa ser maior que zero.").max(1_000_000).nullable()).default(null),
+  custoM2Competencia: z.string().trim().max(40).nullable().default(null),
+  custoM2Fonte: z.string().trim().max(300).nullable().default(null),
+  custoM2Url: z.union([z.literal(""), z.url("Link do custo do m² inválido.").max(1000)]).nullable().default(null).transform((v) => v || null),
 });
 
 export async function salvarConfiguracao(entrada: z.input<typeof configuracaoSchema>, ciente = false): Promise<Resultado> {
@@ -491,6 +495,8 @@ const fonteSchema = z.object({
   orientacao: z.string().trim().min(10, "Diga em uma frase como pesquisar nesta fonte.").max(600),
   aplicaA: z.array(z.enum(APLICA_A)).max(APLICA_A.length),
   tipo: z.enum(TIPOS_REF),
+  destaque: z.boolean().default(false),
+  assinaturaPaga: z.boolean().default(false),
   ordem: z.number().int().min(0).max(10000),
 });
 

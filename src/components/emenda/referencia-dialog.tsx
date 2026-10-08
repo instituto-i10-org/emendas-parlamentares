@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { lerNumero } from "@/lib/emendas/estado";
-import { TIPOS_REFERENCIA, referenciaCompleta, type FontePreco, type ReferenciaPreco, type TipoReferencia } from "@/lib/riep";
+import { TIPOS_REFERENCIA, referenciaCompleta, urlDaFonte, type FontePreco, type ReferenciaPreco, type TipoReferencia } from "@/lib/riep";
 import { hojeIso } from "@/lib/utils";
 import { Campo, CampoNumero } from "./ui";
 
@@ -157,7 +157,7 @@ export function ReferenciaDialog({
           {oficial ? (
             <div className="rounded-box bg-soft px-4 py-3 text-sm">
               <a
-                href={oficial.url}
+                href={urlDaFonte(oficial, f.objeto || item?.descricao)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 font-bold text-navy underline-offset-2 hover:underline"
@@ -166,6 +166,10 @@ export function ReferenciaDialog({
                 <ExternalLink className="size-3.5" aria-hidden />
                 <span className="sr-only">(abre em nova aba)</span>
               </a>
+              {oficial.url.includes("{item}") && (f.objeto || item?.descricao) ? (
+                <p className="mt-1 text-xs text-muted-foreground">Abre já pesquisando «{(f.objeto || item?.descricao || "").trim()}».</p>
+              ) : null}
+              {oficial.assinaturaPaga ? <p className="mt-1 text-xs font-semibold text-warn">Esta tabela exige assinatura paga.</p> : null}
               <p className="mt-1 text-xs text-muted-foreground">{oficial.orientacao}</p>
             </div>
           ) : null}

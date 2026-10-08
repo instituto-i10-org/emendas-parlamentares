@@ -121,6 +121,10 @@ async function exercicio(podeGerir: boolean) {
               fontePrecoObrigatoria: c?.fontePrecoObrigatoria ?? true,
               situacoesEmendamento: c?.situacoesEmendamento ?? ["EM_TRAMITACAO"],
               validadeLinkEntidadeDias: c?.validadeLinkEntidadeDias ?? 10,
+              custoM2Referencia: num(c?.custoM2Referencia),
+              custoM2Competencia: c?.custoM2Competencia ?? null,
+              custoM2Fonte: c?.custoM2Fonte ?? null,
+              custoM2Url: c?.custoM2Url ?? null,
             }
           : null
       }
@@ -356,6 +360,8 @@ async function fontesPreco(podeEditar: boolean) {
         orientacao: f.orientacao,
         aplicaA: f.aplicaA,
         tipo: f.tipo,
+        destaque: f.destaque,
+        assinaturaPaga: f.assinaturaPaga,
         ordem: f.ordem,
         ativo: f.ativo,
         usos: f._count.referencias,

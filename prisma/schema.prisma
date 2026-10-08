@@ -361,8 +361,16 @@ model ConfiguracaoExercicio {
   situacoesEmendamento StatusInstrumento[] @default([EM_TRAMITACAO])
   // Fundamento normativo por extenso de cada parâmetro: { cotaIndividual: { texto, normaId } }.
   fundamentos          Json                @default("{}")
+
+  // --- obras: custo de referência do m² de construção ----------------------
+  // Usado para sugerir o item único "em m²" nas emendas de obra. Vem de
+  // referência oficial (ex.: custo médio do m² SINAPI/IBGE para SP).
+  custoM2Referencia   Decimal? @db.Decimal(12, 2)
+  custoM2Competencia  String?
+  custoM2Fonte        String?
+  custoM2Url          String?
   // Prazo padrão da diligência, em dias (RI, art. 210-C, § 2º: 5 dias).
-  prazoDiligenciaDias  Int                 @default(5)
+  prazoDiligenciaDias Int      @default(5)
 
   // --- preços e plano da entidade --------------------------------------------
   // Item com preço e sem fonte informada: bloqueia a submissão (verdadeiro) ou
@@ -877,6 +885,8 @@ model Emenda {
 
   // --- etapa 3 ---------------------------------------------------------------
   declaracaoVinculo Boolean   @default(false)
+  // O autor declara que pesquisou e informou os preços (responsabilidade dele).
+  declaracaoPrecos  Boolean   @default(false)
   submetidaEm       DateTime?
 
   // --- tramitação (Comissão) -------------------------------------------------
@@ -969,20 +979,24 @@ model ReferenciaPreco {
 // Fonte oficial de preço que o sistema indica ao autor da emenda, com o link
 // para pesquisar. O sistema não busca nem sugere preço: aponta onde buscar.
 model FontePrecoOficial {
-  id         String              @id @default(cuid())
-  nome       String              @unique
-  url        String
+  id             String              @id @default(cuid())
+  nome           String              @unique
+  url            String
   // Como pesquisar, em uma ou duas frases.
-  orientacao String
+  orientacao     String
   // Para que despesas serve: modelos de plano (CUSTEIO, OBRAS, EQUIPAMENTOS,
   // TERCEIRO_SETOR) e SAUDE. Vazio = serve para tudo.
-  aplicaA    String[]            @default([])
+  aplicaA        String[]            @default([])
   // Como a referência tirada desta fonte é classificada.
-  tipo       TipoReferenciaPreco
-  ordem      Int                 @default(0)
-  ativo      Boolean             @default(true)
-  createdAt  DateTime            @default(now())
-  updatedAt  DateTime            @updatedAt
+  tipo           TipoReferenciaPreco
+  // Fonte recomendada: aparece primeiro, em destaque (banco de preços i10).
+  destaque       Boolean             @default(false)
+  // Tabela que exige assinatura paga (CPOS/CDHU): o autor é avisado.
+  assinaturaPaga Boolean             @default(false)
+  ordem          Int                 @default(0)
+  ativo          Boolean             @default(true)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
 
   referencias ReferenciaPreco[]
 
@@ -1162,20 +1176,20 @@ model PerfilAcesso {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  passwordHash  String?
-  perfilId      String?
+  id             String    @id @default(cuid())
+  name           String?
+  email          String?   @unique
+  emailVerified  DateTime?
+  image          String?
+  passwordHash   String?
+  perfilId       String?
   // Desativado não entra; o histórico e a autoria continuam.
-  ativo         Boolean   @default(true)
+  ativo          Boolean   @default(true)
   // Conta criada pelo administrador (ou pelo comando do sistema vazio): no
   // primeiro login, troca a senha temporária e confere nome e e-mail.
-  primeiroAcesso Boolean  @default(false)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  primeiroAcesso Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   perfil              PerfilAcesso?        @relation(fields: [perfilId], references: [id], onDelete: SetNull)
   accounts            Account[]

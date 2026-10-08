@@ -1,21 +1,29 @@
 [
   {
+    "nome": "Banco de preços i10",
+    "url": "https://pnigp.vercel.app/banco-precos",
+    "orientacao": "Mediana e faixa de preço de compras públicas do mesmo item. Use \"Ver referência\" na linha de cada item para consultar sem sair da emenda.",
+    "aplicaA": [],
+    "tipo": "PAINEL",
+    "destaque": true
+  },
+  {
     "nome": "Pesquisa de Preços (Compras.gov.br)",
-    "url": "https://www.gov.br/compras/pt-br/sistemas/conheca-o-compras/pesquisa-de-precos",
-    "orientacao": "Pesquise pelo nome ou pelo código CATMAT/CATSER do item, limite às compras dos últimos 12 meses e anote a mediana e quantas compras entraram na conta.",
+    "url": "https://pesquisaprecos.compras.gov.br/pesquisa-precos-frontend-semlogin/",
+    "orientacao": "Versão pública, sem login. Pesquise pelo nome ou pelo código CATMAT/CATSER do item, limite às compras dos últimos 12 meses e anote a mediana e quantas compras entraram na conta.",
     "aplicaA": [],
     "tipo": "PAINEL"
   },
   {
     "nome": "Atas de registro de preços (PNCP)",
-    "url": "https://pncp.gov.br/app/atas",
+    "url": "https://pncp.gov.br/app/atas?q={item}&status=vigente&ufs=SP&pagina=1",
     "orientacao": "Procure uma ata vigente com o mesmo item. Anote o número da ata, o órgão que a gerencia, o item e o valor unitário.",
     "aplicaA": [],
     "tipo": "ATA"
   },
   {
     "nome": "Contratos de outros órgãos (PNCP)",
-    "url": "https://pncp.gov.br/app/contratos",
+    "url": "https://pncp.gov.br/app/contratos?q={item}&pagina=1",
     "orientacao": "Procure contratações recentes do mesmo item por outros municípios ou órgãos. Anote o número do contrato, o órgão e a data de assinatura.",
     "aplicaA": [],
     "tipo": "CONTRATACAO_OUTRO_ORGAO"
@@ -24,49 +32,75 @@
     "nome": "Bolsa Eletrônica de Compras de São Paulo (BEC/SP)",
     "url": "https://www.bec.sp.gov.br/",
     "orientacao": "Consulte os preços praticados nas compras do Estado de São Paulo para o mesmo item. Anote o código do item e o período consultado.",
-    "aplicaA": ["CUSTEIO", "EQUIPAMENTOS", "TERCEIRO_SETOR"],
+    "aplicaA": [
+      "CUSTEIO",
+      "EQUIPAMENTOS",
+      "TERCEIRO_SETOR"
+    ],
     "tipo": "PAINEL"
   },
   {
     "nome": "Banco de Preços em Saúde (Ministério da Saúde)",
     "url": "https://bps.saude.gov.br/",
     "orientacao": "Para medicamentos, materiais e equipamentos de saúde. Filtre por item e pelos últimos 12 meses e anote a mediana e o número de compras.",
-    "aplicaA": ["SAUDE"],
+    "aplicaA": [
+      "SAUDE"
+    ],
     "tipo": "BANCO_PRECOS_SAUDE"
   },
   {
     "nome": "Tabela de preços de medicamentos (CMED/Anvisa)",
     "url": "https://www.gov.br/anvisa/pt-br/assuntos/medicamentos/cmed/precos",
     "orientacao": "Preço máximo de venda ao governo para medicamentos. Anote a apresentação do medicamento e a data da tabela.",
-    "aplicaA": ["SAUDE"],
+    "aplicaA": [
+      "SAUDE"
+    ],
+    "tipo": "TABELA_OFICIAL"
+  },
+  {
+    "nome": "Custo médio do m² — SINAPI/IBGE",
+    "url": "https://ftp.ibge.gov.br/Precos_Custos_e_Indices_da_Construcao_Civil/Fasciculo_Indicadores_IBGE/",
+    "orientacao": "Para obras: valor oficial do m² de construção em São Paulo, publicado todo mês pelo IBGE (abra o caderno do mês mais recente). Use com o item único em m².",
+    "aplicaA": [
+      "OBRAS"
+    ],
     "tipo": "TABELA_OFICIAL"
   },
   {
     "nome": "SINAPI (Caixa)",
     "url": "https://www.caixa.gov.br/poder-publico/modernizacao-gestao/sinapi/Paginas/default.aspx",
     "orientacao": "Tabela oficial para obras e reformas. Use o relatório de São Paulo, anote o código da composição, o mês de referência e se é com ou sem desoneração.",
-    "aplicaA": ["OBRAS"],
+    "aplicaA": [
+      "OBRAS"
+    ],
     "tipo": "TABELA_OFICIAL"
   },
   {
     "nome": "Tabela CPOS/CDHU (São Paulo)",
     "url": "https://www.cdhu.sp.gov.br/web/guest/fornecedores/tabela-de-custos-cpos",
     "orientacao": "Tabela de custos de obras do Estado de São Paulo. Anote o código do serviço e a data-base da tabela.",
-    "aplicaA": ["OBRAS"],
-    "tipo": "TABELA_OFICIAL"
+    "aplicaA": [
+      "OBRAS"
+    ],
+    "tipo": "TABELA_OFICIAL",
+    "assinaturaPaga": true
   },
   {
     "nome": "Catálogo de serviços da FDE (obras escolares SP)",
     "url": "https://www.fde.sp.gov.br/",
     "orientacao": "Referência para obras e reformas em prédios escolares. Anote o código do serviço e a data-base.",
-    "aplicaA": ["OBRAS"],
+    "aplicaA": [
+      "OBRAS"
+    ],
     "tipo": "TABELA_OFICIAL"
   },
   {
     "nome": "SICRO (DNIT)",
     "url": "https://www.gov.br/dnit/pt-br/assuntos/planejamento-e-pesquisa/custos-referenciais/sistemas-de-custos/sicro",
     "orientacao": "Tabela oficial para obras de estradas, pavimentação e drenagem. Anote o código da composição, a região e o mês de referência.",
-    "aplicaA": ["OBRAS"],
+    "aplicaA": [
+      "OBRAS"
+    ],
     "tipo": "TABELA_OFICIAL"
   }
 ]

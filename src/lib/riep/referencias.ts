@@ -79,7 +79,22 @@ export type FontePreco = {
   orientacao: string;
   aplicaA: string[];
   tipo: TipoReferencia;
+  // Recomendada: aparece primeiro, em destaque.
+  destaque?: boolean;
+  // Exige assinatura paga (o autor é avisado).
+  assinaturaPaga?: boolean;
 };
+
+// O link da fonte para um item. Quando o endereço cadastrado tem "{item}", ele
+// é trocado pelo nome do item, e a fonte já abre com a busca feita (PNCP).
+// Sem item, o marcador sai vazio e a fonte abre na busca em branco.
+export const abreComItem = (f: Pick<FontePreco, "url">) => f.url.includes("{item}");
+export function urlDaFonte(f: Pick<FontePreco, "url">, item?: string | null): string {
+  return f.url.replaceAll("{item}", encodeURIComponent((item ?? "").trim()));
+}
+
+// Destaque primeiro; o resto na ordem do cadastro.
+export const ordenarFontes = (fontes: FontePreco[]) => [...fontes].sort((a, b) => Number(!!b.destaque) - Number(!!a.destaque));
 
 // As fontes que servem à emenda: as gerais (aplicaA vazio), as do modelo do
 // plano e, se a dotação é de saúde, as de saúde. Na ordem do cadastro.

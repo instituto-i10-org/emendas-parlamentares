@@ -81,6 +81,18 @@ export function Etapa3({
           ou subcontratados, vínculo conjugal, de união estável ou de parentesco até o terceiro grau (ADPF 854).
         </span>
       </label>
+
+      <label data-guia="nova-emenda.declaracao-precos" className="flex cursor-pointer gap-3 rounded-box bg-soft p-4 text-sm leading-relaxed">
+        <input
+          type="checkbox"
+          className="mt-1 size-4 shrink-0"
+          checked={e.declaracaoPrecos}
+          onChange={(ev) => atualizar({ declaracaoPrecos: ev.target.checked })}
+        />
+        <span>
+          <b>Declaração dos preços.</b> Declaro que pesquisei e informei os preços desta emenda. <span className="text-muted-foreground">Obrigatória para enviar.</span>
+        </span>
+      </label>
     </div>
   );
 }

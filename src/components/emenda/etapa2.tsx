@@ -29,6 +29,7 @@ import {
   quantidadeSugerida,
   referenciaAntiga,
   fontesParaEmenda,
+  urlDaFonte,
   parcelaDaDotacao,
   unidadeDiverge,
   rotuloReferencia,
@@ -40,6 +41,8 @@ import type { Atualizar, DerivadoEmenda } from "./editor";
 import { FontesPreco } from "./fontes-preco";
 import { LinkEntidade } from "./link-entidade";
 import { ReferenciaDialog } from "./referencia-dialog";
+import { VerReferencia } from "./ver-referencia";
+import { SugestaoObraM2 } from "./obra-m2";
 import { Ajuda, AreaTexto, Aviso, Campo, CampoNumero, Detalhes, Pilulas, Secao, Selo, TextoRico } from "./ui";
 
 export function Etapa2({
@@ -401,6 +404,8 @@ function MemoriaCalculo({
   const [quadroAberto, setQuadroAberto] = useState(false);
   const biblioteca = ctx.catalogo.objetos;
   const indicadas = fontesParaEmenda(ctx.fontesPreco, d.modelo, parcelaDaDotacao(d.dotacao) === "SAUDE");
+  // O banco recomendado (destaque) serve ao "Ver referência" de cada linha.
+  const banco = ctx.fontesPreco.find((f) => f.destaque) ?? null;
   const itensNum = e.itens.map((i) => ({
     descricao: i.descricao,
     quantidade: lerNumero(i.quantidade),
@@ -447,6 +452,17 @@ function MemoriaCalculo({
     <Secao guia="nova-emenda.memoria" titulo="Memória de cálculo" ajuda="As mesmas linhas das metas, agora com preço. Toda linha precisa dizer de qual fonte veio o valor.">
       <FontesPreco fontes={indicadas} orientacao={orientacao} />
 
+      {d.modelo === "OBRAS" && ctx.custoM2 ? (
+        <SugestaoObraM2
+          objeto={e.objeto}
+          custo={ctx.custoM2}
+          fonte={ctx.fontesPreco.find((f) => f.aplicaA.includes("OBRAS") && f.nome.includes("m²")) ?? null}
+          codigo={proximoCodigoReferencia(e.referencias)}
+          temItens={e.itens.some((i) => i.descricao.trim() || lerNumero(i.valorUnitario) > 0)}
+          aoAplicar={(r, item) => atualizar((x) => ({ referencias: [...x.referencias, r], itens: [item] }))}
+        />
+      ) : null}
+
       <div className="mt-4">
         <Tabela
           nome="itens"
@@ -471,14 +487,15 @@ function MemoriaCalculo({
                   value={it.descricao}
                   onChange={(ev) => mudarItem(i, { descricao: ev.target.value })}
                 />
-                {L?.resultado ? (
-                  <div className="mt-1">
+                <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                  {L?.resultado ? (
                     <Selo tipo={bloqueia(L.resultado) ? "bad" : L.resultado === "acessorio" ? "info" : "ok"}>
                       {ROTULO_RESULTADO[L.resultado]}
                       {bloqueia(L.resultado) ? " · bloqueia" : ""}
                     </Selo>
-                  </div>
-                ) : null}
+                  ) : null}
+                  {banco ? <VerReferencia item={it.descricao} urlBanco={urlDaFonte(banco)} /> : null}
+                </div>
               </div>,
               <input
                 key="u"

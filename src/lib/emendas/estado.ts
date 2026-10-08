@@ -36,6 +36,7 @@ export type EstadoEmenda = {
   instrumentoOutro: string;
   evento: Evento | null;
   declaracao: boolean;
+  declaracaoPrecos: boolean;
   // O proponente viu o aviso de possível duplicata e mandou seguir.
   confirmarDuplicata?: boolean;
 };
@@ -64,6 +65,7 @@ export const estadoInicial = (): EstadoEmenda => ({
   instrumentoOutro: "",
   evento: null,
   declaracao: false,
+  declaracaoPrecos: false,
 });
 
 // "R$ 1.234,56" → 1234.56. Aceita também número já sem máscara.
@@ -120,6 +122,7 @@ export function paraValidacao(
     instrumentoOutro: e.instrumentoOutro,
     evento: e.evento,
     declaracao: e.declaracao,
+    declaracaoPrecos: e.declaracaoPrecos,
   };
 }
 
@@ -198,5 +201,6 @@ export const estadoSchema = z.object({
     ])
     .nullable(),
   declaracao: z.boolean(),
+  declaracaoPrecos: z.boolean().default(false),
   confirmarDuplicata: z.boolean().optional(),
 });

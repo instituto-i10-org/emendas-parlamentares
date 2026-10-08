@@ -408,13 +408,14 @@ const GUIAS_LISTA: Guia[] = [
   {
     id: "nova-emenda.etapa2",
     titulo: "Nova emenda › Plano de trabalho",
-    versao: 1,
+    versao: 2,
     passos: [
       { ancora: "nova-emenda.modelo", titulo: "Modelo do plano", texto: "O modelo vem do tipo de despesa escolhido na etapa anterior e define o que o plano precisa ter." },
       { ancora: "nova-emenda.entidade", titulo: "Preenchimento pela entidade", texto: "Na execução indireta, gere um link para a própria entidade preencher o plano, sem precisar de login." },
       { ancora: "nova-emenda.justificativa", titulo: "Justificativa", texto: "Por que a emenda é necessária." },
       { ancora: "nova-emenda.metas", titulo: "Metas", texto: "Quem é beneficiado, a unidade e a quantidade, e a meta finalística." },
-      { ancora: "nova-emenda.memoria", titulo: "Memória de cálculo", texto: "Os itens com quantidade e preço, e a fonte oficial de onde veio cada preço. A soma é o valor da emenda." },
+      { ancora: "nova-emenda.responsabilidade", titulo: "Os preços são seus", texto: "O sistema indica onde pesquisar, com o banco de preços i10 em destaque, mas não preenche nem confere valores." },
+      { ancora: "nova-emenda.memoria", titulo: "Memória de cálculo", texto: "Os itens com quantidade e preço, e a fonte de onde veio cada preço. \"Ver referência\" mostra a mediana de compras públicas do item, só para consulta." },
       { ancora: "nova-emenda.cronograma", titulo: "Cronograma", texto: "Como o valor será desembolsado. A soma das parcelas tem de bater com o valor da emenda." },
       { ancora: "nova-emenda.rodape", titulo: "Seguir", texto: "Vá para a validação, volte, salve o rascunho ou visualize o plano." },
     ],
@@ -422,11 +423,12 @@ const GUIAS_LISTA: Guia[] = [
   {
     id: "nova-emenda.etapa3",
     titulo: "Nova emenda › Validar e submeter",
-    versao: 1,
+    versao: 2,
     passos: [
       { ancora: "nova-emenda.treze", titulo: "As treze verificações", texto: "Cada uma com o resultado (conforme, alerta ou falha) e a explicação. Uma falha impede o envio." },
       { ancora: "nova-emenda.pendencias", titulo: "Pendências", texto: "As conferências do sistema que ainda pedem atenção. Bloqueios impedem o envio; alertas, não." },
-      { ancora: "nova-emenda.declaracao", titulo: "Declaração", texto: "Marque a declaração de inexistência de vedação antes de enviar." },
+      { ancora: "nova-emenda.declaracao", titulo: "Declaração de vedação", texto: "Marque a declaração de inexistência de vedação antes de enviar." },
+      { ancora: "nova-emenda.declaracao-precos", titulo: "Declaração dos preços", texto: "Obrigatória: você declara que pesquisou e informou os preços desta emenda. Sem ela, a emenda não é enviada." },
       { ancora: "nova-emenda.submeter", titulo: "Submeter", texto: "Envia a emenda à Câmara. O servidor confere tudo de novo; se recusar, a tentativa fica registrada e você vê o motivo." },
     ],
   },

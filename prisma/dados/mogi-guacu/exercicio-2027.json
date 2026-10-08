@@ -65,5 +65,11 @@
    "date": "2027-04-30",
    "url": null
   }
- ]
+ ],
+ "m2Reference": {
+  "value": 2089.88,
+  "period": "ago/2026",
+  "source": "Custo médio do m² SINAPI/IBGE — São Paulo, com desoneração",
+  "url": "https://ftp.ibge.gov.br/Precos_Custos_e_Indices_da_Construcao_Civil/Fasciculo_Indicadores_IBGE/sinapi_202608caderno.pdf"
+ }
 }

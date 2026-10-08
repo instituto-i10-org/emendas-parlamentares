@@ -35,6 +35,8 @@ const envServidor = {
   DEMO_SENHA: "",
   // Guias de ajuda não abrem sozinhos nos testes (o spec dos guias liga pelo cookie).
   GUIAS_AUTOMATICOS: "false",
+  // Sem internet nos testes: o "Ver referência" mostra o aviso de indisponível.
+  BANCO_PRECOS_URL: "",
 };
 
 export default defineConfig({

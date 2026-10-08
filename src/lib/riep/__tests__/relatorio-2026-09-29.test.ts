@@ -142,6 +142,7 @@ function estado(objeto: string, trecho: string, item: string, extra: Partial<Est
     instrumentoOutro: "",
     evento: null,
     declaracao: true,
+    declaracaoPrecos: true,
     metaPlanejamento: null,
     ...extra,
   };

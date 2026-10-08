@@ -230,6 +230,7 @@ export default async function PlanoPage({ params }: { params: Promise<{ id: stri
                 "Inexistência de vínculo conjugal, de união estável ou de parentesco até o terceiro grau (ADPF 854)",
                 x.declaracaoVinculo ? "Confirmada" : pendente("Ainda não confirmada"),
               ],
+              ["Pesquisei e informei os preços desta emenda", x.declaracaoPrecos ? "Confirmada" : pendente("Ainda não confirmada")],
             ]}
           />
         </Secao>

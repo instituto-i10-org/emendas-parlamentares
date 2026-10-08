@@ -49,7 +49,8 @@ test.describe("Preço manual com fontes oficiais", () => {
     await criarRascunho(page, { execucao: "DIRETA", destino: DESTINOS.escola, objeto: "Reforma da cobertura da escola", valor: "150000" });
     await irParaPlano(page);
     const quadroObra = page.locator("div").filter({ has: page.getByText("Onde pesquisar o preço") }).first();
-    await expect(quadroObra.getByRole("link", { name: /SINAPI/ })).toBeVisible();
+    await expect(quadroObra.getByRole("link", { name: /SINAPI \(Caixa\)/ })).toBeVisible();
+    await expect(quadroObra.getByRole("link", { name: /Custo médio do m²/ })).toBeVisible();
     await expect(quadroObra.getByRole("link", { name: /SICRO/ })).toBeVisible();
   });
 

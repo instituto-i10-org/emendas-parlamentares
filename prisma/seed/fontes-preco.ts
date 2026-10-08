@@ -3,7 +3,7 @@ import { join } from "node:path";
 import type { PrismaClient } from "../../src/generated/prisma/client";
 import type { TipoReferenciaPreco } from "../../src/generated/prisma/enums";
 
-type Fonte = { nome: string; url: string; orientacao: string; aplicaA: string[]; tipo: TipoReferenciaPreco };
+type Fonte = { nome: string; url: string; orientacao: string; aplicaA: string[]; tipo: TipoReferenciaPreco; destaque?: boolean; assinaturaPaga?: boolean };
 
 // Fontes oficiais de preço indicadas ao autor. Valem para qualquer município:
 // o arquivo fica em prisma/dados/comum. Edição posterior é por Configurações;

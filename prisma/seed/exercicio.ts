@@ -42,6 +42,8 @@ export type ExercicioJson = {
   parameterBasis?: Record<string, string>;
   // Regras das treze verificações (modo e fundamento), quando o município as fixa.
   validationRules?: { code: string; mode: "BLOQUEANTE" | "ALERTA"; active?: boolean; basis: string }[];
+  // Custo de referência do m² de construção (obras), com procedência.
+  m2Reference?: { value: number; period: string; source: string; url: string };
 };
 
 // Exercícios com dados na pasta do município (exercicio-<ano>.json,
@@ -97,6 +99,14 @@ export async function semearExercicio(prisma: PrismaClient, ano: number) {
     icEpCodigo: ex.icEp,
     orgaosForaDasEmendas: ex.excludedOrgans,
     rotuloBase: ex.baseLabel,
+    ...(ex.m2Reference
+      ? {
+          custoM2Referencia: ex.m2Reference.value,
+          custoM2Competencia: ex.m2Reference.period,
+          custoM2Fonte: ex.m2Reference.source,
+          custoM2Url: ex.m2Reference.url,
+        }
+      : {}),
   };
   // Fundamentos só quando a pasta os traz: os escritos pela tela ficam.
   const fundamentos = ex.parameterBasis ? Object.fromEntries(Object.entries(ex.parameterBasis).map(([k, texto]) => [k, { texto, normaId: null }])) : undefined;

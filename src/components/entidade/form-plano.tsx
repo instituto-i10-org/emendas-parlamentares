@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { enviarPlanoEntidade } from "@/lib/actions/convite";
 import { totalPlanoEntidade, type ItemEntidade, type PlanoEntidade } from "@/lib/emendas/convite";
 import { lerNumero } from "@/lib/emendas/estado";
-import { BRL, type FontePreco } from "@/lib/riep";
+import { BRL, ordenarFontes, urlDaFonte, type FontePreco } from "@/lib/riep";
 import { hojeIso } from "@/lib/utils";
 
 const OUTRA = "__outra";
@@ -170,9 +170,9 @@ export function FormPlanoEntidade({
           Para cada item, pesquise o preço numa fonte oficial, informe o valor unitário e diga de onde tirou. As fontes indicadas abrem em nova aba.
         </p>
         <ul className="mb-4 grid gap-2 sm:grid-cols-2">
-          {indicadas.map((f) => (
+          {ordenarFontes(indicadas).map((f) => (
             <li key={f.id} className="rounded-field bg-soft px-3.5 py-2.5">
-              <a href={f.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-bold text-navy hover:underline">
+              <a href={urlDaFonte(f)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-bold text-navy hover:underline">
                 {f.nome}
                 <ExternalLink className="size-3.5" aria-hidden />
                 <span className="sr-only">(abre em nova aba)</span>

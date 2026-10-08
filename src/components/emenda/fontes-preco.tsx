@@ -1,8 +1,9 @@
 "use client";
 
 import { ExternalLink } from "lucide-react";
-import type { FontePreco } from "@/lib/riep";
-import { Ajuda, TextoRico } from "./ui";
+import { ordenarFontes, urlDaFonte, type FontePreco } from "@/lib/riep";
+import { cn } from "@/lib/utils";
+import { Ajuda, Selo, TextoRico } from "./ui";
 
 // Onde pesquisar o preço. O sistema não busca nem sugere valor: indica as
 // fontes oficiais que servem a esta emenda, com o link. O autor pesquisa,
@@ -23,6 +24,10 @@ export function FontesPreco({ fontes, orientacao }: { fontes: FontePreco[]; orie
           </p>
         </Ajuda>
       </div>
+      <p data-guia="nova-emenda.responsabilidade" className="mb-3 rounded-field border-l-4 border-warn bg-surface px-3.5 py-2.5 text-sm leading-relaxed">
+        <b>Os preços são de sua responsabilidade.</b> O sistema indica onde pesquisar e pode mostrar uma referência, mas não preenche nem
+        confere valores. Ao enviar, você declara que pesquisou e informou os preços desta emenda.
+      </p>
       {orientacao ? (
         <p className="mb-3 text-sm text-muted-foreground">
           <TextoRico texto={orientacao} />
@@ -30,10 +35,16 @@ export function FontesPreco({ fontes, orientacao }: { fontes: FontePreco[]; orie
       ) : null}
       {fontes.length ? (
         <ul className="grid gap-2 sm:grid-cols-2">
-          {fontes.map((f) => (
-            <li key={f.id} className="rounded-field bg-surface px-3.5 py-3">
+          {ordenarFontes(fontes).map((f) => (
+            <li key={f.id} className={cn("rounded-field bg-surface px-3.5 py-3", f.destaque && "ring-2 ring-navy/30 sm:col-span-2")}>
+              {f.destaque || f.assinaturaPaga ? (
+                <div className="mb-1 flex flex-wrap gap-1">
+                  {f.destaque ? <Selo tipo="ok">Recomendado</Selo> : null}
+                  {f.assinaturaPaga ? <Selo tipo="warn">assinatura paga</Selo> : null}
+                </div>
+              ) : null}
               <a
-                href={f.url}
+                href={urlDaFonte(f)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 text-sm font-bold text-navy underline-offset-2 hover:underline"

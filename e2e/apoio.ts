@@ -148,7 +148,7 @@ export async function emendaValida(page: Page, objeto: string): Promise<string> 
   const [fonte] = await sql<{ id: string }>(`select id from "FontePrecoOficial" where ativo order by ordem limit 1`);
   await sql(
     `update "Emenda" set justificativa = $2, "metaFinalistica" = $3, "agenteExecutor" = 'Secretaria Municipal de Saúde',
-       etapas = 'Planejamento → contratação → entrega', "declaracaoVinculo" = true, "quadroViabilidade" = $4, valor = 3000 where id = $1`,
+       etapas = 'Planejamento → contratação → entrega', "declaracaoVinculo" = true, "declaracaoPrecos" = true, "quadroViabilidade" = $4, valor = 3000 where id = $1`,
     [id, JUSTIFICATIVA, "Ampliar a acessibilidade dos pacientes atendidos na unidade.", JSON.stringify({ "EQUIPAMENTOS-0": "Sim", "EQUIPAMENTOS-1": "Não", "EQUIPAMENTOS-2": "Sim" })]
   );
   await sql(`insert into "MetaEmenda" (id, "emendaId", ordem, beneficiarios, unidade, quantidade) values ($1 || 'm', $1, 0, 'Pacientes da unidade', 'cadeira', 2)`, [id]);

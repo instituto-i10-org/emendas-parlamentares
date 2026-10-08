@@ -12,3 +12,4 @@ export * from "./validar";
 export * from "./sugerir";
 export * from "./base";
 export * from "./verificacoes";
+export * from "./obra-m2";

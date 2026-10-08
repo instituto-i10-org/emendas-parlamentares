@@ -70,6 +70,7 @@ function estadoAmbulancia(): EstadoValidacao {
     instrumentoOutro: "",
     evento: null,
     declaracao: true,
+    declaracaoPrecos: true,
     metaPlanejamento: null,
   };
 }

@@ -43,6 +43,8 @@ export type ContextoEmenda = {
   fontesPreco: FontePreco[];
   // Dias de validade do link da entidade.
   validadeLinkEntidadeDias: number;
+  // Custo de referência do m² de construção (obras); nulo = não parametrizado.
+  custoM2: { valor: number; competencia: string | null; fonte: string | null; url: string | null } | null;
   // O emendamento está aberto agora? (exercício, projeto de lei e prazo)
   emendamento: SituacaoEmendamento;
   // O que as treze verificações leem do exercício, além da base.
@@ -271,6 +273,15 @@ export const carregarContexto = cache(async (ano: number): Promise<ContextoEmend
     prazoEncerrado: !!prazoProtocolo && hojeBrasilia() > prazoProtocolo,
     fontesPreco: fontesDb,
     validadeLinkEntidadeDias: configuracao?.validadeLinkEntidadeDias ?? 10,
+    custoM2:
+      configuracao?.custoM2Referencia != null && Number(configuracao.custoM2Referencia) > 0
+        ? {
+            valor: Number(configuracao.custoM2Referencia),
+            competencia: configuracao.custoM2Competencia,
+            fonte: configuracao.custoM2Fonte,
+            url: configuracao.custoM2Url,
+          }
+        : null,
     emendamento: situacaoEmendamento({
       ano,
       exercicioStatus: exercicio.status,
@@ -286,7 +297,7 @@ export const carregarContexto = cache(async (ano: number): Promise<ContextoEmend
 // Fontes oficiais de preço ativas, na ordem do cadastro.
 export async function lerFontesPreco(): Promise<FontePreco[]> {
   const fontes = await prisma.fontePrecoOficial.findMany({ where: { ativo: true }, orderBy: [{ ordem: "asc" }, { nome: "asc" }] });
-  return fontes.map((f) => ({ id: f.id, nome: f.nome, url: f.url, orientacao: f.orientacao, aplicaA: f.aplicaA, tipo: f.tipo }));
+  return fontes.map((f) => ({ id: f.id, nome: f.nome, url: f.url, orientacao: f.orientacao, aplicaA: f.aplicaA, tipo: f.tipo, destaque: f.destaque, assinaturaPaga: f.assinaturaPaga }));
 }
 
 // Já apresentado pelo autor no exercício, sem contar a emenda em edição.

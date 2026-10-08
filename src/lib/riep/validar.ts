@@ -48,6 +48,8 @@ export type EstadoValidacao = {
   instrumentoOutro: string;
   evento: Evento | null;
   declaracao: boolean;
+  // "Declaro que pesquisei e informei os preços desta emenda." Obrigatória.
+  declaracaoPrecos: boolean;
   // Meta da ação da dotação, nas peças de planejamento.
   metaPlanejamento: MetaPlanejamento | null;
 };
@@ -440,6 +442,9 @@ export function validar(e: EstadoValidacao, ctx: ContextoValidacao): Checagem[] 
 
   if (e.declaracao) add("ok", "Declaração de inexistência de vedação", "Assinada pelo proponente");
   else add("warn", "Declaração pendente", "Marque a declaração de inexistência de vínculo até o 3º grau.");
+
+  if (e.declaracaoPrecos) add("ok", "Declaração dos preços", "O proponente declarou que pesquisou e informou os preços");
+  else add("bad", "Declaração dos preços pendente", "Marque «Declaro que pesquisei e informei os preços desta emenda» para enviar.");
 
   return out;
 }

@@ -196,6 +196,7 @@ export async function salvarEmenda(entrada: EstadoEmenda, submeter = false, anoT
     evento: eventoEfetivo(dotacao, e.evento),
     valor,
     declaracaoVinculo: e.declaracao,
+    declaracaoPrecos: e.declaracaoPrecos,
   };
 
   const salvo = await prisma.$transaction(async (tx) => {

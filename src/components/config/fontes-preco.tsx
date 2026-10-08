@@ -7,7 +7,7 @@ import { Campo, Selo } from "@/components/emenda/ui";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { alternarFontePrecoAtiva, salvarFontePreco } from "@/lib/actions/config";
-import { TIPOS_REFERENCIA, type TipoReferencia } from "@/lib/riep";
+import { TIPOS_REFERENCIA, urlDaFonte, type TipoReferencia } from "@/lib/riep";
 import { BotaoAcao, useAcao } from "./comum";
 
 export type FontePrecoConfig = {
@@ -17,6 +17,8 @@ export type FontePrecoConfig = {
   orientacao: string;
   aplicaA: string[];
   tipo: TipoReferencia;
+  destaque: boolean;
+  assinaturaPaga: boolean;
   ordem: number;
   ativo: boolean;
   usos: number;
@@ -31,7 +33,7 @@ const APLICA: [string, string][] = [
 ];
 const rotuloAplica = (k: string) => APLICA.find(([c]) => c === k)?.[1] ?? k;
 
-const vazia = { id: "", nome: "", url: "", orientacao: "", aplicaA: [] as string[], tipo: "PAINEL" as TipoReferencia, ordem: "100" };
+const vazia = { id: "", nome: "", url: "", orientacao: "", aplicaA: [] as string[], tipo: "PAINEL" as TipoReferencia, destaque: false, assinaturaPaga: false, ordem: "100" };
 
 // Fontes oficiais de preço que a tela da emenda indica ao autor, com o link.
 export function AbaFontesPreco({ fontes, podeEditar }: { fontes: FontePrecoConfig[]; podeEditar: boolean }) {
@@ -49,13 +51,16 @@ export function AbaFontesPreco({ fontes, podeEditar }: { fontes: FontePrecoConfi
           <div key={x.id} className={`rounded-box bg-soft p-4 text-sm ${x.ativo ? "" : "opacity-60"}`}>
             <div className="flex flex-wrap items-start gap-2">
               <div className="min-w-0 flex-1">
-                <a href={x.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 font-bold text-navy hover:underline">
+                <a href={urlDaFonte(x)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 font-bold text-navy hover:underline">
                   {x.nome}
                   <ExternalLink className="size-3.5" aria-hidden />
                 </a>
                 <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{x.orientacao}</p>
                 <div data-guia="config.precos.aplica" className="mt-2 flex flex-wrap gap-1">
                   <Selo>{TIPOS_REFERENCIA[x.tipo].nome.split(" (")[0]}</Selo>
+                  {x.destaque ? <Selo tipo="ok">recomendada</Selo> : null}
+                  {x.assinaturaPaga ? <Selo tipo="warn">assinatura paga</Selo> : null}
+                  {x.url.includes("{item}") ? <Selo tipo="info">abre já com o item</Selo> : null}
                   {x.aplicaA.length ? x.aplicaA.map((a) => <Selo key={a} tipo="info">{rotuloAplica(a)}</Selo>) : <Selo tipo="info">Todas as despesas</Selo>}
                   {!x.ativo ? <Selo tipo="warn">desativada</Selo> : null}
                   <span className="text-2xs text-muted-foreground">{x.usos} uso(s) em emendas</span>
@@ -66,7 +71,7 @@ export function AbaFontesPreco({ fontes, podeEditar }: { fontes: FontePrecoConfi
                   <Button
                     size="xs"
                     variant="ghost"
-                    onClick={() => setF({ id: x.id, nome: x.nome, url: x.url, orientacao: x.orientacao, aplicaA: x.aplicaA, tipo: x.tipo, ordem: String(x.ordem) })}
+                    onClick={() => setF({ id: x.id, nome: x.nome, url: x.url, orientacao: x.orientacao, aplicaA: x.aplicaA, tipo: x.tipo, destaque: x.destaque, assinaturaPaga: x.assinaturaPaga, ordem: String(x.ordem) })}
                   >
                     Editar
                   </Button>
@@ -97,6 +102,8 @@ export function AbaFontesPreco({ fontes, podeEditar }: { fontes: FontePrecoConfi
                         orientacao: f.orientacao,
                         aplicaA: f.aplicaA as never,
                         tipo: f.tipo,
+                        destaque: f.destaque,
+                        assinaturaPaga: f.assinaturaPaga,
                         ordem: Number(f.ordem) || 0,
                       }),
                     () => setF(null)
@@ -111,7 +118,13 @@ export function AbaFontesPreco({ fontes, podeEditar }: { fontes: FontePrecoConfi
               <Campo rotulo="Nome" obrigatorio htmlFor="fp-n" className="col-span-full">
                 <input id="fp-n" className="campo h-12 px-3.5" value={f.nome} onChange={(e) => setF({ ...f, nome: e.target.value })} />
               </Campo>
-              <Campo rotulo="Endereço (link)" obrigatorio htmlFor="fp-u" className="col-span-full">
+              <Campo
+                rotulo="Endereço (link)"
+                obrigatorio
+                htmlFor="fp-u"
+                className="col-span-full"
+                dica="Se o site aceita a busca pelo endereço, escreva {item} onde vai o nome do item (ex.: https://pncp.gov.br/app/atas?q={item}): a fonte abre já pesquisando."
+              >
                 <input id="fp-u" className="campo h-12 px-3.5" placeholder="https://" value={f.url} onChange={(e) => setF({ ...f, url: e.target.value })} />
               </Campo>
               <Campo rotulo="Como pesquisar" obrigatorio htmlFor="fp-o" className="col-span-full">
@@ -129,6 +142,16 @@ export function AbaFontesPreco({ fontes, podeEditar }: { fontes: FontePrecoConfi
               <Campo rotulo="Ordem" htmlFor="fp-or">
                 <input id="fp-or" className="campo h-12 px-3.5 tnum" value={f.ordem} onChange={(e) => setF({ ...f, ordem: e.target.value })} />
               </Campo>
+              <div className="col-span-full flex flex-wrap gap-x-6 gap-y-2">
+                <label className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" checked={f.destaque} onChange={(e) => setF({ ...f, destaque: e.target.checked })} />
+                  Recomendada (aparece primeiro, em destaque)
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" checked={f.assinaturaPaga} onChange={(e) => setF({ ...f, assinaturaPaga: e.target.checked })} />
+                  Exige assinatura paga
+                </label>
+              </div>
               <fieldset className="col-span-full">
                 <legend className="mb-1.5 text-sm font-semibold text-label">Aparece para (nenhum marcado: todas as despesas)</legend>
                 <div className="flex flex-wrap gap-x-5 gap-y-2">

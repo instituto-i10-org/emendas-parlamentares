@@ -38,6 +38,10 @@ export type ConfiguracaoTela = {
   fontePrecoObrigatoria: boolean;
   validadeLinkEntidadeDias: number;
   situacoesEmendamento: string[];
+  custoM2Referencia: number | null;
+  custoM2Competencia: string | null;
+  custoM2Fonte: string | null;
+  custoM2Url: string | null;
 };
 
 const SITUACOES_PL: [string, string][] = [
@@ -143,6 +147,10 @@ function FormConfiguracao({ c, podeGerir }: { c: ConfiguracaoTela; podeGerir: bo
     fontePrecoObrigatoria: c.fontePrecoObrigatoria,
     situacoesEmendamento: c.situacoesEmendamento,
     validadeLinkEntidadeDias: String(c.validadeLinkEntidadeDias),
+    custoM2Referencia: c.custoM2Referencia !== null ? formatarNumero(c.custoM2Referencia, 2) : "",
+    custoM2Competencia: txt(c.custoM2Competencia),
+    custoM2Fonte: txt(c.custoM2Fonte),
+    custoM2Url: txt(c.custoM2Url),
   });
   const conf = useConfirmarImpacto();
   const pendente = conf.pendente;
@@ -186,6 +194,10 @@ function FormConfiguracao({ c, podeGerir }: { c: ConfiguracaoTela; podeGerir: bo
         fontePrecoObrigatoria: f.fontePrecoObrigatoria,
         situacoesEmendamento: f.situacoesEmendamento,
         validadeLinkEntidadeDias: Number(f.validadeLinkEntidadeDias),
+        custoM2Referencia: f.custoM2Referencia ? lerNumero(f.custoM2Referencia) : null,
+        custoM2Competencia: nulo(f.custoM2Competencia),
+        custoM2Fonte: nulo(f.custoM2Fonte),
+        custoM2Url: nulo(f.custoM2Url),
       } as Parameters<typeof salvarConfiguracao>[0];
     conf.pedir({
       titulo: `Salvar os parâmetros de ${c.ano}`,
@@ -311,6 +323,25 @@ function FormConfiguracao({ c, podeGerir }: { c: ConfiguracaoTela; podeGerir: bo
         </div>
         <Campo rotulo="Validade do link da entidade (dias)" htmlFor="c-link" dica="Depois disso o link deixa de abrir.">
           <input id="c-link" className="campo h-12 px-3.5 tnum" {...m("validadeLinkEntidadeDias")} />
+        </Campo>
+      </div>
+
+      <h3 className="mb-2 antena">Obras: custo de referência do m² de construção</h3>
+      <p className="mb-2 text-xs text-muted-foreground">
+        Nas emendas de obra, a memória de cálculo sugere um item único em m² com este valor. Vazio: a sugestão não aparece.
+      </p>
+      <div data-guia="config.exercicio.m2" className="mb-5 grid grid-cols-3 gap-3.5 max-md:grid-cols-1">
+        <Campo rotulo="Custo do m² (R$)" htmlFor="c-m2">
+          <CampoNumero id="c-m2" valor={f.custoM2Referencia} aoMudar={(v) => setF({ ...f, custoM2Referencia: v })} disabled={!podeGerir} />
+        </Campo>
+        <Campo rotulo="Competência" htmlFor="c-m2c" dica="Mês de referência (ex.: ago/2026).">
+          <input id="c-m2c" className="campo h-12 px-3.5" {...m("custoM2Competencia")} />
+        </Campo>
+        <Campo rotulo="Fonte" htmlFor="c-m2f">
+          <input id="c-m2f" className="campo h-12 px-3.5" {...m("custoM2Fonte")} />
+        </Campo>
+        <Campo rotulo="Link da fonte" htmlFor="c-m2u" className="col-span-full">
+          <input id="c-m2u" className="campo h-12 px-3.5" placeholder="https://" {...m("custoM2Url")} />
         </Campo>
       </div>
 
