@@ -4,6 +4,8 @@
   "codigoIbge": "3530706",
   "nomeCamara": "Câmara Municipal de Mogi Guaçu",
   "nomePrefeitura": "Prefeitura Municipal de Mogi Guaçu",
+  "enderecoCamara": "Rua José Colombo, 235 — Mogi Guaçu-SP",
+  "rodapeDocumentos": "Rua José Colombo, 235 – Loteamento Morro do Ouro – CEP 13840-065 – Mogi Guaçu-SP – Telefone (19) 3851-6100 – contato@camaramogiguacu.sp.gov.br – www.camaramogiguacu.sp.gov.br",
   "anos": [2026, 2027],
   "destinos": "destinos-2026.json",
   "emendasImportadas": { "arquivo": "emendas-impositivas-2026.json", "ano": 2026 },

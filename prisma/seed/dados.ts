@@ -16,6 +16,9 @@ export type MunicipioJson = {
   codigoIbge: string;
   nomeCamara: string;
   nomePrefeitura: string;
+  // Documentos da Câmara (capa do processo e rodapé). Opcionais.
+  enderecoCamara?: string;
+  rodapeDocumentos?: string;
   // Exercícios com exercicio-<ano>.json, loa-<ano>.json e unidades-<ano>.json.
   anos: number[];
   destinos: string;

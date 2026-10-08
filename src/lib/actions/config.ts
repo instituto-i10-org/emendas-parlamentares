@@ -66,6 +66,8 @@ const configuracaoSchema = z.object({
   custoM2Competencia: z.string().trim().max(40).nullable().default(null),
   custoM2Fonte: z.string().trim().max(300).nullable().default(null),
   custoM2Url: z.union([z.literal(""), z.url("Link do custo do m² inválido.").max(1000)]).nullable().default(null).transform((v) => v || null),
+  fichaReserva: z.string().trim().max(20).nullable().default(null).transform((v) => v || null),
+  fundamentoDocumento: z.string().trim().max(2000).nullable().default(null).transform((v) => v || null),
 });
 
 export async function salvarConfiguracao(entrada: z.input<typeof configuracaoSchema>, ciente = false): Promise<Resultado> {

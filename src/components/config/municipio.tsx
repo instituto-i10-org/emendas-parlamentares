@@ -13,7 +13,7 @@ import { useAcao } from "./comum";
 export function AbaMunicipio({ dados, podeEditar }: { dados: DadosMunicipio; podeEditar: boolean }) {
   const [f, setF] = useState<DadosMunicipio>(dados);
   const { pendente, executar } = useAcao();
-  const muda = (k: keyof DadosMunicipio) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setF({ ...f, [k]: e.target.value });
+  const muda = (k: keyof DadosMunicipio) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => setF({ ...f, [k]: e.target.value });
   return (
     <Cartao guia="config.municipio.dados"
       titulo="Município"
@@ -45,6 +45,14 @@ export function AbaMunicipio({ dados, podeEditar }: { dados: DadosMunicipio; pod
           </Campo>
           <Campo rotulo="Nome da Prefeitura" htmlFor="mu-prefeitura" dica="Ex.: Prefeitura Municipal de …">
             <input id="mu-prefeitura" className="campo h-12 px-3.5" maxLength={200} value={f.nomePrefeitura} onChange={muda("nomePrefeitura")} />
+          </Campo>
+        </div>
+        <div className="grid grid-cols-2 gap-4 max-md:grid-cols-1">
+          <Campo rotulo="Endereço da Câmara" htmlFor="mu-endereco" dica="Sai na capa do processo do documento da emenda.">
+            <input id="mu-endereco" className="campo h-12 px-3.5" maxLength={200} value={f.enderecoCamara ?? ""} onChange={muda("enderecoCamara")} />
+          </Campo>
+          <Campo rotulo="Rodapé dos documentos" htmlFor="mu-rodape" dica="Endereço completo, telefone e e-mail, no pé de cada página.">
+            <textarea id="mu-rodape" className="campo min-h-[70px] p-3.5" maxLength={400} value={f.rodapeDocumentos ?? ""} onChange={muda("rodapeDocumentos")} />
           </Campo>
         </div>
       </fieldset>

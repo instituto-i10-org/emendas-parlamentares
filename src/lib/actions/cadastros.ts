@@ -42,11 +42,11 @@ export async function salvarMunicipio(entrada: DadosMunicipio): Promise<Resultad
   if (falhou(user)) return user;
   const p = municipioSchema.safeParse(entrada);
   if (!p.success) return erro(p.error);
-  const dados = { ...p.data, codigoIbge: p.data.codigoIbge || null, nomeCamara: p.data.nomeCamara || null, nomePrefeitura: p.data.nomePrefeitura || null };
+  const dados = { ...p.data, codigoIbge: p.data.codigoIbge || null, nomeCamara: p.data.nomeCamara || null, nomePrefeitura: p.data.nomePrefeitura || null, enderecoCamara: p.data.enderecoCamara || null, rodapeDocumentos: p.data.rodapeDocumentos || null };
   await prisma.$transaction(async (tx) => {
     const antes = await tx.municipio.findFirst();
     const salvo = antes ? await tx.municipio.update({ where: { id: antes.id }, data: dados }) : await tx.municipio.create({ data: dados });
-    const campos = (m: typeof salvo | null) => (m ? { nome: m.nome, uf: m.uf, codigoIbge: m.codigoIbge, nomeCamara: m.nomeCamara, nomePrefeitura: m.nomePrefeitura } : null);
+    const campos = (m: typeof salvo | null) => (m ? { nome: m.nome, uf: m.uf, codigoIbge: m.codigoIbge, nomeCamara: m.nomeCamara, nomePrefeitura: m.nomePrefeitura, enderecoCamara: m.enderecoCamara, rodapeDocumentos: m.rodapeDocumentos } : null);
     await auditar(tx, { usuarioId: user.id, entidade: "Municipio", entidadeId: salvo.id, acao: antes ? "ATUALIZAR" : "CRIAR", dadosAntes: campos(antes), dadosDepois: campos(salvo) });
   });
   return pronto("Dados do município salvos.");

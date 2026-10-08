@@ -42,6 +42,8 @@ export type ConfiguracaoTela = {
   custoM2Competencia: string | null;
   custoM2Fonte: string | null;
   custoM2Url: string | null;
+  fichaReserva: string | null;
+  fundamentoDocumento: string | null;
 };
 
 const SITUACOES_PL: [string, string][] = [
@@ -151,6 +153,8 @@ function FormConfiguracao({ c, podeGerir }: { c: ConfiguracaoTela; podeGerir: bo
     custoM2Competencia: txt(c.custoM2Competencia),
     custoM2Fonte: txt(c.custoM2Fonte),
     custoM2Url: txt(c.custoM2Url),
+    fichaReserva: txt(c.fichaReserva),
+    fundamentoDocumento: txt(c.fundamentoDocumento),
   });
   const conf = useConfirmarImpacto();
   const pendente = conf.pendente;
@@ -198,6 +202,8 @@ function FormConfiguracao({ c, podeGerir }: { c: ConfiguracaoTela; podeGerir: bo
         custoM2Competencia: nulo(f.custoM2Competencia),
         custoM2Fonte: nulo(f.custoM2Fonte),
         custoM2Url: nulo(f.custoM2Url),
+        fichaReserva: nulo(f.fichaReserva),
+        fundamentoDocumento: nulo(f.fundamentoDocumento),
       } as Parameters<typeof salvarConfiguracao>[0];
     conf.pedir({
       titulo: `Salvar os parâmetros de ${c.ano}`,
@@ -342,6 +348,19 @@ function FormConfiguracao({ c, podeGerir }: { c: ConfiguracaoTela; podeGerir: bo
         </Campo>
         <Campo rotulo="Link da fonte" htmlFor="c-m2u" className="col-span-full">
           <input id="c-m2u" className="campo h-12 px-3.5" placeholder="https://" {...m("custoM2Url")} />
+        </Campo>
+      </div>
+
+      <h3 className="mb-2 antena">Documento da emenda</h3>
+      <p className="mb-2 text-xs text-muted-foreground">
+        O Art. 2º do documento anula parcialmente esta dotação, no valor da emenda (em geral, a Reserva de Contingência). A ficha é procurada no projeto de lei do exercício.
+      </p>
+      <div data-guia="config.exercicio.documento" className="mb-5 grid grid-cols-[180px_1fr] gap-3.5 max-md:grid-cols-1">
+        <Campo rotulo="Dotação de reserva das emendas (ficha)" htmlFor="c-reserva">
+          <input id="c-reserva" className="campo h-12 px-3.5 tnum" inputMode="numeric" maxLength={20} {...m("fichaReserva")} />
+        </Campo>
+        <Campo rotulo="Fundamento legal do documento" htmlFor="c-fundoc" dica="Uma norma por linha. Sai em “Fundamento legal” no documento da emenda.">
+          <textarea id="c-fundoc" className="campo min-h-[70px] p-3.5" maxLength={2000} {...m("fundamentoDocumento")} />
         </Campo>
       </div>
 

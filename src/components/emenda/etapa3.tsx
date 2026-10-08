@@ -1,5 +1,7 @@
 "use client";
 
+import { FileText } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import type { SituacaoEmendamento } from "@/lib/emendas/emendamento";
 import type { EstadoEmenda } from "@/lib/emendas/estado";
 import type { Verificacao } from "@/lib/riep";
@@ -123,6 +125,22 @@ function Declaracoes({
             <b>Declaração dos preços.</b> Declaro que pesquisei e informei os preços desta emenda. <span className="text-muted-foreground">Obrigatória para enviar.</span>
           </span>
         </label>
+      </div>
+      <div data-guia="nova-emenda.documento" className="flex flex-wrap items-center gap-3 rounded-box border border-line p-4 text-sm">
+        <FileText className="size-5 shrink-0 text-navy" aria-hidden />
+        <div className="min-w-0 flex-1">
+          <b>Documento da emenda — minuta.</b> Capa do processo, a emenda e o plano de trabalho anexo, como serão protocolados. O número e a data de
+          entrada saem no envio. <span className="text-muted-foreground">Mostra o que está salvo.</span>
+        </div>
+        {e.id ? (
+          <Button variant="ghost" asChild>
+            <a href={`/emendas/${e.id}/documento`} target="_blank" rel="noopener">
+              Ver minuta
+            </a>
+          </Button>
+        ) : (
+          <span className="text-muted-foreground">Salve o rascunho para ver a minuta.</span>
+        )}
       </div>
       {d.resumo.bloqueios > 0 ? (
         <Aviso tipo="bad" titulo={`${d.resumo.bloqueios} bloqueio${d.resumo.bloqueios > 1 ? "s" : ""} impede${d.resumo.bloqueios > 1 ? "m" : ""} o envio`}>

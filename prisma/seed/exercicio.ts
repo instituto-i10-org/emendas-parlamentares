@@ -44,6 +44,9 @@ export type ExercicioJson = {
   validationRules?: { code: string; mode: "BLOQUEANTE" | "ALERTA"; active?: boolean; basis: string }[];
   // Custo de referência do m² de construção (obras), com procedência.
   m2Reference?: { value: number; period: string; source: string; url: string };
+  // Documento da emenda: ficha da dotação anulada no Art. 2º e fundamento legal.
+  reserveFicha?: string;
+  documentBasis?: string[];
 };
 
 // Exercícios com dados na pasta do município (exercicio-<ano>.json,
@@ -62,10 +65,17 @@ function tipoNorma(titulo: string): TipoNorma {
 export async function semearExercicio(prisma: PrismaClient, ano: number) {
   const ex = lerExercicio(ano);
 
-  if (!(await prisma.municipio.findFirst())) {
-    const m = lerMunicipio();
+  const m = lerMunicipio();
+  const existente = await prisma.municipio.findFirst();
+  if (!existente) {
     await prisma.municipio.create({
-      data: { nome: m.nome, uf: m.uf, codigoIbge: m.codigoIbge, nomeCamara: m.nomeCamara, nomePrefeitura: m.nomePrefeitura },
+      data: { nome: m.nome, uf: m.uf, codigoIbge: m.codigoIbge, nomeCamara: m.nomeCamara, nomePrefeitura: m.nomePrefeitura, enderecoCamara: m.enderecoCamara ?? null, rodapeDocumentos: m.rodapeDocumentos ?? null },
+    });
+  } else if (existente.nome === m.nome && (!existente.enderecoCamara || !existente.rodapeDocumentos)) {
+    // Base anterior aos documentos: completa só o que está vazio; o escrito pela tela fica.
+    await prisma.municipio.update({
+      where: { id: existente.id },
+      data: { enderecoCamara: existente.enderecoCamara || m.enderecoCamara || null, rodapeDocumentos: existente.rodapeDocumentos || m.rodapeDocumentos || null },
     });
   }
 
@@ -107,6 +117,8 @@ export async function semearExercicio(prisma: PrismaClient, ano: number) {
           custoM2Url: ex.m2Reference.url,
         }
       : {}),
+    ...(ex.reserveFicha ? { fichaReserva: ex.reserveFicha } : {}),
+    ...(ex.documentBasis ? { fundamentoDocumento: ex.documentBasis.join("\n") } : {}),
   };
   // Fundamentos só quando a pasta os traz: os escritos pela tela ficam.
   const fundamentos = ex.parameterBasis ? Object.fromEntries(Object.entries(ex.parameterBasis).map(([k, texto]) => [k, { texto, normaId: null }])) : undefined;
