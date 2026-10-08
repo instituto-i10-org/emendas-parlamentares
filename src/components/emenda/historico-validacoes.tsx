@@ -35,7 +35,7 @@ export function HistoricoValidacoes({ validacoes }: { validacoes: ValidacaoTela[
             </summary>
             <div className="border-t border-hair p-3.5">
               {v.verificacoes.length ? (
-                <RelatorioVerificacoes verificacoes={v.verificacoes} complementares={v.complementares} valida={v.valida} />
+                <RelatorioVerificacoes compacta verificacoes={v.verificacoes} complementares={v.complementares} valida={v.valida} />
               ) : (
                 <p className="text-xs text-muted-foreground">Validação anterior às treze verificações: só as conferências do motor antigo.</p>
               )}

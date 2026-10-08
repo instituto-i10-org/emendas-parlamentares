@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { ExternalLink, Plus, Trash2 } from "lucide-react";
+import { useConfirmar } from "@/components/app/confirmar";
 import { Campo, CampoNumero } from "@/components/emenda/ui";
 import { Button } from "@/components/ui/button";
 import { enviarPlanoEntidade } from "@/lib/actions/convite";
@@ -53,6 +54,7 @@ export function FormPlanoEntidade({
   const [erro, setErro] = useState("");
   const [enviado, setEnviado] = useState(false);
   const [pendente, iniciar] = useTransition();
+  const { confirmar, janela } = useConfirmar();
 
   // Rascunho local: sobrevive a fechar a aba, nunca sai do navegador.
   useEffect(() => {
@@ -80,9 +82,9 @@ export function FormPlanoEntidade({
   const mudarMeta = (i: number, parcial: Partial<PlanoEntidade["metas"][number]>) =>
     setP({ ...p, metas: p.metas.map((m, j) => (j === i ? { ...m, ...parcial } : m)) });
 
-  function enviar() {
+  async function enviar() {
     setErro("");
-    if (!window.confirm("Enviar o plano? Depois do envio este link deixa de funcionar e não é possível alterar.")) return;
+    if (!(await confirmar({ titulo: "Enviar o plano", mensagem: "Depois do envio este link deixa de funcionar e não é possível alterar o plano.", rotulo: "Enviar plano" }))) return;
     iniciar(async () => {
       const r = await enviarPlanoEntidade(codigo, { ...p, parcelas: p.parcelas.filter((x) => x.trim()) });
       if (!r.ok) {
@@ -111,6 +113,7 @@ export function FormPlanoEntidade({
 
   return (
     <section className="grid gap-6 rounded-card bg-surface p-7 shadow-card max-md:px-4 max-md:py-5">
+      {janela}
       <div>
         <h2 className="mb-3 text-md font-bold">1. Quem está preenchendo</h2>
         <div className="grid grid-cols-2 gap-3.5 max-sm:grid-cols-1">
@@ -309,7 +312,7 @@ export function FormPlanoEntidade({
         </p>
       ) : null}
       <div className="flex flex-wrap items-center gap-3">
-        <Button onClick={enviar} disabled={pendente}>
+        <Button onClick={() => void enviar()} disabled={pendente}>
           {pendente ? "Enviando…" : "Enviar plano ao gabinete"}
         </Button>
         <span className="text-xs text-muted-foreground">O que você digitou fica salvo neste navegador até o envio.</span>

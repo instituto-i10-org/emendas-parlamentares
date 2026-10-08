@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ApagarEmendaTeste } from "@/components/emenda/apagar-emenda-teste";
 import { Pagina } from "@/components/emenda/avisos-pagina";
 import { EditorEmenda } from "@/components/emenda/editor";
+import { AbasLateral } from "@/components/emenda/abas-lateral";
 import { HistoricoValidacoes, type ValidacaoTela } from "@/components/emenda/historico-validacoes";
 import { LinhaChecagem } from "@/components/emenda/linha-checagem";
 import { RelatorioVerificacoes } from "@/components/emenda/relatorio-verificacoes";
@@ -21,7 +22,7 @@ import { getCurrentUser } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Emenda — Emendas360" };
 
-export default async function EmendaPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function EmendaPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ etapa?: string }> }) {
   const { id } = await params;
   const user = await getCurrentUser();
   const x = await buscarEmenda(id);
@@ -44,7 +45,19 @@ export default async function EmendaPage({ params }: { params: Promise<{ id: str
       x.status === "RASCUNHO" && ultimo?.de === "INVALIDA" && ultimo.texto?.startsWith("Devolvida ao autor:")
         ? { texto: ultimo.texto.replace(/^Devolvida ao autor:\s*/, ""), quando: DATA_HORA(ultimo.criadoEm) }
         : null;
-    return <EditorEmenda ctx={ctx} inicial={paraEstado(x)} aplicado={aplicado} autor={x.autor.nome} diligencia={diligencia} devolucao={devolucao} />;
+    // Depois de salvar, o editor volta na etapa em que a pessoa estava.
+    const etapa = Number((await searchParams).etapa);
+    return (
+      <EditorEmenda
+        ctx={ctx}
+        inicial={paraEstado(x)}
+        aplicado={aplicado}
+        autor={x.autor.nome}
+        diligencia={diligencia}
+        devolucao={devolucao}
+        etapaInicial={etapa === 2 || etapa === 3 ? etapa : 1}
+      />
+    );
   }
 
   const checks = (x.validacoes[0]?.itens ?? []) as Checagem[];
@@ -181,54 +194,65 @@ export default async function EmendaPage({ params }: { params: Promise<{ id: str
           ) : null}
         </section>
         <aside className="grid min-w-0 content-start gap-4">
-          <div data-guia="emenda.relatorio" className="rounded-card bg-surface p-[22px] shadow-card">
-            <h2 className="mb-3 text-md font-bold">Relatório da validação</h2>
-            {ultima ? (
-              <RelatorioVerificacoes
-                verificacoes={ultima.verificacoes}
-                complementares={ultima.complementares}
-                valida={ultima.valida}
-                cabecalho={`${DATA_HORA(ultima.executadaEm)} · ${ultima.quem}`}
-              />
-            ) : checks.length ? (
-              // Remetida antes das treze verificações: só as conferências do motor.
-              <div className="divide-y divide-hair">
-                {checks
-                  .filter((c) => c.nivel !== "ok")
-                  .map((c, i) => (
-                    <LinhaChecagem key={i} c={c} />
-                  ))}
-                <p className="pt-3 text-xs text-muted-foreground">{checks.filter((c) => c.nivel === "ok").length} verificações concluídas sem pendência.</p>
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">Ainda não submetida.</p>
-            )}
-          </div>
-          <div data-guia="emenda.validacoes" className="rounded-card bg-surface p-[22px] shadow-card">
-            <h2 className="mb-3 text-md font-bold">Histórico de validações</h2>
-            <HistoricoValidacoes validacoes={validacoes} />
-          </div>
-          <div data-guia="emenda.situacoes" className="rounded-card bg-surface p-[22px] shadow-card">
-            <h2 className="mb-3 text-md font-bold">Histórico de situações</h2>
-            {x.historico.length ? (
-              <ol className="grid gap-2 text-sm">
-                {x.historico.map((h) => (
-                  <li key={h.id} className="rounded-md bg-soft px-3 py-2">
-                    <b>
-                      {h.de ? `${STATUS_EMENDA[h.de]?.rotulo ?? h.de} → ` : ""}
-                      {STATUS_EMENDA[h.para]?.rotulo ?? h.para}
-                    </b>
-                    <span className="block text-xs text-muted-foreground">
-                      {DATA_HORA(h.criadoEm)} · {h.usuario?.name ?? h.usuario?.email ?? "sistema"}
-                    </span>
-                    {h.texto ? <span className="mt-0.5 block text-xs whitespace-pre-line">{h.texto}</span> : null}
-                  </li>
-                ))}
-              </ol>
-            ) : (
-              <p className="text-sm text-muted-foreground">Nenhuma mudança de situação registrada.</p>
-            )}
-          </div>
+          <AbasLateral
+            abas={[
+              {
+                id: "validacao",
+                rotulo: "Validação",
+                guia: "emenda.relatorio",
+                conteudo: ultima ? (
+                  <RelatorioVerificacoes
+                    compacta
+                    verificacoes={ultima.verificacoes}
+                    complementares={ultima.complementares}
+                    valida={ultima.valida}
+                    cabecalho={`${DATA_HORA(ultima.executadaEm)} · ${ultima.quem}`}
+                  />
+                ) : checks.length ? (
+                  // Remetida antes das treze verificações: só as conferências do motor.
+                  <div className="divide-y divide-hair">
+                    {checks
+                      .filter((c) => c.nivel !== "ok")
+                      .map((c, i) => (
+                        <LinhaChecagem key={i} c={c} />
+                      ))}
+                    <p className="pt-3 text-xs text-muted-foreground">{checks.filter((c) => c.nivel === "ok").length} verificações concluídas sem pendência.</p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Ainda não submetida.</p>
+                ),
+              },
+              {
+                id: "validacoes",
+                rotulo: "Validações anteriores",
+                guia: "emenda.validacoes",
+                conteudo: <HistoricoValidacoes validacoes={validacoes} />,
+              },
+              {
+                id: "situacoes",
+                rotulo: "Situações",
+                guia: "emenda.situacoes",
+                conteudo: x.historico.length ? (
+                  <ol className="grid gap-2 text-sm">
+                    {x.historico.map((h) => (
+                      <li key={h.id} className="rounded-md bg-soft px-3 py-2">
+                        <b>
+                          {h.de ? `${STATUS_EMENDA[h.de]?.rotulo ?? h.de} → ` : ""}
+                          {STATUS_EMENDA[h.para]?.rotulo ?? h.para}
+                        </b>
+                        <span className="block text-xs text-muted-foreground">
+                          {DATA_HORA(h.criadoEm)} · {h.usuario?.name ?? h.usuario?.email ?? "sistema"}
+                        </span>
+                        {h.texto ? <span className="mt-0.5 block text-xs whitespace-pre-line">{h.texto}</span> : null}
+                      </li>
+                    ))}
+                  </ol>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Nenhuma mudança de situação registrada.</p>
+                ),
+              },
+            ]}
+          />
         </aside>
       </div>
     </Pagina>

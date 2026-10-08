@@ -7,7 +7,7 @@ import { Ajuda } from "@/components/ui/ajuda";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { ContextoEmenda, DestinoTela } from "@/lib/emendas/contexto";
-import { chaveClassificacao, lerNumero, type EstadoEmenda } from "@/lib/emendas/estado";
+import { chaveClassificacao, formatarNumero, lerNumero, type EstadoEmenda } from "@/lib/emendas/estado";
 import {
   BRL,
   audesp,
@@ -57,11 +57,13 @@ function rotuloSinal(texto: string): string {
 }
 
 // Sinalizações: alertam, não bloqueiam. Selos curtos; o detalhe fica no balão.
-function Sinalizacoes({ sinais }: { sinais: string[] }) {
+// O pretendido acima do autorizado vem com o atalho para igualar os dois.
+function Sinalizacoes({ sinais, ajustarAoAutorizado }: { sinais: string[]; ajustarAoAutorizado?: { valor: number; aplicar: () => void } }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
       {sinais.map((s, i) => (
-        <Tooltip key={i}>
+        <span key={i} className="inline-flex flex-wrap items-center gap-2">
+        <Tooltip>
           <TooltipTrigger asChild>
             <button
               type="button"
@@ -75,6 +77,12 @@ function Sinalizacoes({ sinais }: { sinais: string[] }) {
             <TextoRico texto={s} />
           </TooltipContent>
         </Tooltip>
+        {ajustarAoAutorizado && s.includes("excede o valor autorizado") ? (
+          <Button type="button" variant="surface" size="sm" onClick={ajustarAoAutorizado.aplicar}>
+            Ajustar ao autorizado ({BRL(ajustarAoAutorizado.valor)})
+          </Button>
+        ) : null}
+        </span>
       ))}
       <Ajuda titulo="Sinalizações">
         Sinalização não é bloqueio: nada aqui impede o avanço. O valor conferido de verdade é a soma da memória de cálculo, no passo 2, e a
@@ -972,7 +980,22 @@ function ResultadoClassificacao({
         </>
       ) : null}
 
-      {sinais.length ? <Sinalizacoes sinais={sinais} /> : null}
+      {sinais.length ? (
+        <Sinalizacoes
+          sinais={sinais}
+          ajustarAoAutorizado={
+            d.dotacao && d.dotacao.autorizado > 0
+              ? {
+                  valor: d.dotacao.autorizado,
+                  aplicar: () => {
+                    atualizar({ pretendido: formatarNumero(d.dotacao!.autorizado, 2, "R$ ") });
+                    toast("Valor pretendido ajustado ao autorizado da dotação.");
+                  },
+                }
+              : undefined
+          }
+        />
+      ) : null}
 
       {c.situacao !== "OBICE" && d.dotacao ? <Camadas c={c} dot={d.dotacao} ctx={ctx} /> : null}
       <Matriz gnd={c.gnd} mod={c.mod} elemento={elemTxt} requerido={c.situacao === "OBICE"} />

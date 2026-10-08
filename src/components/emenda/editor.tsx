@@ -104,6 +104,7 @@ export function EditorEmenda({
   autor,
   diligencia = null,
   devolucao = null,
+  etapaInicial = 1,
 }: {
   ctx: ContextoEmenda;
   inicial: EstadoEmenda;
@@ -113,10 +114,12 @@ export function EditorEmenda({
   diligencia?: { numero: number | null; motivo: string; ate: string | null } | null;
   // Devolvida ao autor pela análise técnica (saneamento), com o apontamento.
   devolucao?: { texto: string; quando: string } | null;
+  // Etapa em que o editor abre (o salvamento leva a etapa no endereço).
+  etapaInicial?: number;
 }) {
   const router = useRouter();
   const [e, setE] = useState<EstadoEmenda>(inicial);
-  const [etapa, setEtapa] = useState(1);
+  const [etapa, setEtapa] = useState(etapaInicial);
   const [destinos, setDestinos] = useState(ctx.destinos);
   const [gravando, setGravando] = useState(false);
   const [duplicata, setDuplicata] = useState<{ numero: number | null; objeto: string; status: string } | null>(null);
@@ -175,12 +178,26 @@ export function EditorEmenda({
     setEtapa(n);
   }
 
-  // Cada etapa começa do topo.
+  // Cada etapa começa do topo. O endereço guarda a etapa da emenda já salva,
+  // para recarregar ou voltar nela.
   useEffect(() => {
     window.scrollTo({ top: 0 });
+    if (!e.id) return;
+    const url = new URL(window.location.href);
+    if (etapa > 1) url.searchParams.set("etapa", String(etapa));
+    else url.searchParams.delete("etapa");
+    window.history.replaceState(window.history.state, "", url);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [etapa]);
 
-  async function gravar(submeter = false, confirmarDuplicata = false) {
+  // Abriu numa etapa adiante sem classificação válida: volta ao passo 1.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (etapa > 1 && (!d.classificacao || !d.avanca)) setEtapa(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function gravar(submeter = false, confirmarDuplicata = false, opcoes: { gerarLink?: boolean } = {}) {
     if (gravando) return;
     if (submeter && !d.resumo.pode) {
       toast("Revise as pendências antes de submeter.");
@@ -215,7 +232,14 @@ export function EditorEmenda({
         return;
       }
       toast("Rascunho salvo.");
-      if (!e.id) router.replace(`/emendas/${r.id}`, { scroll: false });
+      // Primeiro salvamento: o endereço passa a ser o da emenda, mantendo a
+      // etapa em que a pessoa estava (e, se pedido, gerando o link da entidade).
+      if (!e.id) {
+        const q = new URLSearchParams();
+        if (etapa > 1) q.set("etapa", String(etapa));
+        if (opcoes.gerarLink) q.set("gerarLink", "1");
+        router.replace(`/emendas/${r.id}${q.toString() ? `?${q}` : ""}`, { scroll: false });
+      }
     } finally {
       setGravando(false);
     }
@@ -436,7 +460,7 @@ export function EditorEmenda({
               descartar={diligencia ? null : descartar}
             />
           ) : etapa === 2 ? (
-            <Etapa2 e={e} d={d} ctx={ctx} atualizar={atualizar} autor={autor} alterado={alterado} />
+            <Etapa2 e={e} d={d} ctx={ctx} atualizar={atualizar} autor={autor} alterado={alterado} salvarEGerarLink={() => gravar(false, false, { gerarLink: true })} gravando={gravando} />
           ) : (
             <Etapa3 e={e} d={d} atualizar={atualizar} emendamento={ctx.emendamento} podeRemeter={podeRemeter} recusa={recusa} />
           )}

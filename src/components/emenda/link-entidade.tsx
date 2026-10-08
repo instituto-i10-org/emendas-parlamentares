@@ -1,14 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useState, useTransition } from "react";
-import { Copy, Link2 } from "lucide-react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { Copy, Link2, Save } from "lucide-react";
+import { useConfirmar } from "@/components/app/confirmar";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { aplicarPlanoEntidade, gerarConvite, listarConvites, revogarConvite, type ConviteTela } from "@/lib/actions/convite";
 import { totalPlanoEntidade } from "@/lib/emendas/convite";
 import { BRL, DATA_HORA } from "@/lib/riep";
 import type { Atualizar } from "./editor";
-import { Aviso, Secao, Selo } from "./ui";
+import { Secao, Selo } from "./ui";
 
 const ROTULO: Record<ConviteTela["situacao"], string> = {
   VALIDO: "aguardando a entidade",
@@ -21,10 +22,25 @@ const ROTULO: Record<ConviteTela["situacao"], string> = {
 // Link para a entidade beneficiária preencher o plano sem cadastro. De uso
 // único, com validade, revogável a qualquer tempo e sem efeito depois que a
 // emenda sai de rascunho. O gabinete vê o envio e decide trazê-lo ao rascunho.
-export function LinkEntidade({ emendaId, alterado, atualizar }: { emendaId: string | null; alterado: boolean; atualizar: Atualizar }) {
+export function LinkEntidade({
+  emendaId,
+  alterado,
+  atualizar,
+  salvarEGerar,
+  gravando = false,
+}: {
+  emendaId: string | null;
+  alterado: boolean;
+  atualizar: Atualizar;
+  // Antes do primeiro salvamento: salva o rascunho e gera o link em seguida.
+  salvarEGerar?: () => void;
+  gravando?: boolean;
+}) {
   const [convites, setConvites] = useState<ConviteTela[] | null>(null);
   const [novo, setNovo] = useState<{ url: string; expiraEm: string } | null>(null);
   const [pendente, iniciar] = useTransition();
+  const { confirmar, janela } = useConfirmar();
+  const gerouSozinho = useRef(false);
 
   const recarregar = useCallback(() => {
     if (!emendaId) return;
@@ -37,26 +53,60 @@ export function LinkEntidade({ emendaId, alterado, atualizar }: { emendaId: stri
 
   useEffect(recarregar, [recarregar]);
 
-  if (!emendaId) {
-    return (
-      <Secao guia="nova-emenda.entidade" titulo="Preenchimento pela entidade">
-        <Aviso tipo="info">Salve o rascunho para gerar o link que a entidade usa para preencher este plano de trabalho.</Aviso>
-      </Secao>
-    );
-  }
-
   const ativo = convites?.find((c) => c.situacao === "VALIDO") ?? null;
   const enviados = convites?.filter((c) => c.situacao === "USADO") ?? [];
 
-  function gerar() {
+  async function gerar(automatico = false) {
     if (!emendaId) return;
-    if (ativo && !window.confirm("Já existe um link aguardando a entidade. Gerar outro cancela o anterior. Continuar?")) return;
+    if (
+      !automatico &&
+      ativo &&
+      !(await confirmar({
+        titulo: "Gerar novo link",
+        mensagem: "Já existe um link aguardando a entidade. Gerar outro cancela o anterior.",
+        rotulo: "Gerar novo link",
+      }))
+    )
+      return;
     iniciar(async () => {
       const r = await gerarConvite(emendaId);
       if (!r.ok) return void toast.error(r.erro);
       setNovo({ url: `${window.location.origin}/publica/plano/${r.codigo}`, expiraEm: r.expiraEm });
       recarregar();
     });
+  }
+
+  // Veio de "Salvar rascunho e gerar link": gera assim que a emenda tem número
+  // de rascunho, uma vez, e tira o pedido do endereço.
+  useEffect(() => {
+    if (!emendaId || gerouSozinho.current || convites === null) return;
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("gerarLink") !== "1") return;
+    gerouSozinho.current = true;
+    url.searchParams.delete("gerarLink");
+    window.history.replaceState(window.history.state, "", url);
+    void gerar(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [emendaId, convites]);
+
+  if (!emendaId) {
+    return (
+      <Secao guia="nova-emenda.entidade" titulo="Preenchimento pela entidade">
+        <div className="grid gap-3 rounded-box bg-info-bg p-4 text-sm">
+          <p>
+            A entidade pode preencher este plano de trabalho por um link, sem precisar de cadastro. Para gerar o link, o rascunho precisa estar
+            salvo.
+          </p>
+          {salvarEGerar ? (
+            <div>
+              <Button size="sm" onClick={salvarEGerar} disabled={gravando}>
+                <Save /> Salvar rascunho e gerar link
+              </Button>
+            </div>
+          ) : null}
+        </div>
+      </Secao>
+    );
   }
 
   async function copiar(url: string) {
@@ -84,12 +134,15 @@ export function LinkEntidade({ emendaId, alterado, atualizar }: { emendaId: stri
                 <Copy /> Copiar link
               </Button>
             </div>
-            <p className="mt-2 text-xs text-muted-foreground">Vale até {DATA_HORA(new Date(novo.expiraEm))}, para um único envio.</p>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Envie este link à entidade por e-mail ou mensagem. Ela preenche o plano sem cadastro; quando enviar, o plano aparece aqui, nesta
+              seção, para você trazer ao rascunho. Vale até {DATA_HORA(new Date(novo.expiraEm))}, para um único envio.
+            </p>
           </div>
         ) : null}
 
         <div className="flex flex-wrap items-center gap-2">
-          <Button size="sm" variant="surface" onClick={gerar} disabled={pendente}>
+          <Button size="sm" variant="surface" onClick={() => void gerar()} disabled={pendente}>
             <Link2 /> {ativo ? "Gerar novo link" : "Gerar link para a entidade"}
           </Button>
           {ativo ? (
@@ -101,16 +154,16 @@ export function LinkEntidade({ emendaId, alterado, atualizar }: { emendaId: stri
                 size="sm"
                 variant="ghost"
                 disabled={pendente}
-                onClick={() =>
-                  window.confirm("Cancelar o link? A entidade não poderá mais usá-lo.") &&
+                onClick={async () => {
+                  if (!(await confirmar({ titulo: "Cancelar o link", mensagem: "A entidade não poderá mais usar este link.", rotulo: "Cancelar link", destrutiva: true }))) return;
                   iniciar(async () => {
                     const r = await revogarConvite(ativo.id);
                     if (!r.ok) return void toast.error(r.erro);
                     setNovo(null);
                     toast("Link cancelado.");
                     recarregar();
-                  })
-                }
+                  });
+                }}
               >
                 Cancelar link
               </Button>
@@ -134,8 +187,16 @@ export function LinkEntidade({ emendaId, alterado, atualizar }: { emendaId: stri
               <Button
                 size="sm"
                 disabled={pendente}
-                onClick={() => {
-                  if (alterado && !window.confirm("O plano da entidade substitui metas, itens, fontes, etapas e cronograma deste rascunho. Continuar?")) return;
+                onClick={async () => {
+                  if (
+                    alterado &&
+                    !(await confirmar({
+                      titulo: "Trazer o plano da entidade",
+                      mensagem: "O plano da entidade substitui metas, itens, fontes, etapas e cronograma deste rascunho.",
+                      rotulo: "Trazer para o plano",
+                    }))
+                  )
+                    return;
                   iniciar(async () => {
                     const r = await aplicarPlanoEntidade(c.id);
                     if (!r.ok) return void toast.error(r.erro);
@@ -167,6 +228,7 @@ export function LinkEntidade({ emendaId, alterado, atualizar }: { emendaId: stri
           </details>
         ) : null}
       </div>
+      {janela}
     </Secao>
   );
 }

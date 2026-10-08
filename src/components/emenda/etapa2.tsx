@@ -49,6 +49,8 @@ export function Etapa2({
   atualizar,
   autor,
   alterado = false,
+  salvarEGerarLink,
+  gravando = false,
 }: {
   e: EstadoEmenda;
   d: DerivadoEmenda;
@@ -56,6 +58,9 @@ export function Etapa2({
   atualizar: Atualizar;
   autor: string;
   alterado?: boolean;
+  // Rascunho ainda não salvo: salva e já gera o link da entidade.
+  salvarEGerarLink?: () => void;
+  gravando?: boolean;
 }) {
   const c = d.classificacao;
   const dot = d.dotacao;
@@ -114,7 +119,7 @@ export function Etapa2({
         <p className="mt-3 text-xs text-muted-foreground">Para mudar qualquer linha deste quadro, volte ao passo 1 e reclassifique.</p>
       </Detalhes>
 
-      {e.execucao === "INDIRETA" ? <LinkEntidade emendaId={e.id} alterado={alterado} atualizar={atualizar} /> : null}
+      {e.execucao === "INDIRETA" ? <LinkEntidade emendaId={e.id} alterado={alterado} atualizar={atualizar} salvarEGerar={salvarEGerarLink} gravando={gravando} /> : null}
 
       <div className="mt-6 grid gap-5">
         <Campo
@@ -258,6 +263,7 @@ function Metas({
       )}
 
       <Tabela
+        nome="metas"
         cabecalho={[
           ["Beneficiários *", ""],
           ["Unidade *", ""],
@@ -443,13 +449,15 @@ function MemoriaCalculo({
 
       <div className="mt-4">
         <Tabela
+          nome="itens"
           cabecalho={[
-            ["Item *", ""],
-            ["Un.", "w-[96px]"],
-            ["Qtd *", "text-right w-[90px]"],
-            ["Valor unitário *", "text-right w-[140px]"],
-            ["Valor total", "text-right w-[120px]"],
-            ["Fonte do preço *", "w-[220px]"],
+            // O item leva a maior parte da largura: é o que precisa ser lido.
+            ["Item *", "w-[34%] min-w-[220px]"],
+            ["Un.", "w-[88px]"],
+            ["Qtd *", "text-right w-[80px]"],
+            ["Valor unitário *", "text-right w-[130px]"],
+            ["Valor total", "text-right w-[116px]"],
+            ["Fonte do preço *", "w-[200px]"],
           ]}
           linhas={e.itens.map((it, i) => {
             const L = resultadoLinha(i);
@@ -939,22 +947,29 @@ function Cronograma({ e, valor, atualizar }: { e: EstadoEmenda; valor: number; a
 
 // ---------------------------------------------------------------- tabela
 
-// Tabela editável: vira cartões no celular. Cada linha tem lixeira e "+".
+// Tabela editável: vira cartões quando o formulário é estreito (celular, ou o
+// formulário ao lado do resumo), para o item caber inteiro. Cada linha tem
+// lixeira e "+".
 function Tabela({
   cabecalho,
   linhas,
   aoRemover,
   aoAdicionar,
+  nome,
 }: {
+  // Nome da tabela (vira atributo para localizá-la mesmo quando, no espaço
+  // estreito, as linhas viram cartões e o cabeçalho some).
+  nome?: string;
   cabecalho: [string, string][];
   linhas: React.ReactNode[][];
   aoRemover: (i: number) => void;
   aoAdicionar: (i: number) => void;
 }) {
   return (
-    <div className="overflow-x-auto max-sm:overflow-visible">
-      <table className="w-full border-separate border-spacing-x-2 border-spacing-y-1.5 max-sm:block">
-        <thead className="max-sm:hidden">
+    <div className="@container" data-tabela={nome}>
+    <div className="overflow-x-auto @max-[760px]:overflow-visible">
+      <table className="w-full border-separate border-spacing-x-2 border-spacing-y-1.5 @max-[760px]:block">
+        <thead className="@max-[760px]:hidden">
           <tr>
             {cabecalho.map(([t, cls]) => (
               <th key={t} className={cn("px-0 text-left text-2xs font-bold tracking-[0.04em] text-muted-foreground uppercase", cls)}>
@@ -964,18 +979,18 @@ function Tabela({
             <th className="w-[72px]" />
           </tr>
         </thead>
-        <tbody className="max-sm:grid max-sm:gap-2.5">
+        <tbody className="@max-[760px]:grid @max-[760px]:gap-2.5">
           {linhas.map((cels, i) => (
-            <tr key={i} className="align-top max-sm:grid max-sm:grid-cols-2 max-sm:gap-2.5 max-sm:rounded-box max-sm:bg-soft max-sm:p-3">
+            <tr key={i} className="linha-cartao align-top @max-[760px]:grid @max-[760px]:grid-cols-2 @max-[760px]:gap-2.5 @max-[760px]:rounded-box @max-[760px]:bg-soft @max-[760px]:p-3">
               {cels.map((cel, j) => (
-                <td key={j} className="p-0 max-sm:first:col-span-2">
-                  <span className="mb-1 hidden text-2xs font-bold tracking-[0.04em] text-muted-foreground uppercase max-sm:block">
+                <td key={j} className="p-0 @max-[760px]:first:col-span-2">
+                  <span className="mb-1 hidden text-2xs font-bold tracking-[0.04em] text-muted-foreground uppercase @max-[760px]:block">
                     {cabecalho[j][0].replace(" *", "")}
                   </span>
                   {cel}
                 </td>
               ))}
-              <td className="p-0 pt-1.5 whitespace-nowrap max-sm:col-span-2 max-sm:text-right">
+              <td className="p-0 pt-1.5 whitespace-nowrap @max-[760px]:col-span-2 @max-[760px]:text-right">
                 <button
                   type="button"
                   aria-label="Remover linha"
@@ -999,6 +1014,7 @@ function Tabela({
           ))}
         </tbody>
       </table>
+    </div>
     </div>
   );
 }
