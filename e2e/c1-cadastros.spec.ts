@@ -68,11 +68,14 @@ test.describe("C1 — cadastros pela tela", () => {
       await page.getByRole("button", { name: "Subir Área Teste C1 renomeada" }).click();
       await expect.poll(async () => (await ordem()).indexOf("Área Teste C1 renomeada")).toBe(antes.indexOf("Área Teste C1 renomeada") - 1);
 
-      // Saúde tem objetos: recusa com a lista.
+      // Saúde tem objetos: a janela já mostra a lista e não oferece excluir.
       await page.locator("tr", { has: page.locator('[data-area="Saúde"]') }).getByRole("button", { name: "Excluir" }).click();
-      await page.getByRole("dialog").getByRole("button", { name: "Excluir área" }).click();
-      await expect(page.getByText(/tem \d+ objeto\(s\) da biblioteca ligado\(s\).*Mude estes objetos de área antes de excluir/)).toBeVisible();
-      await page.getByRole("dialog").getByRole("button", { name: "Cancelar" }).click();
+      const janela = page.getByRole("dialog");
+      await expect(janela.getByText(/não pode ser excluída: \d+ objeto\(s\)/)).toBeVisible();
+      await expect(janela.getByRole("listitem", { name: undefined }).filter({ hasText: "Ambulância" })).toBeVisible();
+      await expect(janela.getByRole("button", { name: "Excluir área" })).toHaveCount(0);
+      await expect(janela.getByRole("link", { name: "Ir para a Biblioteca de objetos" })).toHaveAttribute("href", "/config?aba=biblioteca");
+      await janela.getByRole("button", { name: "Fechar" }).last().click();
       expect((await sql(`select 1 from "AreaAplicacao" where nome = 'Saúde'`)).length).toBe(1);
 
       // A área de teste, sem objetos, sai.

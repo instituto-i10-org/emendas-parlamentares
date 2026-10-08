@@ -73,6 +73,24 @@ test.describe("C2 — guias de ajuda", () => {
     await expect.poll(async () => (await vistos("admin")).find((v) => v.guia === "inicio")?.concluidoEm).not.toBeFalsy();
   });
 
+  test("T-G-8 Esc não fecha o guia; as setas avançam e voltam", async ({ page }) => {
+    await entrar(page, "admin");
+    await page.goto("/inicio");
+    await page.getByRole("button", { name: "Ver ajuda" }).click();
+    await expect(balao(page)).toContainText("Passo 1 de");
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(500);
+    await expect(balao(page)).toBeVisible();
+    await page.keyboard.press("ArrowRight");
+    await expect(balao(page)).toContainText("Passo 2 de");
+    await page.keyboard.press("ArrowLeft");
+    await expect(balao(page)).toContainText("Passo 1 de");
+    // Nada foi gravado como visto pelo Esc.
+    expect((await vistos("admin")).find((v) => v.guia === "inicio")).toBeUndefined();
+    await balao(page).getByRole("button", { name: "Fechar o guia" }).click();
+    await expect(balao(page)).toBeHidden();
+  });
+
   test("T-G-3 pular todos marca todos os guias; nenhum abre mais sozinho", async ({ page }) => {
     await entrar(page, "admin");
     await ligarAutomaticos(page);

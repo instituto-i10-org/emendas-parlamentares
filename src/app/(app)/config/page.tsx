@@ -363,14 +363,14 @@ async function municipio(podeEditar: boolean) {
 async function areas(podeEditar: boolean) {
   const ano = await getAnoAtivo();
   const [lista, unidades] = await Promise.all([
-    prisma.areaAplicacao.findMany({ orderBy: [{ ordem: "asc" }, { nome: "asc" }], include: { _count: { select: { objetos: true } } } }),
+    prisma.areaAplicacao.findMany({ orderBy: [{ ordem: "asc" }, { nome: "asc" }], include: { objetos: { select: { rotulo: true }, orderBy: { rotulo: "asc" } } } }),
     ano ? prisma.unidadeOrcamentaria.findMany({ where: { exercicio: { ano } }, select: { codigo: true } }) : [],
   ]);
   return (
     <AbaAreas
       podeEditar={podeEditar}
       unidades={unidades.map((u) => u.codigo)}
-      areas={lista.map((a) => ({ id: a.id, nome: a.nome, orgaos: a.orgaos, unidadePadrao: a.unidadePadrao, objetos: a._count.objetos }))}
+      areas={lista.map((a) => ({ id: a.id, nome: a.nome, orgaos: a.orgaos, unidadePadrao: a.unidadePadrao, objetos: a.objetos.length, nomesObjetos: a.objetos.map((o) => o.rotulo) }))}
     />
   );
 }

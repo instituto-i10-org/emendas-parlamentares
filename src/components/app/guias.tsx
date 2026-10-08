@@ -114,7 +114,10 @@ export function GuiasProvider({
       animate: true,
       smoothScroll: true,
       allowClose: true,
-      allowKeyboardControl: true,
+      // Esc não fecha o guia (fechar sem querer marcava como pulado); as setas
+      // continuam navegando pelo tratamento abaixo. Fechar só pelo X ou pelos
+      // botões "Pular".
+      allowKeyboardControl: false,
       // Clique fora do balão não fecha (evita perder o guia sem querer).
       overlayClickBehavior: () => {},
       overlayColor: "#061840",
@@ -146,13 +149,27 @@ export function GuiasProvider({
         popover.wrapper.append(pular);
       },
       onDoneClick: () => finalizar("CONCLUIDO"),
-      // Fechar pelo X ou pela tecla Esc.
+      // Fechar pelo X.
       onDestroyStarted: () => finalizar("PULADO"),
       onDestroyed: () => {
+        window.removeEventListener("keydown", setas, true);
         ativo.current = null;
         idAtivo.current = null;
       },
     });
+    // Setas avançam e voltam; Esc é ignorado.
+    const setas = (ev: KeyboardEvent) => {
+      if (!d.isActive()) return;
+      if (ev.key === "Escape") {
+        ev.stopPropagation();
+        ev.preventDefault();
+      } else if (ev.key === "ArrowRight") {
+        if (d.hasNextStep()) d.moveNext();
+      } else if (ev.key === "ArrowLeft") {
+        if (d.hasPreviousStep()) d.movePrevious();
+      }
+    };
+    window.addEventListener("keydown", setas, true);
     ativo.current = d;
     idAtivo.current = guia.id;
     d.drive();

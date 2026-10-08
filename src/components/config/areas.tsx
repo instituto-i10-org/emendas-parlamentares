@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { useConfirmarImpacto } from "@/components/app/confirmar-impacto";
 import { Cartao, TabelaDados } from "@/components/app/pagina";
@@ -10,7 +11,7 @@ import { criarArea, excluirArea, moverArea, renomearArea } from "@/lib/actions/c
 import { salvarArea } from "@/lib/actions/config";
 import { BotaoAcao, useAcao } from "./comum";
 
-export type AreaTela = { id: string; nome: string; orgaos: string[]; unidadePadrao: string | null; objetos: number };
+export type AreaTela = { id: string; nome: string; orgaos: string[]; unidadePadrao: string | null; objetos: number; nomesObjetos: string[] };
 
 const listaOrgaos = (t: string) => t.split(/[,\s;]+/).map((x) => x.trim()).filter(Boolean);
 
@@ -73,21 +74,42 @@ export function AbaAreas({ areas, unidades, podeEditar }: { areas: AreaTela[]; u
           <DialogContent
             titulo={`Excluir a área ${excluindo.nome}`}
             acoes={
-              <>
-                <BotaoAcao variante="destructive" tamanho="default" acao={async () => { const r = await excluirArea(excluindo.id); if (r.ok) setExcluindo(null); return r; }}>
-                  Excluir área
-                </BotaoAcao>
-                <Button variant="ghost" onClick={() => setExcluindo(null)}>
-                  Cancelar
-                </Button>
-              </>
+              excluindo.objetos ? (
+                <>
+                  <Button asChild>
+                    <Link href="/config?aba=biblioteca">Ir para a Biblioteca de objetos</Link>
+                  </Button>
+                  <Button variant="ghost" onClick={() => setExcluindo(null)}>
+                    Fechar
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <BotaoAcao variante="destructive" tamanho="default" acao={async () => { const r = await excluirArea(excluindo.id); if (r.ok) setExcluindo(null); return r; }}>
+                    Excluir área
+                  </BotaoAcao>
+                  <Button variant="ghost" onClick={() => setExcluindo(null)}>
+                    Cancelar
+                  </Button>
+                </>
+              )
             }
           >
-            <p className="text-sm">
-              {excluindo.objetos
-                ? `Esta área tem ${excluindo.objetos} objeto(s) da biblioteca ligado(s). A exclusão será recusada: mude estes objetos de área antes, em Configurações › Biblioteca de objetos.`
-                : "Nenhum objeto da biblioteca usa esta área. A exclusão fica registrada na auditoria."}
-            </p>
+            {excluindo.objetos ? (
+              <div className="grid gap-2 text-sm">
+                <p>
+                  A área não pode ser excluída: {excluindo.objetos} objeto(s) da biblioteca estão ligados a ela. Mude estes objetos de área antes, em
+                  Configurações › Biblioteca de objetos.
+                </p>
+                <ul className="max-h-56 list-disc overflow-y-auto pl-5 text-muted-foreground">
+                  {excluindo.nomesObjetos.map((n) => (
+                    <li key={n}>{n}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <p className="text-sm">Nenhum objeto da biblioteca usa esta área. A exclusão fica registrada na auditoria.</p>
+            )}
           </DialogContent>
         ) : null}
       </Dialog>
