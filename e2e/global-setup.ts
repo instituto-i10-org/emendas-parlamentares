@@ -24,7 +24,7 @@ function rodar(comando: string, args: string[], titulo: string) {
 
 export default function globalSetup() {
   if (/neon\.tech|vercel/.test(TEST_DATABASE_URL)) throw new Error("TEST_DATABASE_URL aponta para produção — abortando.");
-  if (!/\/emendas_test(\?|$)/.test(TEST_DATABASE_URL)) throw new Error("TEST_DATABASE_URL precisa apontar para o banco emendas_test.");
+  if (!/\/emendas_test(_[a-z0-9]+)?(\?|$)/.test(TEST_DATABASE_URL)) throw new Error("TEST_DATABASE_URL precisa apontar para o banco emendas_test.");
   console.log("\nPreparando o banco de teste…");
   rodar("npx", ["tsx", "e2e/preparar-banco.ts"], "banco emendas_test");
   rodar("npx", ["prisma", "migrate", "deploy"], "migrações");
