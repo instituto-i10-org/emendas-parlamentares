@@ -34,6 +34,7 @@ export default async function PainelPage() {
   return (
     <Pagina
       titulo="Resumo consolidado"
+      guia="painel"
       descricao={`Emendas impositivas do exercício ${c.ano}, calculadas da base a cada abertura. Apresentado é o que foi remetido à Câmara; acatado, o que a Comissão aprovou. Rascunhos e rejeitadas não consomem cota.`}
       acoes={
         <BotaoImprimir variante="ghost" />
@@ -41,6 +42,7 @@ export default async function PainelPage() {
     >
       <div className="mb-5 grid grid-cols-4 gap-3.5 max-lg:grid-cols-2">
         <Kpi
+          guia="painel.teto"
           rotulo="Teto global"
           valor={c.tetoGlobal !== null ? BRL(c.tetoGlobal) : "não parametrizado"}
           detalhe={c.cotaIndividual !== null ? `${BRL(c.cotaIndividual)} × ${c.numeroVereadores} vereadores` : "defina a cota do exercício"}
@@ -61,13 +63,13 @@ export default async function PainelPage() {
       </div>
 
       <div className="mb-5 grid grid-cols-3 gap-3.5 max-lg:grid-cols-1">
-        <Kpi rotulo="Apresentado" valor={BRL(c.apresentado.valor)} detalhe={`${c.apresentado.qtd} emenda${c.apresentado.qtd === 1 ? "" : "s"} remetida${c.apresentado.qtd === 1 ? "" : "s"} à Câmara`} />
+        <Kpi guia="painel.apresentado" rotulo="Apresentado" valor={BRL(c.apresentado.valor)} detalhe={`${c.apresentado.qtd} emenda${c.apresentado.qtd === 1 ? "" : "s"} remetida${c.apresentado.qtd === 1 ? "" : "s"} à Câmara`} />
         <Kpi rotulo="Acatado" valor={BRL(c.acatado.valor)} detalhe={`${c.acatado.qtd} aprovada${c.acatado.qtd === 1 ? "" : "s"} pela Comissão`} tom="ok" />
         <Kpi rotulo="Incorporado à lei" valor={BRL(c.incorporado.valor)} detalhe={`${c.incorporado.qtd} marcada${c.incorporado.qtd === 1 ? "" : "s"} na lei aprovada`} />
       </div>
 
       <div className="mb-5">
-        <Cartao titulo="Por área" ajuda="Área de aplicação pela unidade da dotação (cadastro em Configurações › Biblioteca). Só as emendas remetidas à Câmara.">
+        <Cartao guia="painel.areas" titulo="Por área" ajuda="Área de aplicação pela unidade da dotação (cadastro em Configurações › Biblioteca). Só as emendas remetidas à Câmara.">
           <TabelaDados
             vazio="Sem áreas cadastradas."
             colunas={[{ titulo: "Área" }, { titulo: "Emendas", className: "text-right" }, { titulo: "Apresentado", className: "text-right" }, { titulo: "Acatado", className: "text-right" }]}
@@ -85,7 +87,7 @@ export default async function PainelPage() {
       </div>
 
       <div className="grid grid-cols-[minmax(0,1fr)_380px] items-start gap-5 max-[1100px]:grid-cols-1">
-        <Cartao titulo="Cota por vereador" ajuda={c.memoriaCota ?? undefined} acoes={alertas.length ? <Selo tipo="bad">{alertas.length} com alerta</Selo> : <Selo tipo="ok">todas conformes</Selo>}>
+        <Cartao guia="painel.cota" titulo="Cota por vereador" ajuda={c.memoriaCota ?? undefined} acoes={alertas.length ? <Selo tipo="bad">{alertas.length} com alerta</Selo> : <Selo tipo="ok">todas conformes</Selo>}>
           <TabelaDados
             colunas={[
               { titulo: "Vereador" },
@@ -149,7 +151,7 @@ export default async function PainelPage() {
               <p className="text-sm text-muted-foreground">Sem valores indicados.</p>
             )}
           </Cartao>
-          <Cartao titulo="Situação das emendas">
+          <Cartao guia="painel.situacao" titulo="Situação das emendas">
             <ul className="grid grid-cols-[minmax(0,1fr)] gap-2 text-sm">
               {status.map(([k, v]) => (
                 <li key={k} className="flex items-center justify-between gap-2">

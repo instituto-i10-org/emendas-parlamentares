@@ -46,6 +46,7 @@ export default async function PlanejamentoPage({ searchParams }: { searchParams:
   return (
     <Pagina
       titulo="Planejamento"
+      guia="planejamento"
       descricao="Instrumentos de planejamento do exercício, a base de dotações sobre a qual as emendas são classificadas e a comparação entre o projeto e a lei aprovada."
       acoes={
         podeGerir && exercicio ? (
@@ -56,7 +57,7 @@ export default async function PlanejamentoPage({ searchParams }: { searchParams:
         ) : null
       }
     >
-      <nav aria-label="Seções" className="mb-5 flex flex-wrap gap-1 rounded-box bg-surface p-1.5 shadow-[0_1px_2px_rgba(10,36,99,.06)]">
+      <nav data-guia="planejamento.abas" aria-label="Seções" className="mb-5 flex flex-wrap gap-1 rounded-box bg-surface p-1.5 shadow-[0_1px_2px_rgba(10,36,99,.06)]">
         {ABAS.map((a) => (
           <Link
             key={a.id}
@@ -70,7 +71,7 @@ export default async function PlanejamentoPage({ searchParams }: { searchParams:
       </nav>
 
       {aba === "instrumentos" ? (
-        <Cartao titulo={`Instrumentos do exercício ${ano ?? ""}`}>
+        <Cartao guia="planejamento.instrumentos" titulo={`Instrumentos do exercício ${ano ?? ""}`}>
           <IndicadorEmendamento s={emendamento} />
           <TabelaDados
             vazio="Nenhum instrumento cadastrado."
@@ -103,8 +104,10 @@ export default async function PlanejamentoPage({ searchParams }: { searchParams:
                   {i.totalImpresso ? <span className="block text-muted-foreground">total impresso {BRL(i.totalImpresso.toNumber())}</span> : null}
                 </span>,
                 <span key="d" className="tnum">{i._count.dotacoes}</span>,
-                <StatusInstrumento key="s" id={i.id} status={i.status} podeGerir={podeGerir} rotulo={i.numero} />,
-                <div key="a" className="flex items-center justify-end gap-1">
+                <div key="s" data-guia="planejamento.situacao">
+                  <StatusInstrumento id={i.id} status={i.status} podeGerir={podeGerir} rotulo={i.numero} />
+                </div>,
+                <div key="a" data-guia="planejamento.acoes-instrumento" className="flex items-center justify-end gap-1">
                   {i._count.dotacoes ? (
                     <Button size="xs" variant="ghost" asChild>
                       <Link href={`/executivo/planejamento?aba=base&instrumento=${i.id}`}>Ver base</Link>
@@ -157,7 +160,7 @@ async function base(instParam: string | undefined, instrumentos: Instrumentos, f
   const emendaveis = dotacoes.filter((d) => NATUREZAS_EMENDAVEIS.has(`${d.naturezaDespesa.grupo}|${d.naturezaDespesa.modalidadeAplicacao}`) && !fora.includes(d.orgao.codigo));
   return (
     <div className="grid gap-5">
-      <div className="grid grid-cols-3 gap-3.5 max-md:grid-cols-1">
+      <div data-guia="planejamento.base" className="grid grid-cols-3 gap-3.5 max-md:grid-cols-1">
         <Kpi rotulo={`Base · ${inst.numero}`} valor={BRL(total)} detalhe={`${dotacoes.length} dotações`} tom="navy" />
         <Kpi rotulo="Recebem emenda" valor={emendaveis.length} detalhe="custeio ou investimento, aplicação direta ou a entidade" />
         <Kpi rotulo="Com emendas" valor={dotacoes.filter((d) => d._count.emendas).length} />
@@ -204,7 +207,7 @@ async function comparacao(instrumentos: Instrumentos) {
     })
   );
   return (
-    <div className="grid gap-5">
+    <div data-guia="planejamento.comparacao" className="grid gap-5">
       {blocos.map((b) => (
         <Cartao key={b.lei.id} titulo={`${b.lei.numero} · origem ${instrumentos.find((i) => i.id === b.lei.instrumentoOrigemId)?.numero ?? ""}`}>
           <div className="mb-4 grid grid-cols-3 gap-3.5 max-md:grid-cols-1">
@@ -241,7 +244,7 @@ async function importacoesRecentes(exercicioId: string) {
   if (!lista.length) return null;
   const situacao: Record<string, string> = { MAPEAR: "colunas a ligar", LENDO: "lendo", LIDA: "em conferência", GRAVADA: "gravada", CANCELADA: "cancelada", ERRO: "parada por erro" };
   return (
-    <Cartao titulo="Importações recentes" className="mt-5">
+    <Cartao guia="planejamento.importacoes" titulo="Importações recentes" className="mt-5">
       <TabelaDados
         vazio="—"
         colunas={[{ titulo: "Quando" }, { titulo: "Instrumento" }, { titulo: "Arquivo" }, { titulo: "Linhas", className: "text-right" }, { titulo: "Situação" }, { titulo: "" }]}

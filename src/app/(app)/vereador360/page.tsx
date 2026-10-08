@@ -53,10 +53,10 @@ export default async function Vereador360Page({ searchParams }: { searchParams: 
   const lista = c.porAutor.filter((x) => !q || norm(x.nome).includes(norm(q)));
 
   return (
-    <Pagina titulo="Vereador 360" descricao="A cota individual em duas parcelas — saúde e demais áreas — e cada emenda que a consome.">
+    <Pagina titulo="Vereador 360" guia="vereador360" descricao="A cota individual em duas parcelas — saúde e demais áreas — e cada emenda que a consome.">
       <div className={cn("grid items-start gap-5", vetodos && "grid-cols-[300px_minmax(0,1fr)] max-[1000px]:grid-cols-1")}>
         {vetodos ? (
-          <Cartao titulo="Vereadores">
+          <Cartao guia="vereador360.lista" titulo="Vereadores">
             <form className="mb-3">
               <input name="q" defaultValue={q} className="campo h-10 px-3" placeholder="Buscar vereador" aria-label="Buscar vereador" />
             </form>
@@ -87,14 +87,14 @@ export default async function Vereador360Page({ searchParams }: { searchParams: 
         ) : null}
 
         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-5">
-          <Cartao>
+          <Cartao guia="vereador360.vereador">
             <div className="flex flex-wrap items-center gap-3">
               <h2 className="text-xl font-extrabold">{a.nome}</h2>
               {a.partido ? <Selo>{a.partido}</Selo> : null}
               <Selo tipo={s.tom}>{s.rotulo}</Selo>
             </div>
           </Cartao>
-          <div className="grid grid-cols-3 gap-3.5 max-lg:grid-cols-2">
+          <div data-guia="vereador360.cota" className="grid grid-cols-3 gap-3.5 max-lg:grid-cols-2">
             <Kpi rotulo="Cota individual" valor={c.cotaIndividual !== null ? BRL(c.cotaIndividual) : "não definida"} detalhe={parcelaSaude !== null ? `${BRL(parcelaSaude)} reservados à saúde` : undefined} tom="navy" />
             <Kpi rotulo="Comprometido" valor={BRL(a.total)} detalhe={`${a.itens} emenda${a.itens === 1 ? "" : "s"}${a.importadas ? `, ${a.importadas} fora do sistema` : ""}`} />
             <Kpi rotulo="Saldo da cota" valor={c.cotaIndividual !== null ? BRL(Math.max(0, c.cotaIndividual - a.total)) : "—"} tom={c.cotaIndividual !== null && a.total - c.cotaIndividual > 0.005 ? "bad" : "ok"} />
@@ -102,7 +102,7 @@ export default async function Vereador360Page({ searchParams }: { searchParams: 
             <Kpi rotulo="Demais áreas" valor={BRL(a.demais)} detalhe={parcelaDemais !== null ? `limite ${BRL(parcelaDemais)}` : undefined} tom={parcelaDemais !== null && a.demais - parcelaDemais > 0.005 ? "bad" : undefined} />
           </div>
 
-          <Cartao titulo="Emendas no sistema">
+          <Cartao guia="vereador360.emendas" titulo="Emendas no sistema">
             <TabelaDados
               vazio="Nenhuma emenda elaborada no sistema."
               colunas={[{ titulo: "Nº" }, { titulo: "Objeto" }, { titulo: "Parcela" }, { titulo: "Situação" }, { titulo: "Valor", className: "text-right" }]}

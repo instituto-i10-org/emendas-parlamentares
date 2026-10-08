@@ -74,7 +74,7 @@ function Exercicios({ exercicios, podeGerir }: { exercicios: { id: string; ano: 
   const [ano, setAno] = useState(String(new Date().getFullYear() + 1));
   const { pendente, executar } = useAcao();
   return (
-    <Cartao titulo="Exercícios">
+    <Cartao guia="config.exercicio.lista" titulo="Exercícios">
       <ul className="mb-4 grid gap-2">
         {exercicios.map((e) => (
           <li key={e.id} className="flex items-center gap-3 rounded-md bg-soft px-3 py-2 text-sm">
@@ -189,7 +189,7 @@ function FormConfiguracao({ c, podeGerir }: { c: ConfiguracaoTela; podeGerir: bo
   }
 
   return (
-    <Cartao
+    <Cartao guia="config.exercicio.parametros"
       titulo={`Parâmetros do exercício ${c.ano}`}
       ajuda="Campo vazio significa “não parametrizado”: o sistema mostra a pendência e não presume valor."
       acoes={
@@ -346,7 +346,7 @@ function Prazos({
   const [f, setF] = useState({ descricao: "", data: "", url: "" });
   const { pendente, executar } = useAcao();
   return (
-    <Cartao titulo="Prazos do exercício">
+    <Cartao guia="config.exercicio.prazos" titulo="Prazos do exercício">
       <ul className="mb-4 divide-y divide-hair">
         {prazos.map((p) => (
           <li key={p.id} className="flex items-center gap-3 py-2.5 text-sm">

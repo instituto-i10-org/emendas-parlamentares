@@ -16,9 +16,18 @@ import { pularTodosGuias, registrarGuia } from "@/lib/actions/guias";
 // - "Ver ajuda", no menu, abre o guia da tela atual a qualquer momento.
 // - ?guia=<id> na URL abre aquele guia (o "Mostrar onde" da primeira
 //   configuração usa isso).
+// - A tela pode declarar o próprio guia com data-guia-tela="<id>": a página
+//   da emenda (visão ou editor no mesmo endereço) e as etapas da nova emenda,
+//   que trocam sem mudar o endereço.
 // ============================================================================
 
 type Contexto = { abrir: () => void };
+
+// Guia declarado pela própria tela, se houver.
+const guiaDeclarado = (): Guia | null => {
+  const id = document.querySelector("[data-guia-tela]")?.getAttribute("data-guia-tela");
+  return id && GUIAS[id] ? GUIAS[id] : null;
+};
 const GuiasContexto = createContext<Contexto>({ abrir: () => {} });
 export const useGuias = () => useContext(GuiasContexto);
 
@@ -151,7 +160,7 @@ export function GuiasProvider({
 
   const abrir = useCallback(() => {
     const aba = new URLSearchParams(window.location.search).get("aba");
-    const guia = guiaDaRota(window.location.pathname, aba) ?? GUIAS.inicio;
+    const guia = guiaDeclarado() ?? guiaDaRota(window.location.pathname, aba) ?? GUIAS.inicio;
     if (guia) iniciar(guia);
   }, [iniciar]);
 
@@ -198,6 +207,16 @@ function AberturaAutomatica({
     vistosRef.current = vistos;
   }, [vistos]);
 
+  // A tela pode trocar de guia sem trocar de endereço (etapas da emenda).
+  const [tela, setTela] = useState<string | null>(null);
+  useEffect(() => {
+    const ler = () => setTela(document.querySelector("[data-guia-tela]")?.getAttribute("data-guia-tela") ?? null);
+    ler();
+    const obs = new MutationObserver(ler);
+    obs.observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ["data-guia-tela"] });
+    return () => obs.disconnect();
+  }, [pathname]);
+
   useEffect(() => {
     let guia: Guia | null = null;
     let forcado = false;
@@ -205,7 +224,7 @@ function AberturaAutomatica({
       guia = GUIAS[pedido];
       forcado = true;
     } else if (automaticos) {
-      const g = guiaDaRota(pathname, aba);
+      const g = (tela && GUIAS[tela]) || guiaDaRota(pathname, aba);
       if (g && deveAbrirSozinho(g, vistosRef.current)) guia = g;
     }
     if (!guia) return;
@@ -222,7 +241,7 @@ function AberturaAutomatica({
     return () => window.clearTimeout(t);
     // Só reage à troca de tela ou a um pedido explícito.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname, aba, pedido, automaticos]);
+  }, [pathname, aba, pedido, automaticos, tela]);
 
   return null;
 }

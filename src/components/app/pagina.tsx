@@ -10,12 +10,15 @@ export function Pagina({
   trilha,
   descricao,
   acoes,
+  guia,
   children,
 }: {
   titulo: string;
   trilha?: { rotulo: string; href?: string }[];
   descricao?: ReactNode;
   acoes?: ReactNode;
+  // Prefixo das âncoras dos guias de ajuda: "<guia>.titulo" e "<guia>.acoes".
+  guia?: string;
   children: ReactNode;
 }) {
   return (
@@ -37,7 +40,7 @@ export function Pagina({
         </div>
       ) : null}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="flex items-center gap-2.5 text-2xl font-extrabold tracking-[-0.02em]">
+        <h1 data-guia={guia ? `${guia}.titulo` : undefined} className="flex items-center gap-2.5 text-2xl font-extrabold tracking-[-0.02em]">
           {titulo}
           {descricao ? (
             <Ajuda titulo={titulo} className="size-6 bg-surface shadow-pop">
@@ -45,7 +48,11 @@ export function Pagina({
             </Ajuda>
           ) : null}
         </h1>
-        {acoes ? <div className="flex flex-wrap gap-2">{acoes}</div> : null}
+        {acoes ? (
+          <div data-guia={guia ? `${guia}.acoes` : undefined} className="flex flex-wrap gap-2">
+            {acoes}
+          </div>
+        ) : null}
       </div>
       {children}
     </div>
@@ -58,6 +65,7 @@ export function Cartao({
   acoes,
   children,
   className,
+  guia,
 }: {
   titulo?: ReactNode;
   // Orientação sobre o bloco, no "?" ao lado do título.
@@ -65,9 +73,11 @@ export function Cartao({
   acoes?: ReactNode;
   children: ReactNode;
   className?: string;
+  // Âncora do guia de ajuda (data-guia).
+  guia?: string;
 }) {
   return (
-    <section className={cn("rounded-card bg-surface p-[22px] shadow-card", className)}>
+    <section data-guia={guia} className={cn("rounded-card bg-surface p-[22px] shadow-card", className)}>
       {titulo || acoes ? (
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           {titulo ? (
@@ -86,9 +96,21 @@ export function Cartao({
   );
 }
 
-export function Kpi({ rotulo, valor, detalhe, tom }: { rotulo: string; valor: ReactNode; detalhe?: ReactNode; tom?: "ok" | "warn" | "bad" | "navy" }) {
+export function Kpi({
+  rotulo,
+  valor,
+  detalhe,
+  tom,
+  guia,
+}: {
+  rotulo: string;
+  valor: ReactNode;
+  detalhe?: ReactNode;
+  tom?: "ok" | "warn" | "bad" | "navy";
+  guia?: string;
+}) {
   return (
-    <div className={cn("rounded-card p-[22px] shadow-card", tom === "navy" ? "bg-navy-deep text-white" : "bg-surface")}>
+    <div data-guia={guia} className={cn("rounded-card p-[22px] shadow-card", tom === "navy" ? "bg-navy-deep text-white" : "bg-surface")}>
       <div className={cn("text-2xs font-bold tracking-[0.04em] uppercase", tom === "navy" ? "text-on-navy" : "text-muted-foreground")}>{rotulo}</div>
       <div
         className={cn(

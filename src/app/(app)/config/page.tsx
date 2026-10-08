@@ -47,8 +47,8 @@ export default async function ConfigPage({ searchParams }: { searchParams: Promi
   const aba = abas.find((a) => a.id === abaParam)?.id ?? "exercicio";
 
   return (
-    <Pagina titulo="Configurações" descricao="Parâmetros do município e do exercício, acesso, catálogos do motor e base legal. Toda alteração fica na auditoria.">
-      <nav aria-label="Seções" className="mb-5 flex flex-wrap gap-1 rounded-box bg-surface p-1.5 shadow-[0_1px_2px_rgba(10,36,99,.06)]">
+    <Pagina titulo="Configurações" guia="config" descricao="Parâmetros do município e do exercício, acesso, catálogos do motor e base legal. Toda alteração fica na auditoria.">
+      <nav data-guia="config.abas" aria-label="Seções" className="mb-5 flex flex-wrap gap-1 rounded-box bg-surface p-1.5 shadow-[0_1px_2px_rgba(10,36,99,.06)]">
         {abas.map((a) => (
           <Link
             key={a.id}
@@ -390,7 +390,7 @@ async function historico(podeImportar: boolean) {
     .sort((a, b) => b.ano - a.ano);
   return (
     <div className="mt-5">
-      <Cartao
+      <Cartao guia="config.exercicio.historico"
         titulo="Emendas de anos anteriores"
         ajuda="Emendas apresentadas fora do sistema (antes de ele existir). Entram no portal público e nos painéis como “apresentadas fora do sistema”. A importação por planilha é opcional."
         acoes={podeImportar ? <ImportarPlanilha tipo="historico" /> : null}

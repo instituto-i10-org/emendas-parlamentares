@@ -3,12 +3,25 @@ import { Button } from "@/components/ui/button";
 
 // Estados vazios das páginas de emenda, com o que falta para seguir.
 
-export function Pagina({ titulo, children, acoes }: { titulo: string; children: React.ReactNode; acoes?: React.ReactNode }) {
+export function Pagina({
+  titulo,
+  children,
+  acoes,
+  guia,
+}: {
+  titulo: string;
+  children: React.ReactNode;
+  acoes?: React.ReactNode;
+  // Prefixo das âncoras dos guias de ajuda: "<guia>.titulo" e "<guia>.acoes".
+  guia?: string;
+}) {
   return (
     <div className="px-7 pt-9 pb-11 max-md:px-4 max-md:pt-6">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-extrabold tracking-[-0.02em]">{titulo}</h1>
-        {acoes}
+        <h1 data-guia={guia ? `${guia}.titulo` : undefined} className="text-2xl font-extrabold tracking-[-0.02em]">
+          {titulo}
+        </h1>
+        {acoes && guia ? <div data-guia={`${guia}.acoes`}>{acoes}</div> : acoes}
       </div>
       {children}
     </div>

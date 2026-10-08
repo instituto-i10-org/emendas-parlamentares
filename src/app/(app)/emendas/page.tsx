@@ -62,6 +62,7 @@ export default async function EmendasPage({ searchParams }: { searchParams: Prom
   return (
     <Pagina
       titulo={todas ? "Emendas do exercício" : "Minhas emendas"}
+      guia="emendas"
       acoes={
         apresentaEmendas(user, !!autor) && !historico ? (
           <Button asChild>
@@ -84,8 +85,8 @@ export default async function EmendasPage({ searchParams }: { searchParams: Prom
         </p>
       ) : null}
 
-      <FiltrosEmendas acao="/emendas" filtros={filtros} autores={autores} areas={areas} situacoes={SITUACOES_FILTRO} />
-      <div className="mb-3 flex flex-wrap justify-end gap-2">
+      <FiltrosEmendas guia="emendas.filtros" acao="/emendas" filtros={filtros} autores={autores} areas={areas} situacoes={SITUACOES_FILTRO} />
+      <div data-guia="emendas.exportar" className="mb-3 flex flex-wrap justify-end gap-2">
         <Button variant="ghost" size="sm" asChild>
           <a href={comFiltros("/api/export/emendas", filtros, { ano: ano ?? "", formato: "xlsx", lista: 1 })}>
             <Download /> Exportar XLSX
@@ -97,7 +98,7 @@ export default async function EmendasPage({ searchParams }: { searchParams: Prom
           </a>
         </Button>
       </div>
-      <div className="overflow-hidden rounded-card bg-surface shadow-card">
+      <div data-guia="emendas.lista" className="overflow-hidden rounded-card bg-surface shadow-card">
         {emendas.length ? (
           <div className="relative overflow-x-auto">
             <table className="w-full text-sm">

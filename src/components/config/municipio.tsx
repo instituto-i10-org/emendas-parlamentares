@@ -15,7 +15,7 @@ export function AbaMunicipio({ dados, podeEditar }: { dados: DadosMunicipio; pod
   const { pendente, executar } = useAcao();
   const muda = (k: keyof DadosMunicipio) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setF({ ...f, [k]: e.target.value });
   return (
-    <Cartao
+    <Cartao guia="config.municipio.dados"
       titulo="Município"
       ajuda="Identificam a Câmara e a Prefeitura nas telas, no portal público e nos documentos impressos. Num sistema recém-iniciado, o portal mostra “Município não configurado” até o nome ser preenchido."
     >

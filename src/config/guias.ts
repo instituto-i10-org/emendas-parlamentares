@@ -72,13 +72,351 @@ const GUIAS_LISTA: Guia[] = [
       },
     ],
   },
+
+  // ------------------------------------------------------------ acompanhar
+  {
+    id: "painel",
+    titulo: "Resumo consolidado",
+    versao: 1,
+    passos: [
+      { ancora: "painel.titulo", titulo: "Resumo consolidado", texto: "O retrato das emendas do exercício, calculado a cada vez que a tela abre. Nada aqui é digitado: tudo vem das emendas registradas." },
+      { ancora: "painel.teto", titulo: "Teto e parcelas", texto: "O teto global é a cota de cada vereador vezes o número de vereadores. Ao lado, quanto já foi consumido e quanto foi para a saúde e para as demais áreas." },
+      { ancora: "painel.apresentado", titulo: "Apresentado, acatado e incorporado", texto: "Apresentado é o que foi enviado à Câmara; acatado, o que a Comissão aprovou; incorporado, o que foi marcado como parte da lei aprovada." },
+      { ancora: "painel.areas", titulo: "Por área", texto: "As emendas enviadas, agrupadas pela área da secretaria da dotação (Saúde, Educação…), com o apresentado e o acatado de cada uma." },
+      { ancora: "painel.cota", titulo: "Cota por vereador", texto: "Quanto cada vereador já comprometeu da própria cota. Clique no nome para abrir a visão completa dele no Vereador 360." },
+      { ancora: "painel.situacao", titulo: "Situação das emendas", texto: "Quantas emendas estão em cada situação e quanto somam." },
+      { ancora: "painel.acoes", titulo: "Imprimir", texto: "Gera uma versão para impressão ou PDF desta tela." },
+    ],
+  },
+  {
+    id: "comparativo",
+    titulo: "Projeto × lei",
+    versao: 1,
+    passos: [
+      { ancora: "comparativo.titulo", titulo: "Projeto × lei", texto: "Compara, dotação por dotação, o projeto de lei do orçamento com a lei aprovada e mostra quais emendas explicam cada diferença." },
+      { ancora: "comparativo.visoes", titulo: "Duas visões", texto: "“Comparativo por dotação” mostra projeto, lei e diferença. “Execução das dotações emendadas” soma o que já foi empenhado, liquidado e pago nas dotações que receberam emendas." },
+      { ancora: "comparativo.totais", titulo: "Totais", texto: "O total do projeto, o da lei e a diferença. A lei fica maior que o projeto pelo valor das emendas incorporadas." },
+      { ancora: "comparativo.filtros", titulo: "Filtros", texto: "Filtre por órgão ou unidade, ou marque “Só as que mudaram ou têm emenda” para ver apenas o que interessa." },
+      { ancora: "comparativo.dotacoes", titulo: "Dotações", texto: "Cada linha é uma dotação. As emendas incorporadas aparecem com o número e levam à página da emenda." },
+      { ancora: "comparativo.execucao", titulo: "Execução", texto: "Por dotação emendada: o valor aprovado e o que o Executivo já lançou de empenho, liquidação e pagamento." },
+      { ancora: "comparativo.acoes", titulo: "Exportar e gerar a lei", texto: "Baixe a comparação em XLSX ou CSV, ou imprima. Quando a lei ainda não tem base, quem gere o planejamento pode gerá-la a partir do projeto e das emendas incorporadas." },
+    ],
+  },
+  {
+    id: "tramitacao",
+    titulo: "Tramitação",
+    versao: 1,
+    passos: [
+      { ancora: "tramitacao.titulo", titulo: "Tramitação", texto: "Onde a Comissão analisa as emendas enviadas: recebe, pede ajuste ou decide, sempre com o parecer por escrito." },
+      { ancora: "tramitacao.totais", titulo: "Números da fila", texto: "Quantas emendas aguardam parecer, quantas estão em saneamento e quantas já foram aprovadas ou rejeitadas." },
+      { ancora: "tramitacao.abas", titulo: "As filas", texto: "Parecer: aguardando análise. Saneamento: devolvidas para ajuste. Decididas: aprovadas e rejeitadas. Lei aprovada: marcar as que entraram na lei. Por programa e Relatórios: os resumos." },
+      { ancora: "tramitacao.filtros", titulo: "Filtros", texto: "Busque por número, objeto, beneficiário ou autor e filtre por situação, autor, área e período." },
+      { ancora: "tramitacao.decidir", titulo: "Receber, pedir ajuste ou decidir", texto: "Receber marca que a Comissão começou a análise (pede confirmação). Pedir ajuste devolve ao autor com prazo. Decidir aprova ou rejeita, com parecer de pelo menos 20 caracteres." },
+      { ancora: "tramitacao.sanear", titulo: "Saneamento", texto: "Aqui ficam as emendas em ajuste, com o motivo e o prazo, e as inválidas, com as verificações que falharam. A inválida pode ser devolvida ao autor com o apontamento." },
+      { ancora: "tramitacao.reabrir", titulo: "Reabrir", texto: "Uma emenda decidida pode ser reaberta com motivo. O histórico guarda os dois pareceres." },
+      { ancora: "tramitacao.incorporar", titulo: "Incorporada à lei", texto: "Marque as emendas aprovadas que entraram no texto da lei. Fica registrado quem marcou e quando, e é possível desfazer." },
+      { ancora: "tramitacao.periodo", titulo: "Período do relatório", texto: "Escolha as datas para ver as movimentações por situação e por autor." },
+      { ancora: "tramitacao.relatorios", titulo: "Relatórios", texto: "Os totais do período, com exportação em XLSX, CSV e impressão." },
+      { ancora: "tramitacao.programas", titulo: "Por programa", texto: "As emendas agrupadas pelo programa do orçamento, com o total e o valor aprovado de cada um." },
+      { ancora: "tramitacao.acoes", titulo: "Exportar", texto: "Baixa a lista em XLSX ou CSV, respeitando os filtros escolhidos." },
+    ],
+  },
+  // ------------------------------------------------------------ operar
+  {
+    id: "emendas",
+    titulo: "Emendas",
+    versao: 1,
+    passos: [
+      { ancora: "emendas.titulo", titulo: "Emendas", texto: "A lista das emendas do exercício. O vereador vê as próprias; a Comissão e quem acompanha veem todas." },
+      { ancora: "indicador.emendamento", titulo: "Emendamento aberto ou fechado", texto: "Diz se é possível enviar emendas agora e por quê: situação do projeto de lei, prazo de protocolo ou exercício encerrado." },
+      { ancora: "emendas.acoes", titulo: "Nova emenda", texto: "Começa uma emenda nova, em três etapas: descrever, plano de trabalho e validação." },
+      { ancora: "emendas.filtros", titulo: "Filtros", texto: "Busque e filtre por situação, autor, área e período. Os filtros ficam no endereço da página, então dá para guardar ou compartilhar a busca." },
+      { ancora: "emendas.exportar", titulo: "Exportar", texto: "Baixa exatamente as emendas filtradas, em XLSX ou CSV, com acentos e códigos preservados." },
+      { ancora: "emendas.lista", titulo: "A lista", texto: "Clique no objeto para abrir a emenda. Rascunhos podem ser descartados pela lixeira." },
+    ],
+  },
+  {
+    id: "emenda",
+    titulo: "Emenda",
+    versao: 1,
+    passos: [
+      { ancora: "emenda.dados", titulo: "Dados da emenda", texto: "Situação, autor, destino, dotação, parcela da cota, valor e justificativa. Abaixo aparecem os pedidos de ajuste, o parecer da Comissão, a viabilidade do Executivo e a execução, quando houver." },
+      { ancora: "emenda.relatorio", titulo: "Relatório da validação", texto: "As treze verificações conferidas pelo servidor no envio, cada uma com o resultado e a explicação, e as conferências complementares." },
+      { ancora: "emenda.validacoes", titulo: "Histórico de validações", texto: "Todas as vezes que a emenda foi conferida: envio, reenvio e tentativas recusadas, com data e quem pediu." },
+      { ancora: "emenda.situacoes", titulo: "Histórico de situações", texto: "Cada mudança de situação, com data, responsável e o texto do parecer ou do pedido de ajuste." },
+      { ancora: "emenda.acoes", titulo: "Impressão", texto: "“Versão para impressão” abre a emenda inteira, com plano de trabalho, tramitação e validação, pronta para PDF." },
+    ],
+  },
+  {
+    id: "vereador360",
+    titulo: "Vereador 360",
+    versao: 1,
+    passos: [
+      { ancora: "vereador360.titulo", titulo: "Vereador 360", texto: "A cota individual de um vereador e cada emenda que a consome." },
+      { ancora: "vereador360.lista", titulo: "Escolher o vereador", texto: "Para quem acompanha todos: busque e escolha o vereador. A barra mostra quanto da cota já foi usado." },
+      { ancora: "vereador360.vereador", titulo: "Situação da cota", texto: "O nome, o partido e se a cota está dentro do limite." },
+      { ancora: "vereador360.cota", titulo: "Cota, comprometido e saldo", texto: "Quanto o vereador pode indicar, quanto já comprometeu, o saldo e a divisão entre saúde e demais áreas." },
+      { ancora: "vereador360.emendas", titulo: "Emendas", texto: "Cada emenda do vereador no sistema, com parcela, situação e valor. Clique para abrir." },
+    ],
+  },
+  // ------------------------------------------------------------ executivo
+  {
+    id: "viabilidade",
+    titulo: "Viabilidade técnica",
+    versao: 1,
+    passos: [
+      { ancora: "viabilidade.titulo", titulo: "Viabilidade técnica", texto: "O Executivo se manifesta sobre as emendas enviadas. O parecer é informativo: não altera a emenda nem trava a tramitação." },
+      { ancora: "viabilidade.totais", titulo: "Números", texto: "Quantas emendas foram enviadas, quantas ainda estão sem parecer e quantas foram consideradas inviáveis." },
+      { ancora: "viabilidade.filtros", titulo: "Busca e filtro", texto: "Busque pela emenda e filtre entre as que têm e as que ainda não têm parecer." },
+      { ancora: "viabilidade.acao", titulo: "Manifestar-se", texto: "Registre o resultado e a justificativa. Um parecer novo não apaga o anterior: o histórico fica na emenda." },
+    ],
+  },
+  {
+    id: "execucao",
+    titulo: "Execução",
+    versao: 1,
+    passos: [
+      { ancora: "execucao.titulo", titulo: "Execução das emendas", texto: "O acompanhamento de empenho, liquidação e pagamento de cada emenda aprovada." },
+      { ancora: "execucao.totais", titulo: "Totais", texto: "O valor aprovado e o que já foi empenhado, liquidado e pago." },
+      { ancora: "execucao.filtros", titulo: "Busca e filtro", texto: "Busque pela emenda e filtre entre as que têm e as que ainda não têm lançamento." },
+      { ancora: "execucao.acao", titulo: "Lançar andamento", texto: "Registre cada etapa com data, valor e documento. Os totais da emenda e do painel se atualizam na hora." },
+    ],
+  },
+  {
+    id: "planejamento",
+    titulo: "Planejamento",
+    versao: 1,
+    passos: [
+      { ancora: "planejamento.titulo", titulo: "Planejamento", texto: "As leis do orçamento do exercício (PPA, LDO e LOA) e a base de dotações em que as emendas são classificadas." },
+      { ancora: "planejamento.acoes", titulo: "Novo instrumento", texto: "Cadastre um projeto de lei ou uma lei aprovada, com número, data, ementa e o PDF da peça. A lei aprovada fica ligada ao projeto de origem." },
+      { ancora: "planejamento.abas", titulo: "Seções", texto: "Instrumentos: as leis cadastradas. Base de dotações: as dotações carregadas. PL × lei aprovada: o projeto ao lado da lei aprovada." },
+      { ancora: "indicador.emendamento", titulo: "Emendamento", texto: "Mostra se as emendas estão abertas. Depende da situação do projeto de lei, do prazo e do exercício." },
+      { ancora: "planejamento.situacao", titulo: "Situação do instrumento", texto: "Avance ou volte a situação pelas setas. Mudar a situação do projeto de lei pode abrir ou fechar o envio de emendas; o sistema mostra o efeito antes de confirmar." },
+      { ancora: "planejamento.acoes-instrumento", titulo: "Ações do instrumento", texto: "Ver a base, importar a base (PDF, CSV ou XLSX), editar e excluir. Só é possível excluir um instrumento sem dotações e sem lei ligada a ele." },
+      { ancora: "planejamento.importacoes", titulo: "Importações recentes", texto: "As importações em andamento ou concluídas. Clique para continuar uma conferência ou retomar uma leitura de PDF." },
+      { ancora: "planejamento.base", titulo: "Base de dotações", texto: "O total da base, quantas dotações podem receber emendas e quantas já receberam." },
+      { ancora: "planejamento.comparacao", titulo: "Comparação", texto: "Para cada lei aprovada, o total do projeto de origem, o total da lei e as emendas aprovadas." },
+    ],
+  },
+  {
+    id: "importacao",
+    titulo: "Conferência da importação",
+    versao: 1,
+    passos: [
+      { ancora: "importacao.titulo", titulo: "Conferência da importação", texto: "Nada vai para a base antes da sua confirmação. Aqui você confere o que foi lido." },
+      { ancora: "importacao.situacao", titulo: "Situação", texto: "Em que ponto a importação está: lendo, aguardando conferência, gravada ou cancelada." },
+      { ancora: "importacao.leitura", titulo: "Leitura do PDF", texto: "O PDF é lido página por página. Pode sair da tela: ao voltar, a leitura continua de onde parou. Se parar com erro, use “Retomar leitura”." },
+      { ancora: "importacao.mapa", titulo: "Colunas da planilha", texto: "Quando a planilha usa nomes de coluna diferentes, indique qual coluna corresponde a cada campo." },
+      { ancora: "importacao.totais", titulo: "Linhas e totais", texto: "Quantas linhas são válidas, quantas foram recusadas e o total lido." },
+      { ancora: "importacao.conferencia", titulo: "Conferência com a peça", texto: "Informe o total impresso na lei. A carga só é liberada quando o total lido bate com ele ao centavo." },
+      { ancora: "importacao.confirmar", titulo: "Confirmar carga", texto: "Grava a base conferida. Também é possível cancelar a importação sem gravar nada." },
+      { ancora: "importacao.linhas", titulo: "Linhas lidas", texto: "Cada linha com o número e, se recusada, o motivo. Corrija ou inclua linhas aqui mesmo." },
+      { ancora: "importacao.filtro", titulo: "Filtro", texto: "Veja só as recusadas, só as com aviso, ou todas." },
+      { ancora: "importacao.relatorio", titulo: "Relatório de recusas", texto: "Baixa em CSV todas as linhas recusadas e com aviso, com o motivo de cada uma." },
+    ],
+  },
+  // ------------------------------------------------------------ governança
+  {
+    id: "conformidade",
+    titulo: "Conformidade",
+    versao: 1,
+    passos: [
+      { ancora: "conformidade.titulo", titulo: "Conformidade", texto: "O espelho da fiscalização das emendas impositivas. Cada item é conferido nos dados do sistema, não é marcado à mão." },
+      { ancora: "conformidade.totais", titulo: "Resumo", texto: "Quantos itens estão conformes, em atenção ou pendentes." },
+      { ancora: "conformidade.requisitos", titulo: "Requisitos", texto: "Lei Orgânica vigente, Regimento, manual publicado, portal funcionando, autor identificado e limites conferidos. O “?” ao lado de cada item mostra o fundamento." },
+      { ancora: "conformidade.resolver", titulo: "Resolver", texto: "Em cada pendência, a providência recomendada e o atalho para a tela onde resolvê-la." },
+      { ancora: "conformidade.outros", titulo: "Outros itens", texto: "Rastreabilidade do destino, classificação, cota, preços, viabilidade e execução." },
+      { ancora: "conformidade.prazos", titulo: "Próximos prazos", texto: "Os prazos cadastrados para o exercício." },
+    ],
+  },
+  {
+    id: "conta",
+    titulo: "Minha conta",
+    versao: 1,
+    passos: [
+      { ancora: "conta.titulo", titulo: "Minha conta", texto: "Seus dados de acesso." },
+      { ancora: "conta.senha", titulo: "Trocar a senha", texto: "Informe a senha atual e a nova, com pelo menos 10 caracteres." },
+      { ancora: "conta.guias", titulo: "Guias de ajuda", texto: "Faz cada guia abrir de novo na próxima visita a cada tela. Para ver o guia de uma tela na hora, use “Ver ajuda” no menu." },
+    ],
+  },
+  // ------------------------------------------------------------ configurações
+  {
+    id: "config.municipio",
+    titulo: "Configurações › Município",
+    versao: 1,
+    passos: [
+      { ancora: "config.abas", titulo: "Configurações", texto: "Cada aba cuida de uma parte do sistema. Toda alteração fica registrada na auditoria." },
+      { ancora: "config.municipio.dados", titulo: "Dados do município", texto: "Nome, UF, código do IBGE, nome da Câmara e da Prefeitura. Aparecem no portal público, na entrada do sistema e nos documentos. Só o Administrador Geral altera." },
+    ],
+  },
+  {
+    id: "config.exercicio",
+    titulo: "Configurações › Exercício e parâmetros",
+    versao: 1,
+    passos: [
+      { ancora: "config.abas", titulo: "Configurações", texto: "Cada aba cuida de uma parte do sistema. Toda alteração fica registrada na auditoria." },
+      { ancora: "config.exercicio.lista", titulo: "Exercícios", texto: "Os anos do orçamento. Crie o exercício novo aqui. Encerrar um exercício fecha o envio de emendas dele; reabrir desfaz." },
+      { ancora: "config.exercicio.parametros", titulo: "Parâmetros", texto: "Cota de cada vereador, percentual da saúde, prazo de protocolo, situações do projeto que recebem emendas e códigos AUDESP. Se a mudança afetar emendas já enviadas, o sistema mostra quantas antes de salvar." },
+      { ancora: "config.exercicio.prazos", titulo: "Prazos", texto: "Datas do calendário das emendas, que aparecem no manual e na conformidade." },
+      { ancora: "config.exercicio.historico", titulo: "Emendas de anos anteriores", texto: "Importe por planilha as emendas apresentadas fora do sistema. Você confere antes de gravar; elas aparecem no portal e nos painéis." },
+    ],
+  },
+  {
+    id: "config.validacao",
+    titulo: "Configurações › Validação",
+    versao: 1,
+    passos: [
+      { ancora: "config.validacao.treze", titulo: "As treze verificações", texto: "Para cada verificação que admite escolha: se a falha bloqueia o envio ou só alerta, o fundamento legal e a norma citada. As fixas mostram por que não podem mudar." },
+      { ancora: "config.validacao.parametros", titulo: "Fundamento dos parâmetros", texto: "O fundamento legal de cada parâmetro do exercício. Parâmetro definido sem fundamento não é aceito." },
+    ],
+  },
+  {
+    id: "config.portal",
+    titulo: "Configurações › Portal e manual",
+    versao: 1,
+    passos: [
+      { ancora: "config.portal.portal", titulo: "Portal público", texto: "Liga ou desliga a consulta pública às emendas. O link de preenchimento das entidades continua funcionando mesmo com o portal desligado." },
+      { ancora: "config.portal.manual", titulo: "Manual orientativo", texto: "Escolha a norma que institui o manual e publique. O manual lê os valores do sistema, então nunca fica diferente da regra aplicada." },
+    ],
+  },
+  {
+    id: "config.usuarios",
+    titulo: "Configurações › Usuários",
+    versao: 1,
+    passos: [
+      { ancora: "config.usuarios.lista", titulo: "Usuários", texto: "Quem acessa o sistema, com o perfil e o Poder de cada um. Crie usuários, defina senha, ligue a conta ao vereador autor e desative quem não deve mais entrar. Quem é criado aqui troca a senha no primeiro acesso." },
+    ],
+  },
+  {
+    id: "config.perfis",
+    titulo: "Configurações › Perfis",
+    versao: 1,
+    passos: [
+      { ancora: "config.perfis.lista", titulo: "Perfis", texto: "Um perfil reúne um Poder (Legislativo, Executivo ou ambos) e as permissões. Sem nenhuma permissão, é um perfil só de consulta. As mudanças valem no próximo login." },
+    ],
+  },
+  {
+    id: "config.areas",
+    titulo: "Configurações › Áreas",
+    versao: 1,
+    passos: [
+      { ancora: "config.areas.lista", titulo: "Áreas de aplicação", texto: "Saúde, Educação e as demais, com os órgãos de cada uma. Definem a parcela da cota e o agrupamento dos painéis. Uma área só pode ser excluída se nenhum objeto da biblioteca estiver ligado a ela." },
+    ],
+  },
+  {
+    id: "config.tipos-destino",
+    titulo: "Configurações › Tipos de destino",
+    versao: 1,
+    passos: [
+      { ancora: "config.tipos-destino.teste", titulo: "Testar um nome", texto: "Digite o nome de um destino para ver qual tipo o sistema reconhece e a subfunção que ele sugere." },
+      { ancora: "config.tipos-destino.lista", titulo: "Tipos de destino", texto: "UBS, CAPS, EMEF e outros: as palavras que identificam cada tipo no nome do destino e a subfunção sugerida. A ordem decide qual vale quando duas combinam." },
+    ],
+  },
+  {
+    id: "config.destinos",
+    titulo: "Configurações › Destinos",
+    versao: 1,
+    passos: [
+      { ancora: "config.destinos.duplicados", titulo: "Possíveis duplicados", texto: "Nomes parecidos ou o mesmo CNPJ. A mesclagem só acontece com a sua confirmação, e as emendas passam para o beneficiário mantido." },
+      { ancora: "config.destinos.lista", titulo: "Beneficiários", texto: "Unidades da administração e entidades que podem receber emendas. Cadastre, edite, registre pendência de habilitação ou desative." },
+      { ancora: "config.importar-destinos", titulo: "Importar planilha", texto: "Cadastre vários de uma vez. Você confere antes de gravar; quem já existe é atualizado, não duplicado." },
+    ],
+  },
+  {
+    id: "config.biblioteca",
+    titulo: "Configurações › Biblioteca de objetos",
+    versao: 1,
+    passos: [
+      { ancora: "config.biblioteca.lista", titulo: "Biblioteca de objetos", texto: "O vocabulário que o sistema reconhece no objeto da emenda (ambulância, reforma, merenda…), com a natureza da despesa e a área. Desativar um objeto faz o sistema deixar de reconhecê-lo em emendas novas." },
+    ],
+  },
+  {
+    id: "config.precos",
+    titulo: "Configurações › Fontes de preço",
+    versao: 1,
+    passos: [
+      { ancora: "config.precos.lista", titulo: "Fontes oficiais de preço", texto: "Os sites de referência que aparecem no plano de trabalho para o vereador pesquisar o preço de cada item." },
+    ],
+  },
+  {
+    id: "config.normas",
+    titulo: "Configurações › Base legal",
+    versao: 1,
+    passos: [
+      { ancora: "config.normas.lista", titulo: "Base legal", texto: "Lei Orgânica, Regimento e demais atos, com vigência e o PDF. São citados no manual e conferidos na conformidade." },
+    ],
+  },
+  {
+    id: "config.auditoria",
+    titulo: "Configurações › Auditoria",
+    versao: 1,
+    passos: [
+      { ancora: "config.auditoria.filtros", titulo: "Filtros", texto: "Procure por período, usuário, tipo de registro e ação." },
+      { ancora: "config.auditoria.lista", titulo: "Registros", texto: "Cada alteração feita no sistema. “Abrir” mostra o antes e o depois lado a lado." },
+    ],
+  },
+  // ------------------------------------------------------------ nova emenda
+  {
+    id: "nova-emenda.etapa1",
+    titulo: "Nova emenda › Descrever",
+    versao: 1,
+    passos: [
+      { ancora: "nova-emenda.etapas", titulo: "Três etapas", texto: "Descrever a emenda, preencher o plano de trabalho e validar. Pode salvar o rascunho a qualquer momento e voltar depois." },
+      { ancora: "nova-emenda.execucao", titulo: "Quem executa", texto: "Direta: a Prefeitura contrata e paga. Indireta: o recurso é repassado a uma entidade sem fins lucrativos." },
+      { ancora: "nova-emenda.destino", titulo: "Destino e valor", texto: "Escolha para onde vai o recurso e informe uma estimativa do valor. O valor final será a soma dos itens do plano de trabalho." },
+      { ancora: "nova-emenda.objeto", titulo: "Objeto", texto: "Descreva em linguagem comum o que será feito ou comprado. “Melhorar texto” sugere uma redação usando só o que você escreveu." },
+      { ancora: "nova-emenda.avancar", titulo: "Analisar", texto: "O sistema procura no orçamento a dotação que comporta o objeto. Depois de escolhida, siga para o plano de trabalho." },
+      { ancora: "nova-emenda.resumo", titulo: "Resumo e cota", texto: "O que já foi definido e quanto da sua cota está disponível." },
+    ],
+  },
+  {
+    id: "nova-emenda.etapa2",
+    titulo: "Nova emenda › Plano de trabalho",
+    versao: 1,
+    passos: [
+      { ancora: "nova-emenda.modelo", titulo: "Modelo do plano", texto: "O modelo vem do tipo de despesa escolhido na etapa anterior e define o que o plano precisa ter." },
+      { ancora: "nova-emenda.entidade", titulo: "Preenchimento pela entidade", texto: "Na execução indireta, gere um link para a própria entidade preencher o plano, sem precisar de login." },
+      { ancora: "nova-emenda.justificativa", titulo: "Justificativa", texto: "Por que a emenda é necessária." },
+      { ancora: "nova-emenda.metas", titulo: "Metas", texto: "Quem é beneficiado, a unidade e a quantidade, e a meta finalística." },
+      { ancora: "nova-emenda.memoria", titulo: "Memória de cálculo", texto: "Os itens com quantidade e preço, e a fonte oficial de onde veio cada preço. A soma é o valor da emenda." },
+      { ancora: "nova-emenda.cronograma", titulo: "Cronograma", texto: "Como o valor será desembolsado. A soma das parcelas tem de bater com o valor da emenda." },
+      { ancora: "nova-emenda.rodape", titulo: "Seguir", texto: "Vá para a validação, volte, salve o rascunho ou visualize o plano." },
+    ],
+  },
+  {
+    id: "nova-emenda.etapa3",
+    titulo: "Nova emenda › Validar e submeter",
+    versao: 1,
+    passos: [
+      { ancora: "nova-emenda.treze", titulo: "As treze verificações", texto: "Cada uma com o resultado (conforme, alerta ou falha) e a explicação. Uma falha impede o envio." },
+      { ancora: "nova-emenda.pendencias", titulo: "Pendências", texto: "As conferências do sistema que ainda pedem atenção. Bloqueios impedem o envio; alertas, não." },
+      { ancora: "nova-emenda.declaracao", titulo: "Declaração", texto: "Marque a declaração de inexistência de vedação antes de enviar." },
+      { ancora: "nova-emenda.submeter", titulo: "Submeter", texto: "Envia a emenda à Câmara. O servidor confere tudo de novo; se recusar, a tentativa fica registrada e você vê o motivo." },
+    ],
+  },
 ];
 
 export const GUIAS: Record<string, Guia> = Object.fromEntries(GUIAS_LISTA.map((g) => [g.id, g]));
 
 // O guia da tela em que a pessoa está. Configurações usa a aba (?aba=).
 export function guiaDaRota(pathname: string, aba?: string | null): Guia | null {
-  const rotas: [RegExp, string][] = [[/^\/inicio\/?$/, "inicio"]];
+  const rotas: [RegExp, string][] = [
+    [/^\/inicio\/?$/, "inicio"],
+    [/^\/painel\/?$/, "painel"],
+    [/^\/comparativo\/?$/, "comparativo"],
+    [/^\/tramitacao\/?$/, "tramitacao"],
+    [/^\/emendas\/?$/, "emendas"],
+    [/^\/emendas\/nova\/?$/, "nova-emenda.etapa1"],
+    // A página da emenda declara a própria tela (visão ou editor).
+    [/^\/emendas\/[^/]+\/?$/, "emenda"],
+    [/^\/vereador360\/?$/, "vereador360"],
+    [/^\/executivo\/viabilidade\/?$/, "viabilidade"],
+    [/^\/executivo\/execucao\/?$/, "execucao"],
+    [/^\/executivo\/planejamento\/?$/, "planejamento"],
+    [/^\/executivo\/planejamento\/importacao\/[^/]+\/?$/, "importacao"],
+    [/^\/conformidade\/?$/, "conformidade"],
+    [/^\/conta\/?$/, "conta"],
+  ];
   if (pathname.startsWith("/config")) {
     const g = GUIAS[`config.${aba || "exercicio"}`];
     if (g) return g;

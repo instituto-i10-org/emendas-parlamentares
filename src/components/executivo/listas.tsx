@@ -30,6 +30,7 @@ export function ListaViabilidade({ linhas, podeAgir }: { linhas: LinhaExecutivo[
       itens={linhas}
       texto={texto}
       vazio="Nenhuma emenda submetida neste exercício."
+      guia="viabilidade.filtros"
       filtros={{ rotulo: "Manifestação", opcoes: { Todas: () => true, "Sem parecer": (e) => !e.parecer, "Com parecer": (e) => !!e.parecer } }}
       render={(e) => (
         <article key={e.id} className="rounded-box bg-soft p-4">
@@ -46,7 +47,11 @@ export function ListaViabilidade({ linhas, podeAgir }: { linhas: LinhaExecutivo[
                 {e.autor} · {e.destino} · {e.dotacao} · <b className="text-ink">{BRL(e.valor)}</b>
               </p>
             </div>
-            {podeAgir ? <ParecerDialog emendaId={e.id} rotulo={e.rotulo} jaTem={!!e.parecer} /> : null}
+            {podeAgir ? (
+              <div data-guia="viabilidade.acao">
+                <ParecerDialog emendaId={e.id} rotulo={e.rotulo} jaTem={!!e.parecer} />
+              </div>
+            ) : null}
           </div>
           {e.parecer ? (
             <div className="mt-3 rounded-md bg-surface p-3 text-sm">
@@ -71,6 +76,7 @@ export function ListaExecucao({ linhas, podeAgir }: { linhas: LinhaExecutivo[]; 
       itens={linhas}
       texto={texto}
       vazio="Nenhuma emenda aprovada neste exercício."
+      guia="execucao.filtros"
       filtros={{
         rotulo: "Lançamentos",
         opcoes: { Todas: () => true, "Sem lançamento": (e) => !e.andamentos.length, "Com lançamento": (e) => !!e.andamentos.length },
@@ -87,7 +93,11 @@ export function ListaExecucao({ linhas, podeAgir }: { linhas: LinhaExecutivo[]; 
                 {e.autor} · {e.destino} · {e.dotacao} · aprovado <b className="text-ink">{BRL(e.valor)}</b>
               </p>
             </div>
-            {podeAgir ? <AndamentoDialog emendaId={e.id} rotulo={e.rotulo} /> : null}
+            {podeAgir ? (
+              <div data-guia="execucao.acao">
+                <AndamentoDialog emendaId={e.id} rotulo={e.rotulo} />
+              </div>
+            ) : null}
           </div>
           <div className="mt-3 grid grid-cols-3 gap-2 max-sm:grid-cols-1">
             {(

@@ -275,7 +275,7 @@ export function EditorEmenda({
   );
 
   const rodape = (
-    <div className="@container/acoes sticky bottom-0 z-10 -mx-7 rounded-b-card mt-7 flex flex-wrap items-center gap-2 bg-surface px-7 py-4 shadow-[0_-12px_16px_var(--surface)] max-md:-mx-4 max-md:px-4">
+    <div data-guia="nova-emenda.rodape" className="@container/acoes sticky bottom-0 z-10 -mx-7 rounded-b-card mt-7 flex flex-wrap items-center gap-2 bg-surface px-7 py-4 shadow-[0_-12px_16px_var(--surface)] max-md:-mx-4 max-md:px-4">
       {etapa === 1 ? null : etapa === 2 ? (
         <>
           <Button onClick={() => irPara(3)} className="max-md:flex-[1_1_100%]">
@@ -303,6 +303,7 @@ export function EditorEmenda({
             </div>
           ) : null}
           <Button
+            data-guia="nova-emenda.submeter"
             variant="ok"
             disabled={!d.resumo.pode || gravando || !!duplicata || !podeRemeter}
             onClick={() => gravar(true)}
@@ -359,7 +360,7 @@ export function EditorEmenda({
   );
 
   return (
-    <div className="px-7 pt-9 pb-11 max-md:px-4 max-md:pt-6">
+    <div data-guia-tela={`nova-emenda.etapa${etapa}`} className="px-7 pt-9 pb-11 max-md:px-4 max-md:pt-6">
       <div className="mb-2 text-xs font-medium text-muted-foreground">
         Emendas › <b className="font-bold text-ink">{diligencia ? `Emenda nº ${diligencia.numero ?? "—"}/${ctx.config.exercicio} — ajuste pedido pela Comissão` : e.id ? "Editar emenda" : "Nova emenda"}</b>
       </div>
@@ -393,7 +394,7 @@ export function EditorEmenda({
       ) : null}
       <div className="mb-5 flex items-center justify-between gap-4 max-md:flex-col-reverse max-md:items-stretch">
         <h1 className="text-2xl font-extrabold tracking-[-0.02em]">{ETAPAS[etapa - 1]}</h1>
-        <nav aria-label="Etapas" className="flex gap-1 rounded-box bg-surface p-1.5 shadow-[0_1px_2px_rgba(10,36,99,.06)]">
+        <nav data-guia="nova-emenda.etapas" aria-label="Etapas" className="flex gap-1 rounded-box bg-surface p-1.5 shadow-[0_1px_2px_rgba(10,36,99,.06)]">
           {ETAPAS.map((t, i) => {
             const n = i + 1;
             const atual = n === etapa;

@@ -75,7 +75,7 @@ export function AbaDestinos({ destinos, unidades, exercicio, importar = false }:
   return (
     <div className="grid gap-5">
       {pares.length ? (
-        <Cartao titulo={`Possíveis duplicados (${pares.length})`} ajuda="Grafias parecidas (acento, caixa, abreviação) ou o mesmo CNPJ. A mesclagem só acontece com confirmação.">
+        <Cartao guia="config.destinos.duplicados" titulo={`Possíveis duplicados (${pares.length})`} ajuda="Grafias parecidas (acento, caixa, abreviação) ou o mesmo CNPJ. A mesclagem só acontece com confirmação.">
           <ul className="grid gap-2">
             {pares.map((p) => (
               <li key={`${p.a.id}|${p.b.id}`} className="flex flex-wrap items-center gap-2 rounded-box bg-soft px-4 py-3 text-sm" data-par={`${p.a.nome} | ${p.b.nome}`}>
@@ -91,7 +91,7 @@ export function AbaDestinos({ destinos, unidades, exercicio, importar = false }:
           </ul>
         </Cartao>
       ) : null}
-      <Cartao
+      <Cartao guia="config.destinos.lista"
         ajuda="Para onde as emendas podem ir. Os da base oficial vêm do CNES, Censo Escolar, SUAS e Receita; os demais foram cadastrados aqui ou na tela da emenda. Pendência de habilitação bloqueia a submissão de emendas para a entidade."
         titulo={`Beneficiários (${destinos.length})`}
         acoes={
@@ -327,7 +327,7 @@ export function AbaBiblioteca({ areas, objetos }: { areas: AreaConfig[]; objetos
   const [editando, setEditando] = useState<ObjetoConfig | "novo" | null>(null);
   return (
     <div className="grid gap-5">
-      <Cartao ajuda="O vocabulário que o motor reconhece no objeto da emenda. O termo mais longo define a natureza e o elemento; verbos de obra e marcadores de custeio podem prevalecer." titulo={`Biblioteca de objetos (${objetos.length})`} acoes={<Button size="sm" onClick={() => setEditando("novo")}>Novo objeto</Button>}>
+      <Cartao guia="config.biblioteca.lista" ajuda="O vocabulário que o motor reconhece no objeto da emenda. O termo mais longo define a natureza e o elemento; verbos de obra e marcadores de custeio podem prevalecer." titulo={`Biblioteca de objetos (${objetos.length})`} acoes={<Button size="sm" onClick={() => setEditando("novo")}>Novo objeto</Button>}>
         <TabelaDados
           colunas={[{ titulo: "Objeto" }, { titulo: "Natureza" }, { titulo: "Área", className: "max-md:hidden" }, { titulo: "" }]}
           linhas={objetos.map((o) => ({
@@ -522,7 +522,7 @@ export function AbaNormas({ normas }: { normas: NormaConfig[] }) {
       arquivo: n.arquivo,
     });
   return (
-    <Cartao titulo="Base legal" acoes={<Button size="sm" onClick={() => setF(normaVazia)}>Nova norma</Button>}>
+    <Cartao guia="config.normas.lista" titulo="Base legal" acoes={<Button size="sm" onClick={() => setF(normaVazia)}>Nova norma</Button>}>
       <div className="grid gap-3">
         {normas.map((n) => (
           <div key={n.id} className={`rounded-box bg-soft p-4 text-sm ${n.ativo ? "" : "opacity-60"}`} data-norma={n.id}>
@@ -680,8 +680,8 @@ export function AbaAuditoria({
   const link = (n: number) => `/config?${new URLSearchParams({ aba: "auditoria", ...Object.fromEntries(Object.entries(filtros).filter(([, v]) => v)), pagina: String(n) })}`;
   const caixa = "campo h-10 px-2.5 text-sm";
   return (
-    <Cartao titulo={`Auditoria (${total} registros)`}>
-      <form method="get" action="/config" className="mb-4 grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] items-end gap-2.5">
+    <Cartao guia="config.auditoria.lista" titulo={`Auditoria (${total} registros)`}>
+      <form data-guia="config.auditoria.filtros" method="get" action="/config" className="mb-4 grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] items-end gap-2.5">
         <input type="hidden" name="aba" value="auditoria" />
         <label className="grid gap-1 text-xs font-semibold text-muted-foreground">
           De

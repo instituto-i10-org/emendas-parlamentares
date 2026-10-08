@@ -60,6 +60,7 @@ export default async function ImportacaoPage({ params, searchParams }: { params:
   return (
     <Pagina
       titulo={`Importação · ${imp.instrumento.tipo} ${imp.instrumento.numero}`}
+      guia="importacao"
       trilha={[{ rotulo: "Planejamento", href: "/executivo/planejamento" }, { rotulo: "Importação" }]}
       descricao={`${ROTULO_CARGA[imp.tipoCarga]} de ${imp.arquivo.nome} (${FORMATO[imp.formato]}). Nada vai para a base antes da confirmação.`}
       acoes={
@@ -68,32 +69,32 @@ export default async function ImportacaoPage({ params, searchParams }: { params:
         </Button>
       }
     >
-      <div className="mb-4 flex flex-wrap items-center gap-2 text-sm">
+      <div data-guia="importacao.situacao" className="mb-4 flex flex-wrap items-center gap-2 text-sm">
         <Selo tipo={tom}>{rotulo}</Selo>
         <span className="text-muted-foreground">Iniciada em {DATA_HORA(imp.criadoEm)}</span>
         {imp.gravadaEm ? <span className="text-muted-foreground">· gravada em {DATA_HORA(imp.gravadaEm)}</span> : null}
       </div>
 
       {imp.situacao === "LENDO" && gere ? (
-        <Cartao titulo="Leitura do documento">
+        <Cartao guia="importacao.leitura" titulo="Leitura do documento">
           <LeituraEmAndamento id={id} mensagemInicial={progresso?.mensagem ?? ""} lidasInicial={imp.paginasLidas} total={progresso?.paginasQuadro.length || imp.paginas || 0} />
         </Cartao>
       ) : null}
       {imp.situacao === "ERRO" ? (
-        <Cartao titulo="Leitura parada">
+        <Cartao guia="importacao.leitura" titulo="Leitura parada">
           <p className="mb-3 text-sm text-bad-ink">{imp.erro}</p>
           {gere ? <RetomarLeitura id={id} /> : null}
         </Cartao>
       ) : null}
       {imp.situacao === "MAPEAR" && gere ? (
-        <Cartao titulo="Colunas da planilha">
+        <Cartao guia="importacao.mapa" titulo="Colunas da planilha">
           <MapeamentoColunas id={id} cabecalho={imp.cabecalho} campos={definicoes} inicial={(imp.mapa ?? {}) as Record<string, number>} />
         </Cartao>
       ) : null}
 
       {resumo ? (
         <div className="grid gap-5">
-          <div className="grid grid-cols-4 gap-3.5 max-lg:grid-cols-2 max-sm:grid-cols-1">
+          <div data-guia="importacao.totais" className="grid grid-cols-4 gap-3.5 max-lg:grid-cols-2 max-sm:grid-cols-1">
             <Kpi rotulo="Linhas válidas" valor={resumo.validas} tom="navy" />
             <Kpi rotulo="Linhas recusadas" valor={resumo.recusadas} detalhe={resumo.recusadas ? "não entram na base" : "nenhuma"} />
             {resumo.tipo === "DOTACOES" ? (
@@ -109,7 +110,7 @@ export default async function ImportacaoPage({ params, searchParams }: { params:
           </div>
 
           {resumo.tipo === "DOTACOES" ? (
-            <Cartao titulo="Conferência com a peça">
+            <Cartao guia="importacao.conferencia" titulo="Conferência com a peça">
               <TotalImpresso id={id} valor={resumo.totalImpresso} editavel={editavel} />
               {resumo.recarga ? (
                 <ul className="mt-4 grid gap-1 text-sm">
@@ -133,13 +134,13 @@ export default async function ImportacaoPage({ params, searchParams }: { params:
                 </ul>
               ) : null}
               {imp.situacao === "LIDA" && gere ? (
-                <div className="mt-4">
+                <div data-guia="importacao.confirmar" className="mt-4">
                   <AcoesConferencia id={id} podeConfirmar={resumo.podeConfirmar} porQueNao={resumo.porQueNao} />
                 </div>
               ) : null}
             </Cartao>
           ) : imp.situacao === "LIDA" && gere ? (
-            <Cartao>
+            <Cartao guia="importacao.confirmar">
               <AcoesConferencia id={id} podeConfirmar={resumo.podeConfirmar} porQueNao={resumo.porQueNao} />
             </Cartao>
           ) : null}
@@ -173,10 +174,11 @@ export default async function ImportacaoPage({ params, searchParams }: { params:
 
       {imp._count.linhas ? (
         <Cartao
+          guia="importacao.linhas"
           titulo="Linhas lidas"
           className="mt-5"
           acoes={
-            <div className="flex flex-wrap gap-2">
+            <div data-guia="importacao.relatorio" className="flex flex-wrap gap-2">
               {editavel ? <EditarLinha id={id} campos={{}} definicoes={definicoes} rotulo="Incluir linha" /> : null}
               <Button size="sm" variant="ghost" asChild>
                 <a href={`/api/importacao/${id}/relatorio`}>Relatório de recusas (CSV)</a>
@@ -184,7 +186,7 @@ export default async function ImportacaoPage({ params, searchParams }: { params:
             </div>
           }
         >
-          <nav aria-label="Filtro" className="mb-3 flex flex-wrap gap-1">
+          <nav data-guia="importacao.filtro" aria-label="Filtro" className="mb-3 flex flex-wrap gap-1">
             {[
               ["recusadas", `Recusadas (${nRecusadas})`],
               ["avisos", `Com aviso (${nAvisos})`],

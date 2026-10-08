@@ -26,7 +26,7 @@ export function AbaPortal({
   const { pendente, executar } = useAcao();
   return (
     <div className="grid gap-5">
-      <Cartao titulo="Portal público" ajuda="Desligado, o portal mostra que está indisponível e a conformidade aponta a pendência. O link da entidade continua funcionando.">
+      <Cartao guia="config.portal.portal" titulo="Portal público" ajuda="Desligado, o portal mostra que está indisponível e a conformidade aponta a pendência. O link da entidade continua funcionando.">
         <div className="flex flex-wrap items-center gap-3">
           <Selo tipo={portalPublico ? "ok" : "warn"}>{portalPublico ? "Ligado" : "Desligado"}</Selo>
           {podeEditar ? (
@@ -36,7 +36,7 @@ export function AbaPortal({
           ) : null}
         </div>
       </Cartao>
-      <Cartao titulo="Manual orientativo" ajuda="O manual público lê os parâmetros do sistema. Instituído por um ato cadastrado nas normas, e publicado.">
+      <Cartao guia="config.portal.manual" titulo="Manual orientativo" ajuda="O manual público lê os parâmetros do sistema. Instituído por um ato cadastrado nas normas, e publicado.">
         <div className="grid gap-3">
           <label className="grid gap-1 text-sm font-semibold text-label" htmlFor="ato-manual">
             Ato que institui o manual

@@ -70,7 +70,7 @@ export function ImportarPlanilha({ tipo }: { tipo: Tipo }) {
 
   return (
     <>
-      <Button size="sm" variant="surface" onClick={() => setAberto(true)}>
+      <Button data-guia={`config.importar-${tipo}`} size="sm" variant="surface" onClick={() => setAberto(true)}>
         {t.botao}
       </Button>
       <Dialog open={aberto} onOpenChange={(a) => (a ? setAberto(true) : fechar())}>

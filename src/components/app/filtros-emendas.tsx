@@ -13,6 +13,7 @@ export function FiltrosEmendas({
   areas,
   situacoes,
   ocultos = {},
+  guia,
 }: {
   acao: string;
   filtros: Filtros;
@@ -20,10 +21,12 @@ export function FiltrosEmendas({
   areas: { id: string; nome: string }[];
   situacoes: string[];
   ocultos?: Record<string, string>;
+  // Âncora do guia de ajuda.
+  guia?: string;
 }) {
   const caixa = "campo h-10 px-2.5 text-sm";
   return (
-    <form method="get" action={acao} role="search" aria-label="Filtrar emendas" className="mb-4 grid gap-2.5">
+    <form data-guia={guia} method="get" action={acao} role="search" aria-label="Filtrar emendas" className="mb-4 grid gap-2.5">
       {Object.entries(ocultos).map(([k, v]) => (
         <input key={k} type="hidden" name={k} value={v} />
       ))}

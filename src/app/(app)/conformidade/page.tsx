@@ -153,8 +153,8 @@ export default async function ConformidadePage() {
   const proximos = (exercicio?.prazos ?? []).filter((p) => p.data >= new Date(hoje.getTime() - 86_400_000)).slice(0, 4);
 
   return (
-    <Pagina titulo="Conformidade" descricao="Espelho da fiscalização das emendas impositivas. Cada item é conferido nos dados do sistema.">
-      <div className="mb-5 grid grid-cols-3 gap-3.5 max-md:grid-cols-1">
+    <Pagina titulo="Conformidade" guia="conformidade" descricao="Espelho da fiscalização das emendas impositivas. Cada item é conferido nos dados do sistema.">
+      <div data-guia="conformidade.totais" className="mb-5 grid grid-cols-3 gap-3.5 max-md:grid-cols-1">
         <Kpi rotulo="Conformes" valor={todas.filter((i) => i.nivel === "ok").length} tom="ok" />
         <Kpi rotulo="Em atenção" valor={todas.filter((i) => i.nivel === "warn").length} tom="warn" />
         <Kpi rotulo="Pendentes" valor={todas.filter((i) => i.nivel === "bad").length} tom="bad" />
@@ -165,7 +165,7 @@ export default async function ConformidadePage() {
             ["Requisitos do edital", todas.filter((i) => i.principal)],
             ["Outros itens da fiscalização", todas.filter((i) => !i.principal)],
           ].map(([titulo, lista]) => (
-            <Cartao key={titulo as string} titulo={titulo as string}>
+            <Cartao key={titulo as string} guia={titulo === "Requisitos do edital" ? "conformidade.requisitos" : "conformidade.outros"} titulo={titulo as string}>
               <ul className="divide-y divide-hair">
                 {(lista as typeof todas).map((i) => (
                   <li key={i.id} className="flex gap-3 py-3" data-item={i.id}>
@@ -180,7 +180,7 @@ export default async function ConformidadePage() {
                         <p className="mt-1 text-sm">
                           <b>Providência:</b> {i.providencia}{" "}
                           {i.link ? (
-                            <Link href={i.link} className="font-bold text-navy hover:underline">
+                            <Link data-guia="conformidade.resolver" href={i.link} className="font-bold text-navy hover:underline">
                               Resolver
                             </Link>
                           ) : null}
@@ -193,7 +193,7 @@ export default async function ConformidadePage() {
             </Cartao>
           ))}
         </div>
-        <Cartao titulo="Próximos prazos">
+        <Cartao guia="conformidade.prazos" titulo="Próximos prazos">
           {proximos.length ? (
             <ul className="grid gap-3 text-sm">
               {proximos.map((p) => (

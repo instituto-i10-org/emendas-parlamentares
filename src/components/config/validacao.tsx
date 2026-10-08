@@ -70,7 +70,7 @@ export function AbaValidacao({
   return (
     <div className="grid gap-5">
       {conf.janela}
-      <Cartao
+      <Cartao guia="config.validacao.treze"
         titulo={`As treze verificações — exercício ${ano}`}
         ajuda="Bloqueante: a falha torna a emenda inválida. Alerta: aparece no relatório e não impede a remessa. A mudança vale na próxima validação, sem publicação nova."
       >
@@ -151,7 +151,7 @@ export function AbaValidacao({
         ) : null}
       </Cartao>
 
-      <Cartao titulo="Parâmetros da validação e da tramitação" ajuda="Cada parâmetro do exercício (os demais valores ficam na aba Exercício) leva o fundamento por extenso e, se houver, a norma citada. Parâmetro definido sem fundamento não é aceito.">
+      <Cartao guia="config.validacao.parametros" titulo="Parâmetros da validação e da tramitação" ajuda="Cada parâmetro do exercício (os demais valores ficam na aba Exercício) leva o fundamento por extenso e, se houver, a norma citada. Parâmetro definido sem fundamento não é aceito.">
         <div className="grid grid-cols-2 gap-3.5 max-md:grid-cols-1">
           <label className="grid gap-1 text-sm font-semibold text-label">
             Prazo padrão da diligência (dias)

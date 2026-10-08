@@ -56,7 +56,7 @@ export function AbaUsuarios({ usuarios, perfis, autores }: { usuarios: UsuarioTe
   const [autorDe, setAutorDe] = useState<UsuarioTela | null>(null);
   const atribuiveis = perfis.filter((p) => p.atribuivel);
   return (
-    <Cartao titulo="Usuários" acoes={<Button size="sm" onClick={() => setNovo(true)}>Novo usuário</Button>}>
+    <Cartao guia="config.usuarios.lista" titulo="Usuários" acoes={<Button size="sm" onClick={() => setNovo(true)}>Novo usuário</Button>}>
       <TabelaDados
         colunas={[{ titulo: "Nome" }, { titulo: "Poder", className: "max-md:hidden" }, { titulo: "Perfil" }, { titulo: "Autor (vereador)", className: "max-lg:hidden" }, { titulo: "" }]}
         linhas={usuarios.map((u) => ({
@@ -258,7 +258,7 @@ function VincularAutor({ usuario, autores, aoFechar }: { usuario: UsuarioTela | 
 export function AbaPerfis({ perfis }: { perfis: PerfilTela[] }) {
   const [editando, setEditando] = useState<PerfilTela | "novo" | null>(null);
   return (
-    <Cartao ajuda="Um perfil combina um Poder de atuação com permissões. Sem permissões, é perfil de consulta. Mudanças valem no próximo login." titulo="Perfis de acesso" acoes={<Button size="sm" onClick={() => setEditando("novo")}>Novo perfil</Button>}>
+    <Cartao guia="config.perfis.lista" ajuda="Um perfil combina um Poder de atuação com permissões. Sem permissões, é perfil de consulta. Mudanças valem no próximo login." titulo="Perfis de acesso" acoes={<Button size="sm" onClick={() => setEditando("novo")}>Novo perfil</Button>}>
       <TabelaDados
         colunas={[{ titulo: "Perfil" }, { titulo: "Poder" }, { titulo: "Permissões", className: "max-md:hidden" }, { titulo: "Usuários", className: "text-right" }, { titulo: "" }]}
         linhas={perfis.map((p) => ({

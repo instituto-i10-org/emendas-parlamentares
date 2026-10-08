@@ -32,7 +32,7 @@ export function AbaTiposDestino({ tipos, podeEditar }: { tipos: TipoDestinoTela[
   const reconhecido = teste.trim() ? testarNome(teste, ativos) : null;
   return (
     <div className="grid gap-5">
-      <Cartao
+      <Cartao guia="config.tipos-destino.teste"
         titulo="Testar um nome"
         ajuda="Digite o nome de um destino como ele aparece no cadastro e veja qual tipo o sistema reconhece e qual subfunção sugere."
       >
@@ -53,7 +53,7 @@ export function AbaTiposDestino({ tipos, podeEditar }: { tipos: TipoDestinoTela[
           </p>
         </div>
       </Cartao>
-      <Cartao
+      <Cartao guia="config.tipos-destino.lista"
         titulo={`Tipos de destino (${tipos.length})`}
         ajuda="Cada tipo tem as palavras que o identificam no nome do destino e a subfunção que ele sugere (UBS → atenção básica; EMEF → ensino fundamental). Vale o primeiro da lista que reconhecer o nome. Mudar um tipo vale para os destinos cadastrados daqui em diante e para a classificação de novas emendas; a subfunção já gravada nos destinos existentes não muda."
         acoes={podeEditar ? <Button size="sm" onClick={() => setEditando("novo")}>Novo tipo</Button> : null}

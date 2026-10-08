@@ -13,6 +13,7 @@ export function FiltroLista<T>({
   render,
   vazio = "Nada encontrado.",
   porPagina = 20,
+  guia,
 }: {
   itens: T[];
   texto: (i: T) => string;
@@ -20,6 +21,8 @@ export function FiltroLista<T>({
   render: (i: T) => ReactNode;
   vazio?: string;
   porPagina?: number;
+  // Âncora do guia de ajuda na barra de busca e filtros.
+  guia?: string;
 }) {
   const [q, setQ] = useState("");
   const primeiro = filtros ? Object.keys(filtros.opcoes)[0] : null;
@@ -31,7 +34,7 @@ export function FiltroLista<T>({
   }, [itens, q, filtro, filtros, texto]);
   return (
     <div>
-      <div className="mb-4 flex flex-wrap items-center gap-3">
+      <div data-guia={guia} className="mb-4 flex flex-wrap items-center gap-3">
         <div className="relative min-w-[240px] flex-1">
           <Search className="pointer-events-none absolute top-1/2 left-3.5 size-[18px] -translate-y-1/2 text-muted-foreground" />
           <input className="campo h-11 pr-3.5 pl-11" placeholder="Buscar" aria-label="Buscar" value={q} onChange={(e) => setQ(e.target.value)} />

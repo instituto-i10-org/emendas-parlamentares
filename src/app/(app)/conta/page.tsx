@@ -9,11 +9,11 @@ export const metadata: Metadata = { title: "Minha conta — Emendas360" };
 export default async function ContaPage() {
   const user = await getCurrentUser();
   return (
-    <Pagina titulo="Minha conta" descricao={`${user.nome} · ${user.email ?? ""}`}>
-      <Cartao titulo="Trocar a senha">
+    <Pagina titulo="Minha conta" guia="conta" descricao={`${user.nome} · ${user.email ?? ""}`}>
+      <Cartao guia="conta.senha" titulo="Trocar a senha">
         <TrocarSenha />
       </Cartao>
-      <Cartao titulo="Guias de ajuda">
+      <Cartao guia="conta.guias" titulo="Guias de ajuda">
         <ReverGuias />
       </Cartao>
     </Pagina>

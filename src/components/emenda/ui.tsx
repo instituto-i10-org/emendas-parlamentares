@@ -25,9 +25,22 @@ export function Painel({ children, className }: { children: ReactNode; className
   return <section className={cn("rounded-card bg-surface p-7 shadow-card max-md:px-4 max-md:py-5", className)}>{children}</section>;
 }
 
-export function Secao({ titulo, ajuda, children, className }: { titulo: string; ajuda?: ReactNode; children: ReactNode; className?: string }) {
+export function Secao({
+  titulo,
+  ajuda,
+  children,
+  className,
+  guia,
+}: {
+  titulo: string;
+  ajuda?: ReactNode;
+  children: ReactNode;
+  className?: string;
+  // Âncora do guia de ajuda (só o atributo data-guia; não muda a aparência).
+  guia?: string;
+}) {
   return (
-    <div className={cn("mt-7 first:mt-0", className)}>
+    <div data-guia={guia} className={cn("mt-7 first:mt-0", className)}>
       <h3 className="mb-3 flex items-center gap-2 text-md font-bold">
         {titulo}
         {ajuda ? <Ajuda titulo={titulo}>{ajuda}</Ajuda> : null}
@@ -52,6 +65,7 @@ export function Campo({
   htmlFor,
   children,
   className,
+  guia,
 }: {
   rotulo: ReactNode;
   obrigatorio?: boolean;
@@ -61,9 +75,11 @@ export function Campo({
   htmlFor?: string;
   children: ReactNode;
   className?: string;
+  // Âncora do guia de ajuda (só o atributo data-guia; não muda a aparência).
+  guia?: string;
 }) {
   return (
-    <div className={cn("flex min-w-0 flex-col gap-1.5", className)}>
+    <div data-guia={guia} className={cn("flex min-w-0 flex-col gap-1.5", className)}>
       <div className="flex items-center gap-1.5">
         <label htmlFor={htmlFor} className="text-sm font-semibold text-label">
           {rotulo}

@@ -44,12 +44,14 @@ export function Etapa3({
           {recusa.erro} A tentativa ficou registrada no histórico de validações da emenda.
         </Aviso>
       ) : null}
-      <ListaVerificacoes verificacoes={recusa?.verificacoes ?? d.verificacoes} />
+      <div data-guia="nova-emenda.treze">
+        <ListaVerificacoes verificacoes={recusa?.verificacoes ?? d.verificacoes} />
+      </div>
       <p className="text-sm text-muted-foreground">
         Pré-checagem das condições de validade. A remessa só é liberada quando nenhum bloqueio resta; alertas não impedem a submissão.
       </p>
       {pendentes.length ? (
-        <div className="divide-y divide-hair">
+        <div data-guia="nova-emenda.pendencias" className="divide-y divide-hair">
           {pendentes.map((c, i) => (
             <LinhaChecagem key={i} c={c} />
           ))}
@@ -67,7 +69,7 @@ export function Etapa3({
         </Detalhes>
       ) : null}
 
-      <label className="flex cursor-pointer gap-3 rounded-box bg-soft p-4 text-sm leading-relaxed">
+      <label data-guia="nova-emenda.declaracao" className="flex cursor-pointer gap-3 rounded-box bg-soft p-4 text-sm leading-relaxed">
         <input
           type="checkbox"
           className="mt-1 size-4 shrink-0"

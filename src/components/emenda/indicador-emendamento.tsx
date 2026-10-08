@@ -7,6 +7,7 @@ export function IndicadorEmendamento({ s }: { s: SituacaoEmendamento | null }) {
   const Icone = s.aberto ? CalendarCheck : CalendarX;
   return (
     <p
+      data-guia="indicador.emendamento"
       role="status"
       className={
         "mb-4 flex items-start gap-2 rounded-box px-4 py-3 text-sm " + (s.aberto ? "bg-info-bg text-ink" : "border border-warn-line bg-warn-bg text-[#7A4A06]")

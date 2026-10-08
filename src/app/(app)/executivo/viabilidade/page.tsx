@@ -20,9 +20,10 @@ export default async function ViabilidadePage() {
   return (
     <Pagina
       titulo="Viabilidade técnica"
+      guia="viabilidade"
       descricao="O Executivo se manifesta sobre a viabilidade das emendas submetidas. O parecer é informativo: não altera a emenda nem trava a tramitação, e serve também como registro de impedimento técnico (CF art. 166 §11)."
     >
-      <div className="mb-5 grid grid-cols-3 gap-3.5 max-md:grid-cols-1">
+      <div data-guia="viabilidade.totais" className="mb-5 grid grid-cols-3 gap-3.5 max-md:grid-cols-1">
         <Kpi rotulo="Emendas submetidas" valor={linhas.length} />
         <Kpi rotulo="Sem parecer" valor={linhas.length - com.length} tom={linhas.length - com.length ? "warn" : undefined} />
         <Kpi rotulo="Inviáveis (último parecer)" valor={com.filter((l) => l.parecer!.resultado === "INVIAVEL").length} tom="bad" />

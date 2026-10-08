@@ -144,7 +144,7 @@ export function Etapa1({
         }}
       />
 
-      <div className="grid grid-cols-2 gap-3.5 max-sm:grid-cols-1">
+      <div data-guia="nova-emenda.destino" className="grid grid-cols-2 gap-3.5 max-sm:grid-cols-1">
         <CampoDestino e={e} destino={d.destino} destinos={destinos} ctx={ctx} atualizar={atualizar} aoCadastrar={aoCadastrarDestino} />
         <Campo
           rotulo="Valor pretendido"
@@ -156,7 +156,7 @@ export function Etapa1({
         </Campo>
       </div>
 
-      <div ref={objetoRef}>
+      <div ref={objetoRef} data-guia="nova-emenda.objeto">
         <Campo
           rotulo="Objeto da emenda"
           obrigatorio
@@ -180,7 +180,7 @@ export function Etapa1({
 
       {analisando !== null ? <Processando passo={analisando} rotuloBase={ctx.config.rotuloBase ?? "LOA"} /> : null}
 
-      <div ref={resultadoRef} className="scroll-mt-4">
+      <div ref={resultadoRef} data-guia="nova-emenda.resultado" className="scroll-mt-4">
         {d.obsoleta && analisando === null ? (
           <div className="flex flex-wrap items-center gap-3 rounded-box bg-warn-bg px-4 py-3.5 text-sm text-warn">
             <span className="flex-1">
@@ -207,7 +207,7 @@ export function Etapa1({
         ) : null}
       </div>
 
-      <div className="@container/acoes1 sticky bottom-0 z-10 -mx-7 rounded-b-card flex flex-wrap items-center gap-2 bg-surface px-7 py-4 shadow-[0_-12px_16px_var(--surface)] max-md:-mx-4 max-md:px-4">
+      <div data-guia="nova-emenda.avancar" className="@container/acoes1 sticky bottom-0 z-10 -mx-7 rounded-b-card flex flex-wrap items-center gap-2 bg-surface px-7 py-4 shadow-[0_-12px_16px_var(--surface)] max-md:-mx-4 max-md:px-4">
         {pronto && !d.obsoleta ? (
           <Button onClick={irParaPlano} className="max-md:flex-[1_1_100%]">
             Ir para o plano de trabalho →
@@ -369,7 +369,7 @@ function EscolhaExecucao({ valor, aoMudar }: { valor: "DIRETA" | "INDIRETA"; aoM
     },
   ];
   return (
-    <fieldset>
+    <fieldset data-guia="nova-emenda.execucao">
       <legend className="mb-1.5 text-sm font-semibold text-label">
         Quem executa<span className="text-muted-foreground"> *</span>
       </legend>

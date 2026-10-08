@@ -39,7 +39,7 @@ export function LinkEntidade({ emendaId, alterado, atualizar }: { emendaId: stri
 
   if (!emendaId) {
     return (
-      <Secao titulo="Preenchimento pela entidade">
+      <Secao guia="nova-emenda.entidade" titulo="Preenchimento pela entidade">
         <Aviso tipo="info">Salve o rascunho para gerar o link que a entidade usa para preencher este plano de trabalho.</Aviso>
       </Secao>
     );
@@ -70,6 +70,7 @@ export function LinkEntidade({ emendaId, alterado, atualizar }: { emendaId: stri
 
   return (
     <Secao
+      guia="nova-emenda.entidade"
       titulo="Preenchimento pela entidade"
       ajuda="A entidade recebe um link, preenche metas, itens com a fonte de cada preço, etapas e cronograma, e envia. O link serve para um único envio, vence na data indicada e pode ser cancelado aqui. Depois que a emenda é remetida, nenhum link vale mais."
     >

@@ -113,6 +113,7 @@ export default async function TramitacaoPage({ searchParams }: { searchParams: P
   return (
     <Pagina
       titulo="Tramitação"
+      guia="tramitacao"
       descricao="Parecer de mérito separado do saneamento. A Comissão recebe, pede ajuste ou decide com parecer escrito; tudo fica no histórico da emenda."
       acoes={
         <div className="flex flex-wrap gap-2">
@@ -129,14 +130,14 @@ export default async function TramitacaoPage({ searchParams }: { searchParams: P
         </div>
       }
     >
-      <div className="mb-5 grid grid-cols-4 gap-3.5 max-lg:grid-cols-2 print:hidden">
+      <div data-guia="tramitacao.totais" className="mb-5 grid grid-cols-4 gap-3.5 max-lg:grid-cols-2 print:hidden">
         <Kpi rotulo="Aguardando parecer" valor={aguardando.qtd} detalhe={BRL(aguardando.valor)} tom={aguardando.qtd ? "warn" : undefined} />
         <Kpi rotulo="Em saneamento" valor={saneamento.qtd} detalhe={BRL(saneamento.valor)} />
         <Kpi rotulo="Aprovadas" valor={k(["APROVADA"]).qtd} detalhe={BRL(k(["APROVADA"]).valor)} tom="ok" />
         <Kpi rotulo="Rejeitadas" valor={k(["REJEITADA"]).qtd} detalhe={BRL(k(["REJEITADA"]).valor)} />
       </div>
 
-      <nav aria-label="Filas" className="mb-4 flex flex-wrap gap-1 rounded-box bg-surface p-1.5 shadow-[0_1px_2px_rgba(10,36,99,.06)] print:hidden">
+      <nav data-guia="tramitacao.abas" aria-label="Filas" className="mb-4 flex flex-wrap gap-1 rounded-box bg-surface p-1.5 shadow-[0_1px_2px_rgba(10,36,99,.06)] print:hidden">
         {ABAS.map((a) => (
           <Link
             key={a.id}
@@ -155,7 +156,7 @@ export default async function TramitacaoPage({ searchParams }: { searchParams: P
         await programas(ano, f, filtros.areaId, autores, areas)
       ) : (
         <Cartao titulo={`${defAba.titulo} (${pagina.total})`}>
-          <FiltrosEmendas acao="/tramitacao" filtros={filtros} autores={autores} areas={areas} situacoes={[...situacoesDaAba]} ocultos={{ aba }} />
+          <FiltrosEmendas guia="tramitacao.filtros" acao="/tramitacao" filtros={filtros} autores={autores} areas={areas} situacoes={[...situacoesDaAba]} ocultos={{ aba }} />
           {aba === "parecer" ? (
             <TabelaDados
               vazio="Nenhuma emenda aguardando parecer."
@@ -184,7 +185,7 @@ export default async function TramitacaoPage({ searchParams }: { searchParams: P
                     </span>,
                     valor(e),
                     decide ? (
-                      <div key="d" className="flex flex-wrap justify-end gap-1.5">
+                      <div key="d" data-guia="tramitacao.decidir" className="flex flex-wrap justify-end gap-1.5">
                         {e.status === "SUBMETIDA" ? <ReceberEmenda emendaId={e.id} rotulo={rotulo(e)} /> : null}
                         <PedirAjuste emendaId={e.id} rotulo={rotulo(e)} diasPadrao={cfg?.prazoDiligenciaDias ?? 5} />
                         <DecidirEmenda emendaId={e.id} rotulo={rotulo(e)} />
@@ -226,7 +227,7 @@ export default async function TramitacaoPage({ searchParams }: { searchParams: P
                     </div>,
                     valor(e),
                     decide ? (
-                      <div key="d" className="flex flex-wrap justify-end gap-1.5">
+                      <div key="d" data-guia="tramitacao.sanear" className="flex flex-wrap justify-end gap-1.5">
                         {e.status === "INVALIDA" ? <DevolverAoAutor emendaId={e.id} rotulo={rotulo(e)} /> : null}
                         {vencido ? <DecidirEmenda emendaId={e.id} rotulo={rotulo(e)} /> : null}
                       </div>
@@ -250,7 +251,11 @@ export default async function TramitacaoPage({ searchParams }: { searchParams: P
                     {e.parecerTramitacao}
                   </p>,
                   valor(e),
-                  decide && !e.andamentos.length ? <ReabrirEmenda key="r" emendaId={e.id} /> : null,
+                  decide && !e.andamentos.length ? (
+                    <div key="r" data-guia="tramitacao.reabrir">
+                      <ReabrirEmenda emendaId={e.id} />
+                    </div>
+                  ) : null,
                 ],
               }))}
             />
@@ -278,7 +283,11 @@ export default async function TramitacaoPage({ searchParams }: { searchParams: P
                     )}
                   </span>,
                   valor(e),
-                  decide ? <MarcarIncorporada key="m" emendaId={e.id} incorporada={!!e.incorporadaEm} /> : null,
+                  decide ? (
+                    <div key="m" data-guia="tramitacao.incorporar">
+                      <MarcarIncorporada emendaId={e.id} incorporada={!!e.incorporadaEm} />
+                    </div>
+                  ) : null,
                 ],
               }))}
             />
@@ -314,6 +323,7 @@ async function relatorios(ano: number | null, f: Filtros) {
   const exportar = (formato: string) => `/api/relatorios/tramitacao?ano=${ano}&de=${de}&ate=${ate}&formato=${formato}`;
   return (
     <Cartao
+      guia="tramitacao.relatorios"
       titulo={`Movimentação de ${DATA(inicio)} a ${DATA(fim)}`}
       acoes={
         <div className="flex flex-wrap gap-2 print:hidden">
@@ -331,7 +341,7 @@ async function relatorios(ano: number | null, f: Filtros) {
         </div>
       }
     >
-      <form method="get" action="/tramitacao" className="mb-4 flex flex-wrap items-end gap-2.5 print:hidden">
+      <form data-guia="tramitacao.periodo" method="get" action="/tramitacao" className="mb-4 flex flex-wrap items-end gap-2.5 print:hidden">
         <input type="hidden" name="aba" value="relatorios" />
         <label className="grid gap-1 text-xs font-semibold text-muted-foreground">
           De
@@ -438,7 +448,7 @@ async function programas(ano: number | null, f: Filtros, areaId: string | null, 
     porPrograma.set(chave, p);
   }
   return (
-    <Cartao titulo="Por programa">
+    <Cartao guia="tramitacao.programas" titulo="Por programa">
       <FiltrosEmendas acao="/tramitacao" filtros={f} autores={autores} areas={areas} situacoes={[...ABAS.find((a) => a.id === "programas")!.situacoes]} ocultos={{ aba: "programas" }} />
       <TabelaDados
         vazio="Sem emendas remetidas."

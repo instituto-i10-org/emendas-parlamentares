@@ -49,7 +49,7 @@ export function Resumo({
   const cfg = ctx.config;
 
   return (
-    <aside className="sticky top-4 grid gap-3.5 max-[1080px]:static">
+    <aside data-guia="nova-emenda.resumo" className="sticky top-4 grid gap-3.5 max-[1080px]:static">
       <div className="rounded-card bg-surface p-[22px] shadow-card">
         <div className="mb-2.5 text-md font-bold">Resumo</div>
         <div className="mb-4 grid gap-2.5">

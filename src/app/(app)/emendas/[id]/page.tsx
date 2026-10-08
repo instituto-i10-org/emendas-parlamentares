@@ -71,7 +71,7 @@ export default async function EmendaPage({ params }: { params: Promise<{ id: str
     <Pagina
       titulo={x.numero ? `Emenda nº ${x.numero}/${x.exercicio.ano}` : "Emenda"}
       acoes={
-        <div className="flex flex-wrap gap-2">
+        <div data-guia="emenda.acoes" className="flex flex-wrap gap-2">
           {gere && x.autor.demonstracao ? (
             <ApagarEmendaTeste id={x.id} rotulo={x.numero ? `Emenda nº ${x.numero}/${x.exercicio.ano}` : "Esta emenda"} comoBotao />
           ) : null}
@@ -86,8 +86,8 @@ export default async function EmendaPage({ params }: { params: Promise<{ id: str
         </div>
       }
     >
-      <div className="grid grid-cols-[minmax(0,1fr)_400px] items-start gap-5 max-[1080px]:grid-cols-1">
-        <section className="rounded-card bg-surface p-7 shadow-card max-md:px-4">
+      <div data-guia-tela="emenda" className="grid grid-cols-[minmax(0,1fr)_400px] items-start gap-5 max-[1080px]:grid-cols-1">
+        <section data-guia="emenda.dados" className="rounded-card bg-surface p-7 shadow-card max-md:px-4">
           <div className="mb-4 flex flex-wrap items-center gap-2">
             <Selo tipo={STATUS_EMENDA[x.status].tipo}>{STATUS_EMENDA[x.status].rotulo}</Selo>
             {x.modelo ? <Selo>Modelo {MODELOS[x.modelo].numero} — {MODELOS[x.modelo].titulo}</Selo> : null}
@@ -181,7 +181,7 @@ export default async function EmendaPage({ params }: { params: Promise<{ id: str
           ) : null}
         </section>
         <aside className="grid min-w-0 content-start gap-4">
-          <div className="rounded-card bg-surface p-[22px] shadow-card">
+          <div data-guia="emenda.relatorio" className="rounded-card bg-surface p-[22px] shadow-card">
             <h2 className="mb-3 text-md font-bold">Relatório da validação</h2>
             {ultima ? (
               <RelatorioVerificacoes
@@ -204,11 +204,11 @@ export default async function EmendaPage({ params }: { params: Promise<{ id: str
               <p className="text-sm text-muted-foreground">Ainda não submetida.</p>
             )}
           </div>
-          <div className="rounded-card bg-surface p-[22px] shadow-card">
+          <div data-guia="emenda.validacoes" className="rounded-card bg-surface p-[22px] shadow-card">
             <h2 className="mb-3 text-md font-bold">Histórico de validações</h2>
             <HistoricoValidacoes validacoes={validacoes} />
           </div>
-          <div className="rounded-card bg-surface p-[22px] shadow-card">
+          <div data-guia="emenda.situacoes" className="rounded-card bg-surface p-[22px] shadow-card">
             <h2 className="mb-3 text-md font-bold">Histórico de situações</h2>
             {x.historico.length ? (
               <ol className="grid gap-2 text-sm">

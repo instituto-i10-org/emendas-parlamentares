@@ -39,7 +39,7 @@ export function AbaFontesPreco({ fontes, podeEditar }: { fontes: FontePrecoConfi
   const { pendente, executar } = useAcao();
 
   return (
-    <Cartao
+    <Cartao guia="config.precos.lista"
       titulo="Fontes oficiais de preço"
       ajuda="O sistema não busca preço: mostra ao autor onde pesquisar. Cada fonte aparece para os tipos de despesa marcados; sem marca, aparece sempre."
       acoes={podeEditar ? <Button size="sm" onClick={() => setF(vazia)}>Nova fonte</Button> : null}

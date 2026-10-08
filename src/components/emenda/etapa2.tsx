@@ -67,7 +67,7 @@ export function Etapa2({
 
   return (
     <div className="flex flex-col pb-2">
-      <div className="mb-4 flex flex-wrap items-center gap-2">
+      <div data-guia="nova-emenda.modelo" className="mb-4 flex flex-wrap items-center gap-2">
         <span className="inline-flex items-center gap-2 rounded-full bg-navy px-3.5 py-1.5 text-sm font-bold text-white">
           <i className="text-2xs font-semibold tracking-[0.08em] text-on-navy not-italic">MODELO</i> {M.numero} — {M.titulo}
         </span>
@@ -131,7 +131,7 @@ export function Etapa2({
           </div>
         </Campo>
 
-        <Campo rotulo="Justificativa da emenda" obrigatorio htmlFor="f-just" contador={{ atual: e.justificativa.length, max: 2000 }}>
+        <Campo guia="nova-emenda.justificativa" rotulo="Justificativa da emenda" obrigatorio htmlFor="f-just" contador={{ atual: e.justificativa.length, max: 2000 }}>
           <AreaTexto
             id="f-just"
             valor={e.justificativa}
@@ -199,6 +199,7 @@ function Metas({
 
   return (
     <Secao
+      guia="nova-emenda.metas"
       titulo="Metas"
       ajuda="Quem será atendido e quanto será entregue. Sem meta física e sem forma de comprovação a linha não serve para prestar contas."
     >
@@ -437,7 +438,7 @@ function MemoriaCalculo({
   const foraTolerancia = pretendido > 0 && d.valor > 0 && (Math.abs(divergencia) / pretendido) * 100 > ctx.config.toleranciaValorPct;
 
   return (
-    <Secao titulo="Memória de cálculo" ajuda="As mesmas linhas das metas, agora com preço. Toda linha precisa dizer de qual fonte veio o valor.">
+    <Secao guia="nova-emenda.memoria" titulo="Memória de cálculo" ajuda="As mesmas linhas das metas, agora com preço. Toda linha precisa dizer de qual fonte veio o valor.">
       <FontesPreco fontes={indicadas} orientacao={orientacao} />
 
       <div className="mt-4">
@@ -877,7 +878,7 @@ function Cronograma({ e, valor, atualizar }: { e: EstadoEmenda; valor: number; a
   }
 
   return (
-    <Secao titulo="Cronograma de desembolso previsto" ajuda="A soma tem de bater com o valor da emenda. As datas se definem na execução, não aqui.">
+    <Secao guia="nova-emenda.cronograma" titulo="Cronograma de desembolso previsto" ajuda="A soma tem de bater com o valor da emenda. As datas se definem na execução, não aqui.">
       <div className="flex flex-wrap items-center gap-2">
         <label htmlFor="n-parcelas" className="text-sm font-semibold text-label">
           Quantidade de parcelas

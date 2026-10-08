@@ -56,6 +56,7 @@ export default async function ComparativoPage({ searchParams }: { searchParams: 
   return (
     <Pagina
       titulo="Projeto × lei"
+      guia="comparativo"
       descricao="Cada dotação no projeto de lei e na lei aprovada, a diferença e as emendas incorporadas que a explicam. A emenda impositiva soma na dotação de destino: a lei fica maior que o projeto pelo valor das emendas incorporadas."
       acoes={
         <div className="flex flex-wrap gap-2 print:hidden">
@@ -74,7 +75,7 @@ export default async function ComparativoPage({ searchParams }: { searchParams: 
         </div>
       }
     >
-      <nav aria-label="Visões" className="mb-4 flex flex-wrap gap-1 rounded-box bg-surface p-1.5 shadow-[0_1px_2px_rgba(10,36,99,.06)] print:hidden">
+      <nav data-guia="comparativo.visoes" aria-label="Visões" className="mb-4 flex flex-wrap gap-1 rounded-box bg-surface p-1.5 shadow-[0_1px_2px_rgba(10,36,99,.06)] print:hidden">
         {[
           ["comparativo", "Comparativo por dotação"],
           ["execucao", "Execução das dotações emendadas"],
@@ -94,13 +95,13 @@ export default async function ComparativoPage({ searchParams }: { searchParams: 
               A lei aprovada ainda não tem base carregada. Importe-a em Planejamento ou gere a base a partir do projeto e das emendas incorporadas.
             </p>
           ) : null}
-          <div className="mb-5 grid grid-cols-3 gap-3.5 max-lg:grid-cols-1">
+          <div data-guia="comparativo.totais" className="mb-5 grid grid-cols-3 gap-3.5 max-lg:grid-cols-1">
             <Kpi rotulo="Projeto de lei" valor={BRL(total((l) => l.valorPl))} detalhe={dados.projeto?.numero ?? "—"} />
             <Kpi rotulo="Lei aprovada" valor={BRL(total((l) => l.valorLei))} detalhe={dados.lei?.numero ?? "não carregada"} tom="navy" />
             <Kpi rotulo="Diferença" valor={dados.temLei ? BRL(total((l) => l.diferenca)) : "—"} detalhe={!dados.temLei ? "sem lei carregada para comparar" : `${dados.emendas.length} emenda(s) incorporada(s) somam ${BRL(dados.emendas.reduce((x, e) => x + e.valor, 0))}`} />
           </div>
-          <Cartao titulo={`Dotações (${filtradas.length})`}>
-            <form method="get" action="/comparativo" className="mb-4 flex flex-wrap items-end gap-2.5 print:hidden">
+          <Cartao guia="comparativo.dotacoes" titulo={`Dotações (${filtradas.length})`}>
+            <form data-guia="comparativo.filtros" method="get" action="/comparativo" className="mb-4 flex flex-wrap items-end gap-2.5 print:hidden">
               <label className="grid gap-1 text-xs font-semibold text-muted-foreground">
                 Órgão
                 <select name="orgao" defaultValue={orgao} className="campo h-10 px-2.5 text-sm">
@@ -212,7 +213,7 @@ async function execucao(ano: number) {
   }
   const linhas = [...porDot.entries()];
   return (
-    <Cartao titulo={`Dotações emendadas (${linhas.length})`} ajuda="Soma, por dotação, das emendas aprovadas e da execução lançada pelo Executivo em cada uma.">
+    <Cartao guia="comparativo.execucao" titulo={`Dotações emendadas (${linhas.length})`} ajuda="Soma, por dotação, das emendas aprovadas e da execução lançada pelo Executivo em cada uma.">
       <TabelaDados
         vazio="Nenhuma emenda aprovada com dotação definida."
         colunas={[

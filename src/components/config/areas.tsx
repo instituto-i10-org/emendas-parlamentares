@@ -24,7 +24,7 @@ export function AbaAreas({ areas, unidades, podeEditar }: { areas: AreaTela[]; u
   const orgaosDoExercicio = new Set(unidades.map((u) => u.split(".")[0]));
   return (
     <div className="grid gap-5">
-      <Cartao
+      <Cartao guia="config.areas.lista"
         titulo={`Áreas de aplicação (${areas.length})`}
         ajuda="Quais órgãos orçamentários atendem cada área. É o que permite ao sistema dizer que um objeto de área estrita (ambulância é Saúde) não cabe num destino de outra área, definir a parcela da cota (saúde ou demais áreas) e montar os painéis por área. A ordem desempata quando um órgão aparece em mais de uma área."
         acoes={podeEditar ? <Button size="sm" onClick={() => setEditando("nova")}>Nova área</Button> : null}

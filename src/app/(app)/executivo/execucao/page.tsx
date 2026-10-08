@@ -21,9 +21,10 @@ export default async function ExecucaoPage() {
   return (
     <Pagina
       titulo="Execução das emendas"
+      guia="execucao"
       descricao="Empenho, liquidação e pagamento de cada emenda aprovada (Lei 4.320/1964). O lançamento é manual nesta versão; os campos seguem o vocabulário do sistema financeiro para uma integração futura."
     >
-      <div className="mb-5 grid grid-cols-4 gap-3.5 max-lg:grid-cols-2">
+      <div data-guia="execucao.totais" className="mb-5 grid grid-cols-4 gap-3.5 max-lg:grid-cols-2">
         <Kpi rotulo="Aprovado" valor={BRL(aprovado)} detalhe={`${linhas.length} emenda(s)`} tom="navy" />
         <Kpi rotulo="Empenhado" valor={BRL(soma("empenhado"))} />
         <Kpi rotulo="Liquidado" valor={BRL(soma("liquidado"))} />
