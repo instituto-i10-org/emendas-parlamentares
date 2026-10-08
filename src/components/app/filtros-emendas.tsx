@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { Search } from "lucide-react";
+import { FormFiltros } from "@/components/app/form-filtros";
 import { Button } from "@/components/ui/button";
 import { comFiltros, type Filtros } from "@/lib/emendas/filtros";
 import { STATUS_EMENDA } from "@/lib/emendas/rotulos";
 
-// Barra de filtros das listas de emendas. Formulário GET: a lista filtrada fica
-// na URL e funciona sem JavaScript. Sem autores (o vereador), sem seletor de autor.
+// Barra de filtros das listas de emendas. Filtra sozinha ao mudar um campo; a
+// lista filtrada fica na URL (e funciona sem JavaScript, com Enter). Sem
+// autores (o vereador), sem seletor de autor.
 export function FiltrosEmendas({
   acao,
   filtros,
@@ -26,7 +28,7 @@ export function FiltrosEmendas({
 }) {
   const caixa = "campo h-10 px-2.5 text-sm";
   return (
-    <form data-guia={guia} method="get" action={acao} role="search" aria-label="Filtrar emendas" className="mb-4 grid gap-2.5">
+    <FormFiltros guia={guia} acao={acao} rotulo="Filtrar emendas" className="mb-4 grid gap-2.5">
       {Object.entries(ocultos).map(([k, v]) => (
         <input key={k} type="hidden" name={k} value={v} />
       ))}
@@ -34,7 +36,7 @@ export function FiltrosEmendas({
         <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
         <input name="q" defaultValue={filtros.q} className="campo h-10 pr-3 pl-9 text-sm" placeholder="Buscar por número, objeto, beneficiário ou autor" aria-label="Buscar" />
       </div>
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-2.5">
+      <div className="flex flex-wrap items-end gap-2.5 [&>label]:min-w-[150px] [&>label]:flex-1">
         <label className="grid gap-1 text-xs font-semibold text-muted-foreground">
           Situação
           <select name="situacao" defaultValue={filtros.situacao[0] ?? ""} className={caixa}>
@@ -78,16 +80,11 @@ export function FiltrosEmendas({
           Até
           <input type="date" name="ate" defaultValue={filtros.ate ?? ""} className={caixa} />
         </label>
-      </div>
-      <div className="flex flex-wrap gap-2">
-        <Button type="submit" size="sm">
-          Filtrar
-        </Button>
-        <Button variant="ghost" size="sm" asChild>
+        <Button variant="ghost" asChild className="h-10 shrink-0">
           <Link href={comFiltros(acao, {}, ocultos)}>Limpar</Link>
         </Button>
       </div>
-    </form>
+    </FormFiltros>
   );
 }
 

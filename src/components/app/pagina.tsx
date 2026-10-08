@@ -127,7 +127,21 @@ export function Kpi({
   );
 }
 
-// Tabela de leitura: cabeçalho discreto, linhas separadas por fio.
+// Tabela de leitura: cabeçalho discreto, linhas separadas por fio. Em largura
+// pequena (o PRÓPRIO cartão abaixo de 640px, não a janela), cada linha vira um
+// cartão: um campo embaixo do outro, cada um com o rótulo da coluna, e as ações
+// no fim. Colunas que a tabela esconde por falta de espaço voltam a aparecer
+// no cartão.
+export const CARTAO_LINHA = {
+  tabela: "w-full text-sm @max-[640px]:block",
+  cabecalho: "text-left text-2xs font-bold tracking-[0.04em] text-muted-foreground uppercase @max-[640px]:hidden",
+  corpo: "divide-y divide-hair @max-[640px]:grid @max-[640px]:gap-3 @max-[640px]:divide-y-0",
+  linha: "align-middle @max-[640px]:block @max-[640px]:rounded-xl @max-[640px]:border @max-[640px]:border-hair @max-[640px]:p-3.5",
+  // Só o que muda no cartão; o espaçamento normal da célula fica em cada tabela.
+  celula:
+    "@max-[640px]:!block @max-[640px]:!px-0 @max-[640px]:!py-1 @max-[640px]:!text-left @max-[640px]:before:mb-0.5 @max-[640px]:before:block @max-[640px]:before:text-2xs @max-[640px]:before:font-bold @max-[640px]:before:tracking-[0.04em] @max-[640px]:before:text-muted-foreground @max-[640px]:before:uppercase @max-[640px]:before:content-[attr(data-rotulo)]",
+};
+
 export function TabelaDados({
   colunas,
   linhas,
@@ -139,25 +153,25 @@ export function TabelaDados({
 }) {
   if (!linhas.length) return <p className="p-2 text-sm text-muted-foreground">{vazio}</p>;
   // @container: as colunas podem se esconder pela largura do PRÓPRIO cartão
-  // (className "@max-[640px]:hidden"), não pela da janela — vale igual com o
+  // (className "@max-[760px]:hidden"), não pela da janela — vale igual com o
   // menu recolhido ou em coluna lateral.
   return (
     <div className="@container overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead className="text-left text-2xs font-bold tracking-[0.04em] text-muted-foreground uppercase">
+      <table className={CARTAO_LINHA.tabela}>
+        <thead className={CARTAO_LINHA.cabecalho}>
           <tr className="border-b border-hair">
-            {colunas.map((c) => (
-              <th key={c.titulo} className={cn("px-3 py-2.5 first:pl-0 last:pr-0", c.className)}>
+            {colunas.map((c, i) => (
+              <th key={`${c.titulo}-${i}`} className={cn("px-3 py-2.5 first:pl-0 last:pr-0", c.className)}>
                 {c.titulo}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-hair">
+        <tbody className={CARTAO_LINHA.corpo}>
           {linhas.map((l) => (
-            <tr key={l.chave} className="align-middle">
+            <tr key={l.chave} className={CARTAO_LINHA.linha}>
               {l.celulas.map((c, i) => (
-                <td key={i} className={cn("px-3 py-3 first:pl-0 last:pr-0", colunas[i]?.className)}>
+                <td key={i} data-rotulo={colunas[i]?.titulo ?? ""} className={cn("px-3 py-3 first:pl-0 last:pr-0", CARTAO_LINHA.celula, colunas[i]?.className)}>
                   {c}
                 </td>
               ))}

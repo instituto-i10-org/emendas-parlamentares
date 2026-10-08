@@ -30,7 +30,7 @@ export default async function LayoutApp({ children }: { children: ReactNode }) {
     >
       <AppShell
         grupos={navegacaoVisivel(user, { apresenta: apresentaEmendas(user, !!autor) })}
-        usuario={{ nome: user.nome, perfil: user.perfil?.nome ?? "" }}
+        usuario={{ nome: user.nome, perfil: user.perfil?.nome ?? "", email: user.email ?? null }}
         exercicio={exercicio}
       >
         {children}

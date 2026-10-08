@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { ArrowRight, Building2, ChevronDown, Landmark, ShieldCheck, UserRound, UsersRound, type LucideIcon } from "lucide-react";
+import { ArrowRight, Building2, ChevronDown, Landmark, ShieldCheck, UserRound, UsersRound, type LucideIcon, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +20,7 @@ const CONTAS: { grupo: string; contas: { nome: string; papel: string; email: str
     ],
   },
   { grupo: "Prefeitura", contas: [{ nome: "Poder Executivo", papel: "planejamento, viabilidade e execução", email: "executivo@emendas360.local", icone: Building2 }] },
+  { grupo: "Fiscalização", contas: [{ nome: "Controle Interno", papel: "somente consulta: vê tudo, não altera", email: "consulta@emendas360.local", icone: Eye }] },
 ];
 
 export function LoginForm({

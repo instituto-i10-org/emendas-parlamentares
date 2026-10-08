@@ -261,11 +261,14 @@ export function Pilulas<T extends string>({
 }
 
 // Selo pequeno em pílula.
+// Selo nunca quebra em duas linhas; se não couber, corta com reticências (o
+// texto inteiro fica no title).
 export function Selo({ tipo = "neutro", children }: { tipo?: "ok" | "warn" | "bad" | "info" | "neutro"; children: ReactNode }) {
   return (
     <span
+      title={typeof children === "string" ? children : undefined}
       className={cn(
-        "inline-flex items-center rounded-full px-2 py-0.5 text-2xs font-bold tracking-[0.04em] uppercase",
+        "inline-block max-w-full truncate rounded-full px-2 py-0.5 align-middle text-2xs font-bold tracking-[0.04em] whitespace-nowrap uppercase",
         tipo === "ok" && "bg-ok-bg text-ok-ink",
         tipo === "warn" && "bg-warn-bg text-warn",
         tipo === "bad" && "bg-bad-bg text-bad-ink",

@@ -1,5 +1,6 @@
 "use client";
 
+import { JanelaConta } from "@/components/conta/janela-conta";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
@@ -60,7 +61,7 @@ export function AppShell({
   children,
 }: {
   grupos: GrupoNav[];
-  usuario: { nome: string; perfil: string };
+  usuario: { nome: string; perfil: string; email?: string | null };
   exercicio: SeletorExercicioDados | null;
   children: ReactNode;
 }) {
@@ -237,9 +238,13 @@ export function AppShell({
             {iniciais(usuario.nome)}
           </span>
           <span className={cn("min-w-0 flex-1", recolhido && "md:hidden")}>
-            <Link href="/conta" className="block truncate text-xs leading-tight font-bold hover:underline" title="Minha conta e senha">
-              {usuario.nome}
-            </Link>
+            <JanelaConta nome={usuario.nome} email={usuario.email}>
+              {(abrir) => (
+                <button type="button" onClick={abrir} className="block max-w-full cursor-pointer truncate text-left text-xs leading-tight font-bold hover:underline" title="Minha conta e senha">
+                  {usuario.nome}
+                </button>
+              )}
+            </JanelaConta>
             <span className="block truncate text-xs text-on-navy">{usuario.perfil}</span>
           </span>
           <form action={sair}>
