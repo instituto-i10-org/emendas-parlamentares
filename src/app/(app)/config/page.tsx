@@ -15,7 +15,7 @@ import { AbaPortal } from "@/components/config/portal";
 import { requireAccess } from "@/lib/access";
 import { ehAdminGeral, PERMISSOES, podeAtribuirPerfil, podeGerirExercicio, podeGerirPerfis, temPermissao } from "@/lib/authz";
 import { diaBrasilia, paraDestinoMotor } from "@/lib/emendas/contexto";
-import { getAnoAtivo, listarExercicios } from "@/lib/exercicio";
+import { anoPadrao, getAnoAtivo, listarExercicios } from "@/lib/exercicio";
 import { prisma } from "@/lib/prisma";
 import { DATA_HORA } from "@/lib/riep";
 import { cn } from "@/lib/utils";
@@ -81,11 +81,13 @@ export default async function ConfigPage({ searchParams }: { searchParams: Promi
 
 async function exercicio(podeGerir: boolean) {
   const [lista, ano] = await Promise.all([listarExercicios(), getAnoAtivo()]);
+  // Anterior ao exercício em curso: histórico (só consulta; não encerra nem reabre).
+  const padrao = anoPadrao(lista);
   const atual = ano ? await prisma.exercicio.findUnique({ where: { ano }, include: { configuracao: true, prazos: { orderBy: { data: "asc" } } } }) : null;
   const c = atual?.configuracao;
   return (
     <AbaExercicio
-      exercicios={lista}
+      exercicios={lista.map((e) => ({ ...e, historico: padrao !== null && e.ano < padrao }))}
       podeGerir={podeGerir}
       prazos={(atual?.prazos ?? []).map((p) => ({ id: p.id, descricao: p.descricao, data: p.data.toISOString().slice(0, 10), url: p.url }))}
       config={

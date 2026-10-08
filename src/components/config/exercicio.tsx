@@ -56,7 +56,7 @@ export function AbaExercicio({
   prazos,
   podeGerir,
 }: {
-  exercicios: { id: string; ano: number; status: string }[];
+  exercicios: { id: string; ano: number; status: string; historico: boolean }[];
   config: ConfiguracaoTela | null;
   prazos: { id: string; descricao: string; data: string; url: string | null }[];
   podeGerir: boolean;
@@ -70,7 +70,7 @@ export function AbaExercicio({
   );
 }
 
-function Exercicios({ exercicios, podeGerir }: { exercicios: { id: string; ano: number; status: string }[]; podeGerir: boolean }) {
+function Exercicios({ exercicios, podeGerir }: { exercicios: { id: string; ano: number; status: string; historico: boolean }[]; podeGerir: boolean }) {
   const [ano, setAno] = useState(String(new Date().getFullYear() + 1));
   const { pendente, executar } = useAcao();
   return (
@@ -79,8 +79,15 @@ function Exercicios({ exercicios, podeGerir }: { exercicios: { id: string; ano: 
         {exercicios.map((e) => (
           <li key={e.id} className="flex items-center gap-3 rounded-md bg-soft px-3 py-2 text-sm">
             <b className="tnum">{e.ano}</b>
-            <Selo tipo={e.status === "ABERTO" ? "ok" : "neutro"}>{e.status === "ABERTO" ? "aberto" : "encerrado"}</Selo>
-            {podeGerir ? (
+            {e.historico ? (
+              <>
+                <Selo tipo="neutro">histórico</Selo>
+                <span className="text-xs text-muted-foreground">anterior ao exercício em curso: só consulta</span>
+              </>
+            ) : (
+              <Selo tipo={e.status === "ABERTO" ? "ok" : "neutro"}>{e.status === "ABERTO" ? "aberto" : "encerrado"}</Selo>
+            )}
+            {podeGerir && !e.historico ? (
               <span className="ml-auto">
                 <BotaoAcao
                   acao={(ciente) => definirStatusExercicio(e.id, e.status === "ABERTO" ? "ENCERRADO" : "ABERTO", ciente)}
