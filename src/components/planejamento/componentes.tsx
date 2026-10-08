@@ -255,6 +255,7 @@ export function ExcluirInstrumento({ id, rotulo }: { id: string; rotulo: string 
             mensagem: `Excluir ${rotulo}? Só é possível sem base de dotações e sem lei vinculada.`,
             rotulo: "Excluir",
             destrutiva: true,
+            exclusao: true,
             acao: () => excluirInstrumento(id),
           })
         }

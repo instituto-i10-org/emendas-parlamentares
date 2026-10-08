@@ -8,6 +8,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { consultarImpacto } from "@/lib/actions/impacto";
 import type { PedidoImpacto } from "@/lib/impacto/servidor";
 import { exigeCiencia, impactoVazio, type Impacto } from "@/lib/impacto/tipos";
+import { DigitarParaConfirmar, useDigitarParaConfirmar } from "./digitar-para-confirmar";
 
 // ============================================================================
 // Confirmação com impacto: antes de gravar uma alteração sensível, a janela
@@ -25,6 +26,8 @@ export type PedidoConfirmacao = {
   mensagem?: ReactNode;
   rotulo?: string;
   destrutiva?: boolean;
+  // Exclusão: o botão só se libera depois de digitar EXCLUIR.
+  exclusao?: boolean;
   acao: (ciente: boolean) => Promise<Resposta>;
   aoConcluir?: () => void;
 };
@@ -35,6 +38,7 @@ export function useConfirmarImpacto() {
   const [impacto, setImpacto] = useState<Impacto | null>(null);
   const [ciente, setCiente] = useState(false);
   const [pendente, iniciar] = useTransition();
+  const digitado = useDigitarParaConfirmar();
 
   const fechar = () => {
     setAtual(null);
@@ -43,6 +47,7 @@ export function useConfirmarImpacto() {
 
   function pedir(p: PedidoConfirmacao) {
     setCiente(false);
+    digitado.limpar();
     setImpacto(p.impacto ? null : impactoVazio());
     setAtual(p);
     if (!p.impacto) return;
@@ -86,7 +91,7 @@ export function useConfirmarImpacto() {
               </Button>
             ) : (
               <>
-                <Button variant={atual.destrutiva ? "destructive" : "default"} disabled={!impacto || pendente || (exige && !ciente)} onClick={confirmar}>
+                <Button variant={atual.destrutiva ? "destructive" : "default"} disabled={!impacto || pendente || (exige && !ciente) || (!!atual.exclusao && !digitado.liberado)} onClick={confirmar}>
                   {pendente && impacto ? "Gravando…" : atual.rotulo ?? "Confirmar"}
                 </Button>
                 <Button variant="ghost" onClick={fechar}>
@@ -101,6 +106,7 @@ export function useConfirmarImpacto() {
           ) : (
             <CorpoImpacto impacto={impacto} mensagem={atual.mensagem} consultado={!!atual.impacto} exige={exige} ciente={ciente} aoMarcar={setCiente} />
           )}
+          {atual.exclusao && impacto && !bloqueado ? <DigitarParaConfirmar texto={digitado.texto} aoMudar={digitado.setTexto} /> : null}
         </DialogContent>
       ) : null}
     </Dialog>

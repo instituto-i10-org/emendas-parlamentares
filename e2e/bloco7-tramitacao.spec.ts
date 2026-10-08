@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { apagarEmendasDeTeste, emendaValida, entrar, inserirEmenda, sql } from "./apoio";
+import { apagarEmendasDeTeste, emendaValida, entrar, inserirEmenda, irParaEtapa3, sql } from "./apoio";
 
 // Itens 6.1, 6.2, 6.3 e 7.4: situações, filas com filtros e paginação,
 // saneamento separado do parecer, incorporação à lei e relatórios.
@@ -27,9 +27,7 @@ test.describe("Grupo 6 — tramitação", () => {
   test("T-6.1-1 rascunho → submetida → em tramitação → aprovada, tudo no histórico", async ({ page }) => {
     await entrar(page, "vereador");
     const id = await emendaValida(page, "Aquisição de macas para o centro de saúde");
-    await page.goto(`/emendas/${id}`);
-    await page.getByRole("button", { name: /Ir para o plano de trabalho/ }).click();
-    await page.getByRole("button", { name: /Ir para a validação/ }).click();
+    await irParaEtapa3(page, id, "envio");
     await page.getByRole("button", { name: /^Submeter/ }).click();
     await expect(page).toHaveURL(new RegExp(`/emendas/${id}$`));
     await expect(page.getByRole("tab", { name: "Validações anteriores" })).toBeVisible();

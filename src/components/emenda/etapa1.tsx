@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, Building2, Check, Loader2, MapPin, Pencil, Save, Users, Wand2 } from "lucide-react";
+import { AlertTriangle, ArrowLeftRight, Building2, Check, CircleMinus, CirclePlus, Landmark, Loader2, MapPin, Pencil, Users, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { Ajuda } from "@/components/ui/ajuda";
 import { Button } from "@/components/ui/button";
@@ -103,10 +103,8 @@ export function Etapa1({
   destinos,
   aoCadastrarDestino,
   atualizar,
-  irParaPlano,
-  gravar,
-  gravando,
-  descartar,
+  secao,
+  irParaSecao,
 }: {
   e: EstadoEmenda;
   d: DerivadoEmenda;
@@ -115,14 +113,12 @@ export function Etapa1({
   destinos: DestinoTela[];
   aoCadastrarDestino: (d: DestinoTela) => void;
   atualizar: Atualizar;
-  irParaPlano: () => void;
-  gravar: () => void;
-  gravando: boolean;
-  descartar: React.ReactNode;
+  // Seção em exibição (secoes.ts): uma por vez.
+  secao: string;
+  irParaSecao: (id: string) => void;
 }) {
   const [analisando, setAnalisando] = useState<number | null>(null);
   const resultadoRef = useRef<HTMLDivElement>(null);
-  const objetoRef = useRef<HTMLDivElement>(null);
 
   function analisar() {
     if (!d.destino) return toast("Escolha para onde vai a emenda.");
@@ -143,130 +139,182 @@ export function Etapa1({
   const c = d.classificacao;
   // Dotação informada à mão: o painel toma o lugar do resultado da análise.
   const manual = e.dotacaoInformada !== null;
-  const pronto = manual ? !!d.informada && d.avanca : !!c && d.avanca;
   const bloqueado = !!c && !d.avanca && (c.situacao === "OBICE" || c.situacao === "CONFLITO" || c.situacao === "INDETERMINADO");
 
-  return (
-    <div className="flex flex-col gap-5">
-      <EscolhaExecucao
-        valor={e.execucao}
-        aoMudar={(v) => {
-          if (v === e.execucao) return;
-          if (e.destinoId) toast("Forma de execução alterada — escolha o destino novamente.");
-          atualizar({ execucao: v, destinoId: null, endereco: "" });
-        }}
-      />
-
-      <div data-guia="nova-emenda.destino" className="grid grid-cols-2 gap-3.5 max-sm:grid-cols-1">
-        <CampoDestino e={e} destino={d.destino} destinos={destinos} ctx={ctx} atualizar={atualizar} aoCadastrar={aoCadastrarDestino} />
-        <Campo
-          rotulo="Valor da emenda"
-          obrigatorio
-          htmlFor="f-pre"
-          ajuda="É o valor da emenda. A planilha do plano de trabalho comprova esse valor."
-        >
-          <CampoNumero id="f-pre" valor={e.pretendido} aoMudar={(v) => atualizar({ pretendido: v })} prefixo="R$ " placeholder="R$ 0,00" />
-        </Campo>
+  if (secao === "tipo") {
+    return (
+      <div className="flex flex-col gap-7">
+        <TipoDeEmenda />
+        <EscolhaExecucao
+          valor={e.execucao}
+          aoMudar={(v) => {
+            if (v === e.execucao) return;
+            if (e.destinoId) toast("Forma de execução alterada — escolha o destino novamente.");
+            atualizar({ execucao: v, destinoId: null, endereco: "" });
+          }}
+        />
       </div>
+    );
+  }
 
-      <div ref={objetoRef} data-guia="nova-emenda.objeto">
-        <Campo
-          rotulo="Objeto da emenda"
-          obrigatorio
-          htmlFor="f-obj"
-          contador={{ atual: e.objeto.length, max: 500 }}
-          ajuda="Linguagem comum. O motor reconhece termos como ambulância, ultrassom, reforma, pavimentação, oficinas, merenda, trator, câmeras, playground."
-        >
-          <AreaTexto
-            id="f-obj"
-            valor={e.objeto}
-            aoMudar={(v) => atualizar({ objeto: v })}
-            max={500}
-            campo="objeto"
-            placeholder="Ex.: aquisição de uma ambulância para transporte de pacientes"
-            contexto={{ objeto: e.objeto, destino: d.destino?.nome ?? "", execucao: e.execucao, exercicio: ctx.config.exercicio }}
-          />
-        </Campo>
+  if (secao === "destino") {
+    return (
+      <div className="flex flex-col gap-6">
+        <div data-guia="nova-emenda.destino">
+          <CampoDestino e={e} destino={d.destino} destinos={destinos} ctx={ctx} atualizar={atualizar} aoCadastrar={aoCadastrarDestino} />
+        </div>
+        <CampoEndereco valor={e.endereco} cadastro={d.destino?.endereco ?? ""} temDestino={!!d.destino} aoMudar={(v) => atualizar({ endereco: v })} />
       </div>
+    );
+  }
 
-      <CampoEndereco valor={e.endereco} cadastro={d.destino?.endereco ?? ""} aoMudar={(v) => atualizar({ endereco: v })} />
-
-      {analisando !== null ? <Processando passo={analisando} rotuloBase={ctx.config.rotuloBase ?? "LOA"} /> : null}
-
-      <div ref={resultadoRef} data-guia="nova-emenda.resultado" className="scroll-mt-4">
-        {manual ? <DotacaoManual e={e} d={d} atualizar={atualizar} /> : null}
-        {!manual && d.obsoleta && analisando === null ? (
-          <div className="flex flex-wrap items-center gap-3 rounded-box bg-warn-bg px-4 py-3.5 text-sm text-warn">
-            <span className="flex-1">
-              <b className="block">A classificação anterior não vale mais</b>
-              Os dados da emenda mudaram — rode a análise de novo para o sistema reenquadrar a emenda.
-            </span>
-          </div>
-        ) : null}
-        {!manual && c && analisando === null ? <ResultadoClassificacao c={c} e={e} d={d} ctx={ctx} aplicado={aplicado} atualizar={atualizar} /> : null}
-        {!manual && c && analisando === null && precisaAjuste(c) && situacaoEfetiva(c, e.selecao) !== "OK" && e.selecao.escolha !== "ANALISE_TECNICA" ? (
-          <AjusteAutomatico
-            key={chaveClassificacao(e)}
-            c={c}
-            e={e}
-            d={d}
-            ctx={ctx}
-            destinos={destinos}
-            aplicar={(parcial, aviso) => {
-              atualizar({ ...parcial, classificadoCom: chaveClassificacao({ ...e, ...parcial }), selecao: { escolha: null, dotacaoId: null } });
-              toast(aviso);
-              requestAnimationFrame(() => resultadoRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
-            }}
-          />
-        ) : null}
-        {!manual && d.destino && analisando === null ? (
-          <p className="mt-3 text-sm text-muted-foreground">
-            Já sabe a dotação?{" "}
-            <button
-              type="button"
-              className="font-bold text-navy underline underline-offset-2"
-              onClick={() => atualizar({ dotacaoInformada: { ...DOTACAO_INFORMADA_VAZIA, conferidaCom: null }, declaracaoDotacao: false })}
-            >
-              Informar a dotação manualmente
-            </button>
-          </p>
-        ) : null}
-      </div>
-
-      <div data-guia="nova-emenda.avancar" className="@container/acoes1 sticky bottom-0 z-10 -mx-7 rounded-b-card flex flex-wrap items-center gap-2 bg-surface px-7 py-4 shadow-[0_-12px_16px_var(--surface)] max-md:-mx-4 max-md:px-4">
-        {pronto && (manual || !d.obsoleta) ? (
-          <Button onClick={irParaPlano} className="max-md:flex-[1_1_100%]">
-            Ir para o plano de trabalho →
-          </Button>
-        ) : manual ? null : bloqueado && !d.obsoleta ? (
-          <Button
-            onClick={() => {
-              objetoRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-              objetoRef.current?.querySelector("textarea")?.focus({ preventScroll: true });
-            }}
-            className="max-md:flex-[1_1_100%]"
+  if (secao === "objeto") {
+    return (
+      <div className="flex flex-col gap-6">
+        <div data-guia="nova-emenda.objeto">
+          <Campo
+            rotulo="Objeto da emenda"
+            obrigatorio
+            htmlFor="f-obj"
+            contador={{ atual: e.objeto.length, max: 500 }}
+            ajuda="Linguagem comum. O motor reconhece termos como ambulância, ultrassom, reforma, pavimentação, oficinas, merenda, trator, câmeras, playground."
           >
-            Reescrever o objeto
-          </Button>
-        ) : c && !d.obsoleta && c.situacao === "VALIDAR" ? null : (
-          <Button onClick={analisar} disabled={analisando !== null} className="max-md:flex-[1_1_100%]">
-            {d.obsoleta ? "Analisar novamente →" : "Analisar e classificar →"}
-          </Button>
-        )}
-        <Button
-          variant="ghost"
-          className="@max-xl/acoes1:w-11 @max-xl/acoes1:px-0 @max-3xl/acoes:w-11 @max-3xl/acoes:px-0"
-          onClick={gravar}
-          disabled={gravando}
-          aria-label="Salvar rascunho"
-          title="Salvar rascunho"
-        >
-          <Save className="@xl/acoes1:hidden @3xl/acoes:hidden" />
-          <span className="hidden @xl/acoes1:inline @3xl/acoes:inline">{gravando ? "Salvando…" : "Salvar rascunho"}</span>
-        </Button>
-        {descartar}
+            <AreaTexto
+              id="f-obj"
+              valor={e.objeto}
+              aoMudar={(v) => atualizar({ objeto: v })}
+              max={500}
+              campo="objeto"
+              placeholder="Ex.: aquisição de uma ambulância para transporte de pacientes"
+              contexto={{ objeto: e.objeto, destino: d.destino?.nome ?? "", execucao: e.execucao, exercicio: ctx.config.exercicio }}
+            />
+          </Campo>
+        </div>
+        <div data-guia="nova-emenda.valor" className="max-w-sm">
+          <Campo rotulo="Valor da emenda" obrigatorio htmlFor="f-pre" ajuda="É o valor da emenda. A planilha do plano de trabalho comprova esse valor." dica="Digite só os números; o sistema formata em reais.">
+            <CampoNumero id="f-pre" valor={e.pretendido} aoMudar={(v) => atualizar({ pretendido: v })} prefixo="R$ " placeholder="R$ 0,00" />
+          </Campo>
+        </div>
       </div>
+    );
+  }
+
+  // Dotação: a análise automática ou a dotação informada à mão.
+  return (
+    <div className="flex flex-col gap-5" data-pronta={d.avanca && (manual ? !!d.informada : !d.obsoleta) ? "sim" : "nao"}>
+      {manual ? (
+        <DotacaoManual e={e} d={d} atualizar={atualizar} />
+      ) : (
+        <>
+          {analisando !== null ? <Processando passo={analisando} rotuloBase={ctx.config.rotuloBase ?? "LOA"} /> : null}
+          <div id="nova-emenda-resultado" ref={resultadoRef} data-guia="nova-emenda.resultado" className="scroll-mt-4">
+            {d.obsoleta && analisando === null ? (
+              <div className="mb-3 flex flex-wrap items-center gap-3 rounded-box bg-warn-bg px-4 py-3.5 text-sm text-warn">
+                <span className="flex-1">
+                  <b className="block">A classificação anterior não vale mais</b>
+                  Os dados da emenda mudaram — rode a análise de novo para o sistema reenquadrar a emenda.
+                </span>
+              </div>
+            ) : null}
+            {c && !d.obsoleta && analisando === null ? <ResultadoClassificacao c={c} e={e} d={d} ctx={ctx} aplicado={aplicado} atualizar={atualizar} /> : null}
+            {c && !d.obsoleta && analisando === null && precisaAjuste(c) && situacaoEfetiva(c, e.selecao) !== "OK" && e.selecao.escolha !== "ANALISE_TECNICA" ? (
+              <AjusteAutomatico
+                key={chaveClassificacao(e)}
+                c={c}
+                e={e}
+                d={d}
+                ctx={ctx}
+                destinos={destinos}
+                aplicar={(parcial, aviso) => {
+                  atualizar({ ...parcial, classificadoCom: chaveClassificacao({ ...e, ...parcial }), selecao: { escolha: null, dotacaoId: null } });
+                  toast(aviso);
+                  requestAnimationFrame(() => resultadoRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+                }}
+              />
+            ) : null}
+          </div>
+          <div data-guia="nova-emenda.avancar" className="flex flex-wrap items-center gap-3">
+            {!c || d.obsoleta ? (
+              <Button id="b-analisar" size="lg" onClick={analisar} disabled={analisando !== null} className="max-sm:w-full">
+                {d.obsoleta ? "Analisar novamente →" : "Analisar e classificar →"}
+              </Button>
+            ) : bloqueado ? (
+              <Button size="lg" variant="surface" onClick={() => irParaSecao("objeto")} className="max-sm:w-full">
+                Reescrever o objeto
+              </Button>
+            ) : null}
+          </div>
+        </>
+      )}
+      {!manual && analisando === null ? (
+        <p className="text-sm text-muted-foreground">
+          Já sabe a dotação?{" "}
+          <button
+            type="button"
+            className="font-bold text-navy underline underline-offset-2"
+            onClick={() => atualizar({ dotacaoInformada: { ...DOTACAO_INFORMADA_VAZIA, conferidaCom: null }, declaracaoDotacao: false })}
+          >
+            Informar a dotação manualmente
+          </button>
+        </p>
+      ) : null}
     </div>
+  );
+}
+
+// ----------------------------------------------------------- tipo de emenda
+
+// Só a impositiva existe hoje; as demais aparecem para quem conhece o
+// processo, desabilitadas (anotação 1 do Dr. Emerson).
+function TipoDeEmenda() {
+  const opcoes = [
+    { titulo: "Impositiva", origem: "Indicação individual", texto: "Execução obrigatória pelo Município.", Icone: Landmark, ativo: true },
+    { titulo: "Acréscimo", origem: "Em breve", texto: "Aumenta uma dotação existente.", Icone: CirclePlus, ativo: false },
+    { titulo: "Anulação", origem: "Em breve", texto: "Reduz uma dotação existente.", Icone: CircleMinus, ativo: false },
+    { titulo: "Remanejamento", origem: "Em breve", texto: "Move valor de uma dotação para outra.", Icone: ArrowLeftRight, ativo: false },
+  ];
+  return (
+    <fieldset data-guia="nova-emenda.tipo">
+      <legend className="mb-2.5 text-sm font-bold text-label">Tipo de emenda</legend>
+      <div className="grid grid-cols-2 gap-3 max-sm:grid-cols-1">
+        {opcoes.map(({ titulo, origem, texto, Icone, ativo }) => (
+          <div
+            key={titulo}
+            aria-disabled={!ativo || undefined}
+            className={cn(
+              "relative flex items-center gap-3.5 rounded-box p-[18px]",
+              ativo ? "bg-info-bg shadow-[inset_0_0_0_2px_var(--cyan)]" : "bg-soft text-muted-foreground opacity-60"
+            )}
+          >
+            <span className="grid size-11 shrink-0 place-items-center rounded-field bg-surface">
+              <Icone className="size-[22px] text-navy" strokeWidth={1.7} />
+            </span>
+            <span className="pr-6">
+              <b className="flex items-center gap-1.5 text-md">
+                {titulo}
+                {!ativo ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button type="button" className="grid size-4.5 place-items-center rounded-full bg-page text-2xs font-bold" aria-label={`${titulo}: disponível futuramente`}>
+                        ?
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>Disponível futuramente</TooltipContent>
+                  </Tooltip>
+                ) : null}
+              </b>
+              <span className="block text-xs font-semibold text-muted-foreground">{origem}</span>
+              <span className="block text-xs leading-snug">{texto}</span>
+            </span>
+            {ativo ? (
+              <span className="absolute top-3 right-3 grid size-[22px] place-items-center rounded-full bg-cyan text-navy-deep">
+                <Check className="size-3" strokeWidth={3} />
+              </span>
+            ) : null}
+          </div>
+        ))}
+      </div>
+    </fieldset>
   );
 }
 
@@ -344,6 +392,7 @@ function DotacaoManual({ e, d, atualizar }: { e: EstadoEmenda; d: DerivadoEmenda
           </Aviso>
           <label className="flex cursor-pointer gap-3 rounded-box bg-soft p-4 text-sm leading-relaxed">
             <input
+              id="f-dec-dotacao"
               type="checkbox"
               className="mt-1 size-4 shrink-0"
               checked={e.declaracaoDotacao}
@@ -701,7 +750,7 @@ function CampoDestino({
 // --------------------------------------------------------------- endereço
 
 // O endereço vem do cadastro do destino; editar é uma ação explícita.
-function CampoEndereco({ valor, cadastro, aoMudar }: { valor: string; cadastro: string; aoMudar: (v: string) => void }) {
+function CampoEndereco({ valor, cadastro, temDestino, aoMudar }: { valor: string; cadastro: string; temDestino: boolean; aoMudar: (v: string) => void }) {
   const [editando, setEditando] = useState(false);
   const alterado = !!valor.trim() && !!cadastro && valor.trim() !== cadastro.trim();
   return (
@@ -721,7 +770,7 @@ function CampoEndereco({ valor, cadastro, aoMudar }: { valor: string; cadastro: 
         ) : null
       }
     >
-      {editando || (!valor && cadastro) ? (
+      {editando || (!valor && (cadastro || temDestino)) ? (
         <input
           id="f-loc"
           autoFocus={editando}

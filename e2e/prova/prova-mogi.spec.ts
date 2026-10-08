@@ -1,7 +1,7 @@
 import { mkdirSync } from "node:fs";
 import path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
-import { DESTINOS, apagarEmendasDeTeste, criarRascunho, emendaValida, entrar, inserirEmenda, preencherLogin, sql, confirmarNaJanela, abrirMinhaConta } from "../apoio";
+import { DESTINOS, apagarEmendasDeTeste, criarRascunho, emendaValida, entrar, escolherExecucao, idDaUrl, inserirEmenda, irParaEtapa3 as irParaEtapa3Apoio, passo1, preencherLogin, proximo, sql, confirmarNaJanela, abrirMinhaConta } from "../apoio";
 
 // ============================================================================
 // Ensaio da prova de conceito em Mogi Guaçu: um teste por item do formulário
@@ -61,11 +61,9 @@ async function importar(page: Page, numero: string, nome: string, buffer: Buffer
   await page.getByRole("button", { name: "Ler e conferir" }).click();
   await expect(page).toHaveURL(/\/importacao\//, { timeout: 60_000 });
 }
-async function irParaEtapa3(page: Page, id: string) {
-  await page.goto(`/emendas/${id}`);
-  await page.getByRole("button", { name: /Ir para o plano de trabalho/ }).click();
-  await page.getByRole("button", { name: /Ir para a validação/ }).click();
-  await expect(treze(page)).toBeVisible();
+async function irParaEtapa3(page: Page, id: string, secao: "verificacoes" | "envio" = "verificacoes") {
+  await irParaEtapa3Apoio(page, id, secao);
+  if (secao === "verificacoes") await expect(treze(page)).toBeVisible();
 }
 
 test.describe("Grupo 1 — Instrumentos", () => {
@@ -164,16 +162,18 @@ test.describe("Grupo 3 — Apresentação", () => {
   test("Item 3.5 — beneficiário por destino; cadastro sem sair da tela; rascunho", async ({ page }) => {
     await entrar(page, "vereador");
     await page.goto("/emendas/nova");
-    await page.locator('input[name="execucao"][value="INDIRETA"]').check({ force: true });
+    await escolherExecucao(page, "INDIRETA");
+    await proximo(page);
     await page.locator("#f-dest").fill("Entidade nova do ensaio");
     await expect(page.getByRole("option", { name: /Cadastrar “Entidade nova do ensaio”/ })).toBeVisible();
     await captura(page, "3.5");
     // Rascunho com o preenchimento incompleto.
     await page.locator("#f-dest").fill("");
+    await page.getByRole("button", { name: /^Seção 3: Objeto e valor/ }).click();
     await page.locator("#f-obj").fill("Rascunho incompleto do ensaio da prova");
     await page.getByRole("button", { name: "Salvar rascunho" }).first().click();
-    await expect(page).toHaveURL(/\/emendas\/c[a-z0-9]+$/, { timeout: 15_000 });
-    criadas.push(page.url().split("/").pop()!);
+    await expect(page).toHaveURL(/\/emendas\/c[a-z0-9]+(\?|$)/, { timeout: 15_000 });
+    criadas.push(idDaUrl(page));
   });
 });
 
@@ -185,8 +185,9 @@ test.describe("Grupo 4 — Motor", () => {
     await irParaEtapa3(page, id);
     await expect(treze(page).locator("> li")).toHaveCount(13);
     await expect(treze(page).locator('li[data-codigo="PLANO_TRABALHO"]')).toContainText("Falha");
-    await expect(page.getByRole("button", { name: /^Submeter/ })).toBeDisabled();
     await captura(page, "4.1");
+    await proximo(page);
+    await expect(page.getByRole("button", { name: /^Submeter/ })).toBeDisabled();
   });
 
   test("Item 4.2 — relatório com razão e fundamento de cada verificação", async ({ page }) => {
@@ -213,7 +214,7 @@ test.describe("Grupo 4 — Motor", () => {
     await entrar(page, "vereador");
     const id = await emendaValida(page, "Aquisição de cadeira de rodas do ensaio 4.4");
     criadas.push(id);
-    await irParaEtapa3(page, id);
+    await irParaEtapa3(page, id, "envio");
     await page.getByRole("button", { name: /^Submeter/ }).click();
     await expect(page.getByRole("tab", { name: "Validações anteriores" })).toBeVisible({ timeout: 15_000 });
     await page.getByRole("tab", { name: "Validações anteriores" }).click();
@@ -246,7 +247,7 @@ test.describe("Grupo 5 — Plano de trabalho", () => {
     await entrar(page, "vereador");
     const id = await criarRascunho(page, { execucao: "INDIRETA", destino: DESTINOS.entidade, objeto: "Aquisição de colchonetes para atividades físicas com idosos", valor: "3596" });
     criadas.push(id);
-    await page.getByRole("button", { name: /Ir para o plano de trabalho/ }).click();
+    await page.goto(`/emendas/${id}?etapa=2`);
     await page.getByRole("button", { name: /Gerar link para a entidade|Gerar novo link/ }).click();
     await expect(page.getByLabel("Link para a entidade")).toBeVisible();
     await captura(page, "5.3");
@@ -497,7 +498,7 @@ test.describe("Grupos 12 a 15 — Configuração, acesso, exportação e redaç�
   test("Item 15.1 — apoio à redação só com o conteúdo da emenda", async ({ page }) => {
     test.setTimeout(90_000);
     await entrar(page, "vereador");
-    await page.goto("/emendas/nova");
+    await passo1(page, { execucao: "DIRETA", destino: DESTINOS.saude, objeto: "", valor: "" }, { analisar: false, ate: "objeto" });
     await page.locator("#f-obj").fill("Aquisição de cadeira de rodas para a unidade de saúde do bairro");
     await page.getByRole("button", { name: "Melhorar texto" }).first().click();
     if (process.env.E2E_IA) await expect(page.getByText(/Sugestão|recusada/).first()).toBeVisible({ timeout: 60_000 });

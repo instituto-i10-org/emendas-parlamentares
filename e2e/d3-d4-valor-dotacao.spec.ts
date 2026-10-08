@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { DESTINOS, completarPlano, entrar, sql } from "./apoio";
+import { DESTINOS, completarPlano, entrar, idDaUrl, irParaEtapa3, irParaPlano, passo1, proximo, sql } from "./apoio";
 
 // D3: o valor da emenda é o informado; a planilha o comprova.
 // D4: dotação informada à mão, achada na LOA ou fora dela.
@@ -9,12 +9,7 @@ test.afterAll(async () => {
 });
 
 async function inicio(page: Page, objeto: string, valor = "3000") {
-  await page.goto("/emendas/nova");
-  await page.locator(`input[name="execucao"][value="DIRETA"]`).check({ force: true });
-  await page.locator("#f-dest").fill(DESTINOS.saude);
-  await page.getByRole("option").filter({ hasText: DESTINOS.saude }).first().click();
-  await page.locator("#f-pre").fill(valor);
-  await page.locator("#f-obj").fill(objeto);
+  await passo1(page, { execucao: "DIRETA", destino: DESTINOS.saude, objeto, valor }, { analisar: false });
 }
 
 async function informar(page: Page, d: { unidade: string; funcional: string; natureza: string; fonte: string; ficha?: string }) {
@@ -30,7 +25,7 @@ async function informar(page: Page, d: { unidade: string; funcional: string; nat
 async function salvar(page: Page): Promise<string> {
   await page.getByRole("button", { name: "Salvar rascunho" }).first().click();
   await expect(page).toHaveURL(/\/emendas\/c[a-z0-9]+/, { timeout: 15_000 });
-  return new URL(page.url()).pathname.split("/").pop()!;
+  return idDaUrl(page);
 }
 
 test.describe("D3 e D4", () => {
@@ -39,19 +34,18 @@ test.describe("D3 e D4", () => {
   });
 
   test("D3 — planilha fora da tolerância trava; o atalho iguala o valor ao total", async ({ page }) => {
-    await inicio(page, "D34 Aquisição de cadeira de rodas para a unidade de saúde", "3000");
-    await page.getByRole("button", { name: /Analisar e classificar/ }).click();
-    const ir = page.getByRole("button", { name: /Ir para o plano de trabalho/ });
-    const usar = page.getByRole("button", { name: "Usar esta dotação" }).first();
-    await expect(ir.or(usar)).toBeVisible({ timeout: 10_000 });
-    if (!(await ir.isVisible())) await usar.click();
-    await ir.click();
+    await passo1(page, { execucao: "DIRETA", destino: DESTINOS.saude, objeto: "D34 Aquisição de cadeira de rodas para a unidade de saúde", valor: "3000" });
+    await irParaPlano(page);
+    await page.getByRole("button", { name: /^Seção 3: Memória de cálculo/ }).click();
     const linha = page.locator('[data-tabela="itens"] tbody tr').first();
     await linha.getByPlaceholder("Item").fill("Cadeira de rodas");
     await linha.locator("input[inputmode=decimal]").nth(0).fill("1");
     await linha.locator("input[inputmode=decimal]").nth(1).fill("2000");
     const conf = page.locator('[data-teste="conferencia-planilha"]');
     await expect(conf).toHaveAttribute("data-estado", "fora");
+    // Fora da tolerância a seção não avança.
+    await proximo(page);
+    await expect(page.locator('[data-teste="problemas-secao"]')).toContainText("fora da tolerância");
     await conf.getByRole("button", { name: "Usar o total da planilha como valor da emenda" }).click();
     await expect(conf).toHaveAttribute("data-estado", "igual");
     await expect(page.locator('[data-guia="nova-emenda.resumo"]')).toContainText("Valor da emenda");
@@ -77,7 +71,7 @@ test.describe("D3 e D4", () => {
     await inicio(page, "D34 Aquisição de equipamento informado na LOA");
     await informar(page, { unidade: d.uo, funcional: d.funcional, natureza: d.natureza, fonte: d.fonte, ficha: d.ficha });
     await expect(page.getByText("Encontrada na LOA")).toBeVisible();
-    await expect(page.getByRole("button", { name: /Ir para o plano de trabalho/ })).toBeVisible();
+    await expect(page.locator('[data-pronta="sim"]')).toBeVisible();
     const id = await salvar(page);
     const [e] = await sql<{ dotacaoId: string; dotacaoInformada: { naLoa: boolean } }>(`select "dotacaoId", "dotacaoInformada" from "Emenda" where id = $1`, [id]);
     expect(e.dotacaoId).toBe(d.id);
@@ -99,10 +93,9 @@ test.describe("D3 e D4", () => {
     expect(e.declaracaoDotacao).toBe(true);
 
     await completarPlano(id);
-    await page.goto(`/emendas/${id}`);
+    await page.goto(`/emendas/${id}?secao=4`);
     await expect(page.getByText("Não encontrada na LOA")).toBeVisible();
-    await page.getByRole("button", { name: /Ir para o plano de trabalho/ }).click();
-    await page.getByRole("button", { name: /Ir para a validação/ }).click();
+    await irParaEtapa3(page, id, "envio");
     await page.getByRole("button", { name: /^Submeter/ }).click();
     await expect(page).toHaveURL(new RegExp(`/emendas/${id}$`), { timeout: 15_000 });
     const [{ numero, status }] = await sql<{ numero: number; status: string }>(`select numero, status from "Emenda" where id = $1`, [id]);

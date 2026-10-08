@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { DigitarParaConfirmar, useDigitarParaConfirmar } from "@/components/app/digitar-para-confirmar";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { apagarEmendaDeTeste } from "@/lib/actions/emendas";
 
@@ -14,10 +15,15 @@ export function ApagarEmendaTeste({ id, rotulo, comoBotao = false }: { id: strin
   const router = useRouter();
   const [aberto, setAberto] = useState(false);
   const [pendente, iniciar] = useTransition();
+  const digitado = useDigitarParaConfirmar();
+  const abrir = () => {
+    digitado.limpar();
+    setAberto(true);
+  };
   return (
     <>
       {comoBotao ? (
-        <Button variant="ghost" onClick={() => setAberto(true)}>
+        <Button variant="ghost" onClick={abrir}>
           <Trash2 className="size-4" />
           Apagar emenda de teste
         </Button>
@@ -26,7 +32,7 @@ export function ApagarEmendaTeste({ id, rotulo, comoBotao = false }: { id: strin
           type="button"
           aria-label={`Apagar a emenda de teste ${rotulo}`}
           title="Apagar emenda de teste"
-          onClick={() => setAberto(true)}
+          onClick={abrir}
           className="grid size-8 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-bad-bg hover:text-bad-ink focus-visible:outline-2 focus-visible:outline-cyan"
         >
           <Trash2 className="size-4" />
@@ -40,7 +46,7 @@ export function ApagarEmendaTeste({ id, rotulo, comoBotao = false }: { id: strin
             <>
               <Button
                 variant="destructive"
-                disabled={pendente}
+                disabled={pendente || !digitado.liberado}
                 onClick={() =>
                   iniciar(async () => {
                     const r = await apagarEmendaDeTeste(id);
@@ -64,6 +70,7 @@ export function ApagarEmendaTeste({ id, rotulo, comoBotao = false }: { id: strin
             <b>{rotulo}</b> será apagada com o plano de trabalho, os pareceres e os lançamentos de execução, e não poderá ser recuperada. O valor volta
             para a cota. Só emendas da conta de demonstração podem ser apagadas; a exclusão fica registrada na auditoria.
           </p>
+          <DigitarParaConfirmar texto={digitado.texto} aoMudar={digitado.setTexto} />
         </DialogContent>
       </Dialog>
     </>

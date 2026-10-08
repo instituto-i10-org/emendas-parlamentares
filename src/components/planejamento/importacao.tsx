@@ -271,7 +271,7 @@ export function EditarLinha({
                   variant="ghost"
                   disabled={pendente}
                   onClick={async () => {
-                    if (!(await confirmar({ titulo: "Excluir esta linha", mensagem: "A linha sai desta importação.", rotulo: "Excluir linha", destrutiva: true }))) return;
+                    if (!(await confirmar({ titulo: "Excluir esta linha", mensagem: "A linha sai desta importação.", rotulo: "Excluir linha", destrutiva: true, exclusao: true }))) return;
                     iniciar(async () => {
                       const r = await excluirLinha(id, linhaId);
                       if (!r.ok) return void toast.error(r.erro);

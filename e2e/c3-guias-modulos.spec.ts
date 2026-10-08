@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { BASE_URL } from "../playwright.config";
 import { GUIAS } from "../src/config/guias";
-import { CONTAS, dotacaoDaFicha, emendaValida, entrar, inserirEmenda, sql } from "./apoio";
+import { CONTAS, dotacaoDaFicha, emendaValida, entrar, inserirEmenda, proximo, sql } from "./apoio";
 
 // Etapa C3 (PLANO-MOGI-CONFIG.md): um guia por módulo. Para cada guia, com o
 // perfil que vê a tela, abre pelo "Ver ajuda" e percorre todos os passos:
@@ -162,10 +162,10 @@ test.describe("C3 — um guia por módulo", () => {
       await page.goto(`/emendas/${rascunho}`);
       await abrirAjuda(page, largura < 768);
       expect(await percorrer(page, "nova-emenda.etapa1", largura)).toBeGreaterThan(2);
-      await page.getByRole("button", { name: /Ir para o plano de trabalho/ }).click();
+      await page.goto(`/emendas/${rascunho}?etapa=2`);
       await abrirAjuda(page, largura < 768);
       expect(await percorrer(page, "nova-emenda.etapa2", largura)).toBeGreaterThan(2);
-      await page.getByRole("button", { name: /Ir para a validação/ }).click();
+      await page.goto(`/emendas/${rascunho}?etapa=3`);
       await abrirAjuda(page, largura < 768);
       expect(await percorrer(page, "nova-emenda.etapa3", largura)).toBeGreaterThan(2);
     });
@@ -189,7 +189,8 @@ test.describe("C3 — um guia por módulo", () => {
     await page.goto(`/emendas/${rascunho}`);
     await expect(balao(page)).toContainText(GUIAS["nova-emenda.etapa1"].passos[0].titulo);
     await balao(page).getByRole("button", { name: "Fechar o guia" }).click();
-    await page.getByRole("button", { name: /Ir para o plano de trabalho/ }).click();
+    await page.getByRole("button", { name: /^Seção 4: Dotação/ }).click();
+    await proximo(page);
     await expect(balao(page)).toContainText(GUIAS["nova-emenda.etapa2"].passos[0].titulo);
     await balao(page).getByRole("button", { name: "Pular este guia" }).click();
     // A gravação do "pular" é assíncrona: espera chegar ao banco.

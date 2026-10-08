@@ -23,7 +23,7 @@ import { getCurrentUser } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Emenda — Emendas360" };
 
-export default async function EmendaPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ etapa?: string }> }) {
+export default async function EmendaPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ etapa?: string; secao?: string }> }) {
   const { id } = await params;
   const user = await getCurrentUser();
   const x = await buscarEmenda(id);
@@ -47,7 +47,9 @@ export default async function EmendaPage({ params, searchParams }: { params: Pro
         ? { texto: ultimo.texto.replace(/^Devolvida ao autor:\s*/, ""), quando: DATA_HORA(ultimo.criadoEm) }
         : null;
     // Depois de salvar, o editor volta na etapa em que a pessoa estava.
-    const etapa = Number((await searchParams).etapa);
+    const sp = await searchParams;
+    const etapa = Number(sp.etapa);
+    const secao = Number(sp.secao);
     return (
       <EditorEmenda
         ctx={ctx}
@@ -57,6 +59,7 @@ export default async function EmendaPage({ params, searchParams }: { params: Pro
         diligencia={diligencia}
         devolucao={devolucao}
         etapaInicial={etapa === 2 || etapa === 3 ? etapa : 1}
+        secaoInicial={Number.isInteger(secao) && secao > 0 ? secao - 1 : 0}
       />
     );
   }

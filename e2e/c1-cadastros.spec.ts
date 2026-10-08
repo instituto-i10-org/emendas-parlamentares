@@ -80,7 +80,10 @@ test.describe("C1 — cadastros pela tela", () => {
 
       // A área de teste, sem objetos, sai.
       await page.locator("tr", { has: page.locator('[data-area="Área Teste C1 renomeada"]') }).getByRole("button", { name: "Excluir" }).click();
-      await page.getByRole("dialog").getByRole("button", { name: "Excluir área" }).click();
+      const excluirArea = page.getByRole("dialog").getByRole("button", { name: "Excluir área" });
+      await expect(excluirArea).toBeDisabled();
+      await page.getByRole("dialog").locator('[data-teste="digitar-excluir"] input').fill("EXCLUIR");
+      await excluirArea.click();
       await expect(page.getByText("Área “Área Teste C1 renomeada” excluída.")).toBeVisible();
       const trilha = await sql<{ acao: string }>(`select acao from "AuditLog" where entidade = 'AreaAplicacao' and acao in ('CRIAR','RENOMEAR','REORDENAR','EXCLUIR') order by "criadoEm" desc limit 4`);
       expect(trilha.map((t) => t.acao).sort()).toEqual(["CRIAR", "EXCLUIR", "RENOMEAR", "REORDENAR"]);

@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { DESTINOS, criarRascunho, emendaValida, entrar, sql } from "./apoio";
+import { DESTINOS, criarRascunho, emendaValida, entrar, idDaUrl, proximo, sql } from "./apoio";
 
 // Pedidos do Dr. Emerson (PLANO-MOGI-EMERSON.md, D1 e D2): fontes com link já
 // pesquisando o item, banco i10 recomendado, "Ver referência" só para consulta,
@@ -13,9 +13,10 @@ test.afterAll(async () => {
 const linhaItem = (page: Page) => page.locator('[data-tabela="itens"] tbody tr').first();
 const quadroFontes = (page: Page) => page.locator("div").filter({ has: page.getByText("Onde pesquisar o preço") }).first();
 
+// Rascunho salvo, aberto na memória de cálculo (etapa 2, seção 3).
 async function irParaPlano(page: Page) {
-  await page.getByRole("button", { name: /Ir para o plano de trabalho/ }).click();
-  await expect(page.getByText(/MODELO/)).toBeVisible();
+  await page.goto(`/emendas/${idDaUrl(page)}?etapa=2&secao=3`);
+  await expect(page.locator('[data-guia-tela="nova-emenda.etapa2"]')).toBeVisible();
 }
 
 test.describe("D1 — fontes de preço e responsabilidade", () => {
@@ -69,10 +70,14 @@ test.describe("D1 — fontes de preço e responsabilidade", () => {
     await sql(`update "Emenda" set "declaracaoPrecos" = false where id = $1`, [id]);
     await page.goto(`/emendas/${id}?etapa=3`);
     await expect(page.getByText("Declaração dos preços pendente")).toBeVisible();
+    await proximo(page);
     const caixa = page.getByRole("checkbox", { name: /Declaro que pesquisei e informei os preços desta emenda/ });
     await expect(caixa).not.toBeChecked();
     await caixa.check();
+    // De volta às verificações, a pendência sumiu.
+    await page.getByRole("button", { name: /^Seção 1: Verificações/ }).click();
     await expect(page.getByText("Declaração dos preços pendente")).toHaveCount(0);
+    await proximo(page);
     await page.getByRole("button", { name: /^Submeter/ }).click();
     await expect(page).toHaveURL(new RegExp(`/emendas/${id}$`), { timeout: 15_000 });
     const [e] = await sql<{ status: string; declaracaoPrecos: boolean }>(`select status, "declaracaoPrecos" from "Emenda" where id = $1`, [id]);

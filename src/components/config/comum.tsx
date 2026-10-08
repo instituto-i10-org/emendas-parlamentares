@@ -21,6 +21,7 @@ export function BotaoAcao({
   titulo,
   rotulo,
   destrutiva,
+  exclusao,
   desabilitado,
   guia,
 }: {
@@ -34,6 +35,8 @@ export function BotaoAcao({
   titulo?: string;
   rotulo?: string;
   destrutiva?: boolean;
+  // Exclusão: pede para digitar EXCLUIR antes de liberar.
+  exclusao?: boolean;
   desabilitado?: boolean;
   // Âncora do guia de ajuda.
   guia?: string;
@@ -51,7 +54,7 @@ export function BotaoAcao({
         disabled={pendente || conf.pendente || desabilitado}
         onClick={() => {
           if (pedeConfirmacao) {
-            conf.pedir({ titulo: titulo ?? (typeof children === "string" ? children : "Confirmar"), mensagem: confirmar, impacto, rotulo, destrutiva, acao });
+            conf.pedir({ titulo: titulo ?? (typeof children === "string" ? children : "Confirmar"), mensagem: confirmar, impacto, rotulo, destrutiva, exclusao, acao });
             return;
           }
           iniciar(async () => {

@@ -21,6 +21,8 @@ const buttonVariants = cva(
       },
       size: {
         default: "h-12 px-[22px] text-sm",
+        // Ações principais da emenda (protótipo aprovado em 08/10/2026).
+        lg: "h-[52px] rounded-[14px] px-6 text-[13.5px]",
         sm: "h-9 px-3.5 text-sm",
         xs: "h-8 rounded-md px-3 text-xs",
         icon: "size-9 rounded-md",

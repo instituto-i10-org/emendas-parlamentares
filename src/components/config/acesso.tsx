@@ -286,7 +286,7 @@ export function AbaPerfis({ perfis }: { perfis: PerfilTela[] }) {
                 <Button size="xs" variant="ghost" onClick={() => setEditando(p)}>
                   Editar
                 </Button>
-                <BotaoAcao acao={() => excluirPerfil(p.id)} confirmar={`Excluir o perfil ${p.nome}?`} titulo="Excluir perfil" rotulo="Excluir" destrutiva desabilitado={p.usuarios > 0}>
+                <BotaoAcao acao={() => excluirPerfil(p.id)} confirmar={`Excluir o perfil ${p.nome}?`} titulo="Excluir perfil" rotulo="Excluir" destrutiva exclusao desabilitado={p.usuarios > 0}>
                   Excluir
                 </BotaoAcao>
               </div>

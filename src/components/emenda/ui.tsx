@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState, type ReactNode } from "react";
+import { createContext, useContext, useId, useState, type ReactNode } from "react";
 import { AlertTriangle, Check, ChevronRight, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,8 @@ export function Secao({
   children,
   className,
   guia,
+  id,
+  semTitulo,
 }: {
   titulo: string;
   ajuda?: ReactNode;
@@ -38,10 +40,13 @@ export function Secao({
   className?: string;
   // Âncora do guia de ajuda (só o atributo data-guia; não muda a aparência).
   guia?: string;
+  id?: string;
+  // A seção da emenda já mostra o mesmo título: o h3 fica só para leitores de tela.
+  semTitulo?: boolean;
 }) {
   return (
-    <div data-guia={guia} className={cn("mt-7 first:mt-0", className)}>
-      <h3 className="mb-3 flex items-center gap-2 text-md font-bold">
+    <div id={id} data-guia={guia} className={cn("mt-8 scroll-mt-4 first:mt-0", className)}>
+      <h3 className={cn("mb-3 flex items-center gap-2 text-md font-bold", semTitulo && "sr-only")}>
         {titulo}
         {ajuda ? <Ajuda titulo={titulo}>{ajuda}</Ajuda> : null}
       </h3>
@@ -55,6 +60,14 @@ export function Secao({
 export { Ajuda };
 
 // ------------------------------------------------------------------- campo
+
+// Erros da seção, por id do campo (validação ao avançar, padrão GOV.UK: a
+// mensagem acima do campo, borda e fundo vermelhos).
+export const ErrosDaSecao = createContext<Record<string, string>>({});
+export const useErroDoCampo = (id?: string) => {
+  const erros = useContext(ErrosDaSecao);
+  return id ? erros[id] ?? null : null;
+};
 
 export function Campo({
   rotulo,
@@ -78,8 +91,13 @@ export function Campo({
   // Âncora do guia de ajuda (só o atributo data-guia; não muda a aparência).
   guia?: string;
 }) {
+  const erro = useErroDoCampo(htmlFor);
   return (
-    <div data-guia={guia} className={cn("flex min-w-0 flex-col gap-1.5", className)}>
+    <div
+      data-guia={guia}
+      data-erro={erro ? "" : undefined}
+      className={cn("flex min-w-0 flex-col gap-1.5", erro && "border-l-4 border-bad pl-3.5 [&_.campo]:border-bad [&_.campo]:bg-bad-bg", className)}
+    >
       <div className="flex items-center gap-1.5">
         <label htmlFor={htmlFor} className="text-sm font-semibold text-label">
           {rotulo}
@@ -92,6 +110,12 @@ export function Campo({
           </span>
         ) : null}
       </div>
+      {erro ? (
+        <p id={`${htmlFor}-erro`} className="text-sm font-bold text-bad-ink">
+          <span className="sr-only">Erro: </span>
+          {erro}
+        </p>
+      ) : null}
       {children}
       {dica ? <div className="text-xs leading-snug font-medium text-muted-foreground">{dica}</div> : null}
     </div>

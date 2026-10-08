@@ -1,5 +1,5 @@
-import { expect, test, type Page } from "@playwright/test";
-import { DESTINOS, abrirMinhaConta, criarRascunho, entrar, sql } from "./apoio";
+import { expect, test } from "@playwright/test";
+import { DESTINOS, abrirMinhaConta, criarRascunho, entrar, irParaPlano, passo1, sql } from "./apoio";
 
 // Ajustes de interface pelos prints do Diego (08/10/2026, PLANO-MOGI-UI.md).
 
@@ -8,22 +8,6 @@ test.afterAll(async () => {
   if (criadas.length) await sql(`delete from "Emenda" where id = any($1)`, [criadas]);
   await sql(`delete from "Emenda" where objeto like 'UI-PRINT %'`);
 });
-
-// Passo 1 preenchido e analisado, sem salvar.
-async function passo1(page: Page, o: { execucao: "DIRETA" | "INDIRETA"; destino: string; objeto: string; valor: string }) {
-  await page.goto("/emendas/nova");
-  await page.locator(`input[name="execucao"][value="${o.execucao}"]`).check({ force: true });
-  await page.locator("#f-dest").fill(o.destino);
-  await page.getByRole("option").filter({ hasText: o.destino }).first().click();
-  await page.locator("#f-pre").fill(o.valor);
-  await page.locator("#f-obj").fill(o.objeto);
-  await page.getByRole("button", { name: /Analisar e classificar/ }).click();
-  const ir = page.getByRole("button", { name: /Ir para o plano de trabalho/ });
-  const usar = page.getByRole("button", { name: "Usar esta dotação" }).first();
-  await expect(ir.or(usar)).toBeVisible({ timeout: 10_000 });
-  if (!(await ir.isVisible())) await usar.click();
-  await expect(ir).toBeVisible();
-}
 
 test.describe("Ajustes de interface (prints)", () => {
   test("Print 2 — valor acima do autorizado: botão ajusta o valor", async ({ page }) => {
@@ -35,28 +19,34 @@ test.describe("Ajustes de interface (prints)", () => {
     const valor = rotulo.match(/R\$\s?([\d.,]+)/)?.[1];
     expect(valor).toBeTruthy();
     await ajustar.click();
-    await expect(page.locator("#f-pre")).toHaveValue(new RegExp(valor!.replace(/\./g, "\\.")));
     await expect(page.getByText("Valor da emenda ajustado ao autorizado da dotação.")).toBeVisible();
+    await page.getByRole("button", { name: /^Seção 3: Objeto e valor/ }).click();
+    await expect(page.locator("#f-pre")).toHaveValue(new RegExp(valor!.replace(/\./g, "\\.")));
   });
 
-  test("Print 5 — salvar rascunho mantém a etapa, inclusive ao recarregar", async ({ page }) => {
+  test("Print 5 — salvar rascunho mantém a etapa e a seção, inclusive ao recarregar", async ({ page }) => {
     await entrar(page, "vereador");
     const id = await criarRascunho(page, { execucao: "DIRETA", destino: DESTINOS.saude, objeto: "UI-PRINT Aquisição de cadeira de rodas para a unidade de saúde", valor: "3000" });
     criadas.push(id);
-    await page.getByRole("button", { name: /Ir para o plano de trabalho/ }).click();
-    await expect(page.getByRole("heading", { name: "Plano de trabalho", exact: true })).toBeVisible();
+    // O primeiro salvamento já guardou a seção da dotação.
+    await expect(page).toHaveURL(/secao=4/);
+    await expect(page.getByRole("heading", { level: 2, name: /Dotação/ })).toBeVisible();
+    await irParaPlano(page);
+    await page.getByRole("button", { name: /^Seção 2: Metas/ }).click();
+    const metas = page.getByRole("heading", { level: 2, name: /Metas/ });
+    await expect(metas).toBeVisible();
     await page.getByRole("button", { name: "Salvar rascunho" }).last().click();
     await expect(page.getByText("Rascunho salvo.")).toBeVisible();
-    await expect(page).toHaveURL(/etapa=2/);
-    await expect(page.getByRole("heading", { name: "Plano de trabalho", exact: true })).toBeVisible();
+    await expect(page).toHaveURL(/etapa=2&secao=2/);
     await page.reload();
-    await expect(page.getByRole("heading", { name: "Plano de trabalho", exact: true })).toBeVisible();
+    await expect(page.locator('[data-guia-tela="nova-emenda.etapa2"]')).toBeVisible();
+    await expect(metas).toBeVisible();
   });
 
   test("Print 4 — antes de salvar, 'Salvar rascunho e gerar link' salva e mostra o link", async ({ page }) => {
     await entrar(page, "vereador");
     await passo1(page, { execucao: "INDIRETA", destino: DESTINOS.entidade, objeto: "UI-PRINT Aquisição de colchonetes para as atividades da entidade", valor: "5000" });
-    await page.getByRole("button", { name: /Ir para o plano de trabalho/ }).click();
+    await irParaPlano(page);
     await page.getByRole("button", { name: "Salvar rascunho e gerar link" }).click();
     await expect(page).toHaveURL(/\/emendas\/c[a-z0-9]+\?etapa=2$/, { timeout: 15_000 });
     await expect(page.getByLabel("Link para a entidade")).toHaveValue(/\/publica\/plano\/[A-Za-z0-9_-]{40,}$/, { timeout: 15_000 });

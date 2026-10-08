@@ -398,7 +398,7 @@ function Prazos({
               ) : null}
             </span>
             {podeGerir ? (
-              <BotaoAcao acao={() => excluirPrazo(p.id)} confirmar="Excluir este prazo?" titulo="Excluir prazo" rotulo="Excluir" destrutiva>
+              <BotaoAcao acao={() => excluirPrazo(p.id)} confirmar="Excluir este prazo?" titulo="Excluir prazo" rotulo="Excluir" destrutiva exclusao>
                 <Trash2 className="size-4" />
               </BotaoAcao>
             ) : null}

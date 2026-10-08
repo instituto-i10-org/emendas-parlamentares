@@ -55,32 +55,76 @@ export async function sql<T = Record<string, unknown>>(texto: string, valores: u
   }
 }
 
+// Rodapé da emenda: "Próximo" confere a seção e segue.
+export async function proximo(page: Page) {
+  await page.locator('[data-guia="nova-emenda.rodape"]').getByRole("button", { name: /^Próximo/ }).click();
+}
+
+// Quem executa: clica no bloco até a tela (já hidratada) registrar a escolha.
+export async function escolherExecucao(page: Page, execucao: "DIRETA" | "INDIRETA") {
+  const radio = page.locator(`input[name="execucao"][value="${execucao}"]`);
+  await expect(async () => {
+    await page.getByText(execucao === "DIRETA" ? "Execução direta" : "Execução indireta", { exact: true }).click();
+    await expect(radio).toBeChecked({ timeout: 1_000 });
+  }).toPass({ timeout: 15_000 });
+}
+
+// Etapa 1 da nova emenda, seção por seção, até a dotação pronta (sem salvar).
+export async function passo1(
+  page: Page,
+  o: { execucao: "DIRETA" | "INDIRETA"; destino: string; objeto: string; valor: string; endereco?: string },
+  { analisar = true, ate }: { analisar?: boolean; ate?: "objeto" } = {}
+) {
+  await page.goto("/emendas/nova");
+  await escolherExecucao(page, o.execucao);
+  await proximo(page);
+  await page.locator("#f-dest").fill(o.destino);
+  await page.getByRole("option").filter({ hasText: o.destino }).first().click();
+  if (o.endereco) {
+    const editar = page.getByRole("button", { name: "Editar endereço do local" });
+    if (await editar.isVisible().catch(() => false)) await editar.click();
+    await page.locator("#f-loc").fill(o.endereco);
+  }
+  await proximo(page);
+  if (ate === "objeto") return;
+  await page.locator("#f-obj").fill(o.objeto);
+  await page.locator("#f-pre").fill(o.valor);
+  await proximo(page);
+  if (!analisar) return;
+  await page.getByRole("button", { name: /Analisar e classificar/ }).click();
+  // VALIDAR: o motor oferece opções e o autor escolhe; usa a primeira.
+  const pronta = page.locator('[data-pronta="sim"]');
+  const usar = page.getByRole("button", { name: "Usar esta dotação" }).first();
+  await expect(pronta.or(usar)).toBeVisible({ timeout: 10_000 });
+  if (!(await pronta.isVisible())) await usar.click();
+  await expect(pronta).toBeVisible();
+}
+
+// Da dotação pronta para o plano de trabalho.
+export async function irParaPlano(page: Page) {
+  await proximo(page);
+  await expect(page.locator('[data-guia-tela="nova-emenda.etapa2"]')).toBeVisible();
+}
+
+// Id da emenda pelo endereço (que pode levar ?etapa= e ?secao=).
+export const idDaUrl = (page: Page) => new URL(page.url()).pathname.split("/").pop()!;
+
 // Rascunho de emenda pela própria tela, até a classificação pronta.
 export async function criarRascunho(
   page: Page,
   o: { execucao: "DIRETA" | "INDIRETA"; destino: string; objeto: string; valor: string; endereco?: string }
 ): Promise<string> {
-  await page.goto("/emendas/nova");
-  await page.locator(`input[name="execucao"][value="${o.execucao}"]`).check({ force: true });
-  const campoDestino = page.locator("#f-dest");
-  await campoDestino.fill(o.destino);
-  await page.getByRole("option").filter({ hasText: o.destino }).first().click();
-  await page.locator("#f-pre").fill(o.valor);
-  await page.locator("#f-obj").fill(o.objeto);
-  if (o.endereco) {
-    const editar = page.getByRole("button", { name: "Editar endereço do local" });
-    if (await editar.isVisible().catch(() => false)) await editar.click();
-  }
-  await page.getByRole("button", { name: /Analisar e classificar/ }).click();
-  // VALIDAR: o motor oferece opções e o autor escolhe; usa a primeira.
-  const ir = page.getByRole("button", { name: /Ir para o plano de trabalho/ });
-  const usar = page.getByRole("button", { name: "Usar esta dotação" }).first();
-  await expect(ir.or(usar)).toBeVisible({ timeout: 10_000 });
-  if (!(await ir.isVisible())) await usar.click();
-  await expect(ir).toBeVisible();
+  await passo1(page, o);
   await page.getByRole("button", { name: "Salvar rascunho" }).first().click();
-  await expect(page).toHaveURL(/\/emendas\/c[a-z0-9]+$/, { timeout: 15_000 });
-  return page.url().split("/").pop()!;
+  await expect(page).toHaveURL(/\/emendas\/c[a-z0-9]+(\?|$)/, { timeout: 15_000 });
+  return idDaUrl(page);
+}
+
+// Emenda salva aberta direto na etapa 3 (verificações); "envio" vai à seção
+// das declarações, onde fica o botão de submeter.
+export async function irParaEtapa3(page: Page, id: string, secao: "verificacoes" | "envio" = "verificacoes") {
+  await page.goto(`/emendas/${id}?etapa=3${secao === "envio" ? "&secao=2" : ""}`);
+  await expect(page.locator('[data-guia-tela="nova-emenda.etapa3"]')).toBeVisible();
 }
 
 // Dados da dotação de uma ficha do projeto de lei. A ficha se repete entre
@@ -177,7 +221,14 @@ export async function confirmarJanela(page: Page) {
   await expect(janela.locator("[data-impacto]")).toBeVisible({ timeout: 15_000 });
   const ciencia = janela.getByRole("checkbox", { name: /Entendo que esta alteração afeta/ });
   if (await ciencia.isVisible()) await ciencia.check();
+  await digitarExcluirSePedido(page);
   await janela.locator(":scope > div:last-child button").first().click();
+}
+
+// Exclusão: a janela só libera o botão depois de digitar EXCLUIR.
+export async function digitarExcluirSePedido(page: Page) {
+  const campo = page.getByRole("dialog").locator('[data-teste="digitar-excluir"] input');
+  if (await campo.isVisible()) await campo.fill("EXCLUIR");
 }
 
 // Confirmação simples na janela do sistema (no lugar da do navegador):
@@ -185,6 +236,7 @@ export async function confirmarJanela(page: Page) {
 export async function confirmarNaJanela(page: Page, rotulo: string | RegExp) {
   const janela = page.getByRole("dialog");
   await expect(janela).toBeVisible();
+  await digitarExcluirSePedido(page);
   await janela.getByRole("button", { name: rotulo, exact: typeof rotulo === "string" }).click();
   await expect(janela).toBeHidden();
 }

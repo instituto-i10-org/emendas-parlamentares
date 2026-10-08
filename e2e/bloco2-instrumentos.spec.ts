@@ -77,6 +77,9 @@ test.describe("Instrumentos de planejamento", () => {
     const aud = await sql(`select 1 from "AuditLog" where entidade = 'InstrumentoPlanejamento' and acao = 'ATUALIZAR' and "dadosAntes"::text like '%Ementa original%'`);
     expect(aud.length).toBe(1);
     await linha.getByRole("button", { name: "Excluir" }).click();
+    // Duplo check: sem digitar EXCLUIR, o botão da janela não se libera.
+    await expect(page.getByRole("dialog").locator("[data-impacto]")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("dialog").getByRole("button", { name: "Excluir", exact: true })).toBeDisabled();
     await confirmarJanela(page);
     await expect(page.getByText("Instrumento excluído.")).toBeVisible();
     await expect(page.locator("tr", { hasText: "PL 97/2026" })).toHaveCount(0);

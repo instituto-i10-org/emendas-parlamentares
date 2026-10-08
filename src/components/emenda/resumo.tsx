@@ -14,11 +14,14 @@ export function Resumo({
   d,
   ctx,
   aplicado,
+  etapas,
 }: {
   e: EstadoEmenda;
   d: DerivadoEmenda;
   ctx: ContextoEmenda;
   aplicado: Aplicado;
+  // Indicador das três etapas, no topo do cartão.
+  etapas?: React.ReactNode;
 }) {
   const c = d.valida;
   const sit = situacaoEfetiva(c, e.selecao);
@@ -46,41 +49,46 @@ export function Resumo({
   const cfg = ctx.config;
 
   return (
-    <aside data-guia="nova-emenda.resumo" className="sticky top-4 grid gap-3.5 max-[1080px]:static">
+    <aside className="sticky top-4 grid gap-3.5 max-[1080px]:static">
       <div className="rounded-card bg-surface p-[22px] shadow-card">
-        <div className="mb-2.5 text-md font-bold">Resumo</div>
-        <div className="mb-4 grid gap-2.5">
-          <span className="justify-self-start rounded-full bg-ok-bg px-2.5 py-1 text-xs font-bold text-ok-ink">
-            {definidos} de {linhas.length} definidos
-          </span>
-          <span className="block h-1.5 overflow-hidden rounded-full bg-page" aria-hidden>
-            <i className="block h-full rounded-full bg-ok transition-[width]" style={{ width: `${Math.round((definidos / linhas.length) * 100)}%` }} />
-          </span>
-        </div>
-        <dl className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-2.5 gap-y-3 text-sm">
-          {linhas.map(([k, v]) => (
-            <div key={k} className="contents">
-              <dt className="flex items-center gap-2.5 leading-tight text-muted-foreground">
-                <span
-                  className={cn(
-                    "grid size-[18px] shrink-0 place-items-center rounded-full",
-                    v ? "bg-ok text-navy-deep" : "border-[1.5px] border-dashed border-[#B8C3D6]"
-                  )}
-                >
-                  {v ? <Check className="size-[11px]" strokeWidth={3.4} /> : null}
-                </span>
-                {k}
-              </dt>
-              <dd className="text-right font-bold break-words">{v ?? <span className="sr-only">a definir</span>}</dd>
-            </div>
-          ))}
-        </dl>
-        <div className="mt-4 flex flex-wrap gap-1.5">
-          {[`Exercício ${cfg.exercicio}`, cfg.rotuloBase, "Impositiva"].filter(Boolean).map((x) => (
-            <span key={x} className="rounded-full bg-page px-2.5 py-1 text-xs font-bold text-ink">
-              {x}
+        {etapas}
+        <div data-guia="nova-emenda.resumo">
+          <div className="mb-2.5 flex items-center justify-between gap-3">
+            <span className="text-md font-bold">Resumo</span>
+            <span className="rounded-full bg-ok-bg px-2.5 py-1 text-xs font-bold whitespace-nowrap text-ok-ink">
+              {definidos} de {linhas.length} definidos
             </span>
-          ))}
+          </div>
+          <div className="mb-4">
+            <span className="block h-1.5 overflow-hidden rounded-full bg-page" aria-hidden>
+              <i className="block h-full rounded-full bg-ok transition-[width]" style={{ width: `${Math.round((definidos / linhas.length) * 100)}%` }} />
+            </span>
+          </div>
+          <dl className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-2.5 gap-y-3 text-sm">
+            {linhas.map(([k, v]) => (
+              <div key={k} className="contents">
+                <dt className="flex items-center gap-2.5 leading-tight text-muted-foreground">
+                  <span
+                    className={cn(
+                      "grid size-[18px] shrink-0 place-items-center rounded-full",
+                      v ? "bg-ok text-navy-deep" : "border-[1.5px] border-dashed border-[#B8C3D6]"
+                    )}
+                  >
+                    {v ? <Check className="size-[11px]" strokeWidth={3.4} /> : null}
+                  </span>
+                  {k}
+                </dt>
+                <dd className="text-right font-bold break-words">{v ?? <span className="sr-only">a definir</span>}</dd>
+              </div>
+            ))}
+          </dl>
+          <div className="mt-4 flex flex-wrap gap-1.5">
+            {[`Exercício ${cfg.exercicio}`, cfg.rotuloBase, "Impositiva"].filter(Boolean).map((x) => (
+              <span key={x} className="rounded-full bg-page px-2.5 py-1 text-xs font-bold text-ink">
+                {x}
+              </span>
+            ))}
+          </div>
         </div>
       </div>
 

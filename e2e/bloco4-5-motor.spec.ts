@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { DESTINOS, criarRascunho, emendaValida as emendaValidaApoio, entrar, sql, confirmarJanela } from "./apoio";
+import { DESTINOS, criarRascunho, emendaValida as emendaValidaApoio, entrar, irParaEtapa3 as irParaEtapa3Apoio, proximo, sql, confirmarJanela } from "./apoio";
 
 // Itens 4.1 a 4.5 e 12.1 (motor das treze verificações), no fluxo de três
 // etapas de Mogi Guaçu: as treze aparecem na etapa 3, acima das conferências
@@ -16,9 +16,7 @@ const treze = (page: Page) => page.locator('ol[aria-label="As treze verificaçõ
 const linha = (page: Page, codigo: string) => treze(page).locator(`li[data-codigo="${codigo}"]`);
 
 async function irParaEtapa3(page: Page, id: string) {
-  await page.goto(`/emendas/${id}`);
-  await page.getByRole("button", { name: /Ir para o plano de trabalho/ }).click();
-  await page.getByRole("button", { name: /Ir para a validação/ }).click();
+  await irParaEtapa3Apoio(page, id);
   await expect(treze(page)).toBeVisible();
 }
 
@@ -28,7 +26,12 @@ async function emendaValida(page: Page): Promise<string> {
   return id;
 }
 
-const botaoRemeter = (page: Page) => page.getByRole("button", { name: /^Submeter/ });
+// O botão de submeter fica na seção das declarações: vai até ela se preciso.
+async function botaoRemeter(page: Page) {
+  const b = page.getByRole("button", { name: /^Submeter/ });
+  if (!(await b.isVisible())) await proximo(page);
+  return b;
+}
 const exercicioAtual = async () => (await sql<{ id: string }>(`select id from "Exercicio" order by ano desc limit 1`))[0].id;
 
 test.afterAll(async () => {
@@ -51,7 +54,7 @@ test.describe("Grupo 4 — motor das treze verificações", () => {
     // O que já existia continua abaixo.
     await expect(page.getByText("Pré-checagem das condições de validade")).toBeVisible();
     await expect(page.getByText("Metas incompletas")).toBeVisible();
-    await expect(botaoRemeter(page)).toBeDisabled();
+    await expect(await botaoRemeter(page)).toBeDisabled();
   });
 
   test("T-4.3-2 aba Validação: fixas travadas; modo trocado é gravado e auditado", async ({ page }) => {
@@ -80,13 +83,13 @@ test.describe("Grupo 4 — motor das treze verificações", () => {
     try {
       await irParaEtapa3(page, id);
       await expect(linha(page, "PROGRAMA_NO_PPA")).toContainText("Falha");
-      await expect(botaoRemeter(page)).toBeDisabled();
+      await expect(await botaoRemeter(page)).toBeDisabled();
 
       await sql(`insert into "RegraValidacao" (id, codigo, "exercicioId", modo, ativa, "updatedAt") values ('t45-ppa', 'PROGRAMA_NO_PPA', $1, 'ALERTA', true, now())`, [await exercicioAtual()]);
       await irParaEtapa3(page, id);
       await expect(linha(page, "PROGRAMA_NO_PPA")).toContainText("Alerta");
       await expect(linha(page, "PROGRAMA_NO_PPA")).toContainText("verificação alerta");
-      await expect(botaoRemeter(page)).toBeEnabled();
+      await expect(await botaoRemeter(page)).toBeEnabled();
     } finally {
       await sql(`update "Programa" set "constaNoPPA" = true where id = $1`, [d.programaId]);
       await sql(`delete from "RegraValidacao"`);
@@ -97,13 +100,13 @@ test.describe("Grupo 4 — motor das treze verificações", () => {
     await entrar(page, "vereador");
     const id = await emendaValida(page);
     await irParaEtapa3(page, id);
-    await expect(botaoRemeter(page)).toBeEnabled();
+    await expect(await botaoRemeter(page)).toBeEnabled();
     // A cota muda entre a tela e o envio: o navegador não sabe, o servidor sim.
     const ex = await exercicioAtual();
     const [cfg] = await sql<{ cotaIndividual: string }>(`select "cotaIndividual" from "ConfiguracaoExercicio" where "exercicioId" = $1`, [ex]);
     await sql(`update "ConfiguracaoExercicio" set "cotaIndividual" = 100 where "exercicioId" = $1`, [ex]);
     try {
-      await botaoRemeter(page).click();
+      await (await botaoRemeter(page)).click();
       await expect(page.getByText("Remessa recusada na conferência do servidor")).toBeVisible();
       await expect(linha(page, "COTA_AUTOR")).toContainText("Falha");
       const [e] = await sql<{ status: string; numero: number | null }>(`select status, numero from "Emenda" where id = $1`, [id]);
@@ -134,7 +137,7 @@ test.describe("Grupo 4 — motor das treze verificações", () => {
     await entrar(page, "vereador");
     const id = await emendaValida(page);
     await irParaEtapa3(page, id);
-    await botaoRemeter(page).click();
+    await (await botaoRemeter(page)).click();
     await expect(page).toHaveURL(new RegExp(`/emendas/${id}$`));
     await expect(page.getByRole("tab", { name: "Validação", exact: true })).toBeVisible();
     const [e] = await sql<{ status: string; numero: number | null }>(`select status, numero from "Emenda" where id = $1`, [id]);

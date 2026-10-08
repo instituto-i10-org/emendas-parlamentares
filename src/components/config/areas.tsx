@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useConfirmarImpacto } from "@/components/app/confirmar-impacto";
+import { DigitarParaConfirmar, useDigitarParaConfirmar } from "@/components/app/digitar-para-confirmar";
 import { Cartao, TabelaDados } from "@/components/app/pagina";
 import { Campo } from "@/components/emenda/ui";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ const listaOrgaos = (t: string) => t.split(/[,\s;]+/).map((x) => x.trim()).filte
 export function AbaAreas({ areas, unidades, podeEditar }: { areas: AreaTela[]; unidades: string[]; podeEditar: boolean }) {
   const [editando, setEditando] = useState<AreaTela | "nova" | null>(null);
   const [excluindo, setExcluindo] = useState<AreaTela | null>(null);
+  const digitado = useDigitarParaConfirmar();
   const { pendente, executar } = useAcao();
   const orgaosDoExercicio = new Set(unidades.map((u) => u.split(".")[0]));
   return (
@@ -56,7 +58,14 @@ export function AbaAreas({ areas, unidades, podeEditar }: { areas: AreaTela[]; u
                   <Button size="xs" variant="ghost" onClick={() => setEditando(a)}>
                     Editar
                   </Button>
-                  <Button size="xs" variant="ghost" onClick={() => setExcluindo(a)}>
+                  <Button
+                    size="xs"
+                    variant="ghost"
+                    onClick={() => {
+                      digitado.limpar();
+                      setExcluindo(a);
+                    }}
+                  >
                     Excluir
                   </Button>
                 </div>
@@ -85,7 +94,7 @@ export function AbaAreas({ areas, unidades, podeEditar }: { areas: AreaTela[]; u
                 </>
               ) : (
                 <>
-                  <BotaoAcao variante="destructive" tamanho="default" acao={async () => { const r = await excluirArea(excluindo.id); if (r.ok) setExcluindo(null); return r; }}>
+                  <BotaoAcao variante="destructive" tamanho="default" desabilitado={!digitado.liberado} acao={async () => { const r = await excluirArea(excluindo.id); if (r.ok) setExcluindo(null); return r; }}>
                     Excluir área
                   </BotaoAcao>
                   <Button variant="ghost" onClick={() => setExcluindo(null)}>
@@ -108,7 +117,10 @@ export function AbaAreas({ areas, unidades, podeEditar }: { areas: AreaTela[]; u
                 </ul>
               </div>
             ) : (
-              <p className="text-sm">Nenhum objeto da biblioteca usa esta área. A exclusão fica registrada na auditoria.</p>
+              <>
+                <p className="text-sm">Nenhum objeto da biblioteca usa esta área. A exclusão fica registrada na auditoria.</p>
+                <DigitarParaConfirmar texto={digitado.texto} aoMudar={digitado.setTexto} />
+              </>
             )}
           </DialogContent>
         ) : null}

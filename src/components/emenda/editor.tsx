@@ -2,8 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Eye, Save, Trash2 } from "lucide-react";
+import { ArrowRight, Check, Eye, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { DigitarParaConfirmar, useDigitarParaConfirmar } from "@/components/app/digitar-para-confirmar";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { excluirRascunho, salvarEmenda } from "@/lib/actions/emendas";
@@ -29,14 +30,14 @@ import {
 } from "@/lib/riep";
 import { cn } from "@/lib/utils";
 import { Etapa1 } from "./etapa1";
-import { Aviso } from "./ui";
+import { Aviso, ErrosDaSecao } from "./ui";
+import { ETAPAS, problemasDaSecao, secoesDa, type Problema, type Secao as SecaoEmenda } from "./secoes";
 import { Etapa2 } from "./etapa2";
 import { Etapa3 } from "./etapa3";
 import { Resumo } from "./resumo";
 
 export type Atualizar = (parcial: Partial<EstadoEmenda> | ((e: EstadoEmenda) => Partial<EstadoEmenda>)) => void;
 
-const ETAPAS = ["Descrever a emenda", "Plano de trabalho", "Validar e submeter"] as const;
 
 export type DerivadoEmenda = ReturnType<typeof useDerivado>;
 
@@ -119,6 +120,7 @@ export function EditorEmenda({
   diligencia = null,
   devolucao = null,
   etapaInicial = 1,
+  secaoInicial = 0,
 }: {
   ctx: ContextoEmenda;
   inicial: EstadoEmenda;
@@ -130,10 +132,26 @@ export function EditorEmenda({
   devolucao?: { texto: string; quando: string } | null;
   // Etapa em que o editor abre (o salvamento leva a etapa no endereço).
   etapaInicial?: number;
+  secaoInicial?: number;
 }) {
   const router = useRouter();
   const [e, setE] = useState<EstadoEmenda>(inicial);
   const [etapa, setEtapa] = useState(etapaInicial);
+  const [secao, setSecao] = useState(() => Math.min(Math.max(0, secaoInicial), secoesDa(etapaInicial).length - 1));
+  // Problemas da seção ao tentar avançar (validação GOV.UK).
+  const [problemas, setProblemas] = useState<Problema[]>([]);
+  const quadroRef = useRef<HTMLDivElement>(null);
+  // Rodapé preso no pé da janela (o cartão termina abaixo dela): só então
+  // ganha a linha e a sombra. Um marcador logo depois do rodapé diz isso.
+  const fimDoCartao = useRef<HTMLDivElement>(null);
+  const [preso, setPreso] = useState(false);
+  useEffect(() => {
+    const el = fimDoCartao.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([x]) => setPreso(!x.isIntersecting && x.boundingClientRect.top > window.innerHeight));
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
   const [destinos, setDestinos] = useState(ctx.destinos);
   const [gravando, setGravando] = useState(false);
   const [duplicata, setDuplicata] = useState<{ numero: number | null; objeto: string; status: string } | null>(null);
@@ -177,7 +195,8 @@ export function EditorEmenda({
     if (Object.keys(parcial).length) setE((atual) => ({ ...atual, ...parcial }));
   }, [d.classificacao, d.dotacao, d.destino, d.modelo, e.agenteExecutor, e.etapasEditadas, e.evento, e.execucao, ctx.catalogo.unidades]);
 
-  function irPara(n: number) {
+  // Etapa seguinte só com a dotação resolvida no passo 1.
+  function irPara(n: number, sec = 0) {
     if (n > 1) {
       if (!d.classificacao) {
         toast("Rode a análise no passo 1 primeiro.");
@@ -187,29 +206,77 @@ export function EditorEmenda({
         toast("Reescreva o objeto ou escolha a dotação antes de seguir.");
         return;
       }
-      montarPlano();
+      if (etapa === 1) montarPlano();
     }
+    setProblemas([]);
     setEtapa(n);
+    setSecao(sec);
   }
 
-  // Cada etapa começa do topo. O endereço guarda a etapa da emenda já salva,
-  // para recarregar ou voltar nela.
+  const secoes = secoesDa(etapa);
+  const atual = secoes[secao] ?? secoes[0];
+  const ultimaSecao = secao === secoes.length - 1;
+
+  function mostrarProblemas(p: Problema[]) {
+    setProblemas(p);
+    requestAnimationFrame(() => {
+      quadroRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      quadroRef.current?.focus({ preventScroll: true });
+    });
+  }
+
+  // Próximo: confere a seção; com problema, não avança e mostra o quadro.
+  function proximo() {
+    const p = problemasDaSecao(etapa, atual.id, e, d);
+    if (p.length) return mostrarProblemas(p);
+    setProblemas([]);
+    if (!ultimaSecao) setSecao(secao + 1);
+    else if (etapa < 3) irPara(etapa + 1);
+  }
+
+  function voltar() {
+    setProblemas([]);
+    if (secao > 0) setSecao(secao - 1);
+    else if (etapa > 1) {
+      setEtapa(etapa - 1);
+      setSecao(secoesDa(etapa - 1).length - 1);
+    }
+  }
+
+  // Marcador de seção: navegação livre dentro da etapa (como no protótipo);
+  // quem confere a seção é o "Próximo" e, no fim, a validação da etapa 3.
+  function irParaSecao(alvo: number) {
+    setProblemas([]);
+    setSecao(alvo);
+  }
+
+  // Cada seção começa do topo. O endereço guarda etapa e seção da emenda já
+  // salva, para recarregar ou voltar nelas.
   useEffect(() => {
     window.scrollTo({ top: 0 });
     if (!e.id) return;
     const url = new URL(window.location.href);
     if (etapa > 1) url.searchParams.set("etapa", String(etapa));
     else url.searchParams.delete("etapa");
+    if (secao > 0) url.searchParams.set("secao", String(secao + 1));
+    else url.searchParams.delete("secao");
     window.history.replaceState(window.history.state, "", url);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [etapa]);
+  }, [etapa, secao]);
 
   // Abriu numa etapa adiante sem classificação válida: volta ao passo 1.
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (etapa > 1 && (!d.classificacao || !d.avanca)) setEtapa(1);
+    if (etapa > 1 && (!d.classificacao || !d.avanca)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setEtapa(1);
+      setSecao(secoesDa(1).length - 1);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Corrigido o campo, o quadro se atualiza sozinho (só some ao avançar).
+  const problemasVivos = problemas.length ? problemasDaSecao(etapa, atual.id, e, d) : [];
+  const erros = Object.fromEntries(problemasVivos.map((x) => [x.alvo, x.msg]));
 
   async function gravar(submeter = false, confirmarDuplicata = false, opcoes: { gerarLink?: boolean } = {}) {
     if (gravando) return;
@@ -232,7 +299,11 @@ export function EditorEmenda({
           setAlterado(false);
           if (!e.id) router.replace(`/emendas/${id}`, { scroll: false });
         }
-        if (r.verificacoes) setRecusa({ verificacoes: r.verificacoes, erro: r.erro });
+        if (r.verificacoes) {
+          setRecusa({ verificacoes: r.verificacoes, erro: r.erro });
+          // As treze como o servidor as viu ficam na seção das verificações.
+          if (etapa === 3) setSecao(0);
+        }
         toast.error(r.erro);
         return;
       }
@@ -251,6 +322,7 @@ export function EditorEmenda({
       if (!e.id) {
         const q = new URLSearchParams();
         if (etapa > 1) q.set("etapa", String(etapa));
+        if (secao > 0) q.set("secao", String(secao + 1));
         if (opcoes.gerarLink) q.set("gerarLink", "1");
         router.replace(`/emendas/${r.id}${q.toString() ? `?${q}` : ""}`, { scroll: false });
       }
@@ -261,6 +333,7 @@ export function EditorEmenda({
 
   // Descartar: rascunho gravado é excluído; o que nunca foi salvo só é abandonado.
   const [confirmando, setConfirmando] = useState(false);
+  const digitado = useDigitarParaConfirmar();
   const [descartando, setDescartando] = useState(false);
   async function confirmarDescarte() {
     if (e.id) {
@@ -276,16 +349,22 @@ export function EditorEmenda({
   }
   const descartar = (
     <>
-      {/* Na barra estreita, em que os botões quebrariam de linha, fica só a lixeira. */}
       <Button
         variant="ghost"
-        className="ml-auto text-bad-ink hover:text-bad-ink @max-xl/acoes1:w-11 @max-xl/acoes1:px-0 @max-3xl/acoes:w-11 @max-3xl/acoes:px-0"
-        onClick={() => setConfirmando(true)}
+        size="lg"
+        className={cn(
+          "ml-auto bg-transparent text-bad-ink hover:bg-bad-bg hover:text-bad-ink max-md:w-[52px] max-md:px-0",
+          etapa > 1 && "@max-[44rem]/rodape:w-[52px] @max-[44rem]/rodape:px-0"
+        )}
+        onClick={() => {
+          digitado.limpar();
+          setConfirmando(true);
+        }}
         disabled={gravando}
         aria-label="Descartar rascunho"
         title="Descartar rascunho"
       >
-        <Trash2 /> <span className="hidden @xl/acoes1:inline @3xl/acoes:inline">Descartar rascunho</span>
+        <Trash2 /> <span className={cn("max-md:hidden", etapa > 1 && "@max-[44rem]/rodape:hidden")}>Descartar rascunho</span>
       </Button>
       <Dialog open={confirmando} onOpenChange={setConfirmando}>
         <DialogContent
@@ -293,7 +372,7 @@ export function EditorEmenda({
           largura="sm"
           acoes={
             <>
-              <Button variant="destructive" disabled={descartando} onClick={confirmarDescarte}>
+              <Button variant="destructive" disabled={descartando || !digitado.liberado} onClick={confirmarDescarte}>
                 {descartando ? "Descartando…" : "Descartar"}
               </Button>
               <Button variant="ghost" onClick={() => setConfirmando(false)}>
@@ -307,74 +386,72 @@ export function EditorEmenda({
               ? "O rascunho será excluído e não poderá ser recuperado. A exclusão fica registrada na auditoria."
               : "O que foi preenchido nesta emenda será perdido."}
           </p>
+          <DigitarParaConfirmar texto={digitado.texto} aoMudar={digitado.setTexto} />
         </DialogContent>
       </Dialog>
     </>
   );
 
+  const enviar = etapa === 3 && ultimaSecao;
+  const rotuloEnvio =
+    d.resumo.bloqueios > 0
+      ? `${diligencia ? "Reenviar" : "Submeter"} — ${d.resumo.bloqueios} bloqueio${d.resumo.bloqueios > 1 ? "s" : ""}`
+      : d.resumo.alertas > 0
+        ? `${diligencia ? "Reenviar" : "Submeter"} mesmo assim`
+        : diligencia
+          ? "Reenviar à Comissão"
+          : "Submeter emenda";
+
+  // Rodapé de ações: fixo no pé da janela enquanto a seção passa da tela
+  // (sticky), no fim do cartão quando cabe.
   const rodape = (
-    <div data-guia="nova-emenda.rodape" className="@container/acoes sticky bottom-0 z-10 -mx-7 rounded-b-card mt-7 flex flex-wrap items-center gap-2 bg-surface px-7 py-4 shadow-[0_-12px_16px_var(--surface)] max-md:-mx-4 max-md:px-4">
-      {etapa === 1 ? null : etapa === 2 ? (
-        <>
-          <Button onClick={() => irPara(3)} className="max-md:flex-[1_1_100%]">
-            Ir para a validação →
-          </Button>
-          <Button variant="ghost" onClick={() => irPara(1)}>
-            Voltar
-          </Button>
-        </>
-      ) : (
-        <>
-          {duplicata ? (
-            <div className="flex-[1_1_100%]">
-            <Aviso tipo="warn">
-              <b>Possível duplicata.</b> Você já submeteu a emenda nº {duplicata.numero ?? "sem número"} ({duplicata.status.toLowerCase()}) com o mesmo
-              destino e o mesmo objeto: «{duplicata.objeto}». Se for outra emenda de fato, confirme para submeter mesmo assim.{" "}
-              <button type="button" className="font-bold text-navy underline-offset-2 hover:underline" disabled={gravando} onClick={() => gravar(true, true)}>
-                Submeter mesmo assim
-              </button>
-              {" · "}
-              <button type="button" className="font-bold text-navy underline-offset-2 hover:underline" onClick={() => setDuplicata(null)}>
-                Cancelar
-              </button>
-            </Aviso>
-            </div>
-          ) : null}
-          <Button
-            data-guia="nova-emenda.submeter"
-            variant="ok"
-            disabled={!d.resumo.pode || gravando || !!duplicata || !podeRemeter}
-            onClick={() => gravar(true)}
-            className="max-md:flex-[1_1_100%]"
-          >
-            {d.resumo.bloqueios > 0
-              ? `${diligencia ? "Reenviar" : "Submeter"} — ${d.resumo.bloqueios} bloqueio${d.resumo.bloqueios > 1 ? "s" : ""}`
-              : d.resumo.alertas > 0
-                ? `${diligencia ? "Reenviar" : "Submeter"} mesmo assim`
-                : diligencia
-                  ? "Reenviar à Comissão"
-                  : "Submeter emenda"}
-          </Button>
-          <Button variant="ghost" onClick={() => irPara(2)}>
-            Voltar
-          </Button>
-        </>
+    <div
+      data-guia="nova-emenda.rodape"
+      data-preso={preso ? "sim" : undefined}
+      className={cn(
+        "@container/rodape sticky bottom-0 z-10 -mx-8 mt-8 flex flex-wrap items-center gap-2.5 rounded-b-card border-t bg-surface px-8 py-5 transition-shadow max-md:-mx-4 max-md:px-4 max-md:py-4",
+        preso ? "border-hair shadow-[0_-10px_18px_-10px_rgba(10,36,99,.18)]" : "border-transparent"
       )}
-      {/* Na barra estreita, em que os botões quebrariam de linha, fica só o disquete. */}
-      <Button
-        variant="ghost"
-        className="@max-xl/acoes1:w-11 @max-xl/acoes1:px-0 @max-3xl/acoes:w-11 @max-3xl/acoes:px-0"
-        onClick={() => gravar(false)}
-        disabled={gravando}
-        aria-label="Salvar rascunho"
-        title="Salvar rascunho"
-      >
-        <Save className="@xl/acoes1:hidden @3xl/acoes:hidden" />
-        <span className="hidden @xl/acoes1:inline @3xl/acoes:inline">{gravando ? "Salvando…" : "Salvar rascunho"}</span>
+    >
+      {duplicata ? (
+        <div className="flex-[1_1_100%]">
+          <Aviso tipo="warn">
+            <b>Possível duplicata.</b> Você já submeteu a emenda nº {duplicata.numero ?? "sem número"} ({duplicata.status.toLowerCase()}) com o mesmo destino
+            e o mesmo objeto: «{duplicata.objeto}». Se for outra emenda de fato, confirme para submeter mesmo assim.{" "}
+            <button type="button" className="font-bold text-navy underline-offset-2 hover:underline" disabled={gravando} onClick={() => gravar(true, true)}>
+              Submeter mesmo assim
+            </button>
+            {" · "}
+            <button type="button" className="font-bold text-navy underline-offset-2 hover:underline" onClick={() => setDuplicata(null)}>
+              Cancelar
+            </button>
+          </Aviso>
+        </div>
+      ) : null}
+      {enviar ? (
+        <Button
+          data-guia="nova-emenda.submeter"
+          variant="ok"
+          size="lg"
+          disabled={!d.resumo.pode || gravando || !!duplicata || !podeRemeter}
+          onClick={() => gravar(true)}
+          className="max-md:flex-[1_1_100%]"
+        >
+          {rotuloEnvio}
+        </Button>
+      ) : (
+        <Button size="lg" onClick={proximo} className="max-md:flex-[1_1_100%]">
+          Próximo <ArrowRight />
+        </Button>
+      )}
+      <Button variant="ghost" size="lg" onClick={voltar} disabled={etapa === 1 && secao === 0} className="max-md:flex-1">
+        Voltar
       </Button>
-      {diligencia ? null : descartar}
+      <Button variant="ghost" size="lg" onClick={() => gravar(false)} disabled={gravando} aria-label="Salvar rascunho" title="Salvar rascunho" className="max-md:w-[52px] max-md:px-0">
+        <Save /> <span className="max-md:hidden">{gravando ? "Salvando…" : "Salvar rascunho"}</span>
+      </Button>
       {etapa > 1 ? (
-        <Button variant="ghost" asChild className="@max-3xl/acoes:w-11 @max-3xl/acoes:px-0">
+        <Button variant="ghost" size="lg" asChild className="max-md:w-[52px] max-md:px-0 @max-[56rem]/rodape:w-[52px] @max-[56rem]/rodape:px-0">
           <a
             href={e.id ? `/emendas/${e.id}/plano` : "#"}
             target="_blank"
@@ -389,18 +466,40 @@ export function EditorEmenda({
               }
             }}
           >
-            <Eye className="@3xl/acoes:hidden" />
-            <span className="hidden @3xl/acoes:inline">Visualizar plano</span>
+            <Eye /> <span className="@max-[56rem]/rodape:hidden">Visualizar plano</span>
           </a>
         </Button>
       ) : null}
+      {diligencia ? null : descartar}
     </div>
   );
+
+  const titulo = diligencia
+    ? `Emenda nº ${diligencia.numero ?? "—"}/${ctx.config.exercicio}`
+    : e.id
+      ? "Editar emenda"
+      : "Nova emenda";
 
   return (
     <div data-guia-tela={`nova-emenda.etapa${etapa}`} className="px-7 pt-9 pb-11 max-md:px-4 max-md:pt-6">
       <div className="mb-2 text-xs font-medium text-muted-foreground">
-        Emendas › <b className="font-bold text-ink">{diligencia ? `Emenda nº ${diligencia.numero ?? "—"}/${ctx.config.exercicio} — ajuste pedido pela Comissão` : e.id ? "Editar emenda" : "Nova emenda"}</b>
+        Emendas › <b className="font-bold text-ink">{diligencia ? `${titulo} — ajuste pedido pela Comissão` : titulo}</b>
+      </div>
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <h1 className="text-2xl font-extrabold tracking-[-0.02em]">{titulo}</h1>
+        <div data-guia="nova-emenda.situacao" className="flex flex-wrap gap-1.5">
+          {[diligencia ? "Em diligência" : devolucao ? "Devolvida" : "Rascunho", `Exercício ${ctx.config.exercicio}`].map((x, i) => (
+            <span
+              key={x}
+              className={cn(
+                "rounded-full px-2.5 py-1 text-2xs font-bold tracking-[0.04em] whitespace-nowrap uppercase",
+                i === 0 && diligencia ? "bg-warn-bg text-warn" : "bg-hover text-ink"
+              )}
+            >
+              {x}
+            </span>
+          ))}
+        </div>
       </div>
       {!ctx.emendamento.aberto ? (
         <div className="mb-5">
@@ -416,7 +515,8 @@ export function EditorEmenda({
             <span className="whitespace-pre-line">{diligencia.motivo}</span>
             {diligencia.ate ? (
               <span className="mt-1.5 block text-xs">
-                Prazo para reenviar: <b>{diligencia.ate}</b>. A emenda mantém o número e a cota; corrija o que foi pedido e clique em “Reenviar à Comissão” no passo 3.
+                Prazo para reenviar: <b>{diligencia.ate}</b>. A emenda mantém o número e a cota; corrija o que foi pedido e clique em “Reenviar à Comissão” na
+                última seção.
               </span>
             ) : null}
           </Aviso>
@@ -426,62 +526,199 @@ export function EditorEmenda({
         <div className="mb-5">
           <Aviso tipo="warn" titulo="A análise técnica devolveu esta emenda">
             <span className="whitespace-pre-line">{devolucao.texto}</span>
-            <span className="mt-1.5 block text-xs">Devolvida em {devolucao.quando}. Corrija o que foi apontado e submeta de novo no passo 3.</span>
+            <span className="mt-1.5 block text-xs">Devolvida em {devolucao.quando}. Corrija o que foi apontado e submeta de novo na última seção.</span>
           </Aviso>
         </div>
       ) : null}
-      <div className="mb-5 flex items-center justify-between gap-4 max-md:flex-col-reverse max-md:items-stretch">
-        <h1 className="text-2xl font-extrabold tracking-[-0.02em]">{ETAPAS[etapa - 1]}</h1>
-        <nav data-guia="nova-emenda.etapas" aria-label="Etapas" className="flex gap-1 rounded-box bg-surface p-1.5 shadow-[0_1px_2px_rgba(10,36,99,.06)]">
-          {ETAPAS.map((t, i) => {
-            const n = i + 1;
-            const atual = n === etapa;
-            return (
-              <button
-                key={t}
-                type="button"
-                aria-current={atual ? "step" : undefined}
-                onClick={() => irPara(n)}
-                className={cn(
-                  "flex items-center gap-2 rounded-md px-3.5 py-2 text-sm font-semibold whitespace-nowrap text-muted-foreground transition-colors focus-visible:outline-2 focus-visible:outline-cyan max-md:flex-1 max-md:justify-center",
-                  atual ? "bg-navy font-bold text-white" : "hover:bg-soft",
-                  !atual && n < etapa && "text-ink"
-                )}
-              >
-                <span className={cn("grid size-[22px] place-items-center rounded-full text-xs", atual ? "bg-cyan text-navy-deep" : "bg-page")}>{n}</span>
-                <span className="sr-only">Etapa {n} de 3: </span>
-                <span className={cn(!atual && "max-[1180px]:sr-only")}>{t}</span>
-              </button>
-            );
-          })}
-        </nav>
-      </div>
 
       <div className="grid grid-cols-[minmax(0,1fr)_400px] items-start gap-5 max-[1080px]:grid-cols-1">
-        <section className="relative rounded-card bg-surface p-7 pb-0 shadow-card max-md:px-4 max-md:pt-5">
-          {etapa === 1 ? (
-            <Etapa1
-              e={e}
-              d={d}
-              ctx={ctx}
-              aplicado={aplicado}
-              destinos={destinos}
-              aoCadastrarDestino={(novo) => setDestinos((l) => [...l.filter((x) => x.id !== novo.id), novo])}
-              atualizar={atualizar}
-              irParaPlano={() => irPara(2)}
-              gravar={() => gravar(false)}
-              gravando={gravando}
-              descartar={diligencia ? null : descartar}
-            />
-          ) : etapa === 2 ? (
-            <Etapa2 e={e} d={d} ctx={ctx} atualizar={atualizar} autor={autor} alterado={alterado} salvarEGerarLink={() => gravar(false, false, { gerarLink: true })} gravando={gravando} />
-          ) : (
-            <Etapa3 e={e} d={d} atualizar={atualizar} emendamento={ctx.emendamento} podeRemeter={podeRemeter} recusa={recusa} />
-          )}
-          {etapa > 1 ? rodape : <div className="h-7" />}
+        <section className="relative rounded-card bg-surface px-8 pt-8 shadow-card max-md:px-4 max-md:pt-5">
+          <BarraFase etapa={etapa} secao={secao} secoes={secoes} />
+          <Marcadores
+            secoes={secoes}
+            atual={secao}
+            erro={problemasVivos.length > 0}
+            pendentes={secoes.map((x) => problemasDaSecao(etapa, x.id, e, d).length > 0)}
+            aoEscolher={irParaSecao}
+          />
+          <p className="mt-2 mb-6 text-sm text-muted-foreground">{atual.descricao}</p>
+          {problemasVivos.length ? (
+            <div
+              ref={quadroRef}
+              tabIndex={-1}
+              role="alert"
+              data-teste="problemas-secao"
+              className="mb-6 rounded-box border-2 border-bad bg-surface p-4 outline-none"
+            >
+              <h3 className="mb-2 text-md font-bold">
+                Há {problemasVivos.length} problema{problemasVivos.length > 1 ? "s" : ""} nesta seção
+              </h3>
+              <ul className="grid gap-1 text-sm">
+                {problemasVivos.map((x) => (
+                  <li key={x.alvo + x.msg}>
+                    <a
+                      href={`#${x.alvo}`}
+                      className="font-bold text-bad-ink underline underline-offset-2"
+                      onClick={(ev) => {
+                        ev.preventDefault();
+                        const el = document.getElementById(x.alvo);
+                        el?.scrollIntoView({ behavior: "smooth", block: "center" });
+                        (el as HTMLElement | null)?.focus?.({ preventScroll: true });
+                      }}
+                    >
+                      {x.msg}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          <ErrosDaSecao.Provider value={erros}>
+            <div key={`${etapa}-${atual.id}`}>
+              {etapa === 1 ? (
+                <Etapa1
+                  e={e}
+                  d={d}
+                  ctx={ctx}
+                  aplicado={aplicado}
+                  destinos={destinos}
+                  aoCadastrarDestino={(novo) => setDestinos((l) => [...l.filter((x) => x.id !== novo.id), novo])}
+                  atualizar={atualizar}
+                  secao={atual.id}
+                  irParaSecao={(id) => irParaSecao(Math.max(0, secoes.findIndex((x) => x.id === id)))}
+                />
+              ) : etapa === 2 ? (
+                <Etapa2
+                  e={e}
+                  d={d}
+                  ctx={ctx}
+                  atualizar={atualizar}
+                  autor={autor}
+                  alterado={alterado}
+                  salvarEGerarLink={() => gravar(false, false, { gerarLink: true })}
+                  gravando={gravando}
+                  secao={atual.id}
+                />
+              ) : (
+                <Etapa3 e={e} d={d} atualizar={atualizar} emendamento={ctx.emendamento} podeRemeter={podeRemeter} recusa={recusa} secao={atual.id} />
+              )}
+            </div>
+          </ErrosDaSecao.Provider>
+          {rodape}
+          <div ref={fimDoCartao} aria-hidden className="h-px" />
         </section>
-        <Resumo e={e} d={d} ctx={ctx} aplicado={aplicado} />
+        <Resumo e={e} d={d} ctx={ctx} aplicado={aplicado} etapas={<Etapas etapa={etapa} aoEscolher={(n) => irPara(n, 0)} />} />
       </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------- indicadores
+
+// As três etapas na lateral, em linha; só a atual leva o nome.
+function Etapas({ etapa, aoEscolher }: { etapa: number; aoEscolher: (n: number) => void }) {
+  return (
+    <nav data-guia="nova-emenda.etapas" aria-label="Etapas da emenda" className="mb-5 border-b border-hair pb-5">
+      <ol className="flex items-center">
+        {ETAPAS.map((t, i) => {
+          const n = i + 1;
+          const atual = n === etapa;
+          return (
+            <li key={t} className={cn("flex items-center", i < ETAPAS.length - 1 && "flex-1")}>
+              <button
+                type="button"
+                onClick={() => aoEscolher(n)}
+                disabled={n >= etapa}
+                aria-current={atual ? "step" : undefined}
+                aria-label={`Etapa ${n} de 3: ${t}${n < etapa ? " (concluída)" : ""}`}
+                className={cn(
+                  "disabled:cursor-default",
+                  "grid size-[26px] shrink-0 place-items-center rounded-full text-xs font-bold focus-visible:outline-2 focus-visible:outline-cyan",
+                  atual ? "bg-navy text-white" : n < etapa ? "bg-ok text-navy-deep" : "border-[1.5px] border-line-3 bg-surface text-muted-foreground"
+                )}
+              >
+                {n < etapa ? <Check className="size-3.5" strokeWidth={3} /> : n}
+              </button>
+              {i < ETAPAS.length - 1 ? <span className={cn("mx-2 h-px flex-1", n < etapa ? "bg-ok" : "bg-line-3")} aria-hidden /> : null}
+            </li>
+          );
+        })}
+      </ol>
+      <p className="mt-3 text-center text-sm font-bold">{ETAPAS[etapa - 1]}</p>
+      <p className="text-center text-xs text-muted-foreground">Etapa {etapa} de 3 · em andamento</p>
+    </nav>
+  );
+}
+
+// Seções da etapa no topo do cartão: números ligados; a atual com o nome.
+function Marcadores({
+  secoes,
+  atual,
+  erro,
+  pendentes,
+  aoEscolher,
+}: {
+  secoes: SecaoEmenda[];
+  atual: number;
+  erro: boolean;
+  // Seções com algo a preencher: antes da atual, borda vermelha.
+  pendentes: boolean[];
+  aoEscolher: (i: number) => void;
+}) {
+  return (
+    <nav data-guia="nova-emenda.secoes" aria-label="Seções da etapa" className="flex flex-wrap items-center gap-x-2 gap-y-2">
+      {secoes.map((x, i) => {
+        const eAtual = i === atual;
+        const estado = i < atual ? (pendentes[i] ? "falta preencher" : "concluída") : "pendente";
+        return (
+          <span key={x.id} className="flex items-center gap-2">
+            {i > 0 ? <span className="h-px w-4 bg-line-3" aria-hidden /> : null}
+            {eAtual ? (
+              <h2 aria-current="step" className={cn("flex items-center gap-2.5 text-[19px] font-bold tracking-[-0.01em]", erro && "text-bad-ink")}>
+                <span className={cn("grid size-[26px] shrink-0 place-items-center rounded-full text-xs text-white", erro ? "bg-bad" : "bg-navy")}>{i + 1}</span>
+                {x.titulo}
+                <span className="sr-only">
+                  {" "}
+                  — seção {i + 1} de {secoes.length}
+                </span>
+              </h2>
+            ) : (
+              <button
+                type="button"
+                onClick={() => aoEscolher(i)}
+                title={`${x.titulo} — ${estado}`}
+                aria-label={`Seção ${i + 1}: ${x.titulo} (${estado})`}
+                className={cn(
+                  "grid size-[26px] place-items-center rounded-full text-xs font-bold focus-visible:outline-2 focus-visible:outline-cyan",
+                  estado === "concluída"
+                    ? "bg-ok text-navy-deep"
+                    : estado === "falta preencher"
+                      ? "border-2 border-bad bg-bad-bg text-bad-ink"
+                      : "border-[1.5px] border-line-3 text-muted-foreground hover:border-navy"
+                )}
+              >
+                {estado === "concluída" ? <Check className="size-3.5" strokeWidth={3} /> : i + 1}
+              </button>
+            )}
+          </span>
+        );
+      })}
+    </nav>
+  );
+}
+
+// Celular: em que ponto do preenchimento a pessoa está.
+function BarraFase({ etapa, secao, secoes }: { etapa: number; secao: number; secoes: SecaoEmenda[] }) {
+  const total = secoesDa(1).length + secoesDa(2).length + secoesDa(3).length;
+  const feitas = (etapa > 1 ? secoesDa(1).length : 0) + (etapa > 2 ? secoesDa(2).length : 0) + secao;
+  return (
+    <div className="mb-4 md:hidden" data-teste="barra-fase">
+      <p className="text-xs font-bold">
+        Etapa {etapa} de 3 · Seção {secao + 1} de {secoes.length}
+      </p>
+      <span className="mt-1.5 block h-1 overflow-hidden rounded-full bg-page" aria-hidden>
+        <i className="block h-full rounded-full bg-cyan" style={{ width: `${Math.round(((feitas + 1) / total) * 100)}%` }} />
+      </span>
     </div>
   );
 }

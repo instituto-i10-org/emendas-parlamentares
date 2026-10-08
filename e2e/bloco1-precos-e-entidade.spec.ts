@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { expect, test, type Page } from "@playwright/test";
-import { DESTINOS, criarRascunho, entrar, sql, confirmarJanela, confirmarNaJanela } from "./apoio";
+import { DESTINOS, criarRascunho, entrar, idDaUrl, proximo, sql, confirmarJanela, confirmarNaJanela } from "./apoio";
 
 // Pedidos do Dr. Emerson: preço informado pelo autor a partir de fonte oficial
 // (sem pesquisa automática) e o link para a entidade preencher o plano.
@@ -18,9 +18,11 @@ test.beforeEach(({ page }) => {
 // some); por isso é localizada pelo nome, não pelo título da coluna.
 const linhaItem = (page: Page) => page.locator('[data-tabela="itens"] tbody tr').first();
 
-async function irParaPlano(page: Page) {
-  await page.getByRole("button", { name: /Ir para o plano de trabalho/ }).click();
-  await expect(page.getByText(/MODELO/)).toBeVisible();
+// Rascunho salvo, aberto direto numa seção do plano (1: agente e
+// justificativa, com o link da entidade; 3: memória de cálculo).
+async function irParaPlano(page: Page, secao = 3) {
+  await page.goto(`/emendas/${idDaUrl(page)}?etapa=2&secao=${secao}`);
+  await expect(page.locator('[data-guia-tela="nova-emenda.etapa2"]')).toBeVisible();
 }
 
 test.describe("Preço manual com fontes oficiais", () => {
@@ -68,9 +70,9 @@ test.describe("Preço manual com fontes oficiais", () => {
     const linha = linhaItem(page);
     await linha.getByPlaceholder("Item").fill("Cadeira de rodas");
     await linha.locator("input[inputmode=decimal]").nth(1).fill("1500");
-    await page.getByRole("button", { name: /Validar e submeter/ }).first().click();
-    await expect(page.getByText("Linha sem fonte de preço")).toBeVisible();
-    await expect(page.locator("[data-nivel=bad]", { hasText: "Linha sem fonte de preço" }).or(page.getByText("Linha sem fonte de preço"))).toBeVisible();
+    // Bloqueia: a seção não avança e aponta a linha sem fonte.
+    await proximo(page);
+    await expect(page.locator('[data-teste="problemas-secao"]')).toContainText("Informe a fonte do preço em todas as linhas");
 
     await entrar(page, "admin");
     await page.goto("/config?aba=exercicio");
@@ -128,7 +130,7 @@ test.describe("Link da entidade", () => {
   async function gerarLink(page: Page): Promise<{ emendaId: string; url: string }> {
     await entrar(page, "vereador");
     const emendaId = await criarRascunho(page, { execucao: "INDIRETA", destino: ENTIDADE, objeto: OBJETO_ENTIDADE, valor: "4000" });
-    await irParaPlano(page);
+    await irParaPlano(page, 1);
     await page.getByRole("button", { name: /Gerar link para a entidade|Gerar novo link/ }).click();
     const campo = page.getByLabel("Link para a entidade");
     await expect(campo).toBeVisible();
@@ -181,10 +183,11 @@ test.describe("Link da entidade", () => {
     // O gabinete vê o envio e traz para o rascunho.
     await entrar(page, "vereador");
     await page.goto(`/emendas/${emendaId}`);
-    await irParaPlano(page);
+    await irParaPlano(page, 1);
     await expect(page.getByText("Plano enviado pela entidade")).toBeVisible();
     await expect(page.getByText(/Preenchido por Maria da Silva/)).toBeVisible();
     await page.getByRole("button", { name: "Trazer para o plano" }).click();
+    await page.getByRole("button", { name: /^Seção 3: Memória de cálculo/ }).click();
     await expect(linhaItem(page).getByPlaceholder("Item")).toHaveValue("Colchonete para ginástica");
   });
 
@@ -234,7 +237,7 @@ test.describe("Link da entidade", () => {
     await expect(page.getByText("Plano enviado")).toBeVisible();
     await entrar(page, "vereador");
     await page.goto(`/emendas/${emendaId}`);
-    await irParaPlano(page);
+    await irParaPlano(page, 1);
     await page.getByRole("button", { name: /Gerar link para a entidade|Gerar novo link/ }).click();
     const segundo = await page.getByLabel("Link para a entidade").inputValue();
     await page.getByRole("button", { name: "Gerar novo link" }).click();

@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { JUSTIFICATIVA, SENHA, apagarEmendasDeTeste, dotacaoDaFicha, emendaValida, entrar, inserirEmenda, preencherLogin, sql, confirmarJanela, abrirMinhaConta } from "./apoio";
+import { DESTINOS, JUSTIFICATIVA, SENHA, digitarExcluirSePedido, idDaUrl, irParaEtapa3, passo1, apagarEmendasDeTeste, dotacaoDaFicha, emendaValida, entrar, inserirEmenda, preencherLogin, sql, confirmarJanela, abrirMinhaConta } from "./apoio";
 
 // Itens 12.1 a 12.4, 13.1, 13.3, 14.1, 14.2 e 15.1: normas com arquivo e
 // vigência, beneficiários e mesclagem, usuários, auditoria com antes e depois,
@@ -32,9 +32,7 @@ test.describe("Grupo 12 — configuração", () => {
       [ex.id]
     );
     try {
-      await page.goto(`/emendas/${id}`);
-      await page.getByRole("button", { name: /Ir para o plano de trabalho/ }).click();
-      await page.getByRole("button", { name: /Ir para a validação/ }).click();
+      await irParaEtapa3(page, id);
       const linha = page.locator('ol[aria-label="As treze verificações"]').first().locator('li[data-codigo="PROGRAMA_NO_PPA"]');
       await expect(linha).toContainText("Falha");
       // Sem a regra do exercício, vale a geral: só alerta.
@@ -193,7 +191,10 @@ test.describe("Grupos 13 e 14 — trilha, exportação e impressão", () => {
     await entrar(page, "vereador");
     await page.goto("/emendas/t10-ap");
     await page.getByRole("button", { name: /Apagar/ }).first().click();
-    await page.getByRole("button", { name: /Apagar/ }).last().click();
+    // Duplo check: o botão da janela só se libera depois de digitar EXCLUIR.
+    await expect(page.getByRole("dialog").getByRole("button", { name: "Apagar", exact: true })).toBeDisabled();
+    await digitarExcluirSePedido(page);
+    await page.getByRole("dialog").getByRole("button", { name: "Apagar", exact: true }).click();
     await expect.poll(async () => (await sql(`select 1 from "Emenda" where id = 't10-ap'`)).length).toBe(0);
     expect((await sql(`select 1 from "AuditLog" where id = 't10-log'`)).length).toBe(1);
     await sql(`delete from "AuditLog" where id = 't10-log'`);
@@ -233,13 +234,13 @@ test.describe("Grupo 15 — redação", () => {
   test("T-15.1-5 sem a chave de IA: aviso claro e o resto funciona", async ({ page }) => {
     test.skip(!!process.env.E2E_IA, "com a chave de IA configurada");
     await entrar(page, "vereador");
-    await page.goto("/emendas/nova");
+    await passo1(page, { execucao: "DIRETA", destino: DESTINOS.saude, objeto: "", valor: "" }, { analisar: false, ate: "objeto" });
     await page.locator("#f-obj").fill("Aquisição de cadeira de rodas para a unidade de saúde");
     await page.getByRole("button", { name: "Melhorar texto" }).first().click();
     await expect(page.getByText(/apoio à redação está indisponível/)).toBeVisible();
     await page.getByRole("button", { name: "Salvar rascunho" }).first().click();
-    await expect(page).toHaveURL(/\/emendas\/c[a-z0-9]+$/, { timeout: 15_000 });
-    const id = page.url().split("/").pop()!;
+    await expect(page).toHaveURL(/\/emendas\/c[a-z0-9]+(\?|$)/, { timeout: 15_000 });
+    const id = idDaUrl(page);
     await sql(`delete from "Emenda" where id = $1`, [id]);
   });
 });

@@ -55,6 +55,7 @@ export function Etapa2({
   alterado = false,
   salvarEGerarLink,
   gravando = false,
+  secao,
 }: {
   e: EstadoEmenda;
   d: DerivadoEmenda;
@@ -65,6 +66,8 @@ export function Etapa2({
   // Rascunho ainda não salvo: salva e já gera o link da entidade.
   salvarEGerarLink?: () => void;
   gravando?: boolean;
+  // Seção em exibição (secoes.ts): uma por vez.
+  secao: string;
 }) {
   const c = d.classificacao;
   const dot = d.dotacao;
@@ -74,8 +77,20 @@ export function Etapa2({
   const au = audesp(ctx.config);
   const contextoIA = { objeto: e.objeto, destino: d.destino?.nome ?? "", execucao: e.execucao, exercicio: ctx.config.exercicio };
 
+  if (secao === "metas") return <Metas e={e} d={d} atualizar={atualizar} />;
+  if (secao === "memoria") return <MemoriaCalculo e={e} d={d} ctx={ctx} atualizar={atualizar} orientacao={M.cotacao} />;
+  if (secao === "execucao") {
+    return (
+      <div className="flex flex-col">
+        <Viabilidade e={e} d={d} atualizar={atualizar} contextoIA={contextoIA} />
+        <Etapas e={e} atualizar={atualizar} sugestao={M.etapas} />
+        <Cronograma e={e} valor={d.valor} atualizar={atualizar} />
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col pb-2">
+    <div className="flex flex-col">
       <div data-guia="nova-emenda.modelo" className="mb-4 flex flex-wrap items-center gap-2">
         <span className="inline-flex items-center gap-2 rounded-full bg-navy px-3.5 py-1.5 text-sm font-bold text-white">
           <i className="text-2xs font-semibold tracking-[0.08em] text-on-navy not-italic">MODELO</i> {M.numero} — {M.titulo}
@@ -125,8 +140,10 @@ export function Etapa2({
 
       {e.execucao === "INDIRETA" ? <LinkEntidade emendaId={e.id} alterado={alterado} atualizar={atualizar} salvarEGerar={salvarEGerarLink} gravando={gravando} /> : null}
 
-      <div className="mt-6 grid gap-5">
+      <div className="mt-6 grid gap-6">
         <Campo
+          guia="nova-emenda.agente"
+          htmlFor="secao-agente"
           rotulo="Agente executor"
           obrigatorio
           ajuda={
@@ -135,7 +152,7 @@ export function Etapa2({
               : "Execução direta: quem executa é a unidade orçamentária da dotação."
           }
         >
-          <div className="flex min-h-12 items-center rounded-field bg-soft px-3.5 text-sm font-semibold">
+          <div id="secao-agente" className="flex min-h-12 items-center rounded-field bg-soft px-3.5 text-sm font-semibold">
             {e.agenteExecutor || <span className="text-muted-foreground">Definido após a análise da etapa 1.</span>}
           </div>
         </Campo>
@@ -151,30 +168,40 @@ export function Etapa2({
             contexto={contextoIA}
           />
         </Campo>
-      </div>
 
-      <Metas e={e} d={d} atualizar={atualizar} contextoIA={contextoIA} />
-      <MemoriaCalculo e={e} d={d} ctx={ctx} atualizar={atualizar} orientacao={M.cotacao} />
-      <Viabilidade e={e} d={d} atualizar={atualizar} contextoIA={contextoIA} />
-      <Etapas e={e} atualizar={atualizar} sugestao={M.etapas} />
-      <Cronograma e={e} valor={d.valor} atualizar={atualizar} />
+        <Campo
+          guia="nova-emenda.finalistica"
+          rotulo="Meta finalística"
+          obrigatorio
+          htmlFor="f-finalistica"
+          ajuda="Uma linha, sobre o resultado — não sobre a entrega. A entrega fica nas metas físicas, na próxima seção."
+        >
+          <AreaTexto
+            id="f-finalistica"
+            valor={e.metaFinalistica}
+            aoMudar={(v2) => atualizar({ metaFinalistica: v2 })}
+            max={500}
+            campo="finalistica"
+            linhaUnica
+            placeholder="o resultado que a emenda pretende alcançar"
+            contexto={contextoIA}
+          />
+        </Campo>
+      </div>
     </div>
   );
 }
 
+// ----------------------------------------------------------------- desfazer
+
+// Linha do formulário sai na hora; o aviso oferece "Desfazer" por 8 segundos.
+function desfazer(atualizar: Atualizar, antes: Partial<EstadoEmenda>, mensagem: string) {
+  toast(mensagem, { duration: 8000, action: { label: "Desfazer", onClick: () => atualizar(antes) } });
+}
+
 // ------------------------------------------------------------------- metas
 
-function Metas({
-  e,
-  d,
-  atualizar,
-  contextoIA,
-}: {
-  e: EstadoEmenda;
-  d: DerivadoEmenda;
-  atualizar: Atualizar;
-  contextoIA: { objeto: string; destino: string; execucao: "DIRETA" | "INDIRETA" };
-}) {
+function Metas({ e, d, atualizar }: { e: EstadoEmenda; d: DerivadoEmenda; atualizar: Atualizar }) {
   const pl = d.metaPlanejamento;
   const mq = metodoQuantidade({
     classificacao: d.classificacao,
@@ -208,6 +235,8 @@ function Metas({
 
   return (
     <Secao
+      id="secao-metas"
+      semTitulo
       guia="nova-emenda.metas"
       titulo="Metas"
       ajuda="Quem será atendido e quanto será entregue. Sem meta física e sem forma de comprovação a linha não serve para prestar contas."
@@ -284,7 +313,10 @@ function Metas({
           <input key="u" className="campo h-10 px-3" placeholder="unidade" value={mt.unidade} onChange={(ev) => mudarMeta(i, { unidade: ev.target.value })} />,
           <CampoNumero key="q" className="h-10 px-3 text-right" casas={2} completar={false} valor={mt.quantidade} aoMudar={(q) => mudarMeta(i, { quantidade: q })} />,
         ])}
-        aoRemover={(i) => atualizar((x) => ({ metas: x.metas.length > 1 ? x.metas.filter((_, j) => j !== i) : [{ beneficiarios: "", unidade: "", quantidade: "" }] }))}
+        aoRemover={(i) => {
+          desfazer(atualizar, { metas: e.metas }, "Meta removida.");
+          atualizar((x) => ({ metas: x.metas.length > 1 ? x.metas.filter((_, j) => j !== i) : [{ beneficiarios: "", unidade: "", quantidade: "" }] }));
+        }}
         aoAdicionar={(i) =>
           atualizar((x) => {
             const metas = [...x.metas];
@@ -323,24 +355,6 @@ function Metas({
         </div>
       ) : null}
 
-      <Campo
-        rotulo="Meta finalística"
-        obrigatorio
-        htmlFor="f-finalistica"
-        className="mt-4"
-        ajuda="Uma linha, sobre o resultado — não sobre a entrega. A entrega já está nas metas físicas acima."
-      >
-        <AreaTexto
-          id="f-finalistica"
-          valor={e.metaFinalistica}
-          aoMudar={(v2) => atualizar({ metaFinalistica: v2 })}
-          max={500}
-          campo="finalistica"
-          linhaUnica
-          placeholder="o resultado que a emenda pretende alcançar"
-          contexto={contextoIA}
-        />
-      </Campo>
     </Secao>
   );
 }
@@ -447,7 +461,7 @@ function MemoriaCalculo({
   const cp = d.planilha;
 
   return (
-    <Secao guia="nova-emenda.memoria" titulo="Memória de cálculo" ajuda="As mesmas linhas das metas, agora com preço. Toda linha precisa dizer de qual fonte veio o valor.">
+    <Secao id="secao-memoria" semTitulo guia="nova-emenda.memoria" titulo="Memória de cálculo" ajuda="As mesmas linhas das metas, agora com preço. Toda linha precisa dizer de qual fonte veio o valor.">
       <FontesPreco fontes={indicadas} orientacao={orientacao} />
 
       {d.modelo === "OBRAS" && ctx.custoM2 ? (
@@ -538,11 +552,12 @@ function MemoriaCalculo({
               </div>,
             ];
           })}
-          aoRemover={(i) =>
+          aoRemover={(i) => {
+            desfazer(atualizar, { itens: e.itens }, "Item removido.");
             atualizar((x) => ({
               itens: x.itens.length > 1 ? x.itens.filter((_, j) => j !== i) : [{ descricao: "", unidade: "", quantidade: "1", valorUnitario: "", referencia: null }],
-            }))
-          }
+            }));
+          }}
           aoAdicionar={(i) =>
             atualizar((x) => {
               const itens = [...x.itens];
@@ -704,7 +719,7 @@ function Viabilidade({
     const opcoes = Object.keys(INSTRUMENTOS) as Instrumento[];
     const elemento = elementoDoInstrumento(e.instrumento, d.dotacao?.gnd ?? "3");
     return (
-      <Secao titulo={QUADRO_INSTRUMENTO.titulo} ajuda={QUADRO_INSTRUMENTO.orientacao}>
+      <Secao id="secao-viabilidade" titulo={QUADRO_INSTRUMENTO.titulo} ajuda={QUADRO_INSTRUMENTO.orientacao}>
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-hair pb-3">
           <span className="flex items-center gap-2 text-sm font-bold">
             {QUADRO_INSTRUMENTO.pergunta}
@@ -749,7 +764,7 @@ function Viabilidade({
   const Q = QUADROS[m];
   if (!Q) return null;
   return (
-    <Secao titulo={Q.titulo} ajuda={Q.orientacao}>
+    <Secao id="secao-viabilidade" titulo={Q.titulo} ajuda={Q.orientacao}>
       <div className="divide-y divide-hair">
         {Q.itens.map((it, i) => {
           const k = chaveQuadro(m, i);
@@ -791,7 +806,10 @@ function Etapas({ e, atualizar, sugestao }: { e: EstadoEmenda; atualizar: Atuali
               <button
                 type="button"
                 aria-label={`Remover etapa ${maiuscula(s)}`}
-                onClick={() => gravar(etapas.filter((_, j) => j !== i))}
+                onClick={() => {
+                  desfazer(atualizar, { etapas: e.etapas, etapasEditadas: e.etapasEditadas }, "Etapa removida.");
+                  gravar(etapas.filter((_, j) => j !== i));
+                }}
                 className="grid size-6 place-items-center rounded-full text-muted-foreground hover:bg-page hover:text-bad-ink"
               >
                 <Trash2 className="size-3.5" />
@@ -916,7 +934,7 @@ function Cronograma({ e, valor, atualizar }: { e: EstadoEmenda; valor: number; a
   }
 
   return (
-    <Secao guia="nova-emenda.cronograma" titulo="Cronograma de desembolso previsto" ajuda="A soma tem de bater com o valor da emenda. As datas se definem na execução, não aqui.">
+    <Secao id="secao-cronograma" guia="nova-emenda.cronograma" titulo="Cronograma de desembolso previsto" ajuda="A soma tem de bater com o valor da emenda. As datas se definem na execução, não aqui.">
       <div className="flex flex-wrap items-center gap-2">
         <label htmlFor="n-parcelas" className="text-sm font-semibold text-label">
           Quantidade de parcelas
@@ -948,7 +966,10 @@ function Cronograma({ e, valor, atualizar }: { e: EstadoEmenda; valor: number; a
                 <button
                   type="button"
                   aria-label="Remover parcela"
-                  onClick={() => atualizar((x) => ({ parcelas: x.parcelas.filter((_, j) => j !== i) }))}
+                  onClick={() => {
+                    desfazer(atualizar, { parcelas: e.parcelas }, "Parcela removida.");
+                    atualizar((x) => ({ parcelas: x.parcelas.filter((_, j) => j !== i) }));
+                  }}
                   className="grid size-8 place-items-center rounded-md text-muted-foreground hover:bg-page hover:text-bad-ink"
                 >
                   <Trash2 className="size-4" />

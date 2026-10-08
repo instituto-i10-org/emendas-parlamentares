@@ -8,12 +8,12 @@ test.describe("Segurança de base", () => {
   test("T-0-1 permissão retirada vale na ação seguinte, sem novo login", async ({ page }) => {
     await entrar(page, "vereador");
     await page.goto("/emendas/nova");
-    await expect(page.locator("#f-dest")).toBeVisible();
+    await expect(page.locator(`input[name="execucao"]`).first()).toBeAttached();
     await sql(`update "PerfilAcesso" set "apresentarEmendas" = false where nome = 'Vereador'`);
     try {
       await page.goto("/emendas/nova");
       await expect(page).toHaveURL(/acesso-negado|\/inicio/);
-      await expect(page.locator("#f-dest")).toHaveCount(0);
+      await expect(page.locator(`input[name="execucao"]`)).toHaveCount(0);
     } finally {
       await sql(`update "PerfilAcesso" set "apresentarEmendas" = true where nome = 'Vereador'`);
     }

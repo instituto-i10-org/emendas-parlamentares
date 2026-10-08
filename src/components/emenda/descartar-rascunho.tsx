@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { DigitarParaConfirmar, useDigitarParaConfirmar } from "@/components/app/digitar-para-confirmar";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { excluirRascunho } from "@/lib/actions/emendas";
 
@@ -13,13 +14,17 @@ export function DescartarRascunho({ id, rotulo }: { id: string; rotulo: string }
   const router = useRouter();
   const [aberto, setAberto] = useState(false);
   const [pendente, iniciar] = useTransition();
+  const digitado = useDigitarParaConfirmar();
   return (
     <>
       <button
         type="button"
         aria-label={`Descartar o rascunho ${rotulo}`}
         title="Descartar rascunho"
-        onClick={() => setAberto(true)}
+        onClick={() => {
+          digitado.limpar();
+          setAberto(true);
+        }}
         className="grid size-8 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-bad-bg hover:text-bad-ink focus-visible:outline-2 focus-visible:outline-cyan"
       >
         <Trash2 className="size-4" />
@@ -32,7 +37,7 @@ export function DescartarRascunho({ id, rotulo }: { id: string; rotulo: string }
             <>
               <Button
                 variant="destructive"
-                disabled={pendente}
+                disabled={pendente || !digitado.liberado}
                 onClick={() =>
                   iniciar(async () => {
                     const r = await excluirRascunho(id);
@@ -54,6 +59,7 @@ export function DescartarRascunho({ id, rotulo }: { id: string; rotulo: string }
           <p className="text-sm">
             <b>{rotulo}</b> será excluído e não poderá ser recuperado. A exclusão fica registrada na auditoria.
           </p>
+          <DigitarParaConfirmar texto={digitado.texto} aoMudar={digitado.setTexto} />
         </DialogContent>
       </Dialog>
     </>
