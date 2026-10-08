@@ -150,6 +150,8 @@ test.describe("C3 — um guia por módulo", () => {
           await abrirAjuda(page, largura < 768);
           const n = await percorrer(page, a.guia, largura);
           expect(n, `${a.guia}: nenhum passo mostrado`).toBeGreaterThan(0);
+          // Abas de Configurações: guia útil, com ao menos três passos.
+          if (a.guia.startsWith("config.")) expect(n, `${a.guia}: menos de 3 passos`).toBeGreaterThanOrEqual(3);
           expect(await page.evaluate(() => document.documentElement.scrollWidth), `${a.guia}: rolagem lateral`).toBeLessThanOrEqual(largura);
         }
       });
@@ -187,8 +189,10 @@ test.describe("C3 — um guia por módulo", () => {
     await page.getByRole("button", { name: /Ir para o plano de trabalho/ }).click();
     await expect(balao(page)).toContainText(GUIAS["nova-emenda.etapa2"].passos[0].titulo);
     await balao(page).getByRole("button", { name: "Pular este guia" }).click();
-    const vistos = await sql<{ guia: string }>(`select guia from "GuiaVisto" where "usuarioId" = (select id from "User" where email = $1)`, [CONTAS.vereador]);
-    expect(vistos.map((v) => v.guia).sort()).toEqual(expect.arrayContaining(["emendas", "nova-emenda.etapa1", "nova-emenda.etapa2"]));
+    // A gravação do "pular" é assíncrona: espera chegar ao banco.
+    await expect
+      .poll(async () => (await sql<{ guia: string }>(`select guia from "GuiaVisto" where "usuarioId" = (select id from "User" where email = $1)`, [CONTAS.vereador])).map((v) => v.guia).sort(), { timeout: 10_000 })
+      .toEqual(expect.arrayContaining(["emendas", "nova-emenda.etapa1", "nova-emenda.etapa2"]));
   });
 
   test("T-G3 pular todos vale para os outros módulos; versão nova reabre uma vez", async ({ page }) => {

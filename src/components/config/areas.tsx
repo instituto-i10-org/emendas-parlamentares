@@ -27,7 +27,7 @@ export function AbaAreas({ areas, unidades, podeEditar }: { areas: AreaTela[]; u
       <Cartao guia="config.areas.lista"
         titulo={`Áreas de aplicação (${areas.length})`}
         ajuda="Quais órgãos orçamentários atendem cada área. É o que permite ao sistema dizer que um objeto de área estrita (ambulância é Saúde) não cabe num destino de outra área, definir a parcela da cota (saúde ou demais áreas) e montar os painéis por área. A ordem desempata quando um órgão aparece em mais de uma área."
-        acoes={podeEditar ? <Button size="sm" onClick={() => setEditando("nova")}>Nova área</Button> : null}
+        acoes={podeEditar ? <Button data-guia="config.areas.nova" size="sm" onClick={() => setEditando("nova")}>Nova área</Button> : null}
       >
         <TabelaDados
           vazio="Nenhuma área cadastrada."
@@ -36,16 +36,16 @@ export function AbaAreas({ areas, unidades, podeEditar }: { areas: AreaTela[]; u
             chave: a.id,
             celulas: [
               <b key="n" data-area={a.nome}>{a.nome}</b>,
-              <span key="o" className="tnum">
+              <span key="o" data-guia="config.areas.orgaos" className="tnum">
                 {a.orgaos.length ? a.orgaos.join(", ") : <span className="text-muted-foreground">nenhum</span>}
                 {a.orgaos.some((o) => orgaosDoExercicio.size && !orgaosDoExercicio.has(o)) ? (
                   <span className="block text-xs text-muted-foreground">Algum órgão não existe no exercício em uso.</span>
                 ) : null}
               </span>,
               <span key="u" className="tnum">{a.unidadePadrao ?? "—"}</span>,
-              <span key="q" className="tnum">{a.objetos}</span>,
+              <span key="q" data-guia="config.areas.objetos" className="tnum">{a.objetos}</span>,
               podeEditar ? (
-                <div key="b" className="flex flex-wrap items-center justify-end gap-1">
+                <div key="b" data-guia="config.areas.acoes" className="flex flex-wrap items-center justify-end gap-1">
                   <Button size="xs" variant="ghost" aria-label={`Subir ${a.nome}`} disabled={pendente || i === 0} onClick={() => executar(() => moverArea(a.id, "acima"))}>
                     Subir
                   </Button>

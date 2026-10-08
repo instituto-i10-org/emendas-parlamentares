@@ -42,7 +42,7 @@ export function AbaFontesPreco({ fontes, podeEditar }: { fontes: FontePrecoConfi
     <Cartao guia="config.precos.lista"
       titulo="Fontes oficiais de preço"
       ajuda="O sistema não busca preço: mostra ao autor onde pesquisar. Cada fonte aparece para os tipos de despesa marcados; sem marca, aparece sempre."
-      acoes={podeEditar ? <Button size="sm" onClick={() => setF(vazia)}>Nova fonte</Button> : null}
+      acoes={podeEditar ? <Button data-guia="config.precos.nova" size="sm" onClick={() => setF(vazia)}>Nova fonte</Button> : null}
     >
       <div className="grid gap-3">
         {fontes.map((x) => (
@@ -54,7 +54,7 @@ export function AbaFontesPreco({ fontes, podeEditar }: { fontes: FontePrecoConfi
                   <ExternalLink className="size-3.5" aria-hidden />
                 </a>
                 <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{x.orientacao}</p>
-                <div className="mt-2 flex flex-wrap gap-1">
+                <div data-guia="config.precos.aplica" className="mt-2 flex flex-wrap gap-1">
                   <Selo>{TIPOS_REFERENCIA[x.tipo].nome.split(" (")[0]}</Selo>
                   {x.aplicaA.length ? x.aplicaA.map((a) => <Selo key={a} tipo="info">{rotuloAplica(a)}</Selo>) : <Selo tipo="info">Todas as despesas</Selo>}
                   {!x.ativo ? <Selo tipo="warn">desativada</Selo> : null}
@@ -62,7 +62,7 @@ export function AbaFontesPreco({ fontes, podeEditar }: { fontes: FontePrecoConfi
                 </div>
               </div>
               {podeEditar ? (
-                <div className="flex shrink-0 items-center gap-1">
+                <div data-guia="config.precos.acoes" className="flex shrink-0 items-center gap-1">
                   <Button
                     size="xs"
                     variant="ghost"

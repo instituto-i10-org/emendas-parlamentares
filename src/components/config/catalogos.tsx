@@ -327,7 +327,7 @@ export function AbaBiblioteca({ areas, objetos }: { areas: AreaConfig[]; objetos
   const [editando, setEditando] = useState<ObjetoConfig | "novo" | null>(null);
   return (
     <div className="grid gap-5">
-      <Cartao guia="config.biblioteca.lista" ajuda="O vocabulário que o motor reconhece no objeto da emenda. O termo mais longo define a natureza e o elemento; verbos de obra e marcadores de custeio podem prevalecer." titulo={`Biblioteca de objetos (${objetos.length})`} acoes={<Button size="sm" onClick={() => setEditando("novo")}>Novo objeto</Button>}>
+      <Cartao guia="config.biblioteca.lista" ajuda="O vocabulário que o motor reconhece no objeto da emenda. O termo mais longo define a natureza e o elemento; verbos de obra e marcadores de custeio podem prevalecer." titulo={`Biblioteca de objetos (${objetos.length})`} acoes={<Button data-guia="config.biblioteca.novo" size="sm" onClick={() => setEditando("novo")}>Novo objeto</Button>}>
         <TabelaDados
           colunas={[{ titulo: "Objeto" }, { titulo: "Natureza" }, { titulo: "Área", className: "max-md:hidden" }, { titulo: "" }]}
           linhas={objetos.map((o) => ({
@@ -337,15 +337,15 @@ export function AbaBiblioteca({ areas, objetos }: { areas: AreaConfig[]; objetos
                 <b>{o.rotulo}</b>
                 <span className="block text-xs text-muted-foreground">{o.termos.join(" · ")}</span>
               </div>,
-              <span key="n" className="whitespace-nowrap">
+              <span key="n" data-guia="config.biblioteca.natureza" className="whitespace-nowrap">
                 {o.natureza === "CAPITAL" ? "Capital" : "Custeio"} · {o.elemento}
                 {o.subfuncao ? ` · sf ${o.subfuncao}` : ""}
               </span>,
-              <span key="a" className="max-md:hidden">
+              <span key="a" data-guia="config.biblioteca.area" className="max-md:hidden">
                 {o.area ?? "—"}
                 {o.estrito ? " (estrita)" : ""}
               </span>,
-              <div key="b" className="flex items-center justify-end gap-1">
+              <div key="b" data-guia="config.biblioteca.acoes" className="flex items-center justify-end gap-1">
                 <Button size="xs" variant="ghost" onClick={() => setEditando(o)}>
                   Editar
                 </Button>
@@ -522,7 +522,7 @@ export function AbaNormas({ normas }: { normas: NormaConfig[] }) {
       arquivo: n.arquivo,
     });
   return (
-    <Cartao guia="config.normas.lista" titulo="Base legal" acoes={<Button size="sm" onClick={() => setF(normaVazia)}>Nova norma</Button>}>
+    <Cartao guia="config.normas.lista" titulo="Base legal" acoes={<Button data-guia="config.normas.nova" size="sm" onClick={() => setF(normaVazia)}>Nova norma</Button>}>
       <div className="grid gap-3">
         {normas.map((n) => (
           <div key={n.id} className={`rounded-box bg-soft p-4 text-sm ${n.ativo ? "" : "opacity-60"}`} data-norma={n.id}>
@@ -534,13 +534,13 @@ export function AbaNormas({ normas }: { normas: NormaConfig[] }) {
                   {n.numero ? ` nº ${n.numero}` : ""}
                 </b>
                 {n.artigo ? <span className="block text-xs text-muted-foreground">{n.artigo}</span> : null}
-                <span className="block text-xs text-muted-foreground">
+                <span data-guia="config.normas.vigencia" className="block text-xs text-muted-foreground">
                   {n.dataAto ? `de ${dataBR(n.dataAto)} · ` : ""}
                   {n.dataVigencia ? `vigência desde ${dataBR(n.dataVigencia)}` : "vigência não informada"}
                   {n.vigenciaFim ? ` até ${dataBR(n.vigenciaFim)}` : ""}
                 </span>
               </div>
-              <div className="flex shrink-0 flex-wrap items-center gap-1">
+              <div data-guia="config.normas.acoes" className="flex shrink-0 flex-wrap items-center gap-1">
                 {n.arquivo ? (
                   <Button size="xs" variant="ghost" asChild>
                     <a href={`/api/arquivos/${n.arquivo.id}`}>Arquivo</a>
@@ -735,14 +735,14 @@ export function AbaAuditoria({
               {l.entidade} <span className="text-muted-foreground">{l.entidadeId.slice(-8)}</span>
             </span>,
             <Selo key="a">{l.acao}</Selo>,
-            <Button key="b" size="xs" variant="ghost" onClick={() => setAberto(l)}>
+            <Button key="b" data-guia="config.auditoria.abrir" size="xs" variant="ghost" onClick={() => setAberto(l)}>
               Abrir
             </Button>,
           ],
         }))}
       />
       {paginas > 1 ? (
-        <nav aria-label="Paginação" className="mt-4 flex items-center gap-2 text-sm">
+        <nav data-guia="config.auditoria.paginacao" aria-label="Paginação" className="mt-4 flex items-center gap-2 text-sm">
           <span className="text-xs text-muted-foreground">
             página {pagina} de {paginas}
           </span>

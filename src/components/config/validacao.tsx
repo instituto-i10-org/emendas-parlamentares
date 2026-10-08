@@ -83,7 +83,7 @@ export function AbaValidacao({
                   <b className="text-sm">
                     ({v.numero}) {v.titulo}
                   </b>
-                  {!v.configuravel ? <Selo>fixa</Selo> : null}
+                  {!v.configuravel ? <span data-guia="config.validacao.fixa"><Selo>fixa</Selo></span> : null}
                 </div>
                 {!v.configuravel || !r ? (
                   <p className="text-xs text-muted-foreground">
@@ -91,7 +91,7 @@ export function AbaValidacao({
                   </p>
                 ) : (
                   <div className="grid grid-cols-[180px_minmax(0,1fr)_minmax(0,260px)] items-start gap-2.5 max-lg:grid-cols-1">
-                    <div className="grid gap-1.5">
+                    <div data-guia="config.validacao.modo" className="grid gap-1.5">
                       <label className="sr-only" htmlFor={`modo-${v.codigo}`}>
                         Modo da verificação ({v.numero})
                       </label>
@@ -112,7 +112,7 @@ export function AbaValidacao({
                         </label>
                       ) : null}
                     </div>
-                    <label className="grid gap-1 text-xs text-muted-foreground">
+                    <label data-guia="config.validacao.fundamento" className="grid gap-1 text-xs text-muted-foreground">
                       Fundamento por extenso
                       <input
                         className="campo h-10 px-2.5 text-sm text-ink"
@@ -122,7 +122,7 @@ export function AbaValidacao({
                         onChange={(ev) => mudar(v.codigo, { fundamento: ev.target.value })}
                       />
                     </label>
-                    <label className="grid gap-1 text-xs text-muted-foreground" htmlFor={`norma-${v.codigo}`}>
+                    <label data-guia="config.validacao.norma" className="grid gap-1 text-xs text-muted-foreground" htmlFor={`norma-${v.codigo}`}>
                       Norma citada
                       {seletorNorma(`norma-${v.codigo}`, r.normaId, (x) => mudar(v.codigo, { normaId: x }))}
                     </label>
@@ -135,6 +135,7 @@ export function AbaValidacao({
         {podeEditar ? (
           <div className="mt-5">
             <Button
+              data-guia="config.validacao.salvar"
               disabled={pendente}
               onClick={() =>
                 conf.pedir({
@@ -159,7 +160,7 @@ export function AbaValidacao({
             <span className="text-xs font-medium text-muted-foreground">O Regimento Interno (art. 210-C, § 2º) prevê até 5 dias.</span>
           </label>
         </div>
-        <h3 className="mt-6 mb-2 text-sm font-bold">Fundamento de cada parâmetro</h3>
+        <h3 data-guia="config.validacao.fundamentos" className="mt-6 mb-2 text-sm font-bold">Fundamento de cada parâmetro</h3>
         <div className="grid gap-2.5">
           {PARAMETROS.map(([chave, rotulo]) => (
             <div key={chave} className="grid grid-cols-[200px_minmax(0,1fr)_minmax(0,260px)] items-center gap-2.5 max-lg:grid-cols-1">

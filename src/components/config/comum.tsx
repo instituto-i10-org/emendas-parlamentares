@@ -22,6 +22,7 @@ export function BotaoAcao({
   rotulo,
   destrutiva,
   desabilitado,
+  guia,
 }: {
   acao: (ciente: boolean) => Promise<Resultado>;
   children: ReactNode;
@@ -34,6 +35,8 @@ export function BotaoAcao({
   rotulo?: string;
   destrutiva?: boolean;
   desabilitado?: boolean;
+  // Âncora do guia de ajuda.
+  guia?: string;
 }) {
   const router = useRouter();
   const [pendente, iniciar] = useTransition();
@@ -42,6 +45,7 @@ export function BotaoAcao({
   return (
     <>
       <Button
+        data-guia={guia}
         variant={variante}
         size={tamanho}
         disabled={pendente || conf.pendente || desabilitado}

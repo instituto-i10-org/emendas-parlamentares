@@ -56,7 +56,7 @@ export function AbaUsuarios({ usuarios, perfis, autores }: { usuarios: UsuarioTe
   const [autorDe, setAutorDe] = useState<UsuarioTela | null>(null);
   const atribuiveis = perfis.filter((p) => p.atribuivel);
   return (
-    <Cartao guia="config.usuarios.lista" titulo="Usuários" acoes={<Button size="sm" onClick={() => setNovo(true)}>Novo usuário</Button>}>
+    <Cartao guia="config.usuarios.lista" titulo="Usuários" acoes={<Button data-guia="config.usuarios.novo" size="sm" onClick={() => setNovo(true)}>Novo usuário</Button>}>
       <TabelaDados
         colunas={[{ titulo: "Nome" }, { titulo: "Poder", className: "max-md:hidden" }, { titulo: "Perfil" }, { titulo: "Autor (vereador)", className: "max-lg:hidden" }, { titulo: "" }]}
         linhas={usuarios.map((u) => ({
@@ -67,18 +67,18 @@ export function AbaUsuarios({ usuarios, perfis, autores }: { usuarios: UsuarioTe
               <span className="block text-xs text-muted-foreground">{u.email}</span>
               {!u.ativo ? <Selo tipo="warn">desativado</Selo> : null}
             </div>,
-            <span key="pd" className="max-md:hidden">{poderRotulo(u.poder as PerfilTela["poder"])}</span>,
+            <span key="pd" data-guia="config.usuarios.poder" className="max-md:hidden">{poderRotulo(u.poder as PerfilTela["poder"])}</span>,
             u.editavel ? <SeletorPerfil key="p" usuario={u} perfis={atribuiveis} /> : <span key="p">{u.perfilNome ?? "sem perfil"}</span>,
             <span key="a" className="max-lg:hidden">{u.autor ?? <span className="text-muted-foreground">—</span>}</span>,
             u.editavel ? (
               <div key="b" className="flex flex-wrap items-center justify-end gap-1 max-md:min-w-[110px]">
-                <Button size="xs" variant="ghost" onClick={() => setAutorDe(u)}>
+                <Button data-guia="config.usuarios.autor" size="xs" variant="ghost" onClick={() => setAutorDe(u)}>
                   Autor
                 </Button>
-                <Button size="xs" variant="ghost" onClick={() => setSenhaDe(u)}>
+                <Button data-guia="config.usuarios.senha" size="xs" variant="ghost" onClick={() => setSenhaDe(u)}>
                   Senha
                 </Button>
-                <BotaoAcao acao={() => alternarUsuarioAtivo(u.id)} impacto={{ tipo: "usuarioAtivo", id: u.id }} titulo={`${u.ativo ? "Desativar" : "Reativar"} ${u.nome}`} rotulo={u.ativo ? "Desativar" : "Reativar"}>
+                <BotaoAcao guia="config.usuarios.ativo" acao={() => alternarUsuarioAtivo(u.id)} impacto={{ tipo: "usuarioAtivo", id: u.id }} titulo={`${u.ativo ? "Desativar" : "Reativar"} ${u.nome}`} rotulo={u.ativo ? "Desativar" : "Reativar"}>
                   {u.ativo ? "Desativar" : "Reativar"}
                 </BotaoAcao>
               </div>
@@ -100,6 +100,7 @@ function SeletorPerfil({ usuario, perfis }: { usuario: UsuarioTela; perfis: Perf
     <>
       {conf.janela}
       <select
+        data-guia="config.usuarios.perfil"
         aria-label={`Perfil de ${usuario.nome}`}
         className="campo campo-select h-9 w-full min-w-[150px] max-w-[260px] pr-9 pl-3"
         disabled={pendente}
@@ -258,7 +259,7 @@ function VincularAutor({ usuario, autores, aoFechar }: { usuario: UsuarioTela | 
 export function AbaPerfis({ perfis }: { perfis: PerfilTela[] }) {
   const [editando, setEditando] = useState<PerfilTela | "novo" | null>(null);
   return (
-    <Cartao guia="config.perfis.lista" ajuda="Um perfil combina um Poder de atuação com permissões. Sem permissões, é perfil de consulta. Mudanças valem no próximo login." titulo="Perfis de acesso" acoes={<Button size="sm" onClick={() => setEditando("novo")}>Novo perfil</Button>}>
+    <Cartao guia="config.perfis.lista" ajuda="Um perfil combina um Poder de atuação com permissões. Sem permissões, é perfil de consulta. Mudanças valem no próximo login." titulo="Perfis de acesso" acoes={<Button data-guia="config.perfis.novo" size="sm" onClick={() => setEditando("novo")}>Novo perfil</Button>}>
       <TabelaDados
         colunas={[{ titulo: "Perfil" }, { titulo: "Poder" }, { titulo: "Permissões", className: "max-md:hidden" }, { titulo: "Usuários", className: "text-right" }, { titulo: "" }]}
         linhas={perfis.map((p) => ({
@@ -269,8 +270,8 @@ export function AbaPerfis({ perfis }: { perfis: PerfilTela[] }) {
               {p.perfilDoSistema ? <span className="ml-2"><Selo>sistema</Selo></span> : null}
               {p.descricao ? <span className="block text-xs text-muted-foreground">{p.descricao}</span> : null}
             </div>,
-            poderRotulo(p.poder),
-            <div key="p" className="flex max-w-md flex-wrap gap-1 max-md:hidden">
+            <span key="pd" data-guia="config.perfis.poder">{poderRotulo(p.poder)}</span>,
+            <div key="p" data-guia="config.perfis.permissoes" className="flex max-w-md flex-wrap gap-1 max-md:hidden">
               {p.adminGeral ? (
                 <Selo tipo="info">acesso total</Selo>
               ) : p.permissoes.length ? (
@@ -279,9 +280,9 @@ export function AbaPerfis({ perfis }: { perfis: PerfilTela[] }) {
                 <Selo>somente consulta</Selo>
               )}
             </div>,
-            <span key="u" className="tnum">{p.usuarios}</span>,
+            <span key="u" data-guia="config.perfis.usuarios" className="tnum">{p.usuarios}</span>,
             p.perfilDoSistema ? null : (
-              <div key="a" className="flex items-center justify-end gap-1">
+              <div key="a" data-guia="config.perfis.acoes" className="flex items-center justify-end gap-1">
                 <Button size="xs" variant="ghost" onClick={() => setEditando(p)}>
                   Editar
                 </Button>

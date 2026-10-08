@@ -40,7 +40,7 @@ export function AbaMunicipio({ dados, podeEditar }: { dados: DadosMunicipio; pod
           </Campo>
         </div>
         <div className="grid grid-cols-2 gap-4 max-md:grid-cols-1">
-          <Campo rotulo="Nome da Câmara" htmlFor="mu-camara" dica="Ex.: Câmara Municipal de …">
+          <Campo guia="config.municipio.nomes" rotulo="Nome da Câmara" htmlFor="mu-camara" dica="Ex.: Câmara Municipal de …">
             <input id="mu-camara" className="campo h-12 px-3.5" maxLength={200} value={f.nomeCamara} onChange={muda("nomeCamara")} />
           </Campo>
           <Campo rotulo="Nome da Prefeitura" htmlFor="mu-prefeitura" dica="Ex.: Prefeitura Municipal de …">
@@ -50,7 +50,7 @@ export function AbaMunicipio({ dados, podeEditar }: { dados: DadosMunicipio; pod
       </fieldset>
       {podeEditar ? (
         <div className="mt-5 flex gap-2">
-          <Button disabled={pendente} onClick={() => executar(() => salvarMunicipio(f))}>
+          <Button data-guia="config.municipio.salvar" disabled={pendente} onClick={() => executar(() => salvarMunicipio(f))}>
             Salvar dados do município
           </Button>
           <Button variant="ghost" disabled={pendente} onClick={() => setF(dados)}>

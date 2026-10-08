@@ -56,7 +56,7 @@ export function AbaTiposDestino({ tipos, podeEditar }: { tipos: TipoDestinoTela[
       <Cartao guia="config.tipos-destino.lista"
         titulo={`Tipos de destino (${tipos.length})`}
         ajuda="Cada tipo tem as palavras que o identificam no nome do destino e a subfunção que ele sugere (UBS → atenção básica; EMEF → ensino fundamental). Vale o primeiro da lista que reconhecer o nome. Mudar um tipo vale para os destinos cadastrados daqui em diante e para a classificação de novas emendas; a subfunção já gravada nos destinos existentes não muda."
-        acoes={podeEditar ? <Button size="sm" onClick={() => setEditando("novo")}>Novo tipo</Button> : null}
+        acoes={podeEditar ? <Button data-guia="config.tipos-destino.novo" size="sm" onClick={() => setEditando("novo")}>Novo tipo</Button> : null}
       >
         <TabelaDados
           vazio="Nenhum tipo cadastrado."
@@ -68,7 +68,7 @@ export function AbaTiposDestino({ tipos, podeEditar }: { tipos: TipoDestinoTela[
                 <b>{t.nome}</b>
                 {!t.ativo ? <Selo>inativo</Selo> : null}
               </div>,
-              <span key="r" className="text-sm text-muted-foreground">{resumoRegra(t.padrao)}</span>,
+              <span key="r" data-guia="config.tipos-destino.regra" className="text-sm text-muted-foreground">{resumoRegra(t.padrao)}</span>,
               <span key="s" className="text-sm">{rotuloSubfuncao(t.subfuncao)}</span>,
               podeEditar ? (
                 <div key="b" className="flex flex-wrap items-center justify-end gap-1">
