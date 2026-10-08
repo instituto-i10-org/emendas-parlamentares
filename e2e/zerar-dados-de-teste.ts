@@ -14,7 +14,9 @@ async function main() {
   if (zerar.length) await c.query(`truncate ${zerar.map((t) => `"${t}"`).join(", ")} cascade`);
   if (existentes.has("User")) await c.query(`delete from "User" where email not like '%@emendas360.local'`);
   if (existentes.has("PerfilAcesso")) await c.query(`delete from "PerfilAcesso" where "perfilDoSistema" = false`);
-  if (existentes.has("Destino")) await c.query(`delete from "Destino" where origem = 'CADASTRO' and nome like 'TESTE %'`);
+  // Rodada interrompida no meio de um teste deixa os registros fixos dele (ids com prefixo t10-).
+  if (existentes.has("RegraValidacao")) await c.query(`delete from "RegraValidacao" where id like 't10-%'`);
+  if (existentes.has("Destino")) await c.query(`delete from "Destino" where (origem = 'CADASTRO' and nome like 'TESTE %') or id like 't10-%'`);
   await c.end();
 }
 

@@ -17,6 +17,15 @@ três etapas, o sistema encontra a dotação a partir do objeto, plano de trabal
 exigido de todos e preço informado com fonte oficial. O formulário descreve uma
 versão anterior do sistema; esses itens ficaram como estão por decisão.
 
+Ajustes pedidos pelo Dr. Emerson em 06/10/2026 (pacote de 08/10) mexeram na
+mesma tela sem mudar a situação desses itens: as etapas foram divididas em
+seções numeradas (3.1, ainda uma por vez); o tipo de emenda aparece, com os
+demais tipos como "em breve" (3.3); o valor da emenda passou a ser o informado
+pelo vereador, e a planilha o comprova dentro da tolerância (5.1, que pedia
+conferência de um centavo); e a dotação pode ser informada à mão, mesmo fora da
+LOA, sob declaração de responsabilidade do vereador (3.2) — **decisão do Dr.
+Emerson**, que afasta ainda mais o item da dotação em cascata.
+
 | Item | Cond. | Requisito | Situação | Tela e caminho | Conta | Captura |
 |---|---|---|---|---|---|---|
 | 1.1 | Obr | Cadastro de PPA, LDO e LOA com número, ementa, data e arquivo | Atende | Planejamento › Novo instrumento | admin | item-1.1.png |
@@ -25,9 +34,9 @@ versão anterior do sistema; esses itens ficaram como estão por decisão.
 | 2.1 | Obr | Importação de PDF (texto ou digitalizado), CSV e XLSX, com prioridades da LDO e relatório de recusas | Atende | Planejamento › Importar base | admin / executivo | item-2.1.png |
 | 2.2 | Obr | Os oito componentes derivados de cada linha; recusa só da linha | Atende | Planejamento › Importação › Todas | admin / executivo | item-2.2.png |
 | 2.3 | Obr | Pré-visualização, conferência de totais e confirmação | Atende | Planejamento › Importação › Confirmar carga | admin / executivo | item-2.3.png |
-| 3.1 | Obr | Formulário em blocos numerados, todos visíveis | Parcial | Nova emenda (três etapas numeradas, uma por vez) | vereador | — |
-| 3.2 | Obr | Dotação em cascata, com saldo e por extenso | Parcial | Nova emenda › etapa 1 (o sistema sugere a dotação a partir do objeto) | vereador | — |
-| 3.3 | Obr | Tipo de emenda; remanejamento com origem e destino | Parcial | Toda emenda é impositiva; a verificação (x) confere | vereador | — |
+| 3.1 | Obr | Formulário em blocos numerados, todos visíveis | Parcial | Nova emenda (três etapas, cada uma em seções numeradas, uma por vez) | vereador | — |
+| 3.2 | Obr | Dotação em cascata, com saldo e por extenso | Parcial | Nova emenda › etapa 1 › Dotação (o sistema sugere a dotação a partir do objeto; o vereador também pode informá-la à mão) | vereador | — |
+| 3.3 | Obr | Tipo de emenda; remanejamento com origem e destino | Parcial | Nova emenda › etapa 1 › Tipo de emenda (impositiva; acréscimo, anulação e remanejamento aparecem como "em breve"); a verificação (x) confere | vereador | — |
 | 3.4 | Fac | Acréscimo, anulação e remanejamento | Não atende | — | — | — |
 | 3.5 | Obr | Beneficiário por destino, cadastro na própria tela, rascunho a qualquer momento | Atende | Nova emenda › etapa 1 | vereador | item-3.5.png |
 | 4.1 | Obr | As treze verificações em três estados | Atende | Emenda › etapa 3 "Validar e submeter" | vereador | item-4.1.png |
@@ -35,8 +44,8 @@ versão anterior do sistema; esses itens ficaram como estão por decisão.
 | 4.3 | Obr | Modo bloqueante ou alerta por verificação | Atende | Configurações › Validação | admin | item-4.3.png |
 | 4.4 | Obr | Validação no servidor, gravada com histórico | Atende | Página da emenda › Histórico de validações | vereador / comissao | item-4.4.png |
 | 4.5 | Obr | Cada verificação conferida | Atende | Emenda › etapa 3 | vereador | item-4.5.png |
-| 5.1 | Obr | Plano conforme a categoria; declaração; conferência de um centavo | Parcial | Nova emenda › etapa 2 (plano exigido de todos) | vereador | — |
-| 5.2 | Obr | O que falta para remeter, sempre à vista | Parcial | Nova emenda › resumo lateral e etapa 3 | vereador | — |
+| 5.1 | Obr | Plano conforme a categoria; declaração; conferência de um centavo | Parcial | Nova emenda › etapa 2 (plano exigido de todos; total da planilha conferido com o valor da emenda dentro da tolerância) · etapa 3 › declaração dos preços | vereador | — |
+| 5.2 | Obr | O que falta para remeter, sempre à vista | Parcial | Nova emenda › resumo lateral ("N de 7 definidos"), lista do que falta em cada seção e etapa 3 | vereador | — |
 | 5.3 | Fac | Link para a entidade, de uso único | Atende | Emenda (execução indireta) › etapa 2 › Gerar link | vereador · entidade sem login | item-5.3.png |
 | 6.1 | Obr | Situações da emenda e fila com filtros por situação, autor e área | Atende | Tramitação › Parecer | comissao | item-6.1.png |
 | 6.2 | Obr | Parecer obrigatório; saneamento em fila própria | Atende | Tramitação › Parecer e Saneamento | comissao | item-6.2.png |

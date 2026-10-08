@@ -429,13 +429,14 @@ const GUIAS_LISTA: Guia[] = [
   {
     id: "nova-emenda.etapa3",
     titulo: "Nova emenda › Validação e envio",
-    versao: 3,
+    versao: 4,
     passos: [
       { ancora: "nova-emenda.secoes", titulo: "Duas seções", texto: "Primeiro as verificações; depois as declarações e o envio." },
       { ancora: "nova-emenda.treze", titulo: "As treze verificações", texto: "Cada uma com o resultado (conforme, alerta ou falha) e a explicação. Uma falha impede o envio." },
       { ancora: "nova-emenda.pendencias", titulo: "Pendências", texto: "As conferências do sistema que ainda pedem atenção. Bloqueios impedem o envio; alertas, não." },
       { ancora: "nova-emenda.declaracao", titulo: "Declaração de vedação", texto: "Marque a declaração de inexistência de vedação antes de enviar." },
       { ancora: "nova-emenda.declaracao-precos", titulo: "Declaração dos preços", texto: "Obrigatória: você declara que pesquisou e informou os preços desta emenda. Sem ela, a emenda não é enviada." },
+      { ancora: "nova-emenda.documento", titulo: "Minuta do documento", texto: "“Ver minuta” abre o documento como será protocolado: capa, a emenda e o plano de trabalho anexo. Dá para imprimir ou salvar em PDF. O número e a data saem no envio." },
       { ancora: "nova-emenda.submeter", titulo: "Submeter", texto: "Envia a emenda à Câmara. O servidor confere tudo de novo; se recusar, a tentativa fica registrada e você vê o motivo." },
     ],
   },
