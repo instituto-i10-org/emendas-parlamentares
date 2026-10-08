@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { FormFiltros } from "@/components/app/form-filtros";
 import { Barra, Cartao, Kpi, Pagina, TabelaDados } from "@/components/app/pagina";
 import { Selo } from "@/components/emenda/ui";
 import { Poder } from "@/generated/prisma/enums";
@@ -57,9 +58,10 @@ export default async function Vereador360Page({ searchParams }: { searchParams: 
       <div className={cn("grid items-start gap-5", vetodos && "grid-cols-[300px_minmax(0,1fr)] max-[1000px]:grid-cols-1")}>
         {vetodos ? (
           <Cartao guia="vereador360.lista" titulo="Vereadores">
-            <form className="mb-3">
+            <FormFiltros acao="/vereador360" rotulo="Buscar vereador" className="mb-3">
+              {autorId ? <input type="hidden" name="autor" value={autorId} /> : null}
               <input name="q" defaultValue={q} className="campo h-10 px-3" placeholder="Buscar vereador" aria-label="Buscar vereador" />
-            </form>
+            </FormFiltros>
             <ul className="grid grid-cols-1 gap-1">
               {lista.map((x) => {
                 const sx = situacaoCota(x, c);

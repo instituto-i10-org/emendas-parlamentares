@@ -138,12 +138,12 @@ const GUIAS_LISTA: Guia[] = [
   {
     id: "emenda",
     titulo: "Emenda",
-    versao: 1,
+    versao: 2,
     passos: [
       { ancora: "emenda.dados", titulo: "Dados da emenda", texto: "Situação, autor, destino, dotação, parcela da cota, valor e justificativa. Abaixo aparecem os pedidos de ajuste, o parecer da Comissão, a viabilidade do Executivo e a execução, quando houver." },
-      { ancora: "emenda.relatorio", titulo: "Relatório da validação", texto: "As treze verificações conferidas pelo servidor no envio, cada uma com o resultado e a explicação, e as conferências complementares." },
-      { ancora: "emenda.validacoes", titulo: "Histórico de validações", texto: "Todas as vezes que a emenda foi conferida: envio, reenvio e tentativas recusadas, com data e quem pediu." },
-      { ancora: "emenda.situacoes", titulo: "Histórico de situações", texto: "Cada mudança de situação, com data, responsável e o texto do parecer ou do pedido de ajuste." },
+      { ancora: "emenda.relatorio", titulo: "Aba Validação", texto: "As treze verificações conferidas pelo servidor no envio, uma por linha com o resultado. Clique numa linha para ver a explicação; as com alerta ou falha já vêm abertas." },
+      { ancora: "emenda.validacoes", titulo: "Aba Validações anteriores", texto: "Todas as vezes que a emenda foi conferida: envio, reenvio e tentativas recusadas, com data e quem pediu." },
+      { ancora: "emenda.situacoes", titulo: "Aba Situações", texto: "Cada mudança de situação, com data, responsável e o texto do parecer ou do pedido de ajuste." },
       { ancora: "emenda.acoes", titulo: "Impressão", texto: "“Versão para impressão” abre a emenda inteira, com plano de trabalho, tramitação e validação, pronta para PDF." },
     ],
   },
@@ -185,13 +185,13 @@ const GUIAS_LISTA: Guia[] = [
   {
     id: "planejamento",
     titulo: "Planejamento",
-    versao: 1,
+    versao: 2,
     passos: [
       { ancora: "planejamento.titulo", titulo: "Planejamento", texto: "As leis do orçamento do exercício (PPA, LDO e LOA) e a base de dotações em que as emendas são classificadas." },
       { ancora: "planejamento.acoes", titulo: "Novo instrumento", texto: "Cadastre um projeto de lei ou uma lei aprovada, com número, data, ementa e o PDF da peça. A lei aprovada fica ligada ao projeto de origem." },
       { ancora: "planejamento.abas", titulo: "Seções", texto: "Instrumentos: as leis cadastradas. Base de dotações: as dotações carregadas. PL × lei aprovada: o projeto ao lado da lei aprovada." },
       { ancora: "indicador.emendamento", titulo: "Emendamento", texto: "Mostra se as emendas estão abertas. Depende da situação do projeto de lei, do prazo e do exercício." },
-      { ancora: "planejamento.situacao", titulo: "Situação do instrumento", texto: "Avance ou volte a situação pelas setas. Mudar a situação do projeto de lei pode abrir ou fechar o envio de emendas; o sistema mostra o efeito antes de confirmar." },
+      { ancora: "planejamento.situacao", titulo: "Situação do instrumento", texto: "Em “Mudar situação”, escolha avançar ou voltar um passo. Mudar a situação do projeto de lei pode abrir ou fechar o envio de emendas; o sistema mostra o efeito antes de confirmar." },
       { ancora: "planejamento.acoes-instrumento", titulo: "Ações do instrumento", texto: "Ver a base, importar a base (PDF, CSV ou XLSX), editar e excluir. Só é possível excluir um instrumento sem dotações e sem lei ligada a ele." },
       { ancora: "planejamento.importacoes", titulo: "Importações recentes", texto: "As importações em andamento ou concluídas. Clique para continuar uma conferência ou retomar uma leitura de PDF." },
       { ancora: "planejamento.base", titulo: "Base de dotações", texto: "O total da base, quantas dotações podem receber emendas e quantas já receberam." },
@@ -227,16 +227,6 @@ const GUIAS_LISTA: Guia[] = [
       { ancora: "conformidade.resolver", titulo: "Resolver", texto: "Em cada pendência, a providência recomendada e o atalho para a tela onde resolvê-la." },
       { ancora: "conformidade.outros", titulo: "Outros itens", texto: "Rastreabilidade do destino, classificação, cota, preços, viabilidade e execução." },
       { ancora: "conformidade.prazos", titulo: "Próximos prazos", texto: "Os prazos cadastrados para o exercício." },
-    ],
-  },
-  {
-    id: "conta",
-    titulo: "Minha conta",
-    versao: 1,
-    passos: [
-      { ancora: "conta.titulo", titulo: "Minha conta", texto: "Seus dados de acesso." },
-      { ancora: "conta.senha", titulo: "Trocar a senha", texto: "Informe a senha atual e a nova, com pelo menos 10 caracteres." },
-      { ancora: "conta.guias", titulo: "Guias de ajuda", texto: "Faz cada guia abrir de novo na próxima visita a cada tela. Para ver o guia de uma tela na hora, use “Ver ajuda” no menu." },
     ],
   },
   // ------------------------------------------------------------ configurações
@@ -392,12 +382,12 @@ const GUIAS_LISTA: Guia[] = [
   {
     id: "config.auditoria",
     titulo: "Configurações › Auditoria",
-    versao: 2,
+    versao: 3,
     passos: [
       { ancora: "config.abas", titulo: "Configurações", texto: "Cada aba cuida de uma parte do sistema. Toda alteração fica registrada na auditoria, com o antes e o depois." },
       { ancora: "config.auditoria.lista", titulo: "Registros", texto: "Cada alteração feita no sistema: quando, quem, em quê e qual ação." },
-      { ancora: "config.auditoria.filtros", titulo: "Filtros", texto: "Procure por período, usuário, tipo de registro e ação." },
-      { ancora: "config.auditoria.abrir", titulo: "Abrir", texto: "Mostra o antes e o depois lado a lado, com o que mudou em destaque. Senhas nunca aparecem." },
+      { ancora: "config.auditoria.filtros", titulo: "Filtros", texto: "Procure por período, usuário, tipo de registro e ação. A lista filtra sozinha ao escolher." },
+      { ancora: "config.auditoria.abrir", titulo: "Abrir", texto: "Mostra, em linguagem simples, só o que mudou: cada campo com o valor de antes e o de depois. Senhas nunca aparecem." },
       { ancora: "config.auditoria.paginacao", titulo: "Páginas", texto: "Os registros aparecem de 50 em 50." },
     ],
   },
@@ -461,7 +451,6 @@ export function guiaDaRota(pathname: string, aba?: string | null): Guia | null {
     [/^\/executivo\/planejamento\/?$/, "planejamento"],
     [/^\/executivo\/planejamento\/importacao\/[^/]+\/?$/, "importacao"],
     [/^\/conformidade\/?$/, "conformidade"],
-    [/^\/conta\/?$/, "conta"],
   ];
   if (pathname.startsWith("/config")) {
     const g = GUIAS[`config.${aba || "exercicio"}`];

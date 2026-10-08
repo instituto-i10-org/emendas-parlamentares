@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { FormFiltros } from "@/components/app/form-filtros";
 import { Cartao, TabelaDados } from "@/components/app/pagina";
 import { Selo } from "@/components/emenda/ui";
 import { Button } from "@/components/ui/button";
@@ -35,7 +36,7 @@ export default async function EmendasPublicasPage({ searchParams }: { searchPara
   return (
     <div className="grid gap-5">
       <h1 className="text-2xl font-extrabold tracking-[-0.02em]">Emendas do exercício {ano}</h1>
-      <form className="flex flex-wrap gap-2" action="/publica/emendas">
+      <FormFiltros acao="/publica/emendas" rotulo="Filtrar emendas" className="flex flex-wrap gap-2">
         <input name="q" defaultValue={q} className="campo h-11 min-w-[240px] flex-1 px-3.5" placeholder="Buscar por objeto, destino, vereador ou número" />
         <select name="autor" defaultValue={autor} className="campo campo-select h-11 max-w-[300px] pr-9 pl-3.5" aria-label="Vereador">
           <option value="">Todos os vereadores</option>
@@ -53,8 +54,10 @@ export default async function EmendasPublicasPage({ searchParams }: { searchPara
             </option>
           ))}
         </select>
-        <Button type="submit">Filtrar</Button>
-      </form>
+        <Button variant="ghost" asChild className="h-11">
+          <Link href="/publica/emendas">Limpar</Link>
+        </Button>
+      </FormFiltros>
       <Cartao titulo={`${filtradas.length} emenda(s)`}>
         <TabelaDados
           vazio="Nenhuma emenda encontrada."
@@ -63,7 +66,7 @@ export default async function EmendasPublicasPage({ searchParams }: { searchPara
             chave: l.chave,
             celulas: [
               <b key="n" className="tnum">{l.numero ?? "—"}</b>,
-              <span key="a" className="max-md:hidden">{l.autor}</span>,
+              <span key="a">{l.autor}</span>,
               <div key="o" className="max-w-xl">
                 {l.href ? (
                   <Link href={l.href} className="font-semibold hover:underline">

@@ -23,6 +23,8 @@ function ancorasDasTelas(): Set<string> {
     const s = readFileSync(a, "utf8");
     for (const m of s.matchAll(/(?:data-guia|guia)=(?:\{\s*)?"([a-z0-9.-]+)"/g)) achadas.add(m[1]);
     for (const m of s.matchAll(/data-guia=\{`([a-z0-9.-]+)\$\{/g)) achadas.add(m[1]);
+    // Propriedade de objeto (ex.: abas da lateral da emenda: { guia: "x" }).
+    for (const m of s.matchAll(/\bguia:\s*"([a-z0-9-]+\.[a-z0-9.-]+)"/g)) achadas.add(m[1]);
     // Expressão (ex.: titulo === "x" ? "a" : "b"): vale cada literal com ponto.
     for (const m of s.matchAll(/guia=\{([^}]*)\}/g)) for (const q of m[1].matchAll(/"([a-z0-9-]+\.[a-z0-9.-]+)"/g)) achadas.add(q[1]);
     for (const m of s.matchAll(/<Pagina\b[^<]*?\sguia="([a-z0-9.-]+)"/g)) {
@@ -57,7 +59,7 @@ describe("guias de ajuda", () => {
   it("um guia por módulo do menu, por aba de Configurações e por etapa da nova emenda", () => {
     const esperados = [
       "inicio", "painel", "comparativo", "tramitacao", "emendas", "emenda", "vereador360", "viabilidade", "execucao",
-      "planejamento", "importacao", "conformidade", "conta",
+      "planejamento", "importacao", "conformidade",
       "config.municipio", "config.exercicio", "config.validacao", "config.portal", "config.usuarios", "config.perfis",
       "config.areas", "config.tipos-destino", "config.destinos", "config.biblioteca", "config.precos", "config.normas", "config.auditoria",
       "nova-emenda.etapa1", "nova-emenda.etapa2", "nova-emenda.etapa3",

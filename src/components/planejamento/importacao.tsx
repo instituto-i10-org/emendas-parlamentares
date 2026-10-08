@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Campo, CampoNumero } from "@/components/emenda/ui";
+import { useConfirmar } from "@/components/app/confirmar";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
@@ -178,34 +179,36 @@ export function TotalImpresso({ id, valor, editavel }: { id: string; valor: numb
 export function AcoesConferencia({ id, podeConfirmar, porQueNao }: { id: string; podeConfirmar: boolean; porQueNao: string | null }) {
   const router = useRouter();
   const [pendente, iniciar] = useTransition();
+  const { confirmar, janela } = useConfirmar();
   return (
     <div className="flex flex-wrap items-center gap-2">
+      {janela}
       <Button
         variant="ok"
         disabled={!podeConfirmar || pendente}
-        onClick={() =>
-          window.confirm("Gravar a base conferida? As dotações passam a valer para as emendas.") &&
+        onClick={async () => {
+          if (!(await confirmar({ titulo: "Gravar a base conferida", mensagem: "As dotações conferidas passam a valer para as emendas.", rotulo: "Confirmar carga" }))) return;
           iniciar(async () => {
             const r = await confirmarImportacao(id);
             if (!r.ok) return void toast.error(r.erro);
             toast(r.mensagem);
             router.refresh();
-          })
-        }
+          });
+        }}
       >
         {pendente ? "Gravando…" : "Confirmar carga"}
       </Button>
       <Button
         variant="ghost"
         disabled={pendente}
-        onClick={() =>
-          window.confirm("Cancelar esta importação? Nada foi gravado na base.") &&
+        onClick={async () => {
+          if (!(await confirmar({ titulo: "Cancelar esta importação", mensagem: "Nada foi gravado na base; a importação é descartada.", rotulo: "Cancelar importação", destrutiva: true }))) return;
           iniciar(async () => {
             const r = await cancelarImportacao(id);
             if (!r.ok) return void toast.error(r.erro);
             router.push("/executivo/planejamento");
-          })
-        }
+          });
+        }}
       >
         Cancelar importação
       </Button>
@@ -233,8 +236,10 @@ export function EditarLinha({
   const [f, setF] = useState(campos);
   const [motivos, setMotivos] = useState<string[]>([]);
   const [pendente, iniciar] = useTransition();
+  const { confirmar, janela } = useConfirmar();
   return (
     <>
+      {janela}
       <Button size="xs" variant={linhaId ? "ghost" : "surface"} onClick={() => (setF(campos), setMotivos([]), setAberto(true))}>
         {rotulo}
       </Button>
@@ -265,15 +270,15 @@ export function EditarLinha({
                 <Button
                   variant="ghost"
                   disabled={pendente}
-                  onClick={() =>
-                    window.confirm("Excluir esta linha da importação?") &&
+                  onClick={async () => {
+                    if (!(await confirmar({ titulo: "Excluir esta linha", mensagem: "A linha sai desta importação.", rotulo: "Excluir linha", destrutiva: true }))) return;
                     iniciar(async () => {
                       const r = await excluirLinha(id, linhaId);
                       if (!r.ok) return void toast.error(r.erro);
                       setAberto(false);
                       router.refresh();
-                    })
-                  }
+                    });
+                  }}
                 >
                   Excluir linha
                 </Button>

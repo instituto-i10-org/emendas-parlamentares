@@ -91,9 +91,9 @@ export function AbaValidacao({
                   </p>
                 ) : (
                   <div className="grid grid-cols-[180px_minmax(0,1fr)_minmax(0,260px)] items-start gap-2.5 max-lg:grid-cols-1">
-                    <div data-guia="config.validacao.modo" className="grid gap-1.5">
-                      <label className="sr-only" htmlFor={`modo-${v.codigo}`}>
-                        Modo da verificação ({v.numero})
+                    <div data-guia="config.validacao.modo" className="grid gap-1">
+                      <label className="text-xs text-muted-foreground" htmlFor={`modo-${v.codigo}`}>
+                        Modo<span className="sr-only"> da verificação ({v.numero})</span>
                       </label>
                       <select
                         id={`modo-${v.codigo}`}

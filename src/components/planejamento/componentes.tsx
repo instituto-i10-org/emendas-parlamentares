@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Upload } from "lucide-react";
+import { ChevronDown, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { FiltroLista } from "@/components/app/filtro-lista";
 import { Campo, CampoNumero, Pilulas, Selo } from "@/components/emenda/ui";
@@ -12,6 +12,7 @@ import { CampoArquivo, type ArquivoValor } from "@/components/app/campo-arquivo"
 import { iniciarImportacao } from "@/lib/actions/importacao";
 import { criarInstrumento, definirStatusInstrumento, editarInstrumento, excluirInstrumento } from "@/lib/actions/planejamento";
 import { lerNumero } from "@/lib/emendas/estado";
+import { DropdownMenu } from "radix-ui";
 import { useConfirmarImpacto } from "@/components/app/confirmar-impacto";
 import { BRL } from "@/lib/riep";
 
@@ -26,7 +27,9 @@ export const ROTULO_STATUS: Record<string, string> = {
   ENCERRADO: "Encerrado",
 };
 
-// Avança ou volta um passo no ciclo de vida do instrumento.
+// Avança ou volta um passo no ciclo de vida do instrumento: um botão só,
+// "Mudar situação", com as opções escritas por extenso; escolher abre a
+// janela de confirmação com o impacto.
 export function StatusInstrumento({ id, status, podeGerir, rotulo }: { id: string; status: string; podeGerir: boolean; rotulo?: string }) {
   const conf = useConfirmarImpacto();
   const pendente = conf.pendente;
@@ -38,22 +41,39 @@ export function StatusInstrumento({ id, status, podeGerir, rotulo }: { id: strin
       rotulo: `Mudar para ${ROTULO_STATUS[para].toLowerCase()}`,
       acao: (ciente) => definirStatusInstrumento(id, para, ciente),
     });
+  const opcoes = [
+    ...(i > 0 ? [{ para: SEQUENCIA[i - 1], texto: `Voltar para ${ROTULO_STATUS[SEQUENCIA[i - 1]]}` }] : []),
+    ...(i < SEQUENCIA.length - 1 ? [{ para: SEQUENCIA[i + 1], texto: `Avançar para ${ROTULO_STATUS[SEQUENCIA[i + 1]]}` }] : []),
+  ];
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
+    <div className="flex flex-nowrap items-center gap-2">
       {conf.janela}
-      {/* Largura fixa: as setas ficam na mesma coluna em todas as linhas. */}
-      <span className="w-[120px]">
-        <Selo tipo={status === "EM_TRAMITACAO" ? "info" : status === "VIGENTE" ? "ok" : "neutro"}>{ROTULO_STATUS[status]}</Selo>
-      </span>
-      {podeGerir && i > 0 ? (
-        <Button size="xs" variant="ghost" disabled={pendente} onClick={() => mover(SEQUENCIA[i - 1])} title={`Voltar para ${ROTULO_STATUS[SEQUENCIA[i - 1]]}`}>
-          ←
-        </Button>
-      ) : null}
-      {podeGerir && i < SEQUENCIA.length - 1 ? (
-        <Button size="xs" variant="ghost" disabled={pendente} onClick={() => mover(SEQUENCIA[i + 1])}>
-          {ROTULO_STATUS[SEQUENCIA[i + 1]]} →
-        </Button>
+      <Selo tipo={status === "EM_TRAMITACAO" ? "info" : status === "VIGENTE" ? "ok" : "neutro"}>{ROTULO_STATUS[status]}</Selo>
+      {podeGerir && opcoes.length ? (
+        <DropdownMenu.Root modal={false}>
+          <DropdownMenu.Trigger asChild>
+            <Button size="xs" variant="ghost" disabled={pendente}>
+              Mudar situação <ChevronDown className="size-3.5" />
+            </Button>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Portal>
+            <DropdownMenu.Content
+              align="end"
+              sideOffset={6}
+              className="z-50 min-w-[220px] rounded-box bg-surface p-1.5 shadow-[0_12px_32px_rgba(6,24,64,.18)] outline-none"
+            >
+              {opcoes.map((o) => (
+                <DropdownMenu.Item
+                  key={o.para}
+                  onSelect={() => mover(o.para)}
+                  className="flex cursor-pointer items-center rounded-md px-3 py-2 text-sm font-semibold text-ink outline-none select-none data-[highlighted]:bg-soft"
+                >
+                  {o.texto}
+                </DropdownMenu.Item>
+              ))}
+            </DropdownMenu.Content>
+          </DropdownMenu.Portal>
+        </DropdownMenu.Root>
       ) : null}
     </div>
   );

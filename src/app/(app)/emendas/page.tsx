@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Download, FilePlus2 } from "lucide-react";
+import { CARTAO_LINHA } from "@/components/app/pagina";
 import { Pagina } from "@/components/emenda/avisos-pagina";
 import { ApagarEmendaTeste } from "@/components/emenda/apagar-emenda-teste";
 import { DescartarRascunho } from "@/components/emenda/descartar-rascunho";
@@ -19,6 +20,7 @@ import { exercicioHistorico, getAnoAtivo } from "@/lib/exercicio";
 import { prisma } from "@/lib/prisma";
 import { BRL, DATA } from "@/lib/riep";
 import { getCurrentUser } from "@/lib/session";
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Emendas — Emendas360" };
 
@@ -100,9 +102,9 @@ export default async function EmendasPage({ searchParams }: { searchParams: Prom
       </div>
       <div data-guia="emendas.lista" className="overflow-hidden rounded-card bg-surface shadow-card">
         {emendas.length ? (
-          <div className="relative overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-soft text-left text-2xs font-bold tracking-[0.04em] text-muted-foreground uppercase">
+          <div className="@container relative overflow-x-auto">
+            <table className={cn(CARTAO_LINHA.tabela)}>
+              <thead className={cn(CARTAO_LINHA.cabecalho, "bg-soft")}>
                 <tr>
                   <th className="px-5 py-3">Nº</th>
                   <th className="px-5 py-3">Objeto</th>
@@ -115,11 +117,11 @@ export default async function EmendasPage({ searchParams }: { searchParams: Prom
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-hair">
+              <tbody className={cn(CARTAO_LINHA.corpo, "@max-[640px]:p-3")}>
                 {emendas.map((x) => (
-                  <tr key={x.id} className="hover:bg-soft">
-                    <td className="px-5 py-3.5 font-bold tnum">{x.numero ?? "—"}</td>
-                    <td className="max-w-[420px] px-5 py-3.5">
+                  <tr key={x.id} className={cn(CARTAO_LINHA.linha, "hover:bg-soft")}>
+                    <td data-rotulo="Nº" className={cn(CARTAO_LINHA.celula, "px-5 py-3.5 font-bold tnum")}>{x.numero ?? "—"}</td>
+                    <td data-rotulo="Objeto" className={cn(CARTAO_LINHA.celula, "max-w-[420px] px-5 py-3.5 @max-[640px]:max-w-none")}>
                       <Link href={`/emendas/${x.id}`} className="font-bold hover:underline">
                         {x.objeto || "Rascunho sem objeto"}
                       </Link>
@@ -128,13 +130,13 @@ export default async function EmendasPage({ searchParams }: { searchParams: Prom
                         {x.parcela ? ` · ${x.parcela === "SAUDE" ? "saúde" : "demais áreas"}` : ""}
                       </span>
                     </td>
-                    <td className="px-5 py-3.5 max-md:hidden">{x.destino?.nome ?? "—"}</td>
-                    {todas ? <td className="px-5 py-3.5 max-lg:hidden">{x.autor.nome}</td> : null}
-                    <td className="px-5 py-3.5 text-right font-bold whitespace-nowrap tnum">{x.valor.toNumber() > 0 ? BRL(x.valor.toNumber()) : "—"}</td>
-                    <td className="px-5 py-3.5">
+                    <td data-rotulo="Destino" className={cn(CARTAO_LINHA.celula, "px-5 py-3.5 max-md:hidden")}>{x.destino?.nome ?? "—"}</td>
+                    {todas ? <td data-rotulo="Autor" className={cn(CARTAO_LINHA.celula, "px-5 py-3.5 max-lg:hidden")}>{x.autor.nome}</td> : null}
+                    <td data-rotulo="Valor" className={cn(CARTAO_LINHA.celula, "px-5 py-3.5 text-right font-bold whitespace-nowrap tnum")}>{x.valor.toNumber() > 0 ? BRL(x.valor.toNumber()) : "—"}</td>
+                    <td data-rotulo="Situação" className={cn(CARTAO_LINHA.celula, "px-5 py-3.5")}>
                       <Selo tipo={STATUS_EMENDA[x.status].tipo}>{STATUS_EMENDA[x.status].rotulo}</Selo>
                     </td>
-                    <td className="px-3 py-2">
+                    <td className={cn(CARTAO_LINHA.celula, "px-3 py-2")}>
                       {!podeGerirEmenda(user, { autorUsuarioId: x.autor.usuarioId }) ? null : naoRemetida(x.status) ? (
                         <DescartarRascunho id={x.id} rotulo={x.objeto ? `“${x.objeto.slice(0, 80)}”` : "Este rascunho"} />
                       ) : x.autor.demonstracao ? (

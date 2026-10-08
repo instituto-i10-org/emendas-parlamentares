@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Download } from "lucide-react";
 import { BotaoImprimir } from "@/components/app/botao-imprimir";
+import { FormFiltros } from "@/components/app/form-filtros";
 import { Cartao, Kpi, Pagina, TabelaDados } from "@/components/app/pagina";
 import { GerarLei } from "@/components/comparativo/gerar-lei";
 import { Selo } from "@/components/emenda/ui";
@@ -101,7 +102,7 @@ export default async function ComparativoPage({ searchParams }: { searchParams: 
             <Kpi rotulo="Diferença" valor={dados.temLei ? BRL(total((l) => l.diferenca)) : "—"} detalhe={!dados.temLei ? "sem lei carregada para comparar" : `${dados.emendas.length} emenda(s) incorporada(s) somam ${BRL(dados.emendas.reduce((x, e) => x + e.valor, 0))}`} />
           </div>
           <Cartao guia="comparativo.dotacoes" titulo={`Dotações (${filtradas.length})`}>
-            <form data-guia="comparativo.filtros" method="get" action="/comparativo" className="mb-4 flex flex-wrap items-end gap-2.5 print:hidden">
+            <FormFiltros guia="comparativo.filtros" acao="/comparativo" rotulo="Filtrar dotações" className="mb-4 flex flex-wrap items-end gap-2.5 print:hidden">
               <label className="grid gap-1 text-xs font-semibold text-muted-foreground">
                 Órgão
                 <select name="orgao" defaultValue={orgao} className="campo h-10 px-2.5 text-sm">
@@ -127,10 +128,10 @@ export default async function ComparativoPage({ searchParams }: { searchParams: 
               <label className="flex items-center gap-2 text-sm">
                 <input type="checkbox" name="emendadas" value="1" defaultChecked={soEmendadas} /> Só as que mudaram ou têm emenda
               </label>
-              <Button type="submit" size="sm">
-                Filtrar
+              <Button variant="ghost" asChild className="h-10">
+                <Link href="/comparativo">Limpar</Link>
               </Button>
-            </form>
+            </FormFiltros>
             <TabelaDados
               vazio="Nenhuma dotação."
               colunas={[
@@ -158,7 +159,7 @@ export default async function ComparativoPage({ searchParams }: { searchParams: 
                     <span key="p" className="whitespace-nowrap tnum">{l.pl ? BRL(l.valorPl) : "—"}</span>,
                     <span key="l" className="whitespace-nowrap tnum">{l.lei ? BRL(l.valorLei) : "—"}</span>,
                     <b key="x" className="whitespace-nowrap tnum">{dados.temLei ? BRL(l.diferenca) : "—"}</b>,
-                    <ul key="e" className="text-xs @max-[700px]:hidden">
+                    <ul key="e" className="text-xs">
                       {l.emendas.map((e) => (
                         <li key={`${e.id}${e.efeito}`}>
                           <Link href={`/emendas/${e.id}`} className="font-semibold hover:underline">
@@ -231,7 +232,7 @@ async function execucao(ano: number) {
               <b>{x.nome}</b>
               <span className="block text-xs text-muted-foreground">{x.detalhe}</span>
             </div>,
-            <span key="e" className="text-xs @max-[700px]:hidden">
+            <span key="e" className="text-xs">
               {x.emendas.map((e, i) => (
                 <span key={e.id}>
                   {i ? ", " : ""}
@@ -243,7 +244,7 @@ async function execucao(ano: number) {
             </span>,
             <span key="v" className="whitespace-nowrap tnum">{BRL(x.valor)}</span>,
             <span key="m" className="whitespace-nowrap tnum">{BRL(x.empenhado)}</span>,
-            <span key="l" className="whitespace-nowrap tnum @max-[560px]:hidden">{BRL(x.liquidado)}</span>,
+            <span key="l" className="whitespace-nowrap tnum">{BRL(x.liquidado)}</span>,
             <b key="p" className="whitespace-nowrap tnum">{BRL(x.pago)}</b>,
           ],
         }))}

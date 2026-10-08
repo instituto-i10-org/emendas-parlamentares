@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Cartao, Pagina, TabelaDados } from "@/components/app/pagina";
 import { AbaAreas } from "@/components/config/areas";
+import { diferencaLegivel, idsDoRegistro, nomeDoRegistro, rotuloAcao, rotuloEntidade } from "@/lib/auditoria/legivel";
 import { ImportarPlanilha } from "@/components/config/importar-planilha";
 import { AbaMunicipio } from "@/components/config/municipio";
 import { AbaTiposDestino } from "@/components/config/tipos-destino";
@@ -279,14 +280,17 @@ async function auditoria(sp: Record<string, string | undefined>) {
       : {}),
     ...(filtros.usuario ? { usuarioId: filtros.usuario } : {}),
     ...(filtros.entidade ? { entidade: filtros.entidade } : {}),
-    ...(filtros.acao ? { acao: { contains: filtros.acao, mode: "insensitive" as const } } : {}),
+    ...(filtros.acao ? { acao: filtros.acao } : {}),
   };
-  const [total, lista, usuarios, entidades] = await Promise.all([
+  const [total, lista, usuarios, entidades, acoes] = await Promise.all([
     prisma.auditLog.count({ where }),
     prisma.auditLog.findMany({ where, orderBy: { criadoEm: "desc" }, skip: (pagina - 1) * AUDITORIA_POR_PAGINA, take: AUDITORIA_POR_PAGINA, include: { usuario: { select: { name: true, email: true } } } }),
     prisma.user.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true, email: true } }),
     prisma.auditLog.findMany({ distinct: ["entidade"], select: { entidade: true }, orderBy: { entidade: "asc" } }),
+    prisma.auditLog.findMany({ distinct: ["acao"], select: { acao: true }, orderBy: { acao: "asc" } }),
   ]);
+  // Nomes no lugar dos ids que aparecem no antes e no depois.
+  const nomes = await nomesDosIds(lista.flatMap((l) => idsDoRegistro(l.dadosAntes, l.dadosDepois)));
   return (
     <AbaAuditoria
       total={total}
@@ -294,19 +298,48 @@ async function auditoria(sp: Record<string, string | undefined>) {
       porPagina={AUDITORIA_POR_PAGINA}
       filtros={filtros}
       usuarios={usuarios.map((u) => ({ id: u.id, nome: u.name ?? u.email ?? u.id }))}
-      entidades={entidades.map((e) => e.entidade)}
+      entidades={entidades.map((e) => ({ valor: e.entidade, rotulo: rotuloEntidade(e.entidade) })).sort((a, b) => a.rotulo.localeCompare(b.rotulo, "pt-BR"))}
+      acoes={acoes.map((a) => ({ valor: a.acao, rotulo: rotuloAcao(a.acao) })).sort((a, b) => a.rotulo.localeCompare(b.rotulo, "pt-BR"))}
       linhas={lista.map((l) => ({
         id: l.id,
         quando: DATA_HORA(l.criadoEm),
         usuario: l.usuario?.name ?? l.usuario?.email ?? "sistema",
-        entidade: l.entidade,
-        entidadeId: l.entidadeId,
-        acao: l.acao,
-        antes: l.dadosAntes,
-        depois: l.dadosDepois,
+        entidade: rotuloEntidade(l.entidade),
+        acao: rotuloAcao(l.acao),
+        registro: nomeDoRegistro(l.dadosAntes, l.dadosDepois) ?? nomes[l.entidadeId] ?? null,
+        grupos: diferencaLegivel(l.dadosAntes, l.dadosDepois, nomes),
       }))}
     />
   );
+}
+
+// Nome legível de cada id citado na auditoria (usuário, destino, perfil, norma…).
+async function nomesDosIds(ids: string[]): Promise<Record<string, string>> {
+  const unicos = [...new Set(ids)];
+  if (!unicos.length) return {};
+  const em = { in: unicos };
+  const [us, ds, ps, ns, as, es, is, aus, arqs] = await Promise.all([
+    prisma.user.findMany({ where: { id: em }, select: { id: true, name: true, email: true } }),
+    prisma.destino.findMany({ where: { id: em }, select: { id: true, nome: true } }),
+    prisma.perfilAcesso.findMany({ where: { id: em }, select: { id: true, nome: true } }),
+    prisma.documentoNormativo.findMany({ where: { id: em }, select: { id: true, titulo: true } }),
+    prisma.areaAplicacao.findMany({ where: { id: em }, select: { id: true, nome: true } }),
+    prisma.exercicio.findMany({ where: { id: em }, select: { id: true, ano: true } }),
+    prisma.instrumentoPlanejamento.findMany({ where: { id: em }, select: { id: true, numero: true } }),
+    prisma.autor.findMany({ where: { id: em }, select: { id: true, nome: true } }),
+    prisma.arquivo.findMany({ where: { id: em }, select: { id: true, nome: true } }),
+  ]);
+  return Object.fromEntries([
+    ...us.map((x) => [x.id, x.name ?? x.email ?? "usuário"]),
+    ...ds.map((x) => [x.id, x.nome]),
+    ...ps.map((x) => [x.id, x.nome]),
+    ...ns.map((x) => [x.id, x.titulo]),
+    ...as.map((x) => [x.id, x.nome]),
+    ...es.map((x) => [x.id, `Exercício ${x.ano}`]),
+    ...is.map((x) => [x.id, x.numero]),
+    ...aus.map((x) => [x.id, x.nome]),
+    ...arqs.map((x) => [x.id, x.nome]),
+  ]);
 }
 
 async function fontesPreco(podeEditar: boolean) {

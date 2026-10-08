@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { DestinoDialog } from "@/components/emenda/destino-dialog";
@@ -10,6 +11,8 @@ import { exigeCiencia, type Impacto } from "@/lib/impacto/tipos";
 import { CorpoImpacto } from "@/components/app/confirmar-impacto";
 import type { DestinoTela } from "@/lib/emendas/contexto";
 import { possiveisDuplicados, type ParDuplicado } from "@/lib/emendas/beneficiarios";
+import type { GrupoLegivel } from "@/lib/auditoria/legivel";
+import { FormFiltros } from "@/components/app/form-filtros";
 import { Cartao, TabelaDados } from "@/components/app/pagina";
 import { FiltroLista } from "@/components/app/filtro-lista";
 import { Campo, Pilulas, Selo } from "@/components/emenda/ui";
@@ -341,7 +344,7 @@ export function AbaBiblioteca({ areas, objetos }: { areas: AreaConfig[]; objetos
                 {o.natureza === "CAPITAL" ? "Capital" : "Custeio"} · {o.elemento}
                 {o.subfuncao ? ` · sf ${o.subfuncao}` : ""}
               </span>,
-              <span key="a" data-guia="config.biblioteca.area" className="max-md:hidden">
+              <span key="a" data-guia="config.biblioteca.area">
                 {o.area ?? "—"}
                 {o.estrito ? " (estrita)" : ""}
               </span>,
@@ -621,39 +624,47 @@ export function AbaNormas({ normas }: { normas: NormaConfig[] }) {
 
 // ----------------------------------------------------------------- auditoria
 
-export type AuditoriaLinha = { id: string; quando: string; usuario: string; entidade: string; entidadeId: string; acao: string; antes: unknown; depois: unknown };
+export type AuditoriaLinha = {
+  id: string;
+  quando: string;
+  usuario: string;
+  entidade: string;
+  acao: string;
+  registro: string | null;
+  grupos: GrupoLegivel[];
+};
 
-// Antes e depois lado a lado, campo a campo; o que mudou fica marcado.
-function Diferenca({ antes, depois }: { antes: unknown; depois: unknown }) {
-  const obj = (x: unknown) => (x && typeof x === "object" && !Array.isArray(x) ? (x as Record<string, unknown>) : x == null ? {} : { valor: x });
-  const a = obj(antes);
-  const d = obj(depois);
-  const chaves = [...new Set([...Object.keys(a), ...Object.keys(d)])].filter((k) => !["createdAt", "updatedAt", "passwordHash"].includes(k));
-  const texto = (v: unknown) => (v === undefined ? "—" : v === null ? "vazio" : typeof v === "object" ? JSON.stringify(v) : String(v));
-  if (!chaves.length) return <p className="text-sm text-muted-foreground">Registro sem dados de antes e depois (evento sem alteração de dado, como entrada no sistema).</p>;
+// Antes e depois lado a lado, só o que mudou, em linguagem simples (os nomes e
+// valores já vêm traduzidos do servidor).
+function Diferenca({ grupos }: { grupos: GrupoLegivel[] }) {
+  if (!grupos.length) return <p className="text-sm text-muted-foreground">Nenhum dado mudou neste registro (por exemplo, uma entrada no sistema).</p>;
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-xs">
-        <thead className="text-left text-muted-foreground">
-          <tr>
-            <th className="py-1.5 pr-3">Campo</th>
-            <th className="py-1.5 pr-3">Antes</th>
-            <th className="py-1.5">Depois</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-hair">
-          {chaves.map((k) => {
-            const mudou = texto(a[k]) !== texto(d[k]);
-            return (
-              <tr key={k} className={mudou ? "bg-warn-bg" : ""}>
-                <td className="py-1.5 pr-3 font-semibold">{k}</td>
-                <td className="py-1.5 pr-3 break-all">{texto(a[k])}</td>
-                <td className="py-1.5 break-all">{texto(d[k])}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+    <div className="grid gap-4">
+      {grupos.map((g, i) => (
+        <div key={i}>
+          {g.titulo ? <h3 className="mb-1.5 text-sm font-bold">{g.titulo}</h3> : null}
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="text-left text-2xs font-bold tracking-[0.04em] text-muted-foreground uppercase">
+                <tr className="border-b border-hair">
+                  <th className="py-2 pr-3">Campo</th>
+                  <th className="py-2 pr-3">Antes</th>
+                  <th className="py-2">Depois</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-hair">
+                {g.linhas.map((l) => (
+                  <tr key={l.campo} className="align-top">
+                    <td className="py-2 pr-3 font-semibold">{l.campo}</td>
+                    <td className="py-2 pr-3 break-words text-muted-foreground">{l.antes}</td>
+                    <td className="py-2 break-words">{l.depois}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -666,6 +677,7 @@ export function AbaAuditoria({
   filtros,
   usuarios,
   entidades,
+  acoes,
 }: {
   linhas: AuditoriaLinha[];
   total: number;
@@ -673,7 +685,8 @@ export function AbaAuditoria({
   porPagina: number;
   filtros: { de: string; ate: string; usuario: string; entidade: string; acao: string };
   usuarios: { id: string; nome: string }[];
-  entidades: string[];
+  entidades: { valor: string; rotulo: string }[];
+  acoes: { valor: string; rotulo: string }[];
 }) {
   const [aberto, setAberto] = useState<AuditoriaLinha | null>(null);
   const paginas = Math.max(1, Math.ceil(total / porPagina));
@@ -681,7 +694,7 @@ export function AbaAuditoria({
   const caixa = "campo h-10 px-2.5 text-sm";
   return (
     <Cartao guia="config.auditoria.lista" titulo={`Auditoria (${total} registros)`}>
-      <form data-guia="config.auditoria.filtros" method="get" action="/config" className="mb-4 grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] items-end gap-2.5">
+      <FormFiltros guia="config.auditoria.filtros" acao="/config" rotulo="Filtrar auditoria" className="mb-4 flex flex-wrap items-end gap-2.5 [&>label]:min-w-[150px] [&>label]:flex-1">
         <input type="hidden" name="aba" value="auditoria" />
         <label className="grid gap-1 text-xs font-semibold text-muted-foreground">
           De
@@ -707,20 +720,27 @@ export function AbaAuditoria({
           <select name="entidade" defaultValue={filtros.entidade} className={caixa}>
             <option value="">Todas</option>
             {entidades.map((e) => (
-              <option key={e} value={e}>
-                {e}
+              <option key={e.valor} value={e.valor}>
+                {e.rotulo}
               </option>
             ))}
           </select>
         </label>
         <label className="grid gap-1 text-xs font-semibold text-muted-foreground">
           Ação
-          <input name="acao" defaultValue={filtros.acao} className={caixa} placeholder="Ex.: ATUALIZAR" />
+          <select name="acao" defaultValue={filtros.acao} className={caixa}>
+            <option value="">Todas</option>
+            {acoes.map((a) => (
+              <option key={a.valor} value={a.valor}>
+                {a.rotulo}
+              </option>
+            ))}
+          </select>
         </label>
-        <Button type="submit" size="sm">
-          Filtrar
+        <Button variant="ghost" asChild className="h-10">
+          <Link href="/config?aba=auditoria">Limpar</Link>
         </Button>
-      </form>
+      </FormFiltros>
       <TabelaDados
         vazio="Nenhum registro."
         colunas={[{ titulo: "Quando" }, { titulo: "Usuário", className: "@max-[520px]:hidden" }, { titulo: "Entidade", className: "@max-[680px]:hidden" }, { titulo: "Ação" }, { titulo: "" }]}
@@ -732,9 +752,12 @@ export function AbaAuditoria({
             </span>,
             l.usuario,
             <span key="e" className="text-xs">
-              {l.entidade} <span className="text-muted-foreground">{l.entidadeId.slice(-8)}</span>
+              {l.entidade}
+              {l.registro ? <span className="block text-muted-foreground">{l.registro}</span> : null}
             </span>,
-            <Selo key="a">{l.acao}</Selo>,
+            <span key="a" className="text-sm font-semibold">
+              {l.acao}
+            </span>,
             <Button key="b" data-guia="config.auditoria.abrir" size="xs" variant="ghost" onClick={() => setAberto(l)}>
               Abrir
             </Button>,
@@ -762,11 +785,12 @@ export function AbaAuditoria({
       ) : null}
       <Dialog open={!!aberto} onOpenChange={(a) => !a && setAberto(null)}>
         {aberto ? (
-          <DialogContent titulo={`${aberto.acao} — ${aberto.entidade}`} largura="lg">
-            <p className="mb-3 text-xs text-muted-foreground">
-              {aberto.quando} · {aberto.usuario} · registro {aberto.entidadeId}
+          <DialogContent titulo={aberto.acao} largura="lg">
+            <p className="mb-4 text-sm text-muted-foreground">
+              {aberto.entidade}
+              {aberto.registro ? ` · ${aberto.registro}` : ""} · {aberto.quando} · por {aberto.usuario}
             </p>
-            <Diferenca antes={aberto.antes} depois={aberto.depois} />
+            <Diferenca grupos={aberto.grupos} />
           </DialogContent>
         ) : null}
       </Dialog>

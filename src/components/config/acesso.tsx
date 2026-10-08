@@ -67,9 +67,9 @@ export function AbaUsuarios({ usuarios, perfis, autores }: { usuarios: UsuarioTe
               <span className="block text-xs text-muted-foreground">{u.email}</span>
               {!u.ativo ? <Selo tipo="warn">desativado</Selo> : null}
             </div>,
-            <span key="pd" data-guia="config.usuarios.poder" className="max-md:hidden">{poderRotulo(u.poder as PerfilTela["poder"])}</span>,
+            <span key="pd" data-guia="config.usuarios.poder">{poderRotulo(u.poder as PerfilTela["poder"])}</span>,
             u.editavel ? <SeletorPerfil key="p" usuario={u} perfis={atribuiveis} /> : <span key="p">{u.perfilNome ?? "sem perfil"}</span>,
-            <span key="a" className="max-lg:hidden">{u.autor ?? <span className="text-muted-foreground">—</span>}</span>,
+            <span key="a">{u.autor ?? <span className="text-muted-foreground">—</span>}</span>,
             u.editavel ? (
               <div key="b" className="flex flex-wrap items-center justify-end gap-1 max-md:min-w-[110px]">
                 <Button data-guia="config.usuarios.autor" size="xs" variant="ghost" onClick={() => setAutorDe(u)}>
@@ -271,7 +271,7 @@ export function AbaPerfis({ perfis }: { perfis: PerfilTela[] }) {
               {p.descricao ? <span className="block text-xs text-muted-foreground">{p.descricao}</span> : null}
             </div>,
             <span key="pd" data-guia="config.perfis.poder">{poderRotulo(p.poder)}</span>,
-            <div key="p" data-guia="config.perfis.permissoes" className="flex max-w-md flex-wrap gap-1 max-md:hidden">
+            <div key="p" data-guia="config.perfis.permissoes" className="flex max-w-md flex-wrap gap-1">
               {p.adminGeral ? (
                 <Selo tipo="info">acesso total</Selo>
               ) : p.permissoes.length ? (

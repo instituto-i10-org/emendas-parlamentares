@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Download } from "lucide-react";
-import { BotaoImprimir } from "@/components/app/botao-imprimir";
+import { Download, Printer } from "lucide-react";
 import { FiltrosEmendas, Paginacao } from "@/components/app/filtros-emendas";
+import { FormFiltros } from "@/components/app/form-filtros";
+import { dadosRelatorioTramitacao, periodoDoRelatorio } from "@/lib/emendas/relatorio-tramitacao-servidor";
 import { Cartao, Kpi, Pagina, TabelaDados } from "@/components/app/pagina";
 import { Selo } from "@/components/emenda/ui";
 import { DecidirEmenda, DevolverAoAutor, MarcarIncorporada, PedirAjuste, ReabrirEmenda, ReceberEmenda } from "@/components/tramitacao/acoes";
@@ -13,7 +14,6 @@ import { requireAccess } from "@/lib/access";
 import { podeTramitar } from "@/lib/authz";
 import { listarEmendas, orgaosDaArea, paginaDeEmendas, type EmendaLinha } from "@/lib/emendas/consultas";
 import { POR_PAGINA, comFiltros, lerFiltros, ondeDosFiltros, type Filtros } from "@/lib/emendas/filtros";
-import { relatorioTramitacao } from "@/lib/emendas/relatorio-tramitacao";
 import { RESULTADO_VIABILIDADE, STATUS_EMENDA } from "@/lib/emendas/rotulos";
 import { getAnoAtivo } from "@/lib/exercicio";
 import { prisma } from "@/lib/prisma";
@@ -80,8 +80,8 @@ export default async function TramitacaoPage({ searchParams }: { searchParams: P
   const rotulo = (e: EmendaLinha) => (e.numero ? `Emenda nº ${e.numero}/${ano}` : "Emenda");
   const hoje = new Date();
   const celulaEmenda = (e: EmendaLinha, extra?: React.ReactNode) => (
-    <div key="o" className="min-w-0">
-      <Link href={`/emendas/${e.id}`} className="font-bold break-words hover:underline">
+    <div key="o" className="max-w-[440px] min-w-[220px] @max-[640px]:max-w-none">
+      <Link href={`/emendas/${e.id}`} title={e.objeto || undefined} className="line-clamp-2 font-bold break-words hover:underline">
         {e.objeto || "(sem objeto)"}
       </Link>
       <span className="block text-xs text-muted-foreground">
@@ -177,15 +177,15 @@ export default async function TramitacaoPage({ searchParams }: { searchParams: P
                       {e.numero ?? "—"}
                     </b>,
                     celulaEmenda(e),
-                    <ul key="al" className="max-w-xs text-xs text-muted-foreground @max-[760px]:hidden" aria-label="Alertas da validação">
+                    <ul key="al" className="max-w-xs text-xs text-muted-foreground" aria-label="Alertas da validação">
                       {a.alertas.length ? a.alertas.slice(0, 4).map((t) => <li key={t}>{t}</li>) : <li>Sem alertas.</li>}
                     </ul>,
-                    <span key="p" className="@max-[560px]:hidden">
+                    <span key="p">
                       {parecerExecutivo(e)}
                     </span>,
                     valor(e),
                     decide ? (
-                      <div key="d" data-guia="tramitacao.decidir" className="flex flex-wrap justify-end gap-1.5">
+                      <div key="d" data-guia="tramitacao.decidir" className="flex flex-nowrap justify-end gap-1.5 @max-[640px]:flex-wrap @max-[640px]:justify-start">
                         {e.status === "SUBMETIDA" ? <ReceberEmenda emendaId={e.id} rotulo={rotulo(e)} /> : null}
                         <PedirAjuste emendaId={e.id} rotulo={rotulo(e)} diasPadrao={cfg?.prazoDiligenciaDias ?? 5} />
                         <DecidirEmenda emendaId={e.id} rotulo={rotulo(e)} />
@@ -209,7 +209,7 @@ export default async function TramitacaoPage({ searchParams }: { searchParams: P
                       {e.numero ?? "—"}
                     </b>,
                     celulaEmenda(e),
-                    <div key="ap" className="max-w-md text-xs @max-[700px]:hidden">
+                    <div key="ap" className="max-w-md text-xs">
                       {e.status === "EM_DILIGENCIA" ? (
                         <>
                           <p className="line-clamp-3">Pedido da Comissão: {e.diligenciaMotivo}</p>
@@ -227,7 +227,7 @@ export default async function TramitacaoPage({ searchParams }: { searchParams: P
                     </div>,
                     valor(e),
                     decide ? (
-                      <div key="d" data-guia="tramitacao.sanear" className="flex flex-wrap justify-end gap-1.5">
+                      <div key="d" data-guia="tramitacao.sanear" className="flex flex-nowrap justify-end gap-1.5 @max-[640px]:flex-wrap @max-[640px]:justify-start">
                         {e.status === "INVALIDA" ? <DevolverAoAutor emendaId={e.id} rotulo={rotulo(e)} /> : null}
                         {vencido ? <DecidirEmenda emendaId={e.id} rotulo={rotulo(e)} /> : null}
                       </div>
@@ -247,7 +247,7 @@ export default async function TramitacaoPage({ searchParams }: { searchParams: P
                     {e.numero ?? "—"}
                   </b>,
                   celulaEmenda(e, <span className="mt-1 block text-xs text-muted-foreground">decidida em {DATA(e.tramitadaEm)}</span>),
-                  <p key="p" className="line-clamp-3 max-w-md text-xs text-muted-foreground @max-[700px]:hidden">
+                  <p key="p" className="line-clamp-3 max-w-md text-xs text-muted-foreground">
                     {e.parecerTramitacao}
                   </p>,
                   valor(e),
@@ -302,24 +302,8 @@ export default async function TramitacaoPage({ searchParams }: { searchParams: P
 // Relatório por situação, por autor e por período, a partir do histórico.
 async function relatorios(ano: number | null, f: Filtros) {
   if (!ano) return <p className="text-sm text-muted-foreground">Nenhum exercício.</p>;
-  const hoje = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
-  const de = f.de ?? `${hoje.slice(0, 8)}01`;
-  const ate = f.ate ?? hoje;
-  const inicio = new Date(`${de}T00:00:00-03:00`);
-  const fim = new Date(`${ate}T23:59:59-03:00`);
-  const [passagens, emendas] = await Promise.all([
-    prisma.historicoEmenda.findMany({
-      where: { criadoEm: { gte: inicio, lte: fim }, emenda: { exercicio: { ano } } },
-      select: { emendaId: true, de: true, para: true, criadoEm: true },
-    }),
-    prisma.emenda.findMany({ where: { exercicio: { ano } }, select: { id: true, numero: true, objeto: true, valor: true, autor: { select: { nome: true } } } }),
-  ]);
-  const r = relatorioTramitacao(
-    passagens,
-    new Map(emendas.map((e) => [e.id, { id: e.id, numero: e.numero, autor: e.autor.nome, objeto: e.objeto, valor: e.valor.toNumber() }])),
-    inicio,
-    fim
-  );
+  const { de, ate, inicio, fim } = periodoDoRelatorio(f);
+  const r = await dadosRelatorioTramitacao(ano, inicio, fim);
   const exportar = (formato: string) => `/api/relatorios/tramitacao?ano=${ano}&de=${de}&ate=${ate}&formato=${formato}`;
   return (
     <Cartao
@@ -337,11 +321,16 @@ async function relatorios(ano: number | null, f: Filtros) {
               <Download /> CSV
             </a>
           </Button>
-          <BotaoImprimir variante="ghost" />
+          {/* Imprimir abre a versão para impressão: só o relatório, sem o menu. */}
+          <Button variant="ghost" size="sm" asChild>
+            <a href={`/tramitacao/relatorio?de=${de}&ate=${ate}`} target="_blank" rel="noopener">
+              <Printer /> Imprimir
+            </a>
+          </Button>
         </div>
       }
     >
-      <form data-guia="tramitacao.periodo" method="get" action="/tramitacao" className="mb-4 flex flex-wrap items-end gap-2.5 print:hidden">
+      <FormFiltros guia="tramitacao.periodo" acao="/tramitacao" rotulo="Período do relatório" className="mb-4 flex flex-wrap items-end gap-2.5 print:hidden">
         <input type="hidden" name="aba" value="relatorios" />
         <label className="grid gap-1 text-xs font-semibold text-muted-foreground">
           De
@@ -351,10 +340,7 @@ async function relatorios(ano: number | null, f: Filtros) {
           Até
           <input type="date" name="ate" defaultValue={ate} className="campo h-10 px-2.5 text-sm" />
         </label>
-        <Button type="submit" size="sm">
-          Gerar
-        </Button>
-      </form>
+      </FormFiltros>
       <h3 className="mb-2 text-sm font-bold">Por situação</h3>
       <TabelaDados
         vazio="Nenhuma movimentação no período."
