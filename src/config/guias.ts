@@ -233,9 +233,9 @@ const GUIAS_LISTA: Guia[] = [
   {
     id: "config.municipio",
     titulo: "Configurações › Município",
-    versao: 2,
+    versao: 3,
     passos: [
-      { ancora: "config.abas", titulo: "Configurações", texto: "Cada aba cuida de uma parte do sistema. Toda alteração fica registrada na auditoria, com o antes e o depois." },
+      { ancora: "config.abas", titulo: "Configurações", texto: "O menu à esquerda (no celular, o seletor “Seção”) lista as partes do sistema, agrupadas em Geral, Acesso, Cadastros e Controle. Toda alteração fica registrada na auditoria, com o antes e o depois." },
       { ancora: "config.municipio.dados", titulo: "Dados do município", texto: "Nome, UF e código do IBGE identificam o município. Aparecem no portal público, na entrada do sistema e nos documentos impressos." },
       { ancora: "config.municipio.nomes", titulo: "Câmara e Prefeitura", texto: "O nome oficial de cada Poder, usado nos títulos do portal e nos documentos." },
       { ancora: "config.municipio.salvar", titulo: "Salvar", texto: "Só o Administrador Geral altera estes dados. “Desfazer” volta ao que está gravado." },
@@ -244,9 +244,9 @@ const GUIAS_LISTA: Guia[] = [
   {
     id: "config.exercicio",
     titulo: "Configurações › Exercício e parâmetros",
-    versao: 1,
+    versao: 2,
     passos: [
-      { ancora: "config.abas", titulo: "Configurações", texto: "Cada aba cuida de uma parte do sistema. Toda alteração fica registrada na auditoria." },
+      { ancora: "config.abas", titulo: "Configurações", texto: "O menu à esquerda (no celular, o seletor “Seção”) lista as partes do sistema, agrupadas em Geral, Acesso, Cadastros e Controle. Toda alteração fica registrada na auditoria." },
       { ancora: "config.exercicio.lista", titulo: "Exercícios", texto: "Os anos do orçamento. Crie o exercício novo aqui. Encerrar um exercício fecha o envio de emendas dele; reabrir desfaz." },
       { ancora: "config.exercicio.parametros", titulo: "Parâmetros", texto: "Cota de cada vereador, percentual da saúde, prazo de protocolo, situações do projeto que recebem emendas e códigos AUDESP. Se a mudança afetar emendas já enviadas, o sistema mostra quantas antes de salvar." },
       { ancora: "config.exercicio.prazos", titulo: "Prazos", texto: "Datas do calendário das emendas, que aparecem no manual e na conformidade." },
@@ -256,13 +256,13 @@ const GUIAS_LISTA: Guia[] = [
   {
     id: "config.validacao",
     titulo: "Configurações › Validação",
-    versao: 2,
+    versao: 3,
     passos: [
       { ancora: "config.validacao.treze", titulo: "As treze verificações", texto: "Todas as emendas passam por estas treze conferências antes do envio. A mudança vale na próxima validação, sem publicação nova." },
       { ancora: "config.validacao.fixa", titulo: "Verificações fixas", texto: "As marcadas como fixas sempre bloqueiam o envio, porque decorrem da lei. A tela mostra o motivo de cada uma." },
       { ancora: "config.validacao.modo", titulo: "Bloqueia ou só alerta", texto: "Nas demais, escolha se a falha impede o envio (bloqueante) ou só aparece no relatório (só alerta)." },
       { ancora: "config.validacao.fundamento", titulo: "Fundamento", texto: "O fundamento legal escrito por extenso. Aparece no relatório da emenda e no manual público." },
-      { ancora: "config.validacao.norma", titulo: "Norma citada", texto: "A norma da Base legal em que o fundamento se apoia. Cadastre a norma antes, na aba Base legal." },
+      { ancora: "config.validacao.norma", titulo: "Norma citada", texto: "A norma da Base legal em que o fundamento se apoia. Cadastre a norma antes, em Base legal." },
       { ancora: "config.validacao.salvar", titulo: "Salvar as regras", texto: "Antes de gravar, o sistema mostra quantas emendas já enviadas mudariam de resultado. Se houver alguma, é preciso marcar que está ciente." },
       { ancora: "config.validacao.fundamentos", titulo: "Fundamento dos parâmetros", texto: "Cota, percentual da saúde, prazos e demais parâmetros do exercício também levam fundamento. Parâmetro definido sem fundamento não é aceito." },
     ],
@@ -270,11 +270,11 @@ const GUIAS_LISTA: Guia[] = [
   {
     id: "config.portal",
     titulo: "Configurações › Portal e manual",
-    versao: 2,
+    versao: 3,
     passos: [
       { ancora: "config.portal.portal", titulo: "Portal público", texto: "A consulta pública às emendas, sem login. Mostra se está ligado ou desligado." },
       { ancora: "config.portal.ligar", titulo: "Ligar ou desligar", texto: "Desligado, o portal avisa que está indisponível e a Conformidade aponta a pendência. O link de preenchimento das entidades continua funcionando." },
-      { ancora: "config.portal.ato", titulo: "Ato que institui o manual", texto: "Escolha a norma que institui o manual orientativo. Ela precisa estar cadastrada na aba Base legal." },
+      { ancora: "config.portal.ato", titulo: "Ato que institui o manual", texto: "Escolha a norma que institui o manual orientativo. Ela precisa estar cadastrada em Base legal." },
       { ancora: "config.portal.publicar", titulo: "Publicar", texto: "Publica o manual com o ato escolhido. Depois de publicado, dá para trocar o ato ou retirar a publicação." },
       { ancora: "config.portal.ver", titulo: "Ver o manual", texto: "O manual lê os valores do próprio sistema (cota, prazos, verificações), então nunca fica diferente da regra aplicada." },
     ],
@@ -282,9 +282,9 @@ const GUIAS_LISTA: Guia[] = [
   {
     id: "config.usuarios",
     titulo: "Configurações › Usuários",
-    versao: 2,
+    versao: 3,
     passos: [
-      { ancora: "config.abas", titulo: "Configurações", texto: "Cada aba cuida de uma parte do sistema. Toda alteração fica registrada na auditoria, com o antes e o depois." },
+      { ancora: "config.abas", titulo: "Configurações", texto: "O menu à esquerda (no celular, o seletor “Seção”) lista as partes do sistema, agrupadas em Geral, Acesso, Cadastros e Controle. Toda alteração fica registrada na auditoria, com o antes e o depois." },
       { ancora: "config.usuarios.novo", titulo: "Novo usuário", texto: "Cadastre quem vai acessar: nome, e-mail, perfil e uma senha temporária. No primeiro acesso, a pessoa confere os dados e troca a senha." },
       { ancora: "config.usuarios.poder", titulo: "Poder", texto: "Legislativo, Executivo ou ambos (transversal). Vem do perfil e define quais telas a pessoa enxerga." },
       { ancora: "config.usuarios.perfil", titulo: "Perfil", texto: "Troque o perfil aqui. A mudança vale no próximo clique da pessoa, sem precisar sair do sistema." },
@@ -296,9 +296,9 @@ const GUIAS_LISTA: Guia[] = [
   {
     id: "config.perfis",
     titulo: "Configurações › Perfis",
-    versao: 2,
+    versao: 3,
     passos: [
-      { ancora: "config.abas", titulo: "Configurações", texto: "Cada aba cuida de uma parte do sistema. Toda alteração fica registrada na auditoria, com o antes e o depois." },
+      { ancora: "config.abas", titulo: "Configurações", texto: "O menu à esquerda (no celular, o seletor “Seção”) lista as partes do sistema, agrupadas em Geral, Acesso, Cadastros e Controle. Toda alteração fica registrada na auditoria, com o antes e o depois." },
       { ancora: "config.perfis.lista", titulo: "Perfis de acesso", texto: "Um perfil reúne um Poder e as permissões. Os perfis do sistema já vêm prontos e não podem ser alterados." },
       { ancora: "config.perfis.poder", titulo: "Poder", texto: "Define quais telas o perfil alcança: Legislativo, Executivo ou ambos." },
       { ancora: "config.perfis.permissoes", titulo: "Permissões", texto: "O que o perfil pode fazer: apresentar emendas, tramitar, gerir o planejamento e outras. Sem nenhuma, é um perfil só de consulta." },
@@ -310,9 +310,9 @@ const GUIAS_LISTA: Guia[] = [
   {
     id: "config.areas",
     titulo: "Configurações › Áreas",
-    versao: 2,
+    versao: 3,
     passos: [
-      { ancora: "config.abas", titulo: "Configurações", texto: "Cada aba cuida de uma parte do sistema. Toda alteração fica registrada na auditoria, com o antes e o depois." },
+      { ancora: "config.abas", titulo: "Configurações", texto: "O menu à esquerda (no celular, o seletor “Seção”) lista as partes do sistema, agrupadas em Geral, Acesso, Cadastros e Controle. Toda alteração fica registrada na auditoria, com o antes e o depois." },
       { ancora: "config.areas.lista", titulo: "Áreas de aplicação", texto: "Saúde, Educação e as demais. Definem se o objeto cabe no destino, qual parcela da cota a emenda consome e o agrupamento dos painéis." },
       { ancora: "config.areas.orgaos", titulo: "Órgãos", texto: "Os órgãos do orçamento que atendem a área. Mudar os órgãos pode mudar a parcela de emendas já enviadas: o sistema mostra quantas antes de salvar." },
       { ancora: "config.areas.objetos", titulo: "Objetos ligados", texto: "Quantos objetos da biblioteca pertencem à área. Uma área com objetos não pode ser excluída: mude os objetos de área antes." },
@@ -323,9 +323,9 @@ const GUIAS_LISTA: Guia[] = [
   {
     id: "config.tipos-destino",
     titulo: "Configurações › Tipos de destino",
-    versao: 2,
+    versao: 3,
     passos: [
-      { ancora: "config.abas", titulo: "Configurações", texto: "Cada aba cuida de uma parte do sistema. Toda alteração fica registrada na auditoria, com o antes e o depois." },
+      { ancora: "config.abas", titulo: "Configurações", texto: "O menu à esquerda (no celular, o seletor “Seção”) lista as partes do sistema, agrupadas em Geral, Acesso, Cadastros e Controle. Toda alteração fica registrada na auditoria, com o antes e o depois." },
       { ancora: "config.tipos-destino.teste", titulo: "Testar um nome", texto: "Digite o nome de um destino para ver qual tipo o sistema reconhece e a subfunção que ele sugere." },
       { ancora: "config.tipos-destino.lista", titulo: "Tipos de destino", texto: "UBS, CAPS, EMEF e outros. Ensinam o sistema a sugerir a subfunção certa a partir do nome do destino." },
       { ancora: "config.tipos-destino.regra", titulo: "Palavras que identificam", texto: "As palavras ou siglas que, no nome do destino, indicam o tipo. Alguns tipos usam uma regra avançada, editável à parte." },
@@ -345,9 +345,9 @@ const GUIAS_LISTA: Guia[] = [
   {
     id: "config.biblioteca",
     titulo: "Configurações › Biblioteca de objetos",
-    versao: 2,
+    versao: 3,
     passos: [
-      { ancora: "config.abas", titulo: "Configurações", texto: "Cada aba cuida de uma parte do sistema. Toda alteração fica registrada na auditoria, com o antes e o depois." },
+      { ancora: "config.abas", titulo: "Configurações", texto: "O menu à esquerda (no celular, o seletor “Seção”) lista as partes do sistema, agrupadas em Geral, Acesso, Cadastros e Controle. Toda alteração fica registrada na auditoria, com o antes e o depois." },
       { ancora: "config.biblioteca.lista", titulo: "Biblioteca de objetos", texto: "O vocabulário que o sistema reconhece no objeto da emenda: ambulância, reforma, merenda e outros, com as palavras de cada um." },
       { ancora: "config.biblioteca.natureza", titulo: "Natureza da despesa", texto: "Custeio ou capital, o elemento de despesa e a subfunção. É o que leva o sistema à dotação certa." },
       { ancora: "config.biblioteca.area", titulo: "Área", texto: "A área do objeto. Objeto de área estrita (ambulância é Saúde) não cabe num destino de outra área." },
@@ -358,9 +358,9 @@ const GUIAS_LISTA: Guia[] = [
   {
     id: "config.precos",
     titulo: "Configurações › Fontes de preço",
-    versao: 2,
+    versao: 3,
     passos: [
-      { ancora: "config.abas", titulo: "Configurações", texto: "Cada aba cuida de uma parte do sistema. Toda alteração fica registrada na auditoria, com o antes e o depois." },
+      { ancora: "config.abas", titulo: "Configurações", texto: "O menu à esquerda (no celular, o seletor “Seção”) lista as partes do sistema, agrupadas em Geral, Acesso, Cadastros e Controle. Toda alteração fica registrada na auditoria, com o antes e o depois." },
       { ancora: "config.precos.lista", titulo: "Fontes oficiais de preço", texto: "Os sites de referência que aparecem no plano de trabalho. O sistema não busca preço: mostra ao autor onde pesquisar." },
       { ancora: "config.precos.aplica", titulo: "Para quais despesas", texto: "Cada fonte aparece para os tipos de despesa marcados; sem marca, aparece sempre. Ao lado, quantas vezes já foi usada." },
       { ancora: "config.precos.nova", titulo: "Nova fonte", texto: "Cadastre o nome, o endereço e a orientação de como pesquisar." },
@@ -370,9 +370,9 @@ const GUIAS_LISTA: Guia[] = [
   {
     id: "config.normas",
     titulo: "Configurações › Base legal",
-    versao: 2,
+    versao: 3,
     passos: [
-      { ancora: "config.abas", titulo: "Configurações", texto: "Cada aba cuida de uma parte do sistema. Toda alteração fica registrada na auditoria, com o antes e o depois." },
+      { ancora: "config.abas", titulo: "Configurações", texto: "O menu à esquerda (no celular, o seletor “Seção”) lista as partes do sistema, agrupadas em Geral, Acesso, Cadastros e Controle. Toda alteração fica registrada na auditoria, com o antes e o depois." },
       { ancora: "config.normas.lista", titulo: "Base legal", texto: "Lei Orgânica, Regimento Interno, resoluções e demais atos. São citados no manual e nas verificações, e conferidos na Conformidade." },
       { ancora: "config.normas.nova", titulo: "Nova norma", texto: "Cadastre o tipo, o número, a data do ato, a vigência e o PDF." },
       { ancora: "config.normas.vigencia", titulo: "Vigência", texto: "A data do ato e o período de vigência. A Conformidade exige a Lei Orgânica vigente." },
@@ -382,9 +382,9 @@ const GUIAS_LISTA: Guia[] = [
   {
     id: "config.auditoria",
     titulo: "Configurações › Auditoria",
-    versao: 3,
+    versao: 4,
     passos: [
-      { ancora: "config.abas", titulo: "Configurações", texto: "Cada aba cuida de uma parte do sistema. Toda alteração fica registrada na auditoria, com o antes e o depois." },
+      { ancora: "config.abas", titulo: "Configurações", texto: "O menu à esquerda (no celular, o seletor “Seção”) lista as partes do sistema, agrupadas em Geral, Acesso, Cadastros e Controle. Toda alteração fica registrada na auditoria, com o antes e o depois." },
       { ancora: "config.auditoria.lista", titulo: "Registros", texto: "Cada alteração feita no sistema: quando, quem, em quê e qual ação." },
       { ancora: "config.auditoria.filtros", titulo: "Filtros", texto: "Procure por período, usuário, tipo de registro e ação. A lista filtra sozinha ao escolher." },
       { ancora: "config.auditoria.abrir", titulo: "Abrir", texto: "Mostra, em linguagem simples, só o que mudou: cada campo com o valor de antes e o de depois. Senhas nunca aparecem." },

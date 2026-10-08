@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Cartao, Pagina, TabelaDados } from "@/components/app/pagina";
 import { AbaAreas } from "@/components/config/areas";
 import { diferencaLegivel, idsDoRegistro, nomeDoRegistro, rotuloAcao, rotuloEntidade } from "@/lib/auditoria/legivel";
@@ -18,25 +17,27 @@ import { diaBrasilia, paraDestinoMotor } from "@/lib/emendas/contexto";
 import { anoPadrao, getAnoAtivo, listarExercicios } from "@/lib/exercicio";
 import { prisma } from "@/lib/prisma";
 import { DATA_HORA } from "@/lib/riep";
-import { cn } from "@/lib/utils";
+import { MenuSecoes } from "@/components/config/menu-secoes";
 
 export const metadata: Metadata = { title: "Configurações — Emendas360" };
 
 const ABAS = [
-  { id: "municipio", titulo: "Município" },
-  { id: "exercicio", titulo: "Exercício e parâmetros" },
-  { id: "validacao", titulo: "Validação" },
-  { id: "portal", titulo: "Portal e manual" },
-  { id: "usuarios", titulo: "Usuários" },
-  { id: "perfis", titulo: "Perfis", adminGeral: true },
-  { id: "areas", titulo: "Áreas" },
-  { id: "tipos-destino", titulo: "Tipos de destino" },
-  { id: "destinos", titulo: "Destinos" },
-  { id: "biblioteca", titulo: "Biblioteca de objetos" },
-  { id: "precos", titulo: "Fontes de preço" },
-  { id: "normas", titulo: "Base legal" },
-  { id: "auditoria", titulo: "Auditoria" },
+  { id: "municipio", titulo: "Município", grupo: "Geral" },
+  { id: "exercicio", titulo: "Exercício e parâmetros", grupo: "Geral" },
+  { id: "validacao", titulo: "Validação", grupo: "Geral" },
+  { id: "portal", titulo: "Portal e manual", grupo: "Geral" },
+  { id: "usuarios", titulo: "Usuários", grupo: "Acesso" },
+  { id: "perfis", titulo: "Perfis", grupo: "Acesso", adminGeral: true },
+  { id: "areas", titulo: "Áreas", grupo: "Cadastros" },
+  { id: "tipos-destino", titulo: "Tipos de destino", grupo: "Cadastros" },
+  { id: "destinos", titulo: "Destinos", grupo: "Cadastros" },
+  { id: "biblioteca", titulo: "Biblioteca de objetos", grupo: "Cadastros" },
+  { id: "precos", titulo: "Fontes de preço", grupo: "Cadastros" },
+  { id: "normas", titulo: "Base legal", grupo: "Cadastros" },
+  { id: "auditoria", titulo: "Auditoria", grupo: "Controle" },
 ] as const;
+
+const GRUPOS = ["Geral", "Acesso", "Cadastros", "Controle"] as const;
 
 const num = (v: { toNumber(): number } | null | undefined) => (v == null ? null : v.toNumber());
 
@@ -49,32 +50,25 @@ export default async function ConfigPage({ searchParams }: { searchParams: Promi
 
   return (
     <Pagina titulo="Configurações" guia="config" descricao="Parâmetros do município e do exercício, acesso, catálogos do motor e base legal. Toda alteração fica na auditoria.">
-      <nav data-guia="config.abas" aria-label="Seções" className="mb-5 flex flex-wrap gap-1 rounded-box bg-surface p-1.5 shadow-[0_1px_2px_rgba(10,36,99,.06)]">
-        {abas.map((a) => (
-          <Link
-            key={a.id}
-            href={`/config?aba=${a.id}`}
-            aria-current={a.id === aba ? "page" : undefined}
-            className={cn("rounded-md px-3.5 py-2 text-sm font-semibold", a.id === aba ? "bg-navy text-white" : "text-muted-foreground hover:bg-soft")}
-          >
-            {a.titulo}
-          </Link>
-        ))}
-      </nav>
-      {aba === "municipio" ? await municipio(ehAdminGeral(user)) : null}
-      {aba === "exercicio" ? await exercicio(podeGerirExercicio(user)) : null}
-      {aba === "exercicio" ? await historico(ehAdminGeral(user)) : null}
-      {aba === "validacao" ? await validacao(podeGerirExercicio(user)) : null}
-      {aba === "portal" ? await portal(temPermissao(user, "administrarConfiguracoes")) : null}
-      {aba === "usuarios" ? await usuarios(user) : null}
-      {aba === "perfis" ? await perfis(user) : null}
-      {aba === "areas" ? await areas(ehAdminGeral(user)) : null}
-      {aba === "tipos-destino" ? await tiposDestino(ehAdminGeral(user)) : null}
-      {aba === "destinos" ? await destinos(ehAdminGeral(user)) : null}
-      {aba === "biblioteca" ? await biblioteca() : null}
-      {aba === "precos" ? await fontesPreco(temPermissao(user, "administrarConfiguracoes")) : null}
-      {aba === "normas" ? await normas() : null}
-      {aba === "auditoria" ? await auditoria(sp) : null}
+      <div className="grid grid-cols-[230px_minmax(0,1fr)] items-start gap-5 max-lg:grid-cols-1">
+        <MenuSecoes grupos={GRUPOS.map((g) => ({ titulo: g, secoes: abas.filter((a) => a.grupo === g).map(({ id, titulo }) => ({ id, titulo })) })).filter((g) => g.secoes.length)} atual={aba} />
+        <div className="min-w-0">
+          {aba === "municipio" ? await municipio(ehAdminGeral(user)) : null}
+          {aba === "exercicio" ? await exercicio(podeGerirExercicio(user)) : null}
+          {aba === "exercicio" ? await historico(ehAdminGeral(user)) : null}
+          {aba === "validacao" ? await validacao(podeGerirExercicio(user)) : null}
+          {aba === "portal" ? await portal(temPermissao(user, "administrarConfiguracoes")) : null}
+          {aba === "usuarios" ? await usuarios(user) : null}
+          {aba === "perfis" ? await perfis(user) : null}
+          {aba === "areas" ? await areas(ehAdminGeral(user)) : null}
+          {aba === "tipos-destino" ? await tiposDestino(ehAdminGeral(user)) : null}
+          {aba === "destinos" ? await destinos(ehAdminGeral(user)) : null}
+          {aba === "biblioteca" ? await biblioteca() : null}
+          {aba === "precos" ? await fontesPreco(temPermissao(user, "administrarConfiguracoes")) : null}
+          {aba === "normas" ? await normas() : null}
+          {aba === "auditoria" ? await auditoria(sp) : null}
+        </div>
+      </div>
     </Pagina>
   );
 }
