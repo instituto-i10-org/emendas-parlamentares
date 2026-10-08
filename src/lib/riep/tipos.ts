@@ -230,4 +230,5 @@ export type Selecao = {
 };
 
 export type Nivel = "ok" | "warn" | "bad";
-export type Checagem = { nivel: Nivel; titulo: string; detalhe: string };
+// `declaracao`: marcada na seção "Declarações e envio", não na de verificações.
+export type Checagem = { nivel: Nivel; titulo: string; detalhe: string; declaracao?: true };

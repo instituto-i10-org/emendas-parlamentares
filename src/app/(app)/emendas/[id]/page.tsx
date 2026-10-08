@@ -215,7 +215,7 @@ export default async function EmendaPage({ params, searchParams }: { params: Pro
             </div>
           ) : null}
         </section>
-        <aside className="grid min-w-0 content-start gap-4">
+        <aside className="flex min-w-0 flex-col gap-4 min-[1081px]:sticky min-[1081px]:top-4 min-[1081px]:max-h-[calc(100dvh-2rem)]">
           <AbasLateral
             abas={[
               {

@@ -69,15 +69,14 @@ test.describe("D1 — fontes de preço e responsabilidade", () => {
     const id = await emendaValida(page, `Aquisição de cadeira de rodas para a unidade de saúde ${PREFIXO}`);
     await sql(`update "Emenda" set "declaracaoPrecos" = false where id = $1`, [id]);
     await page.goto(`/emendas/${id}?etapa=3`);
-    await expect(page.getByText("Declaração dos preços pendente")).toBeVisible();
+    // A declaração se marca na seção seguinte: as verificações não a listam.
+    await expect(page.locator('[data-guia="nova-emenda.treze"]')).toBeVisible();
+    await expect(page.getByText("Declaração dos preços pendente")).toHaveCount(0);
     await proximo(page);
     const caixa = page.getByRole("checkbox", { name: /Declaro que pesquisei e informei os preços desta emenda/ });
     await expect(caixa).not.toBeChecked();
+    await expect(page.getByRole("button", { name: /^Submeter/ })).toBeDisabled();
     await caixa.check();
-    // De volta às verificações, a pendência sumiu.
-    await page.getByRole("button", { name: /^Seção 1: Verificações/ }).click();
-    await expect(page.getByText("Declaração dos preços pendente")).toHaveCount(0);
-    await proximo(page);
     await page.getByRole("button", { name: /^Submeter/ }).click();
     await expect(page).toHaveURL(new RegExp(`/emendas/${id}$`), { timeout: 15_000 });
     const [e] = await sql<{ status: string; declaracaoPrecos: boolean }>(`select status, "declaracaoPrecos" from "Emenda" where id = $1`, [id]);

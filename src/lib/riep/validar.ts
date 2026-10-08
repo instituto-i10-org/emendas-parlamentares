@@ -72,6 +72,8 @@ export function validar(e: EstadoValidacao, ctx: ContextoValidacao): Checagem[] 
   const { config: cfg, aplicado: apl, biblioteca } = ctx;
   const out: Checagem[] = [];
   const add = (nivel: Checagem["nivel"], titulo: string, detalhe: string) => out.push({ nivel, titulo, detalhe });
+  const declaracao = (nivel: Checagem["nivel"], titulo: string, detalhe: string) =>
+    out.push({ nivel, titulo, detalhe, declaracao: true });
 
   const c = classificacaoValida(e.classificacao);
   const sit = situacaoEfetiva(c, e.selecao);
@@ -453,16 +455,16 @@ export function validar(e: EstadoValidacao, ctx: ContextoValidacao): Checagem[] 
     else add("ok", "Habilitação da entidade", "Documentação regular (arts. 33-39 da Lei 13.019/2014)");
   }
 
-  if (e.declaracao) add("ok", "Declaração de inexistência de vedação", "Assinada pelo proponente");
-  else add("warn", "Declaração pendente", "Marque a declaração de inexistência de vínculo até o 3º grau.");
+  if (e.declaracao) declaracao("ok", "Declaração de inexistência de vedação", "Assinada pelo proponente");
+  else declaracao("warn", "Declaração pendente", "Marque a declaração de inexistência de vínculo até o 3º grau.");
 
   if (e.dotacaoInformada === "FORA") {
-    if (e.declaracaoDotacao) add("ok", "Declaração da dotação", "O proponente declarou que informou a classificação e responde por ela");
-    else add("bad", "Declaração da dotação pendente", "Marque «A classificação foi informada por mim e é de minha responsabilidade» para enviar.");
+    if (e.declaracaoDotacao) declaracao("ok", "Declaração da dotação", "O proponente declarou que informou a classificação e responde por ela");
+    else declaracao("bad", "Declaração da dotação pendente", "Marque «A classificação foi informada por mim e é de minha responsabilidade» para enviar.");
   }
 
-  if (e.declaracaoPrecos) add("ok", "Declaração dos preços", "O proponente declarou que pesquisou e informou os preços");
-  else add("bad", "Declaração dos preços pendente", "Marque «Declaro que pesquisei e informei os preços desta emenda» para enviar.");
+  if (e.declaracaoPrecos) declaracao("ok", "Declaração dos preços", "O proponente declarou que pesquisou e informou os preços");
+  else declaracao("bad", "Declaração dos preços pendente", "Marque «Declaro que pesquisei e informei os preços desta emenda» para enviar.");
 
   return out;
 }

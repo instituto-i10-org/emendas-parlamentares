@@ -33,8 +33,10 @@ export function Etapa3({
   // Seção em exibição (secoes.ts): verificações ou declarações e envio.
   secao: string;
 }) {
-  const pendentes = d.checks.filter((c) => c.nivel !== "ok");
-  const ok = d.checks.filter((c) => c.nivel === "ok");
+  // As declarações se marcam na seção seguinte; aqui ficam só as verificações.
+  const verificacoes = d.checks.filter((c) => !c.declaracao);
+  const pendentes = verificacoes.filter((c) => c.nivel !== "ok");
+  const ok = verificacoes.filter((c) => c.nivel === "ok");
   if (secao === "envio") return <Declaracoes e={e} d={d} atualizar={atualizar} emendamento={emendamento} podeRemeter={podeRemeter} />;
   return (
     <div className="flex flex-col gap-4">
@@ -63,7 +65,7 @@ export function Etapa3({
           ))}
         </div>
       ) : (
-        <p className="rounded-box bg-ok-bg px-4 py-3 text-sm font-bold text-ok-ink">Nenhuma pendência: a emenda está pronta para submeter.</p>
+        <p className="rounded-box bg-ok-bg px-4 py-3 text-sm font-bold text-ok-ink">Nenhuma pendência nas verificações. No próximo passo, marque as declarações para enviar.</p>
       )}
       {ok.length ? (
         <Detalhes titulo={`${ok.length} verificações concluídas`}>
