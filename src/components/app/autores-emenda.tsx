@@ -40,7 +40,7 @@ export function AutoresEmenda({ autores, className }: { autores: Parte[]; classN
                   <span className="min-w-0">
                     {a.nome}
                     {a.partido ? <span className="text-muted-foreground"> ({a.partido})</span> : null}
-                    {a.principal ? <span className="text-xs text-muted-foreground"> · autor</span> : null}
+                    {a.principal ? <span className="block text-xs text-muted-foreground">autor da emenda</span> : null}
                   </span>
                   <span className="shrink-0 font-bold tnum">{BRL(a.valor)}</span>
                 </li>

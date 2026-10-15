@@ -45,12 +45,6 @@ export async function GET(req: Request) {
       Exercicio: ano,
       Situacao: STATUS_EMENDA[e.status].rotulo,
       Autor: e.autor.nome,
-      // Coautoria: os demais vereadores com a parte de cada um.
-      Coautores: autoresDaEmenda(e)
-        .filter((a) => !a.principal)
-        .map((a) => `${a.nome} (${a.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })})`)
-        .join("; "),
-      ParteDoAutor: parteDe(e, e.autorId),
       Objeto: e.objeto,
       Beneficiario: e.destino?.nome ?? "",
       Orgao: d?.orgao.codigo ?? "",
@@ -74,6 +68,13 @@ export async function GET(req: Request) {
       Empenhado: e.somasExec.empenhado,
       Liquidado: e.somasExec.liquidado,
       Pago: e.somasExec.pago,
+      // Coautoria (no fim, para não deslocar as colunas de antes): os demais
+      // vereadores com a parte de cada um.
+      Coautores: autoresDaEmenda(e)
+        .filter((a) => !a.principal)
+        .map((a) => `${a.nome} (${a.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })})`)
+        .join("; "),
+      ParteDoAutor: parteDe(e, e.autorId),
     };
   });
   // Uma linha por vereador e emenda, com a parte dele: é o que soma na cota.
