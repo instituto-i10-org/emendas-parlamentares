@@ -158,6 +158,10 @@ export type ConfigMotor = {
 // Já apresentado pelo autor no exercício, por parcela, sem contar esta emenda.
 export type Aplicado = { saude: number; demais: number };
 
+// Coautoria: cada vereador da emenda, com a parte dele e o que ele já
+// apresentou. A cota é conferida parte a parte, cada uma contra a do dono.
+export type ParteCota = { nome: string; valor: number; aplicado: Aplicado };
+
 // --- resultado da interpretação e da classificação --------------------------
 
 export type Interpretacao = {

@@ -72,7 +72,7 @@ describe("documento da emenda", () => {
     expect(art2).toContain("Ficha 1208");
     expect(art2).toContain("R$ 286.944,11");
     expect(d.localData).toBe("Câmara Municipal de Mogi Guaçu, 8 de outubro de 2026.");
-    expect(d.assinatura).toEqual({ nome: "ANA SOUZA", cargo: "VEREADOR" });
+    expect(d.assinaturas).toEqual([{ nome: "ANA SOUZA", cargo: "VEREADOR" }]);
   });
 
   it("o cargo não se repete quando o nome já o traz", () => {

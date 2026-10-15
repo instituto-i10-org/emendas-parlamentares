@@ -10,6 +10,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { excluirRascunho, salvarEmenda } from "@/lib/actions/emendas";
 import type { ContextoEmenda, DestinoTela } from "@/lib/emendas/contexto";
 import { chaveClassificacao, lerNumero, paraValidacao, type EstadoEmenda } from "@/lib/emendas/estado";
+import { partesParaCota, type VereadorCota } from "@/lib/emendas/autoria";
 import { aplicarDotacaoInformada } from "@/lib/emendas/dotacao-informada";
 import { contextoVerificacao, verificarEmenda } from "@/lib/emendas/verificacao";
 import {
@@ -43,7 +44,15 @@ export type DerivadoEmenda = ReturnType<typeof useDerivado>;
 
 // O que se deduz do estado: destino, classificação, dotação, modelo, meta,
 // validação. Recalculado a cada mudança — o motor é rápido e puro.
-function useDerivado(e: EstadoEmenda, ctx: ContextoEmenda, destinos: DestinoTela[], aplicado: Aplicado, reenvio: boolean) {
+function useDerivado(
+  e: EstadoEmenda,
+  ctx: ContextoEmenda,
+  destinos: DestinoTela[],
+  aplicado: Aplicado,
+  reenvio: boolean,
+  autor: string,
+  vereadores: VereadorCota[]
+) {
   const destino = useMemo(() => destinos.find((d) => d.id === e.destinoId) ?? null, [destinos, e.destinoId]);
   const chave = chaveClassificacao(e);
   const valida = !!e.classificadoCom && e.classificadoCom === chave;
@@ -73,17 +82,29 @@ function useDerivado(e: EstadoEmenda, ctx: ContextoEmenda, destinos: DestinoTela
   const somaPlanilha = e.itens.reduce((s, i) => s + lerNumero(i.quantidade) * lerNumero(i.valorUnitario), 0);
   const valor = valorDaEmenda(lerNumero(e.pretendido), somaPlanilha);
   const planilha = conferirPlanilha(lerNumero(e.pretendido), somaPlanilha, ctx.config.toleranciaValorPct);
+  // Coautoria: cada parte conferida contra a cota do dono dela.
+  const partes = useMemo(
+    () =>
+      partesParaCota(
+        valor,
+        { nome: autor, aplicado },
+        e.coautores.map((c) => ({ autorId: c.autorId, valor: lerNumero(c.valor) })),
+        vereadores
+      ),
+    [valor, autor, aplicado, e.coautores, vereadores]
+  );
   const checks: Checagem[] = useMemo(
     () =>
       validar(paraValidacao(e, { classificacao, metaPlanejamento, dotacaoInformada: informada.informada }), {
         config: ctx.config,
         aplicado,
+        partes,
         biblioteca: ctx.catalogo.objetos,
       }),
-    [e, classificacao, metaPlanejamento, informada.informada, ctx, aplicado]
+    [e, classificacao, metaPlanejamento, informada.informada, ctx, aplicado, partes]
   );
   // As treze verificações, sobre as mesmas conferências.
-  const ctxVerificacao = useMemo(() => contextoVerificacao(ctx, aplicado, reenvio), [ctx, aplicado, reenvio]);
+  const ctxVerificacao = useMemo(() => contextoVerificacao(ctx, aplicado, reenvio, partes), [ctx, aplicado, reenvio, partes]);
   const treze = useMemo(
     () => verificarEmenda(e, valor, dotacao, ctxVerificacao, checks, informada.informada === "FORA"),
     [e, valor, dotacao, ctxVerificacao, checks, informada.informada]
@@ -109,6 +130,7 @@ function useDerivado(e: EstadoEmenda, ctx: ContextoEmenda, destinos: DestinoTela
     resumo: { ...resumo, bloqueios: resumo.bloqueios + falhas, pode: resumo.pode && falhas === 0 },
     avanca: podeAvancar(classificacao, e.selecao),
     valida: classificacaoValida(classificacao),
+    partes,
   };
 }
 
@@ -117,6 +139,7 @@ export function EditorEmenda({
   inicial,
   aplicado,
   autor,
+  vereadores = [],
   diligencia = null,
   devolucao = null,
   etapaInicial = 1,
@@ -126,6 +149,8 @@ export function EditorEmenda({
   inicial: EstadoEmenda;
   aplicado: Aplicado;
   autor: string;
+  // Vereadores que podem entrar como coautores (com o aplicado de cada um).
+  vereadores?: VereadorCota[];
   // Emenda devolvida pela Comissão para sanear: o pedido, o prazo e o número.
   diligencia?: { numero: number | null; motivo: string; ate: string | null } | null;
   // Devolvida ao autor pela análise técnica (saneamento), com o apontamento.
@@ -163,7 +188,7 @@ export function EditorEmenda({
     setAlterado(true);
   }, []);
 
-  const d = useDerivado(e, ctx, destinos, aplicado, !!diligencia);
+  const d = useDerivado(e, ctx, destinos, aplicado, !!diligencia, autor, vereadores);
   // Resultado da remessa recusada pelo servidor (as treze como ele as viu).
   const [recusa, setRecusa] = useState<{ verificacoes: Verificacao[]; erro: string } | null>(null);
   // Remessa liberada com o emendamento aberto; com o prazo vencido, só o
@@ -581,6 +606,8 @@ export function EditorEmenda({
                   d={d}
                   ctx={ctx}
                   aplicado={aplicado}
+                  autor={autor}
+                  vereadores={vereadores}
                   destinos={destinos}
                   aoCadastrarDestino={(novo) => setDestinos((l) => [...l.filter((x) => x.id !== novo.id), novo])}
                   atualizar={atualizar}

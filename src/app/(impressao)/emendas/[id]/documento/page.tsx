@@ -30,6 +30,8 @@ export default async function DocumentoPage({ params }: { params: Promise<{ id: 
   if (!x) notFound();
   const ve =
     podeGerirEmenda(user, { autorUsuarioId: x.autor.usuarioId }) ||
+    // O coautor assina o documento: vê, sem gerir.
+    x.coautores.some((c) => c.autor.usuarioId === user.id) ||
     podeVerTodasEmendas(user) ||
     temPermissao(user, "analisarViabilidade", "registrarExecucao", "consultarTudo");
   if (!ve) notFound();
@@ -95,9 +97,13 @@ export default async function DocumentoPage({ params }: { params: Promise<{ id: 
             <b>Art. 3º</b> {doc.art3}
           </p>
           <p className="mt-6">{doc.localData}</p>
-          <div className="mt-12 text-center break-inside-avoid">
-            <div className="mx-auto w-72 border-t border-[#111] pt-1 font-bold">{doc.assinatura.nome}</div>
-            <div>{doc.assinatura.cargo}</div>
+          <div className={`mt-12 grid gap-x-8 gap-y-14 ${doc.assinaturas.length > 1 ? "grid-cols-2 max-sm:grid-cols-1" : ""}`}>
+            {doc.assinaturas.map((a, i) => (
+              <div key={i} className="text-center break-inside-avoid">
+                <div className="mx-auto w-72 max-w-full border-t border-[#111] pt-1 font-bold">{a.nome}</div>
+                <div>{a.cargo}</div>
+              </div>
+            ))}
           </div>
         </Folha>
 

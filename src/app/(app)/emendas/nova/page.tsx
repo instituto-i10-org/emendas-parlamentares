@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { EditorEmenda } from "@/components/emenda/editor";
 import { Poder } from "@/generated/prisma/enums";
 import { requireAccess } from "@/lib/access";
-import { aplicadoDoAutor, carregarContexto } from "@/lib/emendas/contexto";
+import { aplicadoDoAutor, carregarContexto, vereadoresParaCoautoria } from "@/lib/emendas/contexto";
 import { estadoInicial } from "@/lib/emendas/estado";
 import { anoPadrao, exercicioHistorico, getAnoAtivo, listarExercicios } from "@/lib/exercicio";
 import { prisma } from "@/lib/prisma";
@@ -23,6 +23,9 @@ export default async function NovaEmendaPage() {
   const autor = await prisma.autor.findUnique({ where: { usuarioId: user.id } });
   if (!autor) redirect("/inicio?erro=acesso-negado");
   if (!ctx.loa.length) redirect("/emendas?erro=sem-loa");
-  const aplicado = await aplicadoDoAutor(ctx.exercicioId, autor.id, ctx.config.percentualSaude);
-  return <EditorEmenda ctx={ctx} inicial={estadoInicial()} aplicado={aplicado} autor={autor.nome} />;
+  const [aplicado, vereadores] = await Promise.all([
+    aplicadoDoAutor(ctx.exercicioId, autor.id, ctx.config.percentualSaude),
+    vereadoresParaCoautoria(ctx.exercicioId, ctx.config.percentualSaude, autor.id),
+  ]);
+  return <EditorEmenda ctx={ctx} inicial={estadoInicial()} aplicado={aplicado} autor={autor.nome} vereadores={vereadores} />;
 }

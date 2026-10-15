@@ -9,6 +9,7 @@ export async function buscarEmenda(id: string) {
     where: { id },
     include: {
       autor: true,
+      coautores: { orderBy: { ordem: "asc" }, include: { autor: true } },
       destino: true,
       exercicio: true,
       dotacao: { include: { acao: true, orgao: true, unidadeOrcamentaria: true, naturezaDespesa: true, programa: true, funcao: true, subfuncao: true, fonteRecurso: true } },
@@ -62,6 +63,11 @@ export function paraEstado(x: EmendaCompleta): EstadoEmenda {
     destinoId: x.destinoId,
     objeto: x.objeto,
     pretendido: x.valorPretendido ? formatarNumero(x.valorPretendido.toNumber(), 2, "R$ ") : "",
+    // A parte do autor é o valor menos as dos coautores.
+    parteAutor: x.valorPretendido
+      ? formatarNumero(x.valorPretendido.toNumber() - x.coautores.reduce((s, c) => s + c.valor.toNumber(), 0), 2, "R$ ")
+      : "",
+    coautores: x.coautores.map((c) => ({ autorId: c.autorId, valor: formatarNumero(c.valor.toNumber(), 2, "R$ ") })),
     endereco: x.endereco,
     selecao: {
       escolha: x.escolhaDotacao,

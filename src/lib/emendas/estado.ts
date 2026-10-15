@@ -20,13 +20,21 @@ export const chaveInformada = (d: DotacaoInformada) =>
 export const informadaConferida = (d: DotacaoInformadaForm | null): boolean =>
   !!d && d.conferidaCom === chaveInformada(d);
 
+// Coautor: outro vereador e a parte dele no valor da emenda.
+export type CoautorForm = { autorId: string; valor: string };
+
 export type EstadoEmenda = {
   id: string | null;
   revisao: number;
   execucao: Execucao;
   destinoId: string | null;
   objeto: string;
+  // Valor da emenda. Com coautores, é a soma das partes (calculada).
   pretendido: string;
+  // Coautoria: a parte do autor e as dos coautores. Sem coautores, a parte do
+  // autor é o próprio valor da emenda.
+  parteAutor: string;
+  coautores: CoautorForm[];
   endereco: string;
   // Chave das entradas com que a classificação foi feita. Se as entradas
   // mudam, a classificação deixa de valer.
@@ -62,6 +70,8 @@ export const estadoInicial = (): EstadoEmenda => ({
   destinoId: null,
   objeto: "",
   pretendido: "",
+  parteAutor: "",
+  coautores: [],
   endereco: "",
   classificadoCom: null,
   selecao: { escolha: null, dotacaoId: null },
@@ -97,6 +107,20 @@ export function lerNumero(v: string | number | null | undefined): number {
 export function formatarNumero(v: number | null | undefined, casas = 2, prefixo = ""): string {
   if (v == null || !Number.isFinite(v)) return "";
   return prefixo + v.toLocaleString("pt-BR", { minimumFractionDigits: casas, maximumFractionDigits: casas });
+}
+
+// Valor da emenda pelas partes: sem coautores, o próprio valor digitado.
+export function totalDasPartes(e: Pick<EstadoEmenda, "pretendido" | "parteAutor" | "coautores">): number {
+  if (!e.coautores.length) return lerNumero(e.pretendido);
+  return Math.round((lerNumero(e.parteAutor) + e.coautores.reduce((s, c) => s + lerNumero(c.valor), 0)) * 100) / 100;
+}
+
+// Partes da emenda, para conferir antes de avançar.
+export function problemaDaAutoria(e: EstadoEmenda): string | null {
+  if (!e.coautores.length) return null;
+  if (e.coautores.some((c) => !c.autorId)) return "Escolha o vereador de cada linha, ou retire a linha vazia.";
+  if (!(lerNumero(e.parteAutor) > 0) || e.coautores.some((c) => !(lerNumero(c.valor) > 0))) return "Informe o valor de cada vereador.";
+  return null;
 }
 
 // As entradas que determinam a classificação. O valor pretendido fica de fora:
@@ -184,6 +208,8 @@ export const estadoSchema = z.object({
   destinoId: z.string().max(40).nullable(),
   objeto: texto(500),
   pretendido: numeroTexto,
+  parteAutor: numeroTexto.default(""),
+  coautores: z.array(z.object({ autorId: z.string().max(40), valor: numeroTexto })).max(30).default([]),
   endereco: texto(500),
   classificadoCom: z.string().max(2000).nullable(),
   selecao: z.object({

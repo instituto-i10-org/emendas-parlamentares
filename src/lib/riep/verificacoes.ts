@@ -1,7 +1,7 @@
 import type { DotacaoBase } from "./base";
 import { parcelaDaDotacao, parcelaSaude, totalParcela } from "./cota";
 import { BRL } from "./texto";
-import type { Aplicado, Checagem, ConfigMotor } from "./tipos";
+import type { Aplicado, Checagem, ConfigMotor, ParteCota } from "./tipos";
 
 // ============================================================================
 // As treze verificações da emenda (sempre as mesmas, na mesma ordem), cada uma
@@ -91,6 +91,8 @@ export type EntradaVerificacao = {
 export type ContextoVerificacao = {
   config: ConfigMotor;
   aplicado: Aplicado;
+  // Coautoria: as partes de cada vereador (sem ela, a emenda é toda do autor).
+  partes?: ParteCota[];
   emendamento: { aberto: boolean; motivo: string | null; explicacao: string };
   // Reenvio depois de diligência: o prazo de protocolo não o alcança.
   reenvio: boolean;
@@ -196,36 +198,56 @@ export function verificar(e: EntradaVerificacao, ctx: ContextoVerificacao, compl
     res.set("LIMITE_DEMAIS_AREAS", { estado: "falha", razao: "Sem a cota parametrizada não há limite a conferir." });
   } else {
     const rCota = regra("COTA_AUTOR");
-    const total = apl.saude + apl.demais + e.valor;
-    res.set(
-      "COTA_AUTOR",
-      centavos(total) <= centavos(cfg.cotaIndividual)
-        ? { estado: "conforme", razao: `${BRL(total)} de ${BRL(cfg.cotaIndividual)} da cota · restam ${BRL(cfg.cotaIndividual - total)}.` }
-        : { estado: problema(rCota.modo), razao: `Com esta emenda o autor chegaria a ${BRL(total)}, acima da cota de ${BRL(cfg.cotaIndividual)}.` }
-    );
     const rLim = regra("LIMITE_DEMAIS_AREAS");
+    const cotaIndividual = cfg.cotaIndividual;
     const p = parcelaDaDotacao(d);
-    if (!p) res.set("LIMITE_DEMAIS_AREAS", { estado: "falha", razao: "Sem dotação de destino não há como saber a parcela (saúde ou demais áreas)." });
-    else {
+    type Res = { estado: EstadoVerificacao; razao: string };
+    // Uma parte: o já aplicado pelo dono dela mais o valor que ela leva.
+    const conferir = (apl: Aplicado, valor: number): { cota: Res; lim: Res | null } => {
+      const total = apl.saude + apl.demais + valor;
+      const cota: Res =
+        centavos(total) <= centavos(cotaIndividual)
+          ? { estado: "conforme", razao: `${BRL(total)} de ${BRL(cotaIndividual)} da cota · restam ${BRL(cotaIndividual - total)}.` }
+          : { estado: problema(rCota.modo), razao: `Com esta emenda o autor chegaria a ${BRL(total)}, acima da cota de ${BRL(cotaIndividual)}.` };
+      if (!p) return { cota, lim: null };
       const tp = totalParcela(cfg, p)!;
-      const ap = (p === "SAUDE" ? apl.saude : apl.demais) + e.valor;
+      const ap = (p === "SAUDE" ? apl.saude : apl.demais) + valor;
       const ps = parcelaSaude(cfg)!;
-      const aplS = apl.saude + (p === "SAUDE" ? e.valor : 0);
-      const aplD = apl.demais + (p === "DEMAIS" ? e.valor : 0);
+      const aplS = apl.saude + (p === "SAUDE" ? valor : 0);
+      const aplD = apl.demais + (p === "DEMAIS" ? valor : 0);
+      let lim: Res;
       if (p === "SAUDE") {
-        res.set(
-          "LIMITE_DEMAIS_AREAS",
+        lim =
           centavos(ap) <= centavos(tp)
             ? { estado: "conforme", razao: `Ação e serviço público de saúde: conta para o mínimo de ${cfg.percentualSaude}%. ${BRL(aplS)} aplicados em saúde.` }
-            : { estado: problema(rLim.modo), razao: `A parcela de saúde é de ${BRL(tp)} e chegaria a ${BRL(ap)}.` }
-        );
+            : { estado: problema(rLim.modo), razao: `A parcela de saúde é de ${BRL(tp)} e chegaria a ${BRL(ap)}.` };
       } else if (centavos(ap) > centavos(tp)) {
-        res.set("LIMITE_DEMAIS_AREAS", { estado: problema(rLim.modo), razao: `As demais áreas podem receber até ${BRL(tp)} e chegariam a ${BRL(ap)}: a parcela mínima da saúde (${BRL(ps)}) fica resguardada.` });
-      } else if (cfg.afericaoSaude === "GLOBAL" && cfg.cotaIndividual - aplS - aplD < ps - aplS) {
-        res.set("LIMITE_DEMAIS_AREAS", { estado: problema(rLim.modo), razao: `O mínimo em saúde (${BRL(ps)}) deixaria de ser alcançável com a cota restante.` });
+        lim = { estado: problema(rLim.modo), razao: `As demais áreas podem receber até ${BRL(tp)} e chegariam a ${BRL(ap)}: a parcela mínima da saúde (${BRL(ps)}) fica resguardada.` };
+      } else if (cfg.afericaoSaude === "GLOBAL" && cotaIndividual - aplS - aplD < ps - aplS) {
+        lim = { estado: problema(rLim.modo), razao: `O mínimo em saúde (${BRL(ps)}) deixaria de ser alcançável com a cota restante.` };
       } else {
-        res.set("LIMITE_DEMAIS_AREAS", { estado: "conforme", razao: `${BRL(ap)} de ${BRL(tp)} nas demais áreas · a parcela mínima da saúde segue resguardada.` });
+        lim = { estado: "conforme", razao: `${BRL(ap)} de ${BRL(tp)} nas demais áreas · a parcela mínima da saúde segue resguardada.` };
       }
+      return { cota, lim };
+    };
+    // Coautoria: cada parte contra a cota do dono; vale a pior, com o nome à
+    // frente de cada razão.
+    const partes = ctx.partes && ctx.partes.length > 1 ? ctx.partes : null;
+    const juntar = (rs: { nome: string; r: Res }[]): Res => {
+      const pior = rs.some((x) => x.r.estado === "falha") ? "falha" : rs.some((x) => x.r.estado === "alerta") ? "alerta" : "conforme";
+      return { estado: pior, razao: rs.map((x) => `${x.nome}: ${x.r.razao.replace("o autor chegaria", "chegaria")}`).join(" ") };
+    };
+    if (partes) {
+      const rs = partes.map((x) => ({ nome: x.nome, ...conferir(x.aplicado, x.valor) }));
+      res.set("COTA_AUTOR", juntar(rs.map((x) => ({ nome: x.nome, r: x.cota }))));
+      if (p) res.set("LIMITE_DEMAIS_AREAS", juntar(rs.map((x) => ({ nome: x.nome, r: x.lim! }))));
+    } else {
+      const r = conferir(apl, e.valor);
+      res.set("COTA_AUTOR", r.cota);
+      if (r.lim) res.set("LIMITE_DEMAIS_AREAS", r.lim);
+    }
+    if (!p) res.set("LIMITE_DEMAIS_AREAS", { estado: "falha", razao: "Sem dotação de destino não há como saber a parcela (saúde ou demais áreas)." });
+    else {
       // Dentro do limite, mas a parcela saiu da funcional digitada, sem a LOA.
       const x = res.get("LIMITE_DEMAIS_AREAS")!;
       if (fora && x.estado === "conforme") {

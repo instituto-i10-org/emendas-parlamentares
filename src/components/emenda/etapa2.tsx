@@ -867,7 +867,15 @@ function ConferenciaPlanilha({ cp, tolerancia, atualizar }: { cp: ConferenciaPla
       variant="surface"
       size="sm"
       onClick={() => {
-        atualizar({ pretendido: formatarNumero(cp.soma, 2, "R$ ") });
+        // Com coautores, a diferença entra (ou sai) da parte do autor.
+        const co = (x: EstadoEmenda) => x.coautores.reduce((s, c) => s + lerNumero(c.valor), 0);
+        atualizar((x) =>
+          x.coautores.length
+            ? cp.soma > co(x)
+              ? { pretendido: formatarNumero(cp.soma, 2, "R$ "), parteAutor: formatarNumero(cp.soma - co(x), 2, "R$ ") }
+              : {}
+            : { pretendido: formatarNumero(cp.soma, 2, "R$ "), parteAutor: formatarNumero(cp.soma, 2, "R$ ") }
+        );
         toast("Valor da emenda igualado ao total da planilha.");
       }}
     >

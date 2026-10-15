@@ -13,7 +13,8 @@ import { informadaGravada, textoInformada } from "@/lib/emendas/dotacao-informad
 import { Button } from "@/components/ui/button";
 import { podeGerirEmenda, podeVerTodasEmendas, temPermissao } from "@/lib/authz";
 import { buscarEmenda, paraEstado } from "@/lib/emendas/carregar";
-import { aplicadoDoAutor, carregarContexto } from "@/lib/emendas/contexto";
+import { autoresDaEmenda, nomeComPartido } from "@/lib/emendas/autoria";
+import { aplicadoDoAutor, carregarContexto, vereadoresParaCoautoria } from "@/lib/emendas/contexto";
 import { somasExecucao } from "@/lib/emendas/execucao";
 import { ETAPA_EXECUCAO, RESULTADO_VIABILIDADE, STATUS_EMENDA } from "@/lib/emendas/rotulos";
 import { editavelPeloAutor, naoRemetida } from "@/lib/emendas/situacoes";
@@ -29,13 +30,16 @@ export default async function EmendaPage({ params, searchParams }: { params: Pro
   const x = await buscarEmenda(id);
   if (!x) notFound();
   const gere = podeGerirEmenda(user, { autorUsuarioId: x.autor.usuarioId });
-  const ve = gere || podeVerTodasEmendas(user) || temPermissao(user, "analisarViabilidade", "registrarExecucao", "consultarTudo") || x.autor.usuarioId === user.id;
+  const ve = gere || podeVerTodasEmendas(user) || temPermissao(user, "analisarViabilidade", "registrarExecucao", "consultarTudo") || x.autor.usuarioId === user.id || x.coautores.some((c) => c.autor.usuarioId === user.id);
   if (!ve) notFound();
 
   if (editavelPeloAutor(x.status) && gere) {
     const ctx = await carregarContexto(x.exercicio.ano);
     if (!ctx) notFound();
-    const aplicado = await aplicadoDoAutor(ctx.exercicioId, x.autorId, ctx.config.percentualSaude, x.id);
+    const [aplicado, vereadores] = await Promise.all([
+      aplicadoDoAutor(ctx.exercicioId, x.autorId, ctx.config.percentualSaude, x.id),
+      vereadoresParaCoautoria(ctx.exercicioId, ctx.config.percentualSaude, x.autorId, x.id),
+    ]);
     const diligencia =
       x.status === "EM_DILIGENCIA"
         ? { numero: x.numero, motivo: x.diligenciaMotivo ?? "", ate: x.diligenciaAte ? DATA(x.diligenciaAte) : null }
@@ -56,6 +60,7 @@ export default async function EmendaPage({ params, searchParams }: { params: Pro
         inicial={paraEstado(x)}
         aplicado={aplicado}
         autor={x.autor.nome}
+        vereadores={vereadores}
         diligencia={diligencia}
         devolucao={devolucao}
         etapaInicial={etapa === 2 || etapa === 3 ? etapa : 1}
@@ -119,8 +124,27 @@ export default async function EmendaPage({ params, searchParams }: { params: Pro
           </div>
           <h2 className="text-lg font-bold">{x.objeto}</h2>
           <dl className="mt-4 grid grid-cols-[minmax(150px,auto)_1fr] gap-x-4 gap-y-2 text-sm max-sm:grid-cols-1">
-            <dt className="text-muted-foreground">Autor</dt>
-            <dd>{x.autor.nome}</dd>
+            {x.coautores.length ? (
+              <>
+                <dt className="text-muted-foreground">Autores</dt>
+                <dd>
+                  <ul className="grid gap-1">
+                    {autoresDaEmenda(x).map((a) => (
+                      <li key={a.autorId} className="flex flex-wrap items-baseline gap-x-2">
+                        <span>{nomeComPartido(a)}</span>
+                        <span className="font-semibold tnum">{BRL(a.valor)}</span>
+                        {a.principal ? <span className="text-xs text-muted-foreground">autor</span> : null}
+                      </li>
+                    ))}
+                  </ul>
+                </dd>
+              </>
+            ) : (
+              <>
+                <dt className="text-muted-foreground">Autor</dt>
+                <dd>{x.autor.nome}</dd>
+              </>
+            )}
             <dt className="text-muted-foreground">Destino</dt>
             <dd>{x.destino?.nome ?? "—"}</dd>
             <dt className="text-muted-foreground">Endereço</dt>

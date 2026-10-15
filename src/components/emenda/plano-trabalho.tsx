@@ -1,3 +1,4 @@
+import { autoresDaEmenda } from "@/lib/emendas/autoria";
 import { informadaGravada, textoInformada } from "@/lib/emendas/dotacao-informada";
 import type { EmendaCompleta } from "@/lib/emendas/carregar";
 import { BRL, DATA, DATA_HORA, EVENTOS, INSTRUMENTOS, MODELOS, QUADROS, TIPOS_REFERENCIA, chaveQuadro, rotuloReferencia, type Checagem, type Modelo, type Verificacao } from "@/lib/riep";
@@ -32,7 +33,18 @@ export function ConteudoPlano({ x, validacao = true }: { x: EmendaCompleta; vali
               ["Situação", STATUS_EMENDA[x.status]?.rotulo ?? x.status],
               ["Valor da emenda", BRL(x.valor.toNumber())],
               ["Planilha do plano", BRL(total)],
-              ["Autor", x.autor.nome + (x.autor.partido ? ` — ${x.autor.partido}` : "")],
+              ...(x.coautores.length
+                ? ([
+                    [
+                      "Autores",
+                      <span key="au" className="whitespace-pre-line">
+                        {autoresDaEmenda(x)
+                          .map((a) => `${a.nome}${a.partido ? ` — ${a.partido}` : ""}: ${BRL(a.valor)}${a.principal ? " (autor)" : ""}`)
+                          .join("\n")}
+                      </span>,
+                    ],
+                  ] as [string, React.ReactNode][])
+                : ([["Autor", x.autor.nome + (x.autor.partido ? ` — ${x.autor.partido}` : "")]] as [string, React.ReactNode][])),
               ["Tipo de despesa", d ? (d.naturezaDespesa.grupo === "4" ? "Investimento (GND 4)" : "Custeio (GND 3)") : pendente("A definir pela análise técnica")],
               ["Parcela da cota", x.parcela === "SAUDE" ? "Saúde — ações e serviços públicos de saúde (IC-CO 1002)" : x.parcela === "DEMAIS" ? "Demais áreas" : pendente()],
             ]}
@@ -247,11 +259,13 @@ export function ConteudoPlano({ x, validacao = true }: { x: EmendaCompleta; vali
         })()}
 
         <section className="mt-10 grid grid-cols-2 gap-10 text-center text-xs max-sm:grid-cols-1">
-          <div className="border-t border-ink pt-2">
-            {x.autor.nome}
-            <br />
-            Vereador(a) autor(a) da emenda
-          </div>
+          {autoresDaEmenda(x).map((a) => (
+            <div key={a.autorId} className="border-t border-ink pt-2">
+              {a.nome}
+              <br />
+              {x.coautores.length ? (a.principal ? "Vereador(a) autor(a) da emenda" : "Vereador(a) coautor(a) da emenda") : "Vereador(a) autor(a) da emenda"}
+            </div>
+          ))}
           <div className="border-t border-ink pt-2">
             Poder Executivo
             <br />

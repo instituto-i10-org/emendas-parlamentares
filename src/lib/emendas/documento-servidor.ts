@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import type { EmendaCompleta } from "./carregar";
+import { autoresDaEmenda } from "./autoria";
 import { informadaGravada } from "./dotacao-informada";
 import { montarDocumento, type DotacaoDocumento } from "./documento";
 import { naoRemetida } from "./situacoes";
@@ -62,6 +63,9 @@ export async function documentoDaEmenda(x: EmendaCompleta) {
     fundamento: config?.fundamentoDocumento ?? null,
     periodoPpa: config?.periodoPpa ?? null,
     autor: { nome: x.autor.nome, partido: x.autor.partido, cargo: x.autor.cargo },
+    autores: x.coautores.length
+      ? autoresDaEmenda(x).map((a, i) => ({ nome: a.nome, partido: a.partido, cargo: i ? x.coautores[i - 1].autor.cargo : x.autor.cargo, valor: a.valor }))
+      : undefined,
     objeto: x.objeto,
     execucao: x.execucao,
     agenteExecutor: x.agenteExecutor,

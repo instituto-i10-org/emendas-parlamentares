@@ -4,10 +4,11 @@ import { revalidatePath } from "next/cache";
 import { Prisma } from "@/generated/prisma/client";
 import { registrarAuditoria } from "@/lib/audit";
 import { podeCriarEmenda, podeGerirEmenda } from "@/lib/authz";
-import { aplicadoDoAutor, carregarContexto } from "@/lib/emendas/contexto";
+import { partesParaCota } from "@/lib/emendas/autoria";
+import { aplicadoDoAutor, carregarContexto, vereadoresParaCoautoria } from "@/lib/emendas/contexto";
 import { mesmaEmenda } from "@/lib/emendas/duplicidade";
 import { mudarSituacao } from "@/lib/emendas/historico";
-import { chaveClassificacao, estadoSchema, lerNumero, paraValidacao, type EstadoEmenda } from "@/lib/emendas/estado";
+import { chaveClassificacao, estadoSchema, formatarNumero, lerNumero, paraValidacao, totalDasPartes, type EstadoEmenda } from "@/lib/emendas/estado";
 import { NAO_REMETIDAS, editavelPeloAutor } from "@/lib/emendas/situacoes";
 import { aplicarDotacaoInformada } from "@/lib/emendas/dotacao-informada";
 import { contextoVerificacao, verificarEmenda } from "@/lib/emendas/verificacao";
@@ -87,6 +88,7 @@ export async function salvarEmenda(entrada: EstadoEmenda, submeter = false, anoT
     return { ok: false, erro: `${em.explicacao} A emenda não pode ser submetida agora.` };
   }
   let autorId: string;
+  let autorNome: string;
   if (existente) {
     if (!podeGerirEmenda(user, { autorUsuarioId: existente.autor.usuarioId })) {
       return { ok: false, erro: "Você não pode alterar esta emenda." };
@@ -98,11 +100,29 @@ export async function salvarEmenda(entrada: EstadoEmenda, submeter = false, anoT
       return { ok: false, erro: "Esta emenda foi alterada em outra aba. Reabra a versão salva antes de continuar." };
     }
     autorId = existente.autorId;
+    autorNome = existente.autor.nome;
   } else {
     if (!podeCriarEmenda(user)) return { ok: false, erro: "Seu perfil não apresenta emendas." };
     const autor = await prisma.autor.findUnique({ where: { usuarioId: user.id } });
     if (!autor) return { ok: false, erro: "Sua conta não está vinculada a um autor (vereador)." };
     autorId = autor.id;
+    autorNome = autor.nome;
+  }
+
+  // Coautoria: vereadores distintos do autor, cadastrados e reais; o valor da
+  // emenda passa a ser a soma das partes.
+  const coautores = e.coautores.map((c) => ({ autorId: c.autorId, valor: lerNumero(c.valor) }));
+  if (coautores.length) {
+    const ids = coautores.map((c) => c.autorId);
+    if (ids.some((id) => !id)) return { ok: false, erro: "Escolha o vereador de cada linha de coautoria, ou retire a linha vazia." };
+    if (new Set(ids).size !== ids.length || ids.includes(autorId)) return { ok: false, erro: "Cada vereador entra uma vez só na emenda." };
+    const achados = await prisma.autor.findMany({ where: { id: { in: ids }, demonstracao: false }, select: { id: true } });
+    if (achados.length !== ids.length) return { ok: false, erro: "Um dos coautores não está entre os vereadores cadastrados." };
+    if (submeter && (lerNumero(e.parteAutor) <= 0 || coautores.some((c) => c.valor <= 0))) {
+      return { ok: false, erro: "Informe o valor de cada vereador da emenda (maior que zero)." };
+    }
+    e.parteAutor = formatarNumero(lerNumero(e.parteAutor), 2, "R$ ");
+    e.pretendido = formatarNumero(totalDasPartes(e), 2, "R$ ");
   }
 
   // Destino e classificação, refeitos aqui.
@@ -141,11 +161,19 @@ export async function salvarEmenda(entrada: EstadoEmenda, submeter = false, anoT
     }
     // O servidor refaz tudo a partir do banco: o que o navegador calculou não vale.
     const aplicado = await aplicadoDoAutor(ctx.exercicioId, autorId, ctx.config.percentualSaude, e.id);
+    const partes = coautores.length
+      ? partesParaCota(
+          valor,
+          { nome: autorNome, aplicado },
+          coautores,
+          await vereadoresParaCoautoria(ctx.exercicioId, ctx.config.percentualSaude, autorId, e.id)
+        )
+      : undefined;
     const checks = validar(
       paraValidacao(e, { classificacao, metaPlanejamento: dotacao ? ctx.metas[dotacao.id] ?? null : null, dotacaoInformada: inf.informada }),
-      { config: ctx.config, aplicado, biblioteca: ctx.catalogo.objetos }
+      { config: ctx.config, aplicado, partes, biblioteca: ctx.catalogo.objetos }
     );
-    const treze = verificarEmenda(e, valor, dotacao, contextoVerificacao(ctx, aplicado, reenvio), checks, inf.informada === "FORA");
+    const treze = verificarEmenda(e, valor, dotacao, contextoVerificacao(ctx, aplicado, reenvio, partes), checks, inf.informada === "FORA");
     const resumo = resumoValidacao(checks);
     const falhas = treze.verificacoes.filter((v) => v.estado === "falha").length;
     validacao = {
@@ -226,6 +254,10 @@ export async function salvarEmenda(entrada: EstadoEmenda, submeter = false, anoT
       ? await tx.emenda.update({ where: { id: existente.id }, data: { ...dados, revisao: { increment: 1 } } })
       : await tx.emenda.create({ data: { ...dados, exercicioId: ctx.exercicioId, autorId } });
 
+    await tx.coautorEmenda.deleteMany({ where: { emendaId: emenda.id } });
+    if (coautores.length) {
+      await tx.coautorEmenda.createMany({ data: coautores.map((c, ordem) => ({ emendaId: emenda.id, autorId: c.autorId, ordem, valor: c.valor })) });
+    }
     await tx.itemEmenda.deleteMany({ where: { emendaId: emenda.id } });
     await tx.referenciaPreco.deleteMany({ where: { emendaId: emenda.id } });
     await tx.metaEmenda.deleteMany({ where: { emendaId: emenda.id } });

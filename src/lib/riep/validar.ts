@@ -18,6 +18,7 @@ import { referenciaAntiga, unidadeDiverge, type ReferenciaPreco } from "./refere
 import { BRL, NUM, norm } from "./texto";
 import type {
   Aplicado,
+  ParteCota,
   Checagem,
   Classificacao,
   ConfigMotor,
@@ -62,6 +63,8 @@ export type EstadoValidacao = {
 export type ContextoValidacao = {
   config: ConfigMotor;
   aplicado: Aplicado;
+  // Coautoria: as partes de cada vereador (sem ela, a emenda é toda do autor).
+  partes?: ParteCota[];
   biblioteca: ObjetoBiblioteca[];
   hoje?: Date;
 };
@@ -381,54 +384,62 @@ export function validar(e: EstadoValidacao, ctx: ContextoValidacao): Checagem[] 
         "Sem classificação não há como saber se a emenda consome a parcela de saúde ou a de demais áreas."
       );
     } else {
-      const nm = nomeParcela(p)!;
-      const tp = totalParcela(cfg, p)!;
-      const ap = (p === "SAUDE" ? apl.saude : apl.demais) + v;
-      if (ap <= tp) add("ok", `Dentro da parcela de ${nm}`, `${BRL(ap)} de ${BRL(tp)} · restam ${BRL(tp - ap)} nesta parcela`);
-      else
-        add(
-          "bad",
-          `Parcela de ${nm} excedida`,
-          `A parcela de ${nm} é de ${BRL(tp)} e chegaria a ${BRL(ap)}. Saldo da outra parcela não cobre esta: a reserva da saúde não é intercambiável.`
-        );
-
-      // Reserva da saúde: o que a aferição da LDO muda é o momento do bloqueio.
-      const aplS = apl.saude + (p === "SAUDE" ? v : 0);
-      const aplD = apl.demais + (p === "DEMAIS" ? v : 0);
-      const ps = parcelaSaude(cfg)!;
-      if (p === "SAUDE") {
-        add(
-          "ok",
-          "Integra a reserva da saúde",
-          `Dotação com IC-CO 1002 — a emenda conta para o mínimo de ${cfg.percentualSaude}% em ações e serviços públicos de saúde`
-        );
-      } else {
-        const faltaS = ps - aplS;
-        const sobra = cfg.cotaIndividual - aplS - aplD;
-        if (faltaS <= 0) {
-          add("ok", "Reserva da saúde já cumprida", `${BRL(aplS)} aplicados em saúde, acima do mínimo de ${BRL(ps)}`);
-        } else if (cfg.afericaoSaude === "GLOBAL") {
-          // A reserva da saúde é limite do que pode ir para as demais áreas,
-          // não obrigação de cada emenda: enquanto a cota restante ainda
-          // alcança o mínimo, é só informação.
-          if (sobra >= faltaS)
-            add(
-              "ok",
-              "Consome a parcela de demais áreas",
-              `Faltam ${BRL(faltaS)} para o mínimo em saúde e restam ${BRL(sobra)} de cota — o mínimo continua alcançável no conjunto das suas emendas`
-            );
-          else
-            add(
-              "bad",
-              "Mínimo em saúde inalcançável",
-              `Faltariam ${BRL(faltaS)} em saúde e sobrariam apenas ${BRL(Math.max(0, sobra))} de cota. O conjunto apresentado torna o mínimo impossível.`
-            );
-        } else {
-          add(
-            "warn",
-            "Fora da reserva da saúde",
-            `Aferição individual: esta emenda não conta para o mínimo de ${cfg.percentualSaude}%`
+      // Coautoria: cada parte contra a cota do dono dela, com o nome à frente.
+      const partes = ctx.partes && ctx.partes.length > 1 ? ctx.partes : [{ nome: "", valor: v, aplicado: apl }];
+      for (const parte of partes) {
+        const quem = partes.length > 1 ? `${parte.nome}: ` : "";
+        const addP = (nivel: Checagem["nivel"], titulo: string, detalhe: string) => add(nivel, quem + titulo, detalhe);
+        const apl = parte.aplicado;
+        const v = parte.valor;
+        const nm = nomeParcela(p)!;
+        const tp = totalParcela(cfg, p)!;
+        const ap = (p === "SAUDE" ? apl.saude : apl.demais) + v;
+        if (ap <= tp) addP("ok", `Dentro da parcela de ${nm}`, `${BRL(ap)} de ${BRL(tp)} · restam ${BRL(tp - ap)} nesta parcela`);
+        else
+          addP(
+            "bad",
+            `Parcela de ${nm} excedida`,
+            `A parcela de ${nm} é de ${BRL(tp)} e chegaria a ${BRL(ap)}. Saldo da outra parcela não cobre esta: a reserva da saúde não é intercambiável.`
           );
+
+        // Reserva da saúde: o que a aferição da LDO muda é o momento do bloqueio.
+        const aplS = apl.saude + (p === "SAUDE" ? v : 0);
+        const aplD = apl.demais + (p === "DEMAIS" ? v : 0);
+        const ps = parcelaSaude(cfg)!;
+        if (p === "SAUDE") {
+          addP(
+            "ok",
+            "Integra a reserva da saúde",
+            `Dotação com IC-CO 1002 — a emenda conta para o mínimo de ${cfg.percentualSaude}% em ações e serviços públicos de saúde`
+          );
+        } else {
+          const faltaS = ps - aplS;
+          const sobra = cfg.cotaIndividual - aplS - aplD;
+          if (faltaS <= 0) {
+            addP("ok", "Reserva da saúde já cumprida", `${BRL(aplS)} aplicados em saúde, acima do mínimo de ${BRL(ps)}`);
+          } else if (cfg.afericaoSaude === "GLOBAL") {
+            // A reserva da saúde é limite do que pode ir para as demais áreas,
+            // não obrigação de cada emenda: enquanto a cota restante ainda
+            // alcança o mínimo, é só informação.
+            if (sobra >= faltaS)
+              addP(
+                "ok",
+                "Consome a parcela de demais áreas",
+                `Faltam ${BRL(faltaS)} para o mínimo em saúde e restam ${BRL(sobra)} de cota — o mínimo continua alcançável no conjunto das suas emendas`
+              );
+            else
+              addP(
+                "bad",
+                "Mínimo em saúde inalcançável",
+                `Faltariam ${BRL(faltaS)} em saúde e sobrariam apenas ${BRL(Math.max(0, sobra))} de cota. O conjunto apresentado torna o mínimo impossível.`
+              );
+          } else {
+            addP(
+              "warn",
+              "Fora da reserva da saúde",
+              `Aferição individual: esta emenda não conta para o mínimo de ${cfg.percentualSaude}%`
+            );
+          }
         }
       }
     }
@@ -488,6 +499,7 @@ export function sinaisValor(args: {
   instrumentoOutro: string;
   config: ConfigMotor;
   aplicado: Aplicado;
+  partes?: ParteCota[];
 }): string[] {
   const { classificacao: r, selecao, pretendido: vp, config: cfg } = args;
   const avisos: string[] = [];
@@ -527,6 +539,20 @@ export function sinaisValor(args: {
     return avisos;
   }
   const p = parcelaDaDotacao(d);
+  // Coautoria: o saldo de cada vereador contra a parte dele.
+  const partes = args.partes && args.partes.length > 1 ? args.partes : null;
+  if (partes) {
+    for (const parte of partes) {
+      const rest = restanteParcela(cfg, parte.aplicado, p);
+      if (p && rest !== null && parte.valor > rest) {
+        avisos.push(
+          `A parte de **${parte.nome}** consome a parcela de **${nomeParcela(p)}**, onde restam a ele(a) **${BRL(Math.max(0, rest))}**. ` +
+            `A parte dele(a) é de ${BRL(parte.valor)}. Saldo de outra parcela não cobre esta — a reserva da saúde não é intercambiável.`
+        );
+      }
+    }
+    return avisos;
+  }
   const rest = restanteParcela(cfg, args.aplicado, p);
   if (p && rest !== null && vp > rest) {
     avisos.push(

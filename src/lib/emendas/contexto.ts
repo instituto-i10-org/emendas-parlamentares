@@ -1,9 +1,11 @@
 import "server-only";
 import { cache } from "react";
 import { prisma } from "@/lib/prisma";
+import type { StatusEmenda } from "@/generated/prisma/enums";
 import { NATUREZAS_EMENDAVEIS } from "@/lib/orcamento/codigo-dotacao";
 import type { Aplicado, Catalogo, ConfigMotor, DestinoMotor, DotacaoBase, FontePreco, MetaPlanejamento, Regras } from "@/lib/riep";
 import { nomeDoAlcance, pertence } from "@/lib/riep/destino";
+import type { VereadorCota } from "./autoria";
 import { situacaoEmendamento, type SituacaoEmendamento } from "./emendamento";
 
 // ============================================================================
@@ -308,17 +310,19 @@ export async function aplicadoDoAutor(
   percentualSaude: number,
   excetoEmendaId?: string | null
 ): Promise<Aplicado> {
-  const [proprias, importadas] = await Promise.all([
-    prisma.emenda.groupBy({
-      by: ["parcela"],
-      where: {
-        exercicioId,
-        autorId,
-        // Em diligência a emenda continua apresentada: a cota segue reservada.
-        status: { in: ["SUBMETIDA", "EM_TRAMITACAO", "EM_DILIGENCIA", "APROVADA"] },
-        ...(excetoEmendaId ? { id: { not: excetoEmendaId } } : {}),
-      },
-      _sum: { valor: true },
+  const apresentadas = {
+    exercicioId,
+    // Em diligência a emenda continua apresentada: a cota segue reservada.
+    status: { in: ["SUBMETIDA", "EM_TRAMITACAO", "EM_DILIGENCIA", "APROVADA"] as StatusEmenda[] },
+    ...(excetoEmendaId ? { id: { not: excetoEmendaId } } : {}),
+  };
+  const [proprias, coautorias, importadas] = await Promise.all([
+    prisma.emenda.groupBy({ by: ["parcela"], where: { ...apresentadas, autorId }, _sum: { valor: true } }),
+    // Coautoria: a parte de cada coautor sai do autor e entra no coautor.
+    prisma.coautorEmenda.findMany({
+      // A parte recebida em emenda de demonstração não conta para o vereador.
+      where: { OR: [{ autorId, emenda: { ...apresentadas, autor: { demonstracao: false } } }, { emenda: { ...apresentadas, autorId } }] },
+      select: { autorId: true, valor: true, emenda: { select: { parcela: true } } },
     }),
     prisma.emendaImportada.groupBy({
       by: ["parcela"],
@@ -326,9 +330,14 @@ export async function aplicadoDoAutor(
       _sum: { valor: true },
     }),
   ]);
+  const grupos = [
+    ...proprias.map((g) => ({ parcela: g.parcela, v: g._sum.valor?.toNumber() ?? 0 })),
+    ...coautorias.map((c) => ({ parcela: c.emenda.parcela, v: (c.autorId === autorId ? 1 : -1) * c.valor.toNumber() })),
+    ...importadas.map((g) => ({ parcela: g.parcela, v: g._sum.valor?.toNumber() ?? 0 })),
+  ];
   const aplicado = { saude: 0, demais: 0 };
-  for (const g of [...proprias, ...importadas]) {
-    const v = g._sum.valor?.toNumber() ?? 0;
+  for (const g of grupos) {
+    const v = g.v;
     if (g.parcela === "SAUDE") aplicado.saude += v;
     else if (g.parcela === "DEMAIS") aplicado.demais += v;
     else {
@@ -337,6 +346,24 @@ export async function aplicadoDoAutor(
     }
   }
   return { saude: Math.round(aplicado.saude * 100) / 100, demais: Math.round(aplicado.demais * 100) / 100 };
+}
+
+// Vereadores que podem entrar como coautores, com o aplicado de cada um (sem
+// a emenda em edição). Conta de demonstração nunca é coautora.
+export async function vereadoresParaCoautoria(
+  exercicioId: string,
+  percentualSaude: number,
+  autorId: string,
+  excetoEmendaId?: string | null
+): Promise<VereadorCota[]> {
+  const autores = await prisma.autor.findMany({
+    where: { demonstracao: false, id: { not: autorId } },
+    orderBy: { nome: "asc" },
+    select: { id: true, nome: true, partido: true },
+  });
+  return Promise.all(
+    autores.map(async (a) => ({ ...a, aplicado: await aplicadoDoAutor(exercicioId, a.id, percentualSaude, excetoEmendaId) }))
+  );
 }
 
 // Situação do emendamento de um exercício, sem carregar a base inteira.

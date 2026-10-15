@@ -2,7 +2,7 @@
 // que impede avançar de cada uma. A conferência completa continua na etapa 3:
 // aqui só se pede o que a seção tem de ter para seguir.
 
-import { informadaConferida, lerNumero, type EstadoEmenda } from "@/lib/emendas/estado";
+import { informadaConferida, lerNumero, problemaDaAutoria, type EstadoEmenda } from "@/lib/emendas/estado";
 import type { DerivadoEmenda } from "./editor";
 
 export type Secao = { id: string; titulo: string; descricao: string };
@@ -67,7 +67,9 @@ export function problemasDaSecao(etapa: number, secao: string, e: EstadoEmenda, 
       if (!e.endereco.trim()) p.push({ alvo: "f-loc", msg: "Informe o endereço do local" });
     } else if (secao === "objeto") {
       if (!e.objeto.trim()) p.push({ alvo: "f-obj", msg: "Descreva o objeto da emenda" });
-      if (!(lerNumero(e.pretendido) > 0)) p.push({ alvo: "f-pre", msg: "Informe o valor da emenda" });
+      const autoria = problemaDaAutoria(e);
+      if (autoria) p.push({ alvo: "f-autoria", msg: autoria });
+      else if (!(lerNumero(e.pretendido) > 0)) p.push({ alvo: "f-pre", msg: "Informe o valor da emenda" });
     } else if (secao === "dotacao") {
       if (e.dotacaoInformada) {
         if (!informadaConferida(e.dotacaoInformada) || !d.informada) p.push({ alvo: "f-dot-unidade", msg: "Preencha a classificação e clique em «Conferir na LOA»" });

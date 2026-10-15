@@ -22,6 +22,7 @@ export default async function PlanoPage({ params }: { params: Promise<{ id: stri
   if (!x) notFound();
   const ve =
     podeGerirEmenda(user, { autorUsuarioId: x.autor.usuarioId }) ||
+    x.coautores.some((c) => c.autor.usuarioId === user.id) ||
     podeVerTodasEmendas(user) ||
     temPermissao(user, "analisarViabilidade", "registrarExecucao", "consultarTudo");
   if (!ve) notFound();

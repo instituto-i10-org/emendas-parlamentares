@@ -4,16 +4,18 @@
 
 import type { SituacaoEmendamento } from "./emendamento";
 import type { DadosVerificacao } from "./contexto";
-import { verificar, type Aplicado, type Checagem, type ConfigMotor, type ContextoVerificacao, type DotacaoBase, type DotacaoMotor } from "@/lib/riep";
+import { verificar, type Aplicado, type Checagem, type ConfigMotor, type ContextoVerificacao, type DotacaoBase, type DotacaoMotor, type ParteCota } from "@/lib/riep";
 
 export function contextoVerificacao(
   ctx: { config: ConfigMotor; emendamento: SituacaoEmendamento; loa: DotacaoBase[]; verificacao: DadosVerificacao },
   aplicado: Aplicado,
-  reenvio: boolean
+  reenvio: boolean,
+  partes?: ParteCota[]
 ): ContextoVerificacao {
   return {
     config: ctx.config,
     aplicado,
+    partes,
     emendamento: ctx.emendamento,
     reenvio,
     base: new Map(ctx.loa.map((d) => [d.id, d])),

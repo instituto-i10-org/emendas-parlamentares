@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Ajuda } from "@/components/ui/ajuda";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import type { VereadorCota } from "@/lib/emendas/autoria";
 import type { ContextoEmenda, DestinoTela } from "@/lib/emendas/contexto";
 import { chaveClassificacao, chaveInformada, formatarNumero, informadaConferida, lerNumero, type EstadoEmenda } from "@/lib/emendas/estado";
 import {
@@ -32,6 +33,7 @@ import {
 } from "@/lib/riep";
 import { nomeDoAlcance } from "@/lib/riep/destino";
 import { cn } from "@/lib/utils";
+import { CampoAutoria } from "./autoria";
 import { DestinoDialog } from "./destino-dialog";
 import type { Atualizar, DerivadoEmenda } from "./editor";
 import { AreaTexto, Aviso, Campo, CampoNumero, Detalhes, Selo, TextoRico, Veredito } from "./ui";
@@ -54,6 +56,8 @@ function rotuloSinal(texto: string): string {
   if (texto.includes("instrumento da parceria não definido")) return "Instrumento da parceria pendente";
   if (texto.includes("fonte AUDESP")) return "AUDESP não parametrizado";
   if (texto.includes("Cota individual não parametrizada")) return "Cota não parametrizada";
+  const parte = texto.match(/^A parte de \*\*(.+?)\*\*/);
+  if (parte) return `Saldo de ${parte[1]} insuficiente`;
   const parcela = texto.match(/consome a parcela de \*\*(.+?)\*\*/);
   if (parcela) return `Saldo de ${parcela[1]} insuficiente`;
   return texto.replace(/\*\*/g, "").split(/[.—]/)[0].slice(0, 48);
@@ -100,6 +104,8 @@ export function Etapa1({
   d,
   ctx,
   aplicado,
+  autor,
+  vereadores,
   destinos,
   aoCadastrarDestino,
   atualizar,
@@ -110,6 +116,8 @@ export function Etapa1({
   d: DerivadoEmenda;
   ctx: ContextoEmenda;
   aplicado: Aplicado;
+  autor: string;
+  vereadores: VereadorCota[];
   destinos: DestinoTela[];
   aoCadastrarDestino: (d: DestinoTela) => void;
   atualizar: Atualizar;
@@ -190,10 +198,8 @@ export function Etapa1({
             />
           </Campo>
         </div>
-        <div data-guia="nova-emenda.valor" className="max-w-sm">
-          <Campo rotulo="Valor previsto" obrigatorio htmlFor="f-pre" ajuda="É o valor da emenda. A planilha do plano de trabalho comprova esse valor." dica="Digite só os números; o sistema formata em reais.">
-            <CampoNumero id="f-pre" valor={e.pretendido} aoMudar={(v) => atualizar({ pretendido: v })} prefixo="R$ " placeholder="R$ 0,00" />
-          </Campo>
+        <div data-guia="nova-emenda.valor" className="max-w-3xl">
+          <CampoAutoria e={e} atualizar={atualizar} autor={autor} aplicado={aplicado} vereadores={vereadores} cota={ctx.config.cotaIndividual} />
         </div>
       </div>
     );
@@ -948,7 +954,9 @@ function ResultadoClassificacao({
     instrumentoOutro: e.instrumentoOutro,
     config: ctx.config,
     aplicado,
+    partes: d.partes,
   });
+  const somaCoautores = e.coautores.reduce((x, k) => x + lerNumero(k.valor), 0);
   const natureza = c.gnd === "4" ? "capital" : "custeio";
   const elemTxt = ELEMENTOS[o.elemento] ?? o.elemento;
   const parcela = parcelaDaDotacao(d.dotacao);
@@ -1141,12 +1149,18 @@ function ResultadoClassificacao({
         <Sinalizacoes
           sinais={sinais}
           ajustarAoAutorizado={
-            d.dotacao && d.dotacao.autorizado > 0
+            d.dotacao && d.dotacao.autorizado > 0 && d.dotacao.autorizado > somaCoautores
               ? {
                   valor: d.dotacao.autorizado,
                   aplicar: () => {
-                    atualizar({ pretendido: formatarNumero(d.dotacao!.autorizado, 2, "R$ ") });
-                    toast("Valor da emenda ajustado ao autorizado da dotação.");
+                    // Com coautores, o ajuste sai da parte do autor.
+                    const total = formatarNumero(d.dotacao!.autorizado, 2, "R$ ");
+                    atualizar(
+                      e.coautores.length
+                        ? { pretendido: total, parteAutor: formatarNumero(d.dotacao!.autorizado - somaCoautores, 2, "R$ ") }
+                        : { pretendido: total, parteAutor: total }
+                    );
+                    toast(e.coautores.length ? "Valor da emenda ajustado ao autorizado da dotação, pela sua parte." : "Valor da emenda ajustado ao autorizado da dotação.");
                   },
                 }
               : undefined

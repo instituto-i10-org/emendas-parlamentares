@@ -831,6 +831,7 @@ model Autor {
 
   usuario           User?             @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
   emendas           Emenda[]
+  coautorias        CoautorEmenda[]
   emendasImportadas EmendaImportada[]
 
   @@unique([nome])
@@ -946,12 +947,31 @@ model Emenda {
   andamentos     AndamentoExecucao[]
   convites       ConviteEntidade[]
   historico      HistoricoEmenda[]
+  coautores      CoautorEmenda[]
 
   @@unique([exercicioId, numero])
   @@index([exercicioId, status])
   @@index([autorId])
   @@index([dotacaoId])
   @@index([destinoId])
+}
+
+// Coautoria (pedido do Dr. Emerson): outros vereadores na mesma emenda, cada
+// um com a sua parte do valor, que sai da cota dele. O autor (Emenda.autorId)
+// é quem criou e quem age; a parte dele é o valor da emenda menos a soma das
+// partes daqui. Emenda sem linhas aqui é de um autor só.
+model CoautorEmenda {
+  id       String  @id @default(cuid())
+  emendaId String
+  autorId  String
+  ordem    Int
+  valor    Decimal @db.Decimal(18, 2)
+
+  emenda Emenda @relation(fields: [emendaId], references: [id], onDelete: Cascade)
+  autor  Autor  @relation(fields: [autorId], references: [id])
+
+  @@unique([emendaId, autorId])
+  @@index([autorId])
 }
 
 // Meta física: quem será atendido e quanto será entregue.

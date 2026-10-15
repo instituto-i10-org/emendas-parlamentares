@@ -35,6 +35,9 @@ export type EntradaDocumento = {
   // Período do PPA em vigor ("2026–2029"), citado no Art. 3º.
   periodoPpa?: string | null;
   autor: { nome: string; partido: string | null; cargo: string };
+  // Coautoria: todos os autores com a parte de cada um (o autor primeiro).
+  // Sem coautores, ausente ou com uma linha só.
+  autores?: { nome: string; partido: string | null; cargo: string; valor: number }[];
   objeto: string;
   execucao: "DIRETA" | "INDIRETA";
   agenteExecutor: string;
@@ -64,7 +67,8 @@ export type DocumentoEmenda = {
   art2: { caput: string; dotacao: Linha[] };
   art3: string;
   localData: string;
-  assinatura: { nome: string; cargo: string };
+  // Uma por autor (na coautoria, todos assinam).
+  assinaturas: { nome: string; cargo: string }[];
 };
 
 const BRL = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -92,7 +96,14 @@ export function montarDocumento(e: EntradaDocumento): DocumentoEmenda {
   const minuta = !e.enviada || e.numero === null;
   const numeroTexto = minuta ? `—/${e.ano}` : `${e.numero}/${e.ano}`;
   const pl = e.projeto ? numeroProjeto(e.projeto.numero) : null;
-  const autorNome = e.autor.nome + (e.autor.partido ? ` (${e.autor.partido})` : "");
+  const comPartido = (a: { nome: string; partido: string | null }) => a.nome + (a.partido ? ` (${a.partido})` : "");
+  const autorNome = comPartido(e.autor);
+  // Coautoria: "Parlamentar Individual Impositiva, em coautoria" — a emenda
+  // segue individual (impositiva, na cota de cada um); cada autor com o seu
+  // valor (Regimento, art. 210-B, § 1º).
+  const autores = e.autores && e.autores.length > 1 ? e.autores : null;
+  const nomesCapa = autores ? autores.map(comPartido) : [autorNome];
+  const capaAutor = nomesCapa.length > 1 ? `${nomesCapa.slice(0, -1).join(", ")} e ${nomesCapa[nomesCapa.length - 1]}` : nomesCapa[0];
   const quando = !minuta && e.submetidaEm ? e.submetidaEm : null;
   const fuso = { timeZone: "America/Sao_Paulo" } as const;
 
@@ -153,7 +164,7 @@ export function montarDocumento(e: EntradaDocumento): DocumentoEmenda {
       protocolo: minuta ? "—" : e.protocolo?.trim() || "Atribuído pela Secretaria da Câmara",
       tipo: "EMENDA IMPOSITIVA",
       numero: numeroTexto,
-      autor: autorNome,
+      autor: capaAutor,
       ementa: `Emenda Impositiva nº ${minuta ? "—" : e.numero} ao ${pl ? `Projeto de Lei nº ${pl}` : "projeto de lei orçamentária"}.`,
       data: quando ? quando.toLocaleDateString("pt-BR", fuso) : "—",
       horario: quando ? quando.toLocaleTimeString("pt-BR", { ...fuso, hour: "2-digit", minute: "2-digit" }) : "—",
@@ -162,8 +173,10 @@ export function montarDocumento(e: EntradaDocumento): DocumentoEmenda {
     subtitulo: `Emenda ao Quadro de Detalhamento da Despesa da Lei Orçamentária Anual do exercício de ${e.ano}.`,
     cabecalho: [
       // O nome pode já trazer o cargo ("Vereador Fulano"): não repete.
-      { rotulo: "Autor", valor: [`${comCargo(e.autor.cargo, autorNome)}.`] },
-      { rotulo: "Tipo de Emenda", valor: ["Parlamentar Individual Impositiva."] },
+      autores
+        ? { rotulo: "Autores", valor: autores.map((a) => `${comCargo(a.cargo, comPartido(a))} – ${BRL(a.valor)}.`) }
+        : { rotulo: "Autor", valor: [`${comCargo(e.autor.cargo, autorNome)}.`] },
+      { rotulo: "Tipo de Emenda", valor: [autores ? "Parlamentar Individual Impositiva, em coautoria." : "Parlamentar Individual Impositiva."] },
       e.fundamento?.trim()
         ? { rotulo: "Fundamento legal", valor: e.fundamento.split("\n").map((l) => l.trim()).filter(Boolean) }
         : { rotulo: "Fundamento legal", valor: PENDENTE("Não configurado (Configurações › Exercício e parâmetros)."), pendente: true },
@@ -173,7 +186,7 @@ export function montarDocumento(e: EntradaDocumento): DocumentoEmenda {
     ],
     art1: {
       caput: `Fica alterado o Quadro de Detalhamento da Despesa da Lei Orçamentária Anual do exercício de ${e.ano}, na seguinte conformidade:`,
-      adequacao: `O autor, utilizando-se das prerrogativas legais previstas na Lei Orgânica do Município e no Regimento Interno da Câmara Municipal, vem por meio da presente emenda orçamentária de caráter impositivo apresentar as seguintes adequações ao Projeto de Lei da LOA ${e.ano}:`,
+      adequacao: `${autores ? "Os autores" : "O autor"}, utilizando-se das prerrogativas legais previstas na Lei Orgânica do Município e no Regimento Interno da Câmara Municipal, ${autores ? "vêm" : "vem"} por meio da presente emenda orçamentária de caráter impositivo apresentar as seguintes adequações ao Projeto de Lei da LOA ${e.ano}:`,
       classificacoes: [
         e.objeto.trim() ? { rotulo: "Objeto", valor: [e.objeto.trim()] } : { rotulo: "Objeto", valor: PENDENTE("Objeto não informado."), pendente: true },
         classificacao,
@@ -181,7 +194,9 @@ export function montarDocumento(e: EntradaDocumento): DocumentoEmenda {
           ? { rotulo: "Identificação da unidade responsável pela execução", valor: [unidadeExecutora] }
           : { rotulo: "Identificação da unidade responsável pela execução", valor: PENDENTE("A definir com a dotação."), pendente: true },
         beneficiario,
-        valor ? { rotulo: "Valor", valor } : { rotulo: "Valor", valor: PENDENTE("Valor não informado."), pendente: true },
+        valor
+          ? { rotulo: "Valor", valor: autores ? [...valor, ...autores.map((a) => `${BRL(a.valor)} da cota de ${comPartido(a)}`)] : valor }
+          : { rotulo: "Valor", valor: PENDENTE("Valor não informado."), pendente: true },
         e.parcela
           ? { rotulo: "Destinação dos recursos", valor: [e.parcela === "SAUDE" ? "Ações e serviços públicos de saúde." : "Demais áreas."] }
           : { rotulo: "Destinação dos recursos", valor: PENDENTE("A definir com a dotação."), pendente: true },
@@ -193,6 +208,6 @@ export function montarDocumento(e: EntradaDocumento): DocumentoEmenda {
     },
     art3: `A presente emenda produz reflexos nos quadros do Plano Plurianual${e.periodoPpa?.trim() ? ` ${e.periodoPpa.trim()}` : ""} e da Lei de Diretrizes Orçamentárias do exercício de ${e.ano}.`,
     localData: `${e.camara.nome || "Câmara Municipal"}, ${dataPorExtenso(quando ?? e.hoje)}.`,
-    assinatura: { nome: e.autor.nome.toLocaleUpperCase("pt-BR"), cargo: e.autor.cargo.toLocaleUpperCase("pt-BR") },
+    assinaturas: (autores ?? [e.autor]).map((a) => ({ nome: a.nome.toLocaleUpperCase("pt-BR"), cargo: a.cargo.toLocaleUpperCase("pt-BR") })),
   };
 }
