@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Pilulas } from "@/components/emenda/ui";
-import { decidirTramitacao, devolverAoAutor, marcarIncorporada, pedirDiligencia, reabrirTramitacao, receberEmenda } from "@/lib/actions/tramitacao";
+import { decidirTramitacao, devolverAoAutor, marcarIncorporada, pedirDiligencia, reabrirTramitacao, receberEmenda, registrarProtocolo } from "@/lib/actions/tramitacao";
 
 // Decisão da Comissão sobre uma emenda submetida: aprovar ou rejeitar, sempre
 // com parecer escrito.
@@ -300,5 +300,60 @@ export function MarcarIncorporada({ emendaId, incorporada }: { emendaId: string;
     >
       {incorporada ? "Desfazer" : "Marcar incorporada"}
     </Button>
+  );
+}
+
+// Protocolo da Câmara: a Secretaria lança o número dado no sistema da Câmara
+// (Pasta Digital). Sai na capa do documento da emenda.
+export function RegistrarProtocolo({ emendaId, rotulo, protocolo }: { emendaId: string; rotulo: string; protocolo: string | null }) {
+  const router = useRouter();
+  const [aberto, setAberto] = useState(false);
+  const [numero, setNumero] = useState(protocolo ?? "");
+  const [pendente, iniciar] = useTransition();
+  return (
+    <>
+      <Button
+        size="sm"
+        variant="ghost"
+        onClick={() => {
+          setNumero(protocolo ?? "");
+          setAberto(true);
+        }}
+      >
+        Protocolo
+      </Button>
+      <Dialog open={aberto} onOpenChange={setAberto}>
+        <DialogContent
+          titulo={`Protocolo da Câmara — ${rotulo}`}
+          acoes={
+            <>
+              <Button
+                disabled={pendente}
+                onClick={() =>
+                  iniciar(async () => {
+                    const r = await registrarProtocolo(emendaId, numero);
+                    if (!r.ok) return void toast.error(r.erro);
+                    toast(numero.trim() ? "Protocolo registrado." : "Protocolo apagado.");
+                    setAberto(false);
+                    router.refresh();
+                  })
+                }
+              >
+                Salvar
+              </Button>
+              <Button variant="ghost" onClick={() => setAberto(false)}>
+                Cancelar
+              </Button>
+            </>
+          }
+        >
+          <label className="grid gap-1.5 text-sm font-semibold text-label" htmlFor={`prot-${emendaId}`}>
+            Número do protocolo
+            <input id={`prot-${emendaId}`} className="campo h-11 px-3 font-normal tnum" maxLength={40} value={numero} onChange={(e) => setNumero(e.target.value)} />
+          </label>
+          <p className="mt-2 text-sm text-muted-foreground">O número dado pela Secretaria no sistema da Câmara. Sai na capa do documento da emenda. Em branco, apaga o lançado.</p>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

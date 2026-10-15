@@ -115,6 +115,40 @@ export async function receberEmenda(emendaId: string): Promise<Resultado> {
   return { ok: true };
 }
 
+// Protocolo da Câmara: o número que a Secretaria dá no sistema da Câmara
+// (Pasta Digital). Lançado depois do envio; sai na capa do documento. Em
+// branco, apaga o lançado (erro de digitação).
+export async function registrarProtocolo(emendaId: string, numero: string): Promise<Resultado> {
+  const user = await getCurrentUser();
+  if (!podeTramitar(user)) return { ok: false, erro: "Sem permissão para tramitar emendas." };
+  const n = String(numero ?? "").trim();
+  if (n.length > 40) return { ok: false, erro: "Número de protocolo longo demais (até 40 caracteres)." };
+  const emenda = await prisma.emenda.findUnique({ where: { id: emendaId } });
+  if (!emenda) return { ok: false, erro: "Emenda não encontrada." };
+  if (naoRemetida(emenda.status)) return { ok: false, erro: "Só a emenda enviada recebe protocolo." };
+  if ((emenda.protocoloCamara ?? "") === n) return { ok: true };
+  await prisma.$transaction(async (tx) => {
+    await tx.emenda.update({
+      where: { id: emendaId },
+      data: n ? { protocoloCamara: n, protocoloRegistradoEm: new Date(), protocoloRegistradoPorId: user.id } : { protocoloCamara: null, protocoloRegistradoEm: null, protocoloRegistradoPorId: null },
+    });
+    await tx.historicoEmenda.create({
+      data: { emendaId, de: emenda.status, para: emenda.status, usuarioId: user.id, texto: n ? `Protocolo da Câmara: nº ${n}.` : "Protocolo da Câmara apagado." },
+    });
+    await auditar(tx, {
+      usuarioId: user.id,
+      entidade: "Emenda",
+      entidadeId: emendaId,
+      acao: "REGISTRAR_PROTOCOLO",
+      dadosAntes: { protocoloCamara: emenda.protocoloCamara },
+      dadosDepois: { protocoloCamara: n || null },
+    });
+  });
+  revalidatePath("/tramitacao");
+  revalidatePath(`/emendas/${emendaId}`);
+  return { ok: true };
+}
+
 // Saneamento: a análise técnica devolve ao autor a emenda inválida, com o
 // apontamento por escrito. Ela volta a rascunho; o texto fica no histórico e
 // aparece no editor do autor. Emenda já remetida vai pela diligência.

@@ -36,7 +36,7 @@ const comNomes = { orgao: true, unidadeOrcamentaria: true, funcao: true, subfunc
 export async function documentoDaEmenda(x: EmendaCompleta) {
   const [municipio, config, projeto] = await Promise.all([
     prisma.municipio.findFirst(),
-    prisma.configuracaoExercicio.findUnique({ where: { exercicioId: x.exercicioId }, select: { fichaReserva: true, fundamentoDocumento: true } }),
+    prisma.configuracaoExercicio.findUnique({ where: { exercicioId: x.exercicioId }, select: { fichaReserva: true, fundamentoDocumento: true, periodoPpa: true } }),
     // O mesmo critério de projetoBase: o projeto de lei orçamentária do exercício com base de dotações.
     prisma.instrumentoPlanejamento.findFirst({
       where: { exercicioId: x.exercicioId, tipo: "LOA", especie: "PROJETO_LEI", dotacoes: { some: {} } },
@@ -54,11 +54,13 @@ export async function documentoDaEmenda(x: EmendaCompleta) {
     numero: x.numero,
     enviada: !naoRemetida(x.status),
     submetidaEm: x.submetidaEm,
+    protocolo: x.protocoloCamara,
     hoje: new Date(),
     camara: { nome: municipio?.nomeCamara ?? null, endereco: municipio?.enderecoCamara ?? null, rodape: municipio?.rodapeDocumentos ?? null },
     nomePrefeitura: municipio?.nomePrefeitura ?? null,
     projeto: projeto ? { numero: projeto.numero, ementa: projeto.ementa } : null,
     fundamento: config?.fundamentoDocumento ?? null,
+    periodoPpa: config?.periodoPpa ?? null,
     autor: { nome: x.autor.nome, partido: x.autor.partido, cargo: x.autor.cargo },
     objeto: x.objeto,
     execucao: x.execucao,

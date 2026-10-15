@@ -25,11 +25,15 @@ export type EntradaDocumento = {
   // Enviada: o documento é o definitivo, com número e data de entrada.
   enviada: boolean;
   submetidaEm: Date | null;
+  // Número dado pela Secretaria no sistema da Câmara, lançado na tramitação.
+  protocolo?: string | null;
   hoje: Date;
   camara: { nome: string | null; endereco: string | null; rodape: string | null };
   nomePrefeitura: string | null;
   projeto: { numero: string; ementa: string } | null;
   fundamento: string | null;
+  // Período do PPA em vigor ("2026–2029"), citado no Art. 3º.
+  periodoPpa?: string | null;
   autor: { nome: string; partido: string | null; cargo: string };
   objeto: string;
   execucao: "DIRETA" | "INDIRETA";
@@ -146,7 +150,7 @@ export function montarDocumento(e: EntradaDocumento): DocumentoEmenda {
     numeroTexto,
     camara: { nome: e.camara.nome || "Câmara Municipal", endereco: e.camara.endereco, rodape: e.camara.rodape },
     capa: {
-      protocolo: minuta ? "—" : "Atribuído pela Secretaria da Câmara",
+      protocolo: minuta ? "—" : e.protocolo?.trim() || "Atribuído pela Secretaria da Câmara",
       tipo: "EMENDA IMPOSITIVA",
       numero: numeroTexto,
       autor: autorNome,
@@ -187,7 +191,7 @@ export function montarDocumento(e: EntradaDocumento): DocumentoEmenda {
       caput: "Para cumprimento do disposto no artigo anterior fica parcialmente anulada a seguinte dotação orçamentária:",
       dotacao: [reserva, valor ? { rotulo: "Valor", valor: [BRL(e.valor)] } : { rotulo: "Valor", valor: PENDENTE("Valor não informado."), pendente: true }],
     },
-    art3: `A presente emenda produz reflexos nos quadros do Plano Plurianual e da Lei de Diretrizes Orçamentárias do exercício de ${e.ano}.`,
+    art3: `A presente emenda produz reflexos nos quadros do Plano Plurianual${e.periodoPpa?.trim() ? ` ${e.periodoPpa.trim()}` : ""} e da Lei de Diretrizes Orçamentárias do exercício de ${e.ano}.`,
     localData: `${e.camara.nome || "Câmara Municipal"}, ${dataPorExtenso(quando ?? e.hoje)}.`,
     assinatura: { nome: e.autor.nome.toLocaleUpperCase("pt-BR"), cargo: e.autor.cargo.toLocaleUpperCase("pt-BR") },
   };

@@ -44,6 +44,7 @@ export type ConfiguracaoTela = {
   custoM2Url: string | null;
   fichaReserva: string | null;
   fundamentoDocumento: string | null;
+  periodoPpa: string | null;
 };
 
 const SITUACOES_PL: [string, string][] = [
@@ -155,6 +156,7 @@ function FormConfiguracao({ c, podeGerir }: { c: ConfiguracaoTela; podeGerir: bo
     custoM2Url: txt(c.custoM2Url),
     fichaReserva: txt(c.fichaReserva),
     fundamentoDocumento: txt(c.fundamentoDocumento),
+    periodoPpa: txt(c.periodoPpa),
   });
   const conf = useConfirmarImpacto();
   const pendente = conf.pendente;
@@ -204,6 +206,7 @@ function FormConfiguracao({ c, podeGerir }: { c: ConfiguracaoTela; podeGerir: bo
         custoM2Url: nulo(f.custoM2Url),
         fichaReserva: nulo(f.fichaReserva),
         fundamentoDocumento: nulo(f.fundamentoDocumento),
+        periodoPpa: nulo(f.periodoPpa),
       } as Parameters<typeof salvarConfiguracao>[0];
     conf.pedir({
       titulo: `Salvar os parâmetros de ${c.ano}`,
@@ -361,6 +364,9 @@ function FormConfiguracao({ c, podeGerir }: { c: ConfiguracaoTela; podeGerir: bo
         </Campo>
         <Campo rotulo="Fundamento legal do documento" htmlFor="c-fundoc" dica="Uma norma por linha. Sai em “Fundamento legal” no documento da emenda.">
           <textarea id="c-fundoc" className="campo min-h-[70px] p-3.5" maxLength={2000} {...m("fundamentoDocumento")} />
+        </Campo>
+        <Campo rotulo="Período do PPA" htmlFor="c-ppa" dica="Ex.: 2026–2029. Sai no Art. 3º do documento.">
+          <input id="c-ppa" className="campo h-12 px-3.5 tnum" maxLength={20} placeholder="2026–2029" {...m("periodoPpa")} />
         </Campo>
       </div>
 

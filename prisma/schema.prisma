@@ -383,6 +383,8 @@ model ConfiguracaoExercicio {
   fichaReserva        String?
   // "Fundamento legal" do documento, uma norma por linha.
   fundamentoDocumento String?
+  // Período do Plano Plurianual em vigor ("2026–2029"): sai no Art. 3º.
+  periodoPpa          String?
 
   // --- preços e plano da entidade --------------------------------------------
   // Item com preço e sem fonte informada: bloqueia a submissão (verdadeiro) ou
@@ -918,6 +920,12 @@ model Emenda {
   diligenciaAte     DateTime?
   diligenciaEm      DateTime?
   reenviadaEm       DateTime?
+  // --- protocolo na Câmara ---------------------------------------------------
+  // Número dado pela Secretaria no sistema da Câmara (Pasta Digital), lançado
+  // depois do envio; sai na capa do documento.
+  protocoloCamara          String?
+  protocoloRegistradoEm    DateTime?
+  protocoloRegistradoPorId String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

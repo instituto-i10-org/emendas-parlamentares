@@ -110,4 +110,15 @@ describe("documento da emenda", () => {
     expect(d.art2.dotacao[0].pendente).toBe(true);
     expect(textos(d.art2.dotacao)).toContain("não configurada");
   });
+
+  it("protocolo da Câmara e período do PPA, quando lançados", () => {
+    const sem = montarDocumento(base);
+    expect(sem.capa.protocolo).toBe("Atribuído pela Secretaria da Câmara");
+    expect(sem.art3).toBe("A presente emenda produz reflexos nos quadros do Plano Plurianual e da Lei de Diretrizes Orçamentárias do exercício de 2027.");
+    const com = montarDocumento({ ...base, protocolo: " 12345 ", periodoPpa: "2026–2029" });
+    expect(com.capa.protocolo).toBe("12345");
+    expect(com.art3).toBe("A presente emenda produz reflexos nos quadros do Plano Plurianual 2026–2029 e da Lei de Diretrizes Orçamentárias do exercício de 2027.");
+    // Na minuta não há protocolo, mesmo lançado.
+    expect(montarDocumento({ ...base, enviada: false, protocolo: "12345" }).capa.protocolo).toBe("—");
+  });
 });

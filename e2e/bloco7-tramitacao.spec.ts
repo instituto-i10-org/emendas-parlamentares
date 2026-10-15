@@ -204,6 +204,24 @@ test.describe("Grupo 6 — tramitação", () => {
     expect(linhas[1].em).toBeNull();
   });
 
+  test("protocolo da Câmara: lançado na tramitação, sai na capa do documento", async ({ page }) => {
+    await inserirEmenda({ id: "t7-p1", status: "APROVADA", ficha: SAUDE, numero: 9411, objeto: "Protocolar um" });
+    await entrar(page, "comissao");
+    await page.goto("/tramitacao?aba=lei&q=Protocolar");
+    const linha = page.locator("tr", { hasText: "Protocolar um" });
+    await linha.getByRole("button", { name: "Protocolo" }).click();
+    await page.getByLabel("Número do protocolo").fill("183055");
+    await page.getByRole("dialog").getByRole("button", { name: "Salvar" }).click();
+    await expect(page.getByText("Protocolo registrado.")).toBeVisible();
+    await expect(linha).toContainText("protocolo nº 183055");
+    await page.goto("/emendas/t7-p1/documento");
+    await expect(page.getByText("183055").first()).toBeVisible();
+    await expect(page.getByText("Atribuído pela Secretaria da Câmara")).toHaveCount(0);
+    const [e] = await sql<{ p: string | null; por: string | null }>(`select "protocoloCamara" p, "protocoloRegistradoPorId" por from "Emenda" where id = 't7-p1'`);
+    expect(e.p).toBe("183055");
+    expect(e.por).toBeTruthy();
+  });
+
   test("T-6.3-2 relatório do período lista as movimentações e exporta", async ({ page }) => {
     await inserirEmenda({ id: "t7-rel", status: "SUBMETIDA", ficha: SAUDE, numero: 9501, objeto: "Relatório do mês" });
     await sql(`insert into "HistoricoEmenda" (id, "emendaId", de, para, "criadoEm") values ('h-t7-rel', 't7-rel', 'RASCUNHO', 'SUBMETIDA', now())`);

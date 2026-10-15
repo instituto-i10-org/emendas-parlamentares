@@ -7,7 +7,7 @@ import { dadosRelatorioTramitacao, periodoDoRelatorio } from "@/lib/emendas/rela
 import { Cartao, Kpi, Pagina, TabelaDados } from "@/components/app/pagina";
 import { Selo } from "@/components/emenda/ui";
 import { informadaGravada, textoInformada } from "@/lib/emendas/dotacao-informada";
-import { DecidirEmenda, DevolverAoAutor, MarcarIncorporada, PedirAjuste, ReabrirEmenda, ReceberEmenda } from "@/components/tramitacao/acoes";
+import { DecidirEmenda, DevolverAoAutor, MarcarIncorporada, PedirAjuste, ReabrirEmenda, ReceberEmenda, RegistrarProtocolo } from "@/components/tramitacao/acoes";
 import { Button } from "@/components/ui/button";
 import type { StatusEmenda } from "@/generated/prisma/enums";
 import { Poder } from "@/generated/prisma/enums";
@@ -89,6 +89,7 @@ export default async function TramitacaoPage({ searchParams }: { searchParams: P
         {e.autor.nome} · {e.destino?.nome ?? "—"} ·{" "}
         {e.dotacao ? e.dotacao.codigo : informadaGravada(e.dotacaoInformada) ? textoInformada(informadaGravada(e.dotacaoInformada)!) : "dotação a definir pela análise técnica"}
         {e.reenviadaEm ? ` · reenviada após diligência em ${DATA(e.reenviadaEm)}` : ""}
+        {e.protocoloCamara ? ` · protocolo nº ${e.protocoloCamara}` : ""}
       </span>
       <span className="mt-1 flex flex-wrap gap-1">
         <Selo tipo={STATUS_EMENDA[e.status].tipo}>{STATUS_EMENDA[e.status].rotulo}</Selo>
@@ -194,6 +195,7 @@ export default async function TramitacaoPage({ searchParams }: { searchParams: P
                         {e.status === "SUBMETIDA" ? <ReceberEmenda emendaId={e.id} rotulo={rotulo(e)} /> : null}
                         <PedirAjuste emendaId={e.id} rotulo={rotulo(e)} diasPadrao={cfg?.prazoDiligenciaDias ?? 5} />
                         <DecidirEmenda emendaId={e.id} rotulo={rotulo(e)} />
+                        <RegistrarProtocolo emendaId={e.id} rotulo={rotulo(e)} protocolo={e.protocoloCamara} />
                       </div>
                     ) : null,
                   ],
@@ -256,9 +258,14 @@ export default async function TramitacaoPage({ searchParams }: { searchParams: P
                     {e.parecerTramitacao}
                   </p>,
                   valor(e),
-                  decide && !e.andamentos.length ? (
-                    <div key="r" data-guia="tramitacao.reabrir">
-                      <ReabrirEmenda emendaId={e.id} />
+                  decide ? (
+                    <div key="r" className="flex flex-nowrap justify-end gap-1.5 @max-[640px]:flex-wrap @max-[640px]:justify-start">
+                      {!e.andamentos.length ? (
+                        <span data-guia="tramitacao.reabrir">
+                          <ReabrirEmenda emendaId={e.id} />
+                        </span>
+                      ) : null}
+                      <RegistrarProtocolo emendaId={e.id} rotulo={rotulo(e)} protocolo={e.protocoloCamara} />
                     </div>
                   ) : null,
                 ],
@@ -289,8 +296,11 @@ export default async function TramitacaoPage({ searchParams }: { searchParams: P
                   </span>,
                   valor(e),
                   decide ? (
-                    <div key="m" data-guia="tramitacao.incorporar">
-                      <MarcarIncorporada emendaId={e.id} incorporada={!!e.incorporadaEm} />
+                    <div key="m" className="flex flex-nowrap justify-end gap-1.5 @max-[640px]:flex-wrap @max-[640px]:justify-start">
+                      <span data-guia="tramitacao.incorporar">
+                        <MarcarIncorporada emendaId={e.id} incorporada={!!e.incorporadaEm} />
+                      </span>
+                      <RegistrarProtocolo emendaId={e.id} rotulo={rotulo(e)} protocolo={e.protocoloCamara} />
                     </div>
                   ) : null,
                 ],

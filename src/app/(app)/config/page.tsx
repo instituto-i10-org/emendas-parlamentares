@@ -121,6 +121,7 @@ async function exercicio(podeGerir: boolean) {
               custoM2Url: c?.custoM2Url ?? null,
               fichaReserva: c?.fichaReserva ?? null,
               fundamentoDocumento: c?.fundamentoDocumento ?? null,
+              periodoPpa: c?.periodoPpa ?? null,
             }
           : null
       }
