@@ -10,7 +10,7 @@ export function paraLinhaExecutivo(e: EmendaLinha, ano: number): LinhaExecutivo 
     id: e.id,
     rotulo: e.numero ? `Emenda nº ${e.numero}/${ano}` : "Emenda",
     objeto: e.objeto,
-    autor: e.autor.nome,
+    autor: e.coautores.length ? `${e.autor.nome} + ${e.coautores.length} em coautoria` : e.autor.nome,
     destino: e.destino?.nome ?? "—",
     dotacao: e.dotacao ? `${e.dotacao.codigo} · ${e.dotacao.unidadeOrcamentaria.codigo}` : "dotação a definir",
     status: e.status,

@@ -1,4 +1,5 @@
 import "server-only";
+import { parteDe } from "@/lib/emendas/autoria";
 import { prisma } from "@/lib/prisma";
 import { diaBrasilia, hojeBrasilia, lerRegras, projetoBase } from "@/lib/emendas/contexto";
 import { ROTULO_STATUS_INSTRUMENTO, situacaoEmendamento } from "@/lib/emendas/emendamento";
@@ -123,12 +124,19 @@ async function impactoConfiguracao(entrada: Record<string, unknown> & { exercici
   // Cota menor: quem já passaria do limite com o que enviou.
   const cotaNova = entrada.cotaIndividual == null || entrada.cotaIndividual === "" ? null : Number(entrada.cotaIndividual);
   if (mudou("cotaIndividual") && cotaNova !== null) {
-    const porAutor = await prisma.emenda.groupBy({
-      by: ["autorId"],
+    // Coautoria: cada vereador com a sua parte (em emenda de demonstração, a
+    // do coautor real não conta para ele).
+    const enviadas = await prisma.emenda.findMany({
       where: { exercicioId: ex.id, status: { in: ["SUBMETIDA", "EM_TRAMITACAO", "EM_DILIGENCIA", "APROVADA"] } },
-      _sum: { valor: true },
+      select: { autorId: true, valor: true, autor: { select: { demonstracao: true } }, coautores: { select: { autorId: true, valor: true } } },
     });
-    const acima = porAutor.filter((a) => Number(a._sum.valor ?? 0) > cotaNova + 0.005).length;
+    const porAutor = new Map<string, number>();
+    for (const e of enviadas) {
+      for (const c of [{ autorId: e.autorId }, ...(e.autor.demonstracao ? [] : e.coautores)]) {
+        porAutor.set(c.autorId, (porAutor.get(c.autorId) ?? 0) + parteDe(e, c.autorId));
+      }
+    }
+    const acima = [...porAutor.values()].filter((v) => v > cotaNova + 0.005).length;
     if (acima) avisos.push(`${plural(acima, "vereador já passa", "vereadores já passam")} da nova cota com as emendas enviadas.`);
   }
 

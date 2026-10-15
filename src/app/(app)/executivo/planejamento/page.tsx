@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { AutoresEmenda } from "@/components/app/autores-emenda";
+import { autoresDaEmenda, incluirCoautores } from "@/lib/emendas/autoria";
 import Link from "next/link";
 import { Cartao, Kpi, Pagina, TabelaDados } from "@/components/app/pagina";
 import { Selo } from "@/components/emenda/ui";
@@ -199,7 +201,7 @@ async function comparacao(instrumentos: Instrumentos) {
         prisma.dotacao.aggregate({ where: { instrumentoId: lei.id }, _sum: { valorAutorizado: true }, _count: true }),
         prisma.emenda.findMany({
           where: { status: "APROVADA", dotacao: { instrumentoId: lei.instrumentoOrigemId! } },
-          include: { autor: true, dotacao: { include: { acao: true } } },
+          include: { autor: true, ...incluirCoautores, dotacao: { include: { acao: true } } },
           orderBy: { numero: "asc" },
         }),
       ]);
@@ -222,7 +224,7 @@ async function comparacao(instrumentos: Instrumentos) {
               chave: e.id,
               celulas: [
                 <b key="n" className="tnum">{e.numero}</b>,
-                e.autor.nome,
+                <AutoresEmenda key="a" autores={autoresDaEmenda(e)} />,
                 e.dotacao ? `${e.dotacao.codigo} — ${e.dotacao.acao.nome}` : "—",
                 <b key="v" className="whitespace-nowrap tnum">{BRL(e.valor.toNumber())}</b>,
               ],

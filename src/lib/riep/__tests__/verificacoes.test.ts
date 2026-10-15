@@ -183,3 +183,30 @@ describe("T-4.3 modo das verificações", () => {
     expect(r.v("ix").fundamento).toBe("Lei Orgânica, art. 140");
   });
 });
+
+describe("coautoria: a cota de cada vereador com a parte dele", () => {
+  const partes = (b: { saude: number; demais: number }) => [
+    { nome: "Ana", valor: 178000, aplicado: { saude: 0, demais: 0 } },
+    { nome: "Bia", valor: 100000, aplicado: b },
+  ];
+  it("todas dentro da cota: conforme, com o nome de cada um na razão", () => {
+    const r = rodar({}, { partes: partes({ saude: 0, demais: 0 }) });
+    expect(r.estado.ix).toBe("conforme");
+    expect(r.v("ix").razao).toMatch(/^Ana: .*Bia: /);
+  });
+  it("a parte de um coautor estoura a cota dele: falha, mesmo com o autor folgado", () => {
+    const r = rodar({}, { partes: partes({ saude: 400000, demais: 386000 }) });
+    expect(r.estado.ix).toBe("falha");
+    expect(r.v("ix").razao).toMatch(/Bia: com esta emenda chegaria a/);
+    expect(r.valida).toBe(false);
+  });
+  it("sem a coautoria, o total iria todo para o autor (que passaria da cota)", () => {
+    expect(rodar({}, { aplicado: { saude: 386000, demais: 386000 } }).estado.ix).toBe("falha");
+    expect(rodar({}, { aplicado: { saude: 386000, demais: 386000 }, partes: [{ nome: "Ana", valor: 1000, aplicado: { saude: 386000, demais: 386000 } }, { nome: "Bia", valor: 277000, aplicado: { saude: 0, demais: 0 } }] }).estado.ix).toBe("conforme");
+  });
+  it("(xi) a parcela da saúde é conferida parte a parte", () => {
+    const r = rodar({}, { partes: partes({ saude: 386000, demais: 0 }) });
+    expect(r.estado.xi).toBe("falha");
+    expect(r.v("xi").razao).toMatch(/Bia: A parcela de saúde/);
+  });
+});

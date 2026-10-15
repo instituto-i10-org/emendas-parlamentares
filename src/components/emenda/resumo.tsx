@@ -45,7 +45,8 @@ export function Resumo({
   ];
   const definidos = linhas.filter(([, v]) => v).length;
 
-  const vigente = d.valor;
+  // Na coautoria, a cota do autor leva só a parte dele.
+  const vigente = d.partes ? d.partes[0].valor : d.valor;
   const cfg = ctx.config;
 
   return (
@@ -110,7 +111,7 @@ export function Resumo({
           <div className="mt-3 grid gap-4">
             <p className="text-xs text-on-navy">
               aplicado {BRL(aplicado.saude + aplicado.demais)}
-              {vigente > 0 && parcela ? ` · com esta emenda ${BRL(aplicado.saude + aplicado.demais + vigente)}` : ""} · restam{" "}
+              {vigente > 0 && parcela ? ` · com ${d.partes ? "a sua parte desta emenda" : "esta emenda"} ${BRL(aplicado.saude + aplicado.demais + vigente)}` : ""} · restam{" "}
               {BRL(Math.max(0, cfg.cotaIndividual - aplicado.saude - aplicado.demais - (parcela ? vigente : 0)))}
             </p>
             <BarraParcela

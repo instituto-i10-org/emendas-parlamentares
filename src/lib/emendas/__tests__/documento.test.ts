@@ -122,3 +122,36 @@ describe("documento da emenda", () => {
     expect(montarDocumento({ ...base, enviada: false, protocolo: "12345" }).capa.protocolo).toBe("—");
   });
 });
+
+describe("documento em coautoria", () => {
+  const co: EntradaDocumento = {
+    ...base,
+    autores: [
+      { nome: "Ana Souza", partido: "XYZ", cargo: "Vereador", valor: 186944.11 },
+      { nome: "Bruno Lima", partido: null, cargo: "Vereador", valor: 100000 },
+    ],
+  };
+  it("capa com todos os autores, cabeçalho com o valor de cada um e o tipo em coautoria", () => {
+    const d = montarDocumento(co);
+    expect(d.capa.autor).toBe("Ana Souza (XYZ) e Bruno Lima");
+    expect(d.cabecalho[0].rotulo).toBe("Autores");
+    expect(textos([d.cabecalho[0]])).toBe("Vereador Ana Souza (XYZ) – R$ 186.944,11.\nVereador Bruno Lima – R$ 100.000,00.");
+    expect(d.cabecalho[1].valor).toEqual(["Parlamentar Individual Impositiva, em coautoria."]);
+    expect(d.art1.adequacao).toMatch(/^Os autores, .* vêm por meio/);
+  });
+  it("valor total com a parte de cada cota, e uma assinatura por autor", () => {
+    const d = montarDocumento(co);
+    const valor = d.art1.classificacoes.find((l) => l.rotulo === "Valor")!;
+    expect(textos([valor])).toContain("R$ 100.000,00 da cota de Bruno Lima");
+    expect(d.assinaturas).toEqual([
+      { nome: "ANA SOUZA", cargo: "VEREADOR" },
+      { nome: "BRUNO LIMA", cargo: "VEREADOR" },
+    ]);
+  });
+  it("um autor só (ou a lista com uma linha): como antes", () => {
+    const d = montarDocumento({ ...base, autores: [{ ...base.autor, valor: base.valor }] });
+    expect(d.cabecalho[0].rotulo).toBe("Autor");
+    expect(d.cabecalho[1].valor).toEqual(["Parlamentar Individual Impositiva."]);
+    expect(d.assinaturas).toHaveLength(1);
+  });
+});

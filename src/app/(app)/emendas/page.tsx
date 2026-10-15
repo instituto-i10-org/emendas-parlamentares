@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import type { Prisma } from "@/generated/prisma/client";
 import { apresentaEmendas, podeGerirEmenda, podeVerTodasEmendas } from "@/lib/authz";
 import { FiltrosEmendas, Paginacao } from "@/components/app/filtros-emendas";
+import { AutoresEmenda, EtiquetaCoautoria } from "@/components/app/autores-emenda";
+import { autoresDaEmenda, emCoautoria, incluirCoautores, ondeParticipa, parteDe } from "@/lib/emendas/autoria";
 import { orgaosDaArea } from "@/lib/emendas/consultas";
 import { lerEmendamento } from "@/lib/emendas/contexto";
 import { POR_PAGINA, comFiltros, lerFiltros, ondeDosFiltros } from "@/lib/emendas/filtros";
@@ -40,14 +42,15 @@ export default async function EmendasPage({ searchParams }: { searchParams: Prom
 
   const onde: Prisma.EmendaWhereInput = {
     exercicio: { ano: ano ?? -1 },
-    ...(todas ? {} : { autorId: autor?.id ?? "-" }),
+    // O vereador vê as dele, como autor ou coautor.
+    ...(todas ? {} : ondeParticipa(autor?.id ?? "-")),
     ...ondeDosFiltros(filtros, await orgaosDaArea(filtros.areaId)),
   };
   const [emendas, total, importadas, autores, areas] = await Promise.all([
     prisma.emenda.findMany({
       where: onde,
       orderBy: [{ updatedAt: "desc" }],
-      include: { destino: true, autor: true },
+      include: { destino: true, autor: true, ...incluirCoautores },
       skip: (filtros.pagina - 1) * POR_PAGINA,
       take: POR_PAGINA,
     }),
@@ -131,8 +134,27 @@ export default async function EmendasPage({ searchParams }: { searchParams: Prom
                       </span>
                     </td>
                     <td data-rotulo="Destino" className={cn(CARTAO_LINHA.celula, "px-5 py-3.5 max-md:hidden")}>{x.destino?.nome ?? "—"}</td>
-                    {todas ? <td data-rotulo="Autor" className={cn(CARTAO_LINHA.celula, "px-5 py-3.5 max-lg:hidden")}>{x.autor.nome}</td> : null}
-                    <td data-rotulo="Valor" className={cn(CARTAO_LINHA.celula, "px-5 py-3.5 text-right font-bold whitespace-nowrap tnum")}>{x.valor.toNumber() > 0 ? BRL(x.valor.toNumber()) : "—"}</td>
+                    {todas ? (
+                      <td data-rotulo="Autor" className={cn(CARTAO_LINHA.celula, "max-w-[240px] px-5 py-3.5 max-lg:hidden")}>
+                        <AutoresEmenda autores={autoresDaEmenda(x)} />
+                      </td>
+                    ) : null}
+                    <td data-rotulo="Valor" className={cn(CARTAO_LINHA.celula, "px-5 py-3.5 text-right font-bold whitespace-nowrap tnum")}>
+                      {x.valor.toNumber() <= 0 ? (
+                        "—"
+                      ) : !todas && autor && emCoautoria(x) ? (
+                        // Na lista do vereador, a parte dele; o total embaixo.
+                        <span className="inline-flex flex-col items-end gap-0.5">
+                          <span className="inline-flex items-center gap-1.5">
+                            <EtiquetaCoautoria principal={x.autorId === autor.id} />
+                            {BRL(parteDe(x, autor.id))}
+                          </span>
+                          <span className="text-xs font-medium text-muted-foreground">de {BRL(x.valor.toNumber())}</span>
+                        </span>
+                      ) : (
+                        BRL(x.valor.toNumber())
+                      )}
+                    </td>
                     <td data-rotulo="Situação" className={cn(CARTAO_LINHA.celula, "px-5 py-3.5")}>
                       <Selo tipo={STATUS_EMENDA[x.status].tipo}>{STATUS_EMENDA[x.status].rotulo}</Selo>
                     </td>

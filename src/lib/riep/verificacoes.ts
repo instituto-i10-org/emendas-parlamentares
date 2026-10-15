@@ -235,7 +235,7 @@ export function verificar(e: EntradaVerificacao, ctx: ContextoVerificacao, compl
     const partes = ctx.partes && ctx.partes.length > 1 ? ctx.partes : null;
     const juntar = (rs: { nome: string; r: Res }[]): Res => {
       const pior = rs.some((x) => x.r.estado === "falha") ? "falha" : rs.some((x) => x.r.estado === "alerta") ? "alerta" : "conforme";
-      return { estado: pior, razao: rs.map((x) => `${x.nome}: ${x.r.razao.replace("o autor chegaria", "chegaria")}`).join(" ") };
+      return { estado: pior, razao: rs.map((x) => `${x.nome}: ${x.r.razao.replace("Com esta emenda o autor chegaria", "com esta emenda chegaria")}`).join(" ") };
     };
     if (partes) {
       const rs = partes.map((x) => ({ nome: x.nome, ...conferir(x.aplicado, x.valor) }));

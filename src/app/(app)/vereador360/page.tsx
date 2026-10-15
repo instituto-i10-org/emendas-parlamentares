@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { EtiquetaCoautoria } from "@/components/app/autores-emenda";
+import { emCoautoria, ondeParticipa, parteDe } from "@/lib/emendas/autoria";
 import Link from "next/link";
 import { FormFiltros } from "@/components/app/form-filtros";
 import { Barra, Cartao, Kpi, Pagina, TabelaDados } from "@/components/app/pagina";
@@ -45,7 +47,7 @@ export default async function Vereador360Page({ searchParams }: { searchParams: 
     importadas: 0,
   };
   const [emendas, importadas] = await Promise.all([
-    listarEmendas(ano!, { autorId }),
+    listarEmendas(ano!, ondeParticipa(autorId)),
     prisma.emendaImportada.findMany({ where: { autorId, exercicio: { ano: ano! } }, orderBy: { numero: "asc" } }),
   ]);
   const s = situacaoCota(a, c);
@@ -120,7 +122,18 @@ export default async function Vereador360Page({ searchParams }: { searchParams: 
                   </div>,
                   e.parcelaEfetiva ? PARCELA[e.parcelaEfetiva] : "—",
                   <Selo key="s" tipo={STATUS_EMENDA[e.status].tipo}>{STATUS_EMENDA[e.status].rotulo}</Selo>,
-                  <b key="v" className="whitespace-nowrap tnum">{BRL(e.valor.toNumber())}</b>,
+                  // Na coautoria, a parte deste vereador; o total embaixo.
+                  emCoautoria(e) ? (
+                    <span key="v" className="inline-flex flex-col items-end gap-0.5">
+                      <span className="inline-flex items-center gap-1.5">
+                        <EtiquetaCoautoria principal={e.autorId === autorId} />
+                        <b className="whitespace-nowrap tnum">{BRL(parteDe(e, autorId))}</b>
+                      </span>
+                      <span className="text-xs whitespace-nowrap text-muted-foreground">de {BRL(e.valor.toNumber())}</span>
+                    </span>
+                  ) : (
+                    <b key="v" className="whitespace-nowrap tnum">{BRL(e.valor.toNumber())}</b>
+                  ),
                 ],
               }))}
             />

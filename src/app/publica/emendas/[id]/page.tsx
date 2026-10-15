@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { autoresDaEmenda, incluirCoautores } from "@/lib/emendas/autoria";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Cartao } from "@/components/app/pagina";
@@ -21,6 +22,7 @@ export default async function EmendaPublicaPage({ params }: { params: Promise<{ 
     where: { id, status: { notIn: NAO_REMETIDAS }, autor: { demonstracao: false } },
     include: {
       autor: true,
+      ...incluirCoautores,
       destino: true,
       exercicio: true,
       dotacao: { include: { acao: true, programa: true, orgao: true, unidadeOrcamentaria: true, funcao: true, subfuncao: true, naturezaDespesa: true, fonteRecurso: true } },
@@ -54,8 +56,27 @@ export default async function EmendaPublicaPage({ params }: { params: Promise<{ 
         </h1>
         <p className="mt-2 text-md">{e.objeto}</p>
         <dl className="mt-5 grid grid-cols-[minmax(150px,auto)_1fr] gap-x-4 gap-y-2 text-sm max-sm:grid-cols-1">
-          <dt className="text-muted-foreground">Vereador</dt>
-          <dd>{e.autor.nome}{e.autor.partido ? ` — ${e.autor.partido}` : ""}</dd>
+          {e.coautores.length ? (
+            <>
+              <dt className="text-muted-foreground">Vereadores</dt>
+              <dd>
+                <ul className="grid gap-0.5">
+                  {autoresDaEmenda(e).map((a) => (
+                    <li key={a.autorId}>
+                      {a.nome}
+                      {a.partido ? ` — ${a.partido}` : ""} · <b className="tnum">{BRL(a.valor)}</b>
+                      {a.principal ? <span className="text-xs text-muted-foreground"> · autor</span> : null}
+                    </li>
+                  ))}
+                </ul>
+              </dd>
+            </>
+          ) : (
+            <>
+              <dt className="text-muted-foreground">Vereador</dt>
+              <dd>{e.autor.nome}{e.autor.partido ? ` — ${e.autor.partido}` : ""}</dd>
+            </>
+          )}
           <dt className="text-muted-foreground">Destino</dt>
           <dd>{e.destino?.nome ?? "—"}</dd>
           <dt className="text-muted-foreground">Local</dt>

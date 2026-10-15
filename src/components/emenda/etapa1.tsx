@@ -36,7 +36,7 @@ import { cn } from "@/lib/utils";
 import { CampoAutoria } from "./autoria";
 import { DestinoDialog } from "./destino-dialog";
 import type { Atualizar, DerivadoEmenda } from "./editor";
-import { AreaTexto, Aviso, Campo, CampoNumero, Detalhes, Selo, TextoRico, Veredito } from "./ui";
+import { AreaTexto, Aviso, Campo, Detalhes, Selo, TextoRico, Veredito } from "./ui";
 
 export const ELEMENTOS: Record<string, string> = {
   "30": "30 — material de consumo",

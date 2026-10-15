@@ -1,6 +1,7 @@
 import { respostaPlanilha } from "@/lib/exportacao";
 import { podeVerTodasEmendas, temPermissao } from "@/lib/authz";
 import { listarEmendas, orgaosDaArea } from "@/lib/emendas/consultas";
+import { autoresDaEmenda, ondeParticipa, parteDe } from "@/lib/emendas/autoria";
 import { lerFiltros, ondeDosFiltros } from "@/lib/emendas/filtros";
 import { PARCELA, STATUS_EMENDA } from "@/lib/emendas/rotulos";
 import { usuarioDaSessao } from "@/lib/session";
@@ -26,7 +27,7 @@ export async function GET(req: Request) {
   else if (daLista) {
     const autor = await prisma.autor.findUnique({ where: { usuarioId: ator.id }, select: { id: true } });
     if (!autor && !todas) return new Response("Sem permissão.", { status: 403 });
-    escopo = autor ? { autorId: autor.id } : { status: { notIn: NAO_REMETIDAS } };
+    escopo = autor ? ondeParticipa(autor.id) : { status: { notIn: NAO_REMETIDAS } };
   } else {
     if (!todas) return new Response("Sem permissão.", { status: 403 });
     escopo = { status: { notIn: NAO_REMETIDAS } };
@@ -44,6 +45,12 @@ export async function GET(req: Request) {
       Exercicio: ano,
       Situacao: STATUS_EMENDA[e.status].rotulo,
       Autor: e.autor.nome,
+      // Coautoria: os demais vereadores com a parte de cada um.
+      Coautores: autoresDaEmenda(e)
+        .filter((a) => !a.principal)
+        .map((a) => `${a.nome} (${a.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })})`)
+        .join("; "),
+      ParteDoAutor: parteDe(e, e.autorId),
       Objeto: e.objeto,
       Beneficiario: e.destino?.nome ?? "",
       Orgao: d?.orgao.codigo ?? "",
@@ -69,5 +76,25 @@ export async function GET(req: Request) {
       Pago: e.somasExec.pago,
     };
   });
-  return respostaPlanilha(formato, `emendas-${ano}`, [{ nome: "Emendas", linhas }]);
+  // Uma linha por vereador e emenda, com a parte dele: é o que soma na cota.
+  const partes = emendas.flatMap((e) =>
+    autoresDaEmenda(e).map((a) => ({
+      Numero: e.numero,
+      Exercicio: ano,
+      Vereador: a.nome,
+      Partido: a.partido ?? "",
+      Papel: a.principal ? "Autor" : "Coautor",
+      Parte: a.valor,
+      ValorDaEmenda: e.valor.toNumber(),
+      Situacao: STATUS_EMENDA[e.status].rotulo,
+      Parcela: e.parcelaEfetiva ? PARCELA[e.parcelaEfetiva] : "",
+      Objeto: e.objeto,
+    }))
+  );
+  // O CSV leva uma aba só (a de emendas); a planilha, as duas.
+  return respostaPlanilha(
+    formato,
+    `emendas-${ano}`,
+    formato === "xlsx" ? [{ nome: "Emendas", linhas }, { nome: "Partes por vereador", linhas: partes }] : [{ nome: "Emendas", linhas }]
+  );
 }

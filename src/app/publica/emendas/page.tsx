@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { AutoresEmenda, EtiquetaCoautoria } from "@/components/app/autores-emenda";
 import Link from "next/link";
 import { FormFiltros } from "@/components/app/form-filtros";
 import { Cartao, TabelaDados } from "@/components/app/pagina";
@@ -26,7 +27,15 @@ export default async function EmendasPublicasPage({ searchParams }: { searchPara
   const ano = await getAnoAtivo();
   const [filtradas, autores] = await Promise.all([
     consultarPortal(ano, { q, autor, situacao }).then((l) => l ?? []),
-    prisma.autor.findMany({ orderBy: { nome: "asc" }, where: { demonstracao: false, OR: [{ emendas: { some: { status: { notIn: NAO_REMETIDAS } } } }, { emendasImportadas: { some: {} } }] } }),
+    prisma.autor.findMany({ orderBy: { nome: "asc" }, where: {
+        demonstracao: false,
+        OR: [
+          { emendas: { some: { status: { notIn: NAO_REMETIDAS } } } },
+          { coautorias: { some: { emenda: { status: { notIn: NAO_REMETIDAS }, autor: { demonstracao: false } } } } },
+          { emendasImportadas: { some: {} } },
+        ],
+      },
+    }),
   ]);
   const paginas = Math.max(1, Math.ceil(filtradas.length / POR_PAGINA));
   const p = Math.min(paginas, Math.max(1, Number(pagina) || 1));
@@ -66,7 +75,7 @@ export default async function EmendasPublicasPage({ searchParams }: { searchPara
             chave: l.chave,
             celulas: [
               <b key="n" className="tnum">{l.numero ?? "—"}</b>,
-              <span key="a">{l.autor}</span>,
+              <AutoresEmenda key="a" autores={l.autores} className="max-w-[220px]" />,
               <div key="o" className="max-w-xl">
                 {l.href ? (
                   <Link href={l.href} className="font-semibold hover:underline">
@@ -77,7 +86,17 @@ export default async function EmendasPublicasPage({ searchParams }: { searchPara
                 )}
                 {l.destino !== "—" ? <span className="block text-xs text-muted-foreground">{l.destino}</span> : null}
               </div>,
-              <b key="v" className="whitespace-nowrap tnum">{BRL(l.valor)}</b>,
+              l.parte !== null ? (
+                <span key="v" className="inline-flex flex-col items-end gap-0.5">
+                  <span className="inline-flex items-center gap-1.5">
+                    <EtiquetaCoautoria principal />
+                    <b className="whitespace-nowrap tnum">{BRL(l.parte)}</b>
+                  </span>
+                  <span className="text-xs whitespace-nowrap text-muted-foreground">de {BRL(l.valor)}</span>
+                </span>
+              ) : (
+                <b key="v" className="whitespace-nowrap tnum">{BRL(l.valor)}</b>
+              ),
               <Selo key="s" tipo={l.situacao === "IMPORTADA" ? "neutro" : STATUS_EMENDA[l.situacao].tipo}>
                 {l.situacao === "IMPORTADA" ? "apresentada" : STATUS_EMENDA[l.situacao].rotulo}
               </Selo>,

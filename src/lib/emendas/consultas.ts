@@ -3,6 +3,7 @@ import { cache } from "react";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { parcelaDaDotacao, type Parcela } from "@/lib/riep";
+import { autoresDaEmenda } from "./autoria";
 import { somasExecucao } from "./execucao";
 
 // ============================================================================
@@ -13,6 +14,8 @@ import { somasExecucao } from "./execucao";
 
 const incluir = {
   autor: true,
+  // Coautoria: os demais vereadores, com a parte de cada um.
+  coautores: { orderBy: { ordem: "asc" }, include: { autor: { select: { id: true, nome: true, partido: true } } } },
   destino: true,
   dotacao: { include: { acao: true, programa: true, orgao: true, unidadeOrcamentaria: true, funcao: true, subfuncao: true, naturezaDespesa: true, fonteRecurso: true } },
   pareceres: { orderBy: { criadoEm: "desc" }, take: 1, include: { usuario: { select: { name: true, email: true } } } },
@@ -172,11 +175,17 @@ export const consolidar = cache(async (ano: number, publico = false): Promise<Co
       porArea.set(nomeArea, ar);
     }
     if (!contam(e.status)) continue;
-    const a = porAutor.get(e.autorId)!;
-    a.itens++;
-    a.total += v;
-    if (e.parcelaEfetiva === "SAUDE") a.saude += v;
-    else a.demais += v;
+    // Coautoria: cada vereador com a sua parte. Em emenda de demonstração, a
+    // parte do coautor real não conta para ele.
+    for (const parte of autoresDaEmenda(e)) {
+      if (!parte.principal && e.autor.demonstracao) continue;
+      const a = porAutor.get(parte.autorId);
+      if (!a) continue;
+      a.itens++;
+      a.total += parte.valor;
+      if (e.parcelaEfetiva === "SAUDE") a.saude += parte.valor;
+      else a.demais += parte.valor;
+    }
     const nome = e.destino?.nome ?? e.dotacao?.unidadeOrcamentaria.nome ?? "Destino a definir";
     const d = porDestino.get(nome) ?? { nome, qtd: 0, valor: 0, saude: 0 };
     d.qtd++;

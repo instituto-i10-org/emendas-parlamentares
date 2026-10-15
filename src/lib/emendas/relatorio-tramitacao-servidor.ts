@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
+import { autoresDaEmenda, incluirCoautores } from "./autoria";
 import { relatorioTramitacao } from "./relatorio-tramitacao";
 
 // Período do relatório (padrão: do dia 1º do mês até hoje, em Brasília) e os
@@ -18,11 +19,26 @@ export async function dadosRelatorioTramitacao(ano: number, inicio: Date, fim: D
       where: { criadoEm: { gte: inicio, lte: fim }, emenda: { exercicio: { ano } } },
       select: { emendaId: true, de: true, para: true, criadoEm: true },
     }),
-    prisma.emenda.findMany({ where: { exercicio: { ano } }, select: { id: true, numero: true, objeto: true, valor: true, autor: { select: { nome: true } } } }),
+    prisma.emenda.findMany({
+      where: { exercicio: { ano } },
+      select: { id: true, numero: true, objeto: true, valor: true, autorId: true, autor: { select: { nome: true, partido: true } }, ...incluirCoautores },
+    }),
   ]);
   return relatorioTramitacao(
     passagens,
-    new Map(emendas.map((e) => [e.id, { id: e.id, numero: e.numero, autor: e.autor.nome, objeto: e.objeto, valor: e.valor.toNumber() }])),
+    new Map(
+      emendas.map((e) => [
+        e.id,
+        {
+          id: e.id,
+          numero: e.numero,
+          autor: e.coautores.length ? `${e.autor.nome} + ${e.coautores.length}` : e.autor.nome,
+          objeto: e.objeto,
+          valor: e.valor.toNumber(),
+          partes: e.coautores.length ? autoresDaEmenda(e).map((a) => ({ autor: a.nome, valor: a.valor })) : undefined,
+        },
+      ])
+    ),
     inicio,
     fim
   );

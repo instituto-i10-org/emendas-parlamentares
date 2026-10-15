@@ -5,7 +5,9 @@
 
 // `de` igual a `para` é anotação (ex.: incorporação à lei), não passagem.
 export type Passagem = { emendaId: string; de?: string | null; para: string; criadoEm: Date };
-export type EmendaDoRelatorio = { id: string; numero: number | null; autor: string; objeto: string; valor: number };
+// `autor`: o nome para as linhas ("Fulano + 2" na coautoria); `partes`: cada
+// vereador com a sua parte, para o quadro por autor (sem ela, tudo do autor).
+export type EmendaDoRelatorio = { id: string; numero: number | null; autor: string; objeto: string; valor: number; partes?: { autor: string; valor: number }[] };
 
 export type RelatorioTramitacao = {
   porSituacao: { situacao: string; qtd: number; valor: number }[];
@@ -34,18 +36,20 @@ export function relatorioTramitacao(passagens: Passagem[], emendas: Map<string, 
     s.qtd++;
     s.valor = Math.round((s.valor + e.valor) * 100) / 100;
     sit.set(p.para, s);
-    const a = aut.get(e.autor) ?? { autor: e.autor, remetidas: 0, valorRemetido: 0, aprovadas: 0, valorAprovado: 0, rejeitadas: 0, valorRejeitado: 0 };
-    if (p.para === "SUBMETIDA") {
-      a.remetidas++;
-      a.valorRemetido = Math.round((a.valorRemetido + e.valor) * 100) / 100;
-    } else if (p.para === "APROVADA") {
-      a.aprovadas++;
-      a.valorAprovado = Math.round((a.valorAprovado + e.valor) * 100) / 100;
-    } else if (p.para === "REJEITADA") {
-      a.rejeitadas++;
-      a.valorRejeitado = Math.round((a.valorRejeitado + e.valor) * 100) / 100;
+    for (const parte of e.partes?.length ? e.partes : [{ autor: e.autor, valor: e.valor }]) {
+      const a = aut.get(parte.autor) ?? { autor: parte.autor, remetidas: 0, valorRemetido: 0, aprovadas: 0, valorAprovado: 0, rejeitadas: 0, valorRejeitado: 0 };
+      if (p.para === "SUBMETIDA") {
+        a.remetidas++;
+        a.valorRemetido = Math.round((a.valorRemetido + parte.valor) * 100) / 100;
+      } else if (p.para === "APROVADA") {
+        a.aprovadas++;
+        a.valorAprovado = Math.round((a.valorAprovado + parte.valor) * 100) / 100;
+      } else if (p.para === "REJEITADA") {
+        a.rejeitadas++;
+        a.valorRejeitado = Math.round((a.valorRejeitado + parte.valor) * 100) / 100;
+      }
+      aut.set(parte.autor, a);
     }
-    aut.set(e.autor, a);
   }
   const distintas = new Set(unicas.map((p) => p.emendaId));
   return {

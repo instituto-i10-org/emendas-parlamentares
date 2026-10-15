@@ -6,7 +6,7 @@ type Num = number | { toNumber(): number };
 const num = (v: Num) => (typeof v === "number" ? v : v.toNumber());
 const arred = (v: number) => Math.round(v * 100) / 100;
 
-export type AutorBasico = { id: string; nome: string; partido?: string | null };
+export type AutorBasico = { id?: string; nome: string; partido?: string | null };
 
 export type ParteAutoria = {
   autorId: string;
@@ -37,14 +37,16 @@ export function autoresDaEmenda(e: EmendaComAutoria): ParteAutoria[] {
 export const emCoautoria = (e: { coautores?: unknown[] | null }) => (e.coautores?.length ?? 0) > 0;
 
 // A parte de um vereador na emenda (0 se ele não é autor nem coautor).
-export function parteDe(e: Pick<EmendaComAutoria, "autorId" | "valor" | "coautores">, autorId: string): number {
+type ComPartes = { autorId: string; valor: Num; coautores?: { autorId: string; valor: Num }[] | null };
+
+export function parteDe(e: ComPartes, autorId: string): number {
   const co = e.coautores ?? [];
   if (e.autorId === autorId) return arred(num(e.valor) - co.reduce((s, c) => s + num(c.valor), 0));
   const c = co.find((x) => x.autorId === autorId);
   return c ? arred(num(c.valor)) : 0;
 }
 
-export const participa = (e: Pick<EmendaComAutoria, "autorId" | "coautores">, autorId: string) =>
+export const participa = (e: Omit<ComPartes, "valor">, autorId: string) =>
   e.autorId === autorId || (e.coautores ?? []).some((c) => c.autorId === autorId);
 
 // "Fulano (PSD)".

@@ -1,4 +1,5 @@
 import type { Prisma, StatusEmenda } from "@/generated/prisma/client";
+import { ondeParticipa } from "./autoria";
 
 // ============================================================================
 // Filtros das listas de emendas, lidos da URL (a lista filtrada se compartilha
@@ -54,7 +55,8 @@ export function lerFiltros(sp: Busca): Filtros {
 export function ondeDosFiltros(f: Filtros, orgaosDaArea: string[] | null): Prisma.EmendaWhereInput {
   const e: Prisma.EmendaWhereInput[] = [];
   if (f.situacao.length) e.push({ status: { in: f.situacao } });
-  if (f.autorId) e.push({ autorId: f.autorId });
+  // O vereador como autor ou coautor (fora da demonstração).
+  if (f.autorId) e.push(ondeParticipa(f.autorId));
   if (orgaosDaArea) {
     e.push({
       // A área cita órgãos ("13") ou unidades ("13.01").
@@ -71,6 +73,7 @@ export function ondeDosFiltros(f: Filtros, orgaosDaArea: string[] | null): Prism
         { justificativa: { contains: f.q, mode: "insensitive" } },
         { destino: { nome: { contains: f.q, mode: "insensitive" } } },
         { autor: { nome: { contains: f.q, mode: "insensitive" } } },
+        { coautores: { some: { autor: { nome: { contains: f.q, mode: "insensitive" } } } } },
         ...(/^\d+$/.test(f.q) ? [{ numero: Number(f.q) }] : []),
       ],
     });

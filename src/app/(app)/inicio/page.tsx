@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { participa } from "@/lib/emendas/autoria";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -73,8 +74,10 @@ export default async function InicioPage({ searchParams }: { searchParams: Promi
     podeAdministrarConfiguracoes(user) ? lerPrimeiraConfiguracao(ano) : null,
   ]);
 
-  const minhas = autor ? emendas.filter((e) => e.autorId === autor.id) : [];
-  const rascunhos = minhas.filter((e) => naoRemetida(e.status)).length;
+  // Minhas: como autor ou coautor (fora da demonstração); os rascunhos a
+  // concluir são só os dele como autor, o único que edita.
+  const minhas = autor ? emendas.filter((e) => e.autorId === autor.id || (!e.autor.demonstracao && participa(e, autor.id))) : [];
+  const rascunhos = minhas.filter((e) => e.autorId === autor?.id && naoRemetida(e.status)).length;
   const submetidas = emendas.filter((e) => e.status === "SUBMETIDA" || e.status === "EM_TRAMITACAO").length;
   const semParecer = emendas.filter((e) => !naoRemetida(e.status) && !e.pareceres.length).length;
   const aExecutar = emendas.filter((e) => e.status === "APROVADA" && e.somasExec.pago < e.valor.toNumber()).length;

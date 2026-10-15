@@ -86,7 +86,7 @@ export default async function TramitacaoPage({ searchParams }: { searchParams: P
         {e.objeto || "(sem objeto)"}
       </Link>
       <span className="block text-xs text-muted-foreground">
-        {e.autor.nome} · {e.destino?.nome ?? "—"} ·{" "}
+        {e.coautores.length ? `${e.autor.nome} + ${e.coautores.length} em coautoria` : e.autor.nome} · {e.destino?.nome ?? "—"} ·{" "}
         {e.dotacao ? e.dotacao.codigo : informadaGravada(e.dotacaoInformada) ? textoInformada(informadaGravada(e.dotacaoInformada)!) : "dotação a definir pela análise técnica"}
         {e.reenviadaEm ? ` · reenviada após diligência em ${DATA(e.reenviadaEm)}` : ""}
         {e.protocoloCamara ? ` · protocolo nº ${e.protocoloCamara}` : ""}

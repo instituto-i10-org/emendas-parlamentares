@@ -1,5 +1,6 @@
 "use server";
 
+import { autoresDaEmenda, incluirCoautores, juntarNomes } from "@/lib/emendas/autoria";
 import { createHash, randomBytes } from "node:crypto";
 import { headers } from "next/headers";
 import { registrarAuditoria } from "@/lib/audit";
@@ -164,7 +165,7 @@ export async function abrirConvite(codigo: string): Promise<ConvitePublico> {
   const c = codigoValido(codigo)
     ? await prisma.conviteEntidade.findUnique({
         where: { codigoHash: resumo(codigo) },
-        include: { emenda: { include: { autor: true, destino: true, exercicio: { include: { configuracao: true } } } } },
+        include: { emenda: { include: { autor: true, ...incluirCoautores, destino: true, exercicio: { include: { configuracao: true } } } } },
       })
     : null;
   if (!c) {
@@ -179,7 +180,8 @@ export async function abrirConvite(codigo: string): Promise<ConvitePublico> {
     emenda: {
       objeto: c.emenda.objeto,
       destino: c.emenda.destino?.nome ?? "",
-      autor: c.emenda.autor.nome,
+      // Coautoria: "A, B e C".
+      autor: juntarNomes(autoresDaEmenda(c.emenda).map((a) => a.nome)),
       exercicio: c.emenda.exercicio.ano,
       valorPretendido: c.emenda.valorPretendido?.toNumber() ?? null,
       tolerancia: c.emenda.exercicio.configuracao?.toleranciaValorPct.toNumber() ?? 10,
