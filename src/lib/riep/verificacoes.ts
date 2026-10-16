@@ -341,7 +341,7 @@ export function conferenciasLocais(
 ): Checagem[] {
   const out: Checagem[] = [];
   const nivel = (modo: ModoRegra): Checagem["nivel"] => (modo === "ALERTA" ? "warn" : "bad");
-  const fund = (r: RegraEfetiva) => (r.fundamento ? ` (${r.fundamento})` : "");
+  const fund = (r: RegraEfetiva) => (r.fundamento ? ` (${r.fundamento.trim().replace(/\.$/, "")})` : "");
   const num = (v: unknown) => (typeof v === "number" && v > 0 ? v : null);
   const vm = regras.VALOR_MINIMO;
   if (vm?.ativa) {
