@@ -28,9 +28,12 @@ function observacaoDe(check: EmendasJson["emendas"][number]["check"]): string | 
 }
 
 // "Adriano Luciano Rodrigues - MDB" → nome e partido.
-function autorDe(rotulo: string) {
-  const m = rotulo.match(/^(.*?)\s+-\s+([A-Za-zÀ-ú]+)$/);
-  return m ? { nome: m[1].trim(), partido: m[2] } : { nome: rotulo.trim(), partido: null };
+// "Fulano - MDB" → nome e partido. O partido pode ter duas palavras ("UNIÃO
+// BRASIL", que se registra pela sigla, UNIÃO).
+const SIGLAS: Record<string, string> = { "UNIÃO BRASIL": "UNIÃO" };
+export function autorDe(rotulo: string) {
+  const m = rotulo.match(/^(.*?)\s+-\s+([A-Za-zÀ-ú]+(?:\s+[A-Za-zÀ-ú]+)?)$/);
+  return m ? { nome: m[1].trim(), partido: SIGLAS[m[2]] ?? m[2] } : { nome: rotulo.trim(), partido: null };
 }
 
 // As 351 emendas impositivas apresentadas ao PL 275/2025 (LOA 2026), lidas por
