@@ -72,7 +72,7 @@ export async function semearExercicio(prisma: PrismaClient, ano: number) {
   const existente = await prisma.municipio.findFirst();
   if (!existente) {
     await prisma.municipio.create({
-      data: { nome: m.nome, uf: m.uf, codigoIbge: m.codigoIbge, nomeCamara: m.nomeCamara, nomePrefeitura: m.nomePrefeitura, enderecoCamara: m.enderecoCamara ?? null, rodapeDocumentos: m.rodapeDocumentos ?? null },
+      data: { nome: m.nome, uf: m.uf, codigoIbge: m.codigoIbge, nomeCamara: m.nomeCamara, nomePrefeitura: m.nomePrefeitura, enderecoCamara: m.enderecoCamara ?? null, rodapeDocumentos: m.rodapeDocumentos ?? null, padraoIdentificacao: m.padraoIdentificacao ?? null },
     });
   } else if (existente.nome === m.nome && (!existente.enderecoCamara || !existente.rodapeDocumentos)) {
     // Base anterior aos documentos: completa só o que está vazio; o escrito pela tela fica.

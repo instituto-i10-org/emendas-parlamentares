@@ -112,7 +112,11 @@ function Declaracoes({
           />
           <span>
             <b>Declaração de inexistência de vedação.</b> Declaro que não há, entre mim ou meus assessores e o beneficiário desta emenda, seus dirigentes
-            ou subcontratados, vínculo conjugal, de união estável ou de parentesco até o terceiro grau (ADPF 854).
+            ou subcontratados, vínculo conjugal, de união estável ou de parentesco até o terceiro grau (ADPF 854)
+            {d.declaracaoConflito
+              ? ", nem vínculo societário, de direção ou de administração, ou qualquer outra situação caracterizadora de conflito de interesses com a entidade beneficiária"
+              : ""}
+            .
           </span>
         </label>
 

@@ -27,6 +27,8 @@ export type EntradaDocumento = {
   submetidaEm: Date | null;
   // Número dado pela Secretaria no sistema da Câmara, lançado na tramitação.
   protocolo?: string | null;
+  // Padrão do Regimento para identificar a emenda ({numero}, {ano}, {autor}, {objeto}).
+  padraoIdentificacao?: string | null;
   hoje: Date;
   camara: { nome: string | null; endereco: string | null; rodape: string | null };
   nomePrefeitura: string | null;
@@ -91,6 +93,10 @@ export function linhasDotacao(d: DotacaoDocumento): string[] {
 }
 
 const comCargo = (cargo: string, nome: string) => (nome.toLocaleLowerCase("pt-BR").startsWith(cargo.toLocaleLowerCase("pt-BR")) ? nome : `${cargo} ${nome}`);
+
+// Identificação pelo padrão do município: troca {numero}, {ano}, {autor} e {objeto}.
+export const identificacao = (padrao: string, v: Record<"numero" | "ano" | "autor" | "objeto", string>) =>
+  padrao.trim().replace(/\{(numero|ano|autor|objeto)\}/g, (_, k: keyof typeof v) => v[k]);
 
 export function montarDocumento(e: EntradaDocumento): DocumentoEmenda {
   const minuta = !e.enviada || e.numero === null;
@@ -165,7 +171,9 @@ export function montarDocumento(e: EntradaDocumento): DocumentoEmenda {
       tipo: "EMENDA IMPOSITIVA",
       numero: numeroTexto,
       autor: capaAutor,
-      ementa: `Emenda Impositiva nº ${minuta ? "—" : e.numero} ao ${pl ? `Projeto de Lei nº ${pl}` : "projeto de lei orçamentária"}.`,
+      ementa: e.padraoIdentificacao?.trim()
+        ? identificacao(e.padraoIdentificacao, { numero: minuta ? "—" : String(e.numero), ano: String(e.ano), autor: capaAutor, objeto: e.objeto.trim().replace(/\.$/, "") })
+        : `Emenda Impositiva nº ${minuta ? "—" : e.numero} ao ${pl ? `Projeto de Lei nº ${pl}` : "projeto de lei orçamentária"}.`,
       data: quando ? quando.toLocaleDateString("pt-BR", fuso) : "—",
       horario: quando ? quando.toLocaleTimeString("pt-BR", { ...fuso, hour: "2-digit", minute: "2-digit" }) : "—",
     },

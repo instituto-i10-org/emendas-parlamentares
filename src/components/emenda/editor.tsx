@@ -12,7 +12,7 @@ import type { ContextoEmenda, DestinoTela } from "@/lib/emendas/contexto";
 import { chaveClassificacao, lerNumero, paraValidacao, type EstadoEmenda } from "@/lib/emendas/estado";
 import { partesParaCota, type VereadorCota } from "@/lib/emendas/autoria";
 import { aplicarDotacaoInformada } from "@/lib/emendas/dotacao-informada";
-import { conferirRegrasLocais, contextoVerificacao, verificarEmenda } from "@/lib/emendas/verificacao";
+import { conferirRegrasLocais, contextoVerificacao, declaracaoConflitoAtiva, verificarEmenda } from "@/lib/emendas/verificacao";
 import {
   MODELOS,
   classificacaoValida,
@@ -133,6 +133,8 @@ function useDerivado(
     avanca: podeAvancar(classificacao, e.selecao),
     valida: classificacaoValida(classificacao),
     partes,
+    // Regra local: a declaração de vínculo abrange conflito de interesses.
+    declaracaoConflito: declaracaoConflitoAtiva(ctx.verificacao.regras, e.execucao),
   };
 }
 

@@ -56,6 +56,7 @@ export async function documentoDaEmenda(x: EmendaCompleta) {
     enviada: !naoRemetida(x.status),
     submetidaEm: x.submetidaEm,
     protocolo: x.protocoloCamara,
+    padraoIdentificacao: municipio?.padraoIdentificacao ?? null,
     hoje: new Date(),
     camara: { nome: municipio?.nomeCamara ?? null, endereco: municipio?.enderecoCamara ?? null, rodape: municipio?.rodapeDocumentos ?? null },
     nomePrefeitura: municipio?.nomePrefeitura ?? null,

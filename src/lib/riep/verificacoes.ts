@@ -98,6 +98,12 @@ export const REGRAS_LOCAIS: RegraLocal[] = [
     ],
   },
   {
+    codigo: "DECLARACAO_CONFLITO",
+    titulo: "Declaração de conflito de interesses obrigatória para entidade",
+    descricao: "Na execução indireta (entidade sem fins lucrativos), a declaração de vínculo passa a abranger vínculo societário, de direção ou de administração e conflito de interesses, e sem ela a emenda não é remetida.",
+    parametros: [],
+  },
+  {
     codigo: "SEM_PESSOAL_DIVIDA",
     titulo: "Vedação de pessoal, encargos e dívida em qualquer área",
     descricao: "A emenda não paga pessoal e encargos sociais (grupo 1) nem a dívida (grupos 2 e 6), seja qual for a área.",
@@ -330,7 +336,7 @@ function pendenciasPlano(checks: Checagem[]): string[] {
 // Conferências das regras locais ligadas. `quantidade` é o que o autor já
 // apresentou no exercício, por parcela (sem a emenda em edição).
 export function conferenciasLocais(
-  e: { valor: number; destino: Pick<DotacaoBase, "gnd" | "funcao" | "subf"> | null; entidade: boolean; quantidade?: { saude: number; demais: number } | null },
+  e: { valor: number; destino: Pick<DotacaoBase, "gnd" | "funcao" | "subf"> | null; entidade: boolean; quantidade?: { saude: number; demais: number } | null; declaracao?: boolean },
   regras: Regras
 ): Checagem[] {
   const out: Checagem[] = [];
@@ -348,6 +354,10 @@ export function conferenciasLocais(
           : { nivel: nivel(vm.modo), titulo: "Abaixo do valor mínimo", detalhe: `O mínimo por emenda${e.entidade && num(p.entidade) ? " para entidade sem fins lucrativos" : ""} é ${BRL(minimo)}${fund(vm)}.` }
       );
     }
+  }
+  const dc = regras.DECLARACAO_CONFLITO;
+  if (dc?.ativa && e.entidade && !e.declaracao) {
+    out.push({ nivel: nivel(dc.modo), titulo: "Declaração de conflito de interesses pendente", detalhe: `Emenda para entidade: marque a declaração de inexistência de vínculo e de conflito de interesses${fund(dc)}.`, declaracao: true });
   }
   const vd = regras.SEM_PESSOAL_DIVIDA;
   if (vd?.ativa && e.destino) {

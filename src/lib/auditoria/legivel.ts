@@ -203,6 +203,7 @@ const CAMPOS: Record<string, string> = {
   periodoPpa: "Período do PPA",
   enderecoCamara: "Endereço da Câmara",
   rodapeDocumentos: "Rodapé dos documentos",
+  padraoIdentificacao: "Padrão de identificação da emenda",
   validadeReferenciaMeses: "Validade da referência de preço (meses)",
   valor: "Valor",
   vigenciaFim: "Fim da vigência",

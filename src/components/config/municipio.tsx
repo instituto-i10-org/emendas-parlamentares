@@ -55,6 +55,13 @@ export function AbaMunicipio({ dados, podeEditar }: { dados: DadosMunicipio; pod
             <textarea id="mu-rodape" className="campo min-h-[70px] p-3.5" maxLength={400} value={f.rodapeDocumentos ?? ""} onChange={muda("rodapeDocumentos")} />
           </Campo>
         </div>
+        <Campo
+          rotulo="Padrão de identificação da emenda (opcional)"
+          htmlFor="mu-padrao"
+          dica="Quando o Regimento fixa a forma de identificar a emenda. Use {numero}, {ano}, {autor} e {objeto}. Ex.: Emenda Impositiva nº {numero}/{ano} – Vereador(a) {autor} – {objeto}. Vazio: «Emenda Impositiva nº X ao Projeto de Lei nº Y»."
+        >
+          <input id="mu-padrao" className="campo h-12 px-3.5" maxLength={300} value={f.padraoIdentificacao ?? ""} onChange={muda("padraoIdentificacao")} />
+        </Campo>
       </fieldset>
       {podeEditar ? (
         <div className="mt-5 flex gap-2">
