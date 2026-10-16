@@ -9,7 +9,7 @@ const exercicioAtual = async () => (await sql<{ id: string }>(`select id from "E
 
 test.afterAll(async () => {
   if (criadas.length) await sql(`delete from "Emenda" where id = any($1)`, [criadas]);
-  await sql(`delete from "RegraValidacao" where codigo in ('VALOR_MINIMO', 'QUANTIDADE_MAXIMA', 'SEM_PESSOAL_DIVIDA')`);
+  await sql(`delete from "RegraValidacao" where codigo in ('VALOR_MINIMO', 'QUANTIDADE_MAXIMA', 'SEM_PESSOAL_DIVIDA', 'DECLARACAO_CONFLITO')`);
 });
 
 test.describe.serial("Regras locais", () => {
