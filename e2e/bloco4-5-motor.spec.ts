@@ -65,7 +65,7 @@ test.describe("Grupo 4 — motor das treze verificações", () => {
       await expect(page.locator(`li[data-codigo="${c}"]`)).toContainText("Sempre bloqueante.");
     }
     await page.locator("#modo-ADERENCIA_LDO").selectOption("ALERTA");
-    await page.getByRole("button", { name: "Salvar regras" }).click();
+    await page.getByRole("button", { name: "Salvar regras", exact: true }).click();
     await confirmarJanela(page);
     await expect(page.getByText("Regras de validação salvas")).toBeVisible();
     const regra = await sql<{ modo: string }>(`select modo from "RegraValidacao" where codigo = 'ADERENCIA_LDO' and "exercicioId" = $1`, [await exercicioAtual()]);
