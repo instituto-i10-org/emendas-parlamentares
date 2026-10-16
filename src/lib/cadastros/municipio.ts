@@ -15,6 +15,8 @@ export const municipioSchema = z.object({
   // Documentos da Câmara: endereço na capa do processo e rodapé das páginas.
   enderecoCamara: z.string().trim().max(200).default(""),
   rodapeDocumentos: z.string().trim().max(400).default(""),
+  // Padrão de identificação da emenda nos documentos (vazio: o padrão do sistema).
+  padraoIdentificacao: z.string().trim().max(300).default(""),
 });
 
 export type DadosMunicipio = z.input<typeof municipioSchema>;

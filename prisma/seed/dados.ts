@@ -19,6 +19,7 @@ export type MunicipioJson = {
   // Documentos da Câmara (capa do processo e rodapé). Opcionais.
   enderecoCamara?: string;
   rodapeDocumentos?: string;
+  padraoIdentificacao?: string;
   // Exercícios com exercicio-<ano>.json, loa-<ano>.json e unidades-<ano>.json.
   anos: number[];
   destinos: string;

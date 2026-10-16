@@ -49,6 +49,10 @@ export function verificarEmenda(
 
 // Regras locais do município (valor mínimo, quantidade, vedações), somadas às
 // conferências complementares. Desligadas, não acrescentam nada.
-export function conferirRegrasLocais(e: { execucao: string }, valor: number, dotacao: DotacaoMotor | null, aplicado: Aplicado, ctx: ContextoVerificacao): Checagem[] {
-  return conferenciasLocais({ valor, destino: dotacao, entidade: e.execucao === "INDIRETA", quantidade: aplicado.quantidade ?? null }, ctx.regras);
+export function conferirRegrasLocais(e: { execucao: string; declaracao: boolean }, valor: number, dotacao: DotacaoMotor | null, aplicado: Aplicado, ctx: ContextoVerificacao): Checagem[] {
+  return conferenciasLocais({ valor, destino: dotacao, entidade: e.execucao === "INDIRETA", quantidade: aplicado.quantidade ?? null, declaracao: e.declaracao }, ctx.regras);
 }
+
+// Declaração de vínculo ampliada (conflito de interesses) para entidade, quando
+// o município liga a regra local.
+export const declaracaoConflitoAtiva = (regras: ContextoVerificacao["regras"], execucao: string) => !!regras.DECLARACAO_CONFLITO?.ativa && execucao === "INDIRETA";

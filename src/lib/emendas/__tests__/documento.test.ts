@@ -123,6 +123,18 @@ describe("documento da emenda", () => {
   });
 });
 
+describe("padrão de identificação do município", () => {
+  it("sem padrão, a ementa de sempre; com padrão, as variáveis trocadas", () => {
+    expect(montarDocumento(base).capa.ementa).toMatch(/^Emenda Impositiva nº 12 ao /);
+    const d = montarDocumento({ ...base, padraoIdentificacao: "Emenda Impositiva nº {numero}/{ano} – Vereador(a) {autor} – {objeto}" });
+    expect(d.capa.ementa).toBe(`Emenda Impositiva nº 12/2027 – Vereador(a) Ana Souza (XYZ) – ${base.objeto.trim().replace(/\.$/, "")}`);
+  });
+  it("na minuta o número fica em branco", () => {
+    const d = montarDocumento({ ...base, enviada: false, padraoIdentificacao: "EI {numero}/{ano}" });
+    expect(d.capa.ementa).toBe("EI —/2027");
+  });
+});
+
 describe("documento em coautoria", () => {
   const co: EntradaDocumento = {
     ...base,

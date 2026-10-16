@@ -393,7 +393,7 @@ async function municipio(podeEditar: boolean) {
   return (
     <AbaMunicipio
       podeEditar={podeEditar}
-      dados={{ nome: m?.nome ?? "", uf: (m?.uf ?? "") as "SP", codigoIbge: m?.codigoIbge ?? "", nomeCamara: m?.nomeCamara ?? "", nomePrefeitura: m?.nomePrefeitura ?? "", enderecoCamara: m?.enderecoCamara ?? "", rodapeDocumentos: m?.rodapeDocumentos ?? "" }}
+      dados={{ nome: m?.nome ?? "", uf: (m?.uf ?? "") as "SP", codigoIbge: m?.codigoIbge ?? "", nomeCamara: m?.nomeCamara ?? "", nomePrefeitura: m?.nomePrefeitura ?? "", enderecoCamara: m?.enderecoCamara ?? "", rodapeDocumentos: m?.rodapeDocumentos ?? "", padraoIdentificacao: m?.padraoIdentificacao ?? "" }}
     />
   );
 }

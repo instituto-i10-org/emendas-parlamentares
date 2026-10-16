@@ -57,6 +57,15 @@ describe("regras locais", () => {
     expect(titulos(conferenciasLocais({ valor: 30000, destino: EDUCACAO, entidade: false, quantidade: null }, borborema))).toContain("ok:Fora de pessoal e dívida");
   });
 
+  it("declaração de conflito: só para entidade e só sem a declaração", () => {
+    const r: Regras = { DECLARACAO_CONFLITO: { modo: "BLOQUEANTE", ativa: true, fundamento: "Regimento, art. 281-B, VIII" } };
+    const sem = conferenciasLocais({ valor: 30000, destino: EDUCACAO, entidade: true, quantidade: null, declaracao: false }, r);
+    expect(titulos(sem)).toEqual(["bad:Declaração de conflito de interesses pendente"]);
+    expect(sem[0].declaracao).toBe(true);
+    expect(conferenciasLocais({ valor: 30000, destino: EDUCACAO, entidade: true, quantidade: null, declaracao: true }, r)).toEqual([]);
+    expect(conferenciasLocais({ valor: 30000, destino: EDUCACAO, entidade: false, quantidade: null, declaracao: false }, r)).toEqual([]);
+  });
+
   it("sem dotação, só o valor mínimo é conferido", () => {
     expect(titulos(conferenciasLocais({ valor: 30000, destino: null, entidade: false, quantidade: { saude: 0, demais: 0 } }, borborema))).toEqual(["ok:Valor mínimo da emenda"]);
   });
