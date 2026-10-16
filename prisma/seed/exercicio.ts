@@ -35,7 +35,8 @@ export type ExercicioJson = {
   rclPercent: number;
   rclBase: { year: number; value: number; note: string };
   councilors: number;
-  legalBasis: { norm: string; article: string; excerpt: string; url: string | null }[];
+  // `since`: início de vigência do dispositivo, quando a pasta o traz.
+  legalBasis: { norm: string; article: string; excerpt: string; url: string | null; since?: string }[];
   deadlines: { what: string; date: string; url: string | null }[];
   // Fundamento por extenso de cada parâmetro ({ cotaIndividual: "LOM art. …" }),
   // quando a pasta do município o traz com procedência.
@@ -145,7 +146,7 @@ export async function semearExercicio(prisma: PrismaClient, ano: number) {
 
   for (const n of ex.legalBasis) {
     const existente = await prisma.documentoNormativo.findFirst({ where: { titulo: n.norm, artigo: n.article } });
-    const dados = { tipo: tipoNorma(n.norm), titulo: n.norm, artigo: n.article, trecho: n.excerpt, url: n.url };
+    const dados = { tipo: tipoNorma(n.norm), titulo: n.norm, artigo: n.article, trecho: n.excerpt, url: n.url, ...(n.since ? { dataVigencia: data(n.since) } : {}) };
     if (existente) await prisma.documentoNormativo.update({ where: { id: existente.id }, data: dados });
     else await prisma.documentoNormativo.create({ data: dados });
   }
