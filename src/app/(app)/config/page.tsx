@@ -380,7 +380,7 @@ async function validacao(podeEditar: boolean) {
       exercicioId={ex.id}
       ano={ano}
       podeEditar={podeEditar}
-      regras={regras.map((r) => ({ codigo: r.codigo, modo: r.modo, ativa: r.ativa, fundamento: r.fundamento ?? "", normaId: r.normaId }))}
+      regras={regras.map((r) => ({ codigo: r.codigo, modo: r.modo, ativa: r.ativa, fundamento: r.fundamento ?? "", normaId: r.normaId, parametros: (r.parametros as Record<string, number> | null) ?? null }))}
       normas={normasDb.map((n) => ({ id: n.id, rotulo: `${n.titulo}${n.artigo ? `, ${n.artigo}` : ""}`.slice(0, 120) }))}
       prazoDiligenciaDias={ex.configuracao?.prazoDiligenciaDias ?? 5}
       fundamentos={(ex.configuracao?.fundamentos as Record<string, { texto: string; normaId: string | null }> | null) ?? {}}

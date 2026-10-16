@@ -171,7 +171,7 @@ export function FormInstrumento({
             ) : null}
             <div className="grid grid-cols-2 gap-3.5 max-sm:grid-cols-1">
               <Campo rotulo="Número" obrigatorio htmlFor="in-num">
-                <input id="in-num" className="campo h-12 px-3.5" placeholder="PL 264/2026" value={f.numero} onChange={(e) => setF({ ...f, numero: e.target.value })} />
+                <input id="in-num" className="campo h-12 px-3.5" placeholder="Ex.: PL 100/2026" value={f.numero} onChange={(e) => setF({ ...f, numero: e.target.value })} />
               </Campo>
               <Campo rotulo={f.especie === "LEI_APROVADA" ? "Data de aprovação" : "Data de envio"} htmlFor="in-dt">
                 <input id="in-dt" type="date" className="campo h-12 px-3.5" value={f.data} onChange={(e) => setF({ ...f, data: e.target.value })} />

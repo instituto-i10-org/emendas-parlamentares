@@ -11,7 +11,7 @@ import { mudarSituacao } from "@/lib/emendas/historico";
 import { chaveClassificacao, estadoSchema, formatarNumero, lerNumero, paraValidacao, totalDasPartes, type EstadoEmenda } from "@/lib/emendas/estado";
 import { NAO_REMETIDAS, editavelPeloAutor } from "@/lib/emendas/situacoes";
 import { aplicarDotacaoInformada } from "@/lib/emendas/dotacao-informada";
-import { contextoVerificacao, verificarEmenda } from "@/lib/emendas/verificacao";
+import { conferirRegrasLocais, contextoVerificacao, verificarEmenda } from "@/lib/emendas/verificacao";
 import { anoDaTela, exercicioHistorico } from "@/lib/exercicio";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rate-limit";
@@ -169,11 +169,15 @@ export async function salvarEmenda(entrada: EstadoEmenda, submeter = false, anoT
           await vereadoresParaCoautoria(ctx.exercicioId, ctx.config.percentualSaude, autorId, e.id)
         )
       : undefined;
-    const checks = validar(
-      paraValidacao(e, { classificacao, metaPlanejamento: dotacao ? ctx.metas[dotacao.id] ?? null : null, dotacaoInformada: inf.informada }),
-      { config: ctx.config, aplicado, partes, biblioteca: ctx.catalogo.objetos }
-    );
-    const treze = verificarEmenda(e, valor, dotacao, contextoVerificacao(ctx, aplicado, reenvio, partes), checks, inf.informada === "FORA");
+    const ctxVerificacao = contextoVerificacao(ctx, aplicado, reenvio, partes);
+    const checks = [
+      ...validar(
+        paraValidacao(e, { classificacao, metaPlanejamento: dotacao ? ctx.metas[dotacao.id] ?? null : null, dotacaoInformada: inf.informada }),
+        { config: ctx.config, aplicado, partes, biblioteca: ctx.catalogo.objetos }
+      ),
+      ...conferirRegrasLocais(e, valor, dotacao, aplicado, ctxVerificacao),
+    ];
+    const treze = verificarEmenda(e, valor, dotacao, ctxVerificacao, checks, inf.informada === "FORA");
     const resumo = resumoValidacao(checks);
     const falhas = treze.verificacoes.filter((v) => v.estado === "falha").length;
     validacao = {

@@ -12,7 +12,7 @@ import type { ContextoEmenda, DestinoTela } from "@/lib/emendas/contexto";
 import { chaveClassificacao, lerNumero, paraValidacao, type EstadoEmenda } from "@/lib/emendas/estado";
 import { partesParaCota, type VereadorCota } from "@/lib/emendas/autoria";
 import { aplicarDotacaoInformada } from "@/lib/emendas/dotacao-informada";
-import { contextoVerificacao, verificarEmenda } from "@/lib/emendas/verificacao";
+import { conferirRegrasLocais, contextoVerificacao, verificarEmenda } from "@/lib/emendas/verificacao";
 import {
   MODELOS,
   classificacaoValida,
@@ -93,18 +93,20 @@ function useDerivado(
       ),
     [valor, autor, aplicado, e.coautores, vereadores]
   );
+  // As treze verificações, sobre as mesmas conferências.
+  const ctxVerificacao = useMemo(() => contextoVerificacao(ctx, aplicado, reenvio, partes), [ctx, aplicado, reenvio, partes]);
   const checks: Checagem[] = useMemo(
-    () =>
-      validar(paraValidacao(e, { classificacao, metaPlanejamento, dotacaoInformada: informada.informada }), {
+    () => [
+      ...validar(paraValidacao(e, { classificacao, metaPlanejamento, dotacaoInformada: informada.informada }), {
         config: ctx.config,
         aplicado,
         partes,
         biblioteca: ctx.catalogo.objetos,
       }),
-    [e, classificacao, metaPlanejamento, informada.informada, ctx, aplicado, partes]
+      ...conferirRegrasLocais(e, valor, dotacao, aplicado, ctxVerificacao),
+    ],
+    [e, classificacao, metaPlanejamento, informada.informada, ctx, aplicado, partes, valor, dotacao, ctxVerificacao]
   );
-  // As treze verificações, sobre as mesmas conferências.
-  const ctxVerificacao = useMemo(() => contextoVerificacao(ctx, aplicado, reenvio, partes), [ctx, aplicado, reenvio, partes]);
   const treze = useMemo(
     () => verificarEmenda(e, valor, dotacao, ctxVerificacao, checks, informada.informada === "FORA"),
     [e, valor, dotacao, ctxVerificacao, checks, informada.informada]

@@ -10,6 +10,8 @@ type EmendasJson = {
     destination: string;
     value: number;
     healthHeuristic: boolean;
+    // Parcela conhecida (pela função da dotação); sem ela, a cota divide pela meação legal.
+    parcel?: "SAUDE" | "DEMAIS";
     check: { items?: number[]; total?: number[]; reduction?: number[] } | null;
   }[];
 };
@@ -62,7 +64,7 @@ export async function semearEmendasImportadas(prisma: PrismaClient, exercicioId:
       numero: x.number,
       descricao: x.destination,
       valor: x.value,
-      parcela: null,
+      parcela: x.parcel ?? null,
       saudeHeuristica: x.healthHeuristic,
       observacao: observacaoDe(x.check),
       fonte: e.fonte.url,

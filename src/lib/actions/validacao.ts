@@ -5,8 +5,9 @@ import { z } from "zod";
 import { auditar } from "@/lib/audit";
 import { temPermissao } from "@/lib/authz";
 import { recusaPorImpacto } from "@/lib/impacto/servidor";
+import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
-import { VERIFICACOES } from "@/lib/riep/verificacoes";
+import { CODIGOS_REGRAS_LOCAIS, REGRAS_LOCAIS, VERIFICACOES } from "@/lib/riep/verificacoes";
 import { getCurrentUser } from "@/lib/session";
 
 // ============================================================================
@@ -23,6 +24,7 @@ const regraSchema = z.object({
   ativa: z.boolean(),
   fundamento: z.string().trim().max(1000),
   normaId: z.string().max(40).nullable(),
+  parametros: z.record(z.string(), z.number().min(0).max(1e12)).nullable().optional(),
 });
 
 export async function salvarRegras(exercicioId: string, regras: z.input<typeof regraSchema>[], ciente = false): Promise<Resultado> {
@@ -32,6 +34,13 @@ export async function salvarRegras(exercicioId: string, regras: z.input<typeof r
   if (!p.success) return { ok: false, erro: p.error.issues[0]?.message ?? "Dados inválidos." };
   const conhecidas = new Map(VERIFICACOES.map((v) => [v.codigo as string, v]));
   for (const r of p.data) {
+    if (CODIGOS_REGRAS_LOCAIS.has(r.codigo)) {
+      const local = REGRAS_LOCAIS.find((x) => x.codigo === r.codigo)!;
+      const chaves = new Set(local.parametros.map((x) => x.chave));
+      if (Object.keys(r.parametros ?? {}).some((k) => !chaves.has(k))) return { ok: false, erro: `Parâmetro desconhecido em ${local.titulo}.` };
+      if (r.ativa && local.parametros.length && !Object.values(r.parametros ?? {}).some((v) => v > 0)) return { ok: false, erro: `Informe ao menos um valor em "${local.titulo}" ou desligue a regra.` };
+      continue;
+    }
     const def = conhecidas.get(r.codigo);
     if (!def) return { ok: false, erro: `Regra desconhecida: ${r.codigo}.` };
     if (!def.configuravel) return { ok: false, erro: "As verificações fixas não mudam de modo." };
@@ -43,11 +52,12 @@ export async function salvarRegras(exercicioId: string, regras: z.input<typeof r
   await prisma.$transaction(async (tx) => {
     for (const r of p.data) {
       const antes = await tx.regraValidacao.findFirst({ where: { codigo: r.codigo, exercicioId } });
-      const dados = { modo: r.modo, ativa: r.ativa, fundamento: r.fundamento || null, normaId: r.normaId };
+      const local = CODIGOS_REGRAS_LOCAIS.has(r.codigo);
+      const dados = { modo: r.modo, ativa: r.ativa, fundamento: r.fundamento || null, normaId: r.normaId, ...(local ? { parametros: r.parametros ?? Prisma.DbNull } : {}) };
       const depois = antes
         ? await tx.regraValidacao.update({ where: { id: antes.id }, data: dados })
         : await tx.regraValidacao.create({ data: { ...dados, codigo: r.codigo, exercicioId } });
-      if (!antes || antes.modo !== depois.modo || antes.ativa !== depois.ativa || antes.fundamento !== depois.fundamento || antes.normaId !== depois.normaId) {
+      if (!antes || antes.modo !== depois.modo || antes.ativa !== depois.ativa || antes.fundamento !== depois.fundamento || antes.normaId !== depois.normaId || JSON.stringify(antes.parametros) !== JSON.stringify(depois.parametros)) {
         await auditar(tx, { usuarioId: user.id, entidade: "RegraValidacao", entidadeId: depois.id, acao: antes ? "ATUALIZAR" : "CRIAR", dadosAntes: antes ?? undefined, dadosDepois: depois });
       }
     }

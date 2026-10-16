@@ -6,7 +6,7 @@ import { lerRegras } from "@/lib/emendas/contexto";
 import { getAnoAtivo } from "@/lib/exercicio";
 import { prisma } from "@/lib/prisma";
 import { BRL, DATA } from "@/lib/riep";
-import { VERIFICACOES, regraDe } from "@/lib/riep/verificacoes";
+import { REGRAS_LOCAIS, VERIFICACOES, regraDe } from "@/lib/riep/verificacoes";
 
 export const metadata: Metadata = { title: "Manual das emendas impositivas" };
 
@@ -142,7 +142,7 @@ export default async function ManualPage() {
             documentação. Só a emenda sem falha é remetida à Câmara.
           </li>
           <li>
-            <b>Decisão.</b> A Comissão de Finanças e Orçamento recebe, pode pedir ajuste (diligência) e aprova ou rejeita, com parecer. O Executivo se
+            <b>Decisão.</b> A Comissão de Finanças recebe, pode pedir ajuste (diligência) e aprova ou rejeita, com parecer. O Executivo se
             manifesta sobre a viabilidade técnica.
           </li>
           <li>
@@ -170,6 +170,32 @@ export default async function ManualPage() {
           })}
         </ol>
       </Cartao>
+
+      {REGRAS_LOCAIS.some((d) => regras[d.codigo]?.ativa) ? (
+        <Cartao titulo="Regras locais do município">
+          <ul className="grid gap-2.5 text-sm">
+            {REGRAS_LOCAIS.filter((d) => regras[d.codigo]?.ativa).map((d) => {
+              const r = regras[d.codigo]!;
+              const p = (r.parametros ?? {}) as Record<string, number>;
+              const valores = d.parametros
+                .filter((x) => typeof p[x.chave] === "number" && p[x.chave] > 0)
+                .map((x) => `${x.rotulo.replace(" (R$)", "")}: ${x.tipo === "valor" ? BRL(p[x.chave]) : p[x.chave]}`);
+              const n = normaDa(d.codigo);
+              return (
+                <li key={d.codigo} data-codigo={d.codigo}>
+                  <b>{d.titulo}</b> — {r.modo === "ALERTA" ? "só alerta" : "impede a remessa"}
+                  {valores.length ? <span className="block">{valores.join(" · ")}</span> : null}
+                  {r.fundamento ? (
+                    <span className="block text-xs text-muted-foreground">
+                      Fundamento: {n ? <a href={`#norma-${n}`} className="font-semibold text-navy hover:underline">{r.fundamento}</a> : r.fundamento}
+                    </span>
+                  ) : null}
+                </li>
+              );
+            })}
+          </ul>
+        </Cartao>
+      ) : null}
 
       <Cartao titulo="6. Base legal">
         {normas.length ? (

@@ -317,7 +317,7 @@ export async function aplicadoDoAutor(
     ...(excetoEmendaId ? { id: { not: excetoEmendaId } } : {}),
   };
   const [proprias, coautorias, importadas] = await Promise.all([
-    prisma.emenda.groupBy({ by: ["parcela"], where: { ...apresentadas, autorId }, _sum: { valor: true } }),
+    prisma.emenda.groupBy({ by: ["parcela"], where: { ...apresentadas, autorId }, _sum: { valor: true }, _count: { _all: true } }),
     // Coautoria: a parte de cada coautor sai do autor e entra no coautor.
     prisma.coautorEmenda.findMany({
       // A parte recebida em emenda de demonstração não conta para o vereador.
@@ -345,7 +345,13 @@ export async function aplicadoDoAutor(
       aplicado.demais += v - (v * percentualSaude) / 100;
     }
   }
-  return { saude: Math.round(aplicado.saude * 100) / 100, demais: Math.round(aplicado.demais * 100) / 100 };
+  // Quantidade por parcela: só as emendas de que é autor (a sem parcela não conta).
+  const quantidade = { saude: 0, demais: 0 };
+  for (const g of proprias) {
+    if (g.parcela === "SAUDE") quantidade.saude += g._count._all;
+    else if (g.parcela === "DEMAIS") quantidade.demais += g._count._all;
+  }
+  return { saude: Math.round(aplicado.saude * 100) / 100, demais: Math.round(aplicado.demais * 100) / 100, quantidade };
 }
 
 // Vereadores que podem entrar como coautores, com o aplicado de cada um (sem
@@ -402,7 +408,7 @@ export async function lerRegras(exercicioId: string): Promise<Regras> {
   const regras: Regras = {};
   for (const r of linhas.sort((a, b) => (a.exercicioId ? 1 : 0) - (b.exercicioId ? 1 : 0))) {
     const norma = r.norma ? `${r.norma.titulo}${r.norma.artigo ? `, ${r.norma.artigo}` : ""}` : null;
-    regras[r.codigo] = { modo: r.modo, ativa: r.ativa, fundamento: r.fundamento || norma };
+    regras[r.codigo] = { modo: r.modo, ativa: r.ativa, fundamento: r.fundamento || norma, parametros: (r.parametros as Record<string, unknown> | null) ?? null };
   }
   return regras;
 }

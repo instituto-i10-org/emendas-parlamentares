@@ -4,7 +4,7 @@
 
 import type { SituacaoEmendamento } from "./emendamento";
 import type { DadosVerificacao } from "./contexto";
-import { verificar, type Aplicado, type Checagem, type ConfigMotor, type ContextoVerificacao, type DotacaoBase, type DotacaoMotor, type ParteCota } from "@/lib/riep";
+import { conferenciasLocais, verificar, type Aplicado, type Checagem, type ConfigMotor, type ContextoVerificacao, type DotacaoBase, type DotacaoMotor, type ParteCota } from "@/lib/riep";
 
 export function contextoVerificacao(
   ctx: { config: ConfigMotor; emendamento: SituacaoEmendamento; loa: DotacaoBase[]; verificacao: DadosVerificacao },
@@ -45,4 +45,10 @@ export function verificarEmenda(
   informadaForaDaLoa = false
 ) {
   return verificar({ objeto: e.objeto, justificativa: e.justificativa, valor, destino: destinoNaBase(dotacao, ctx.base), informadaForaDaLoa }, ctx, complementares);
+}
+
+// Regras locais do município (valor mínimo, quantidade, vedações), somadas às
+// conferências complementares. Desligadas, não acrescentam nada.
+export function conferirRegrasLocais(e: { execucao: string }, valor: number, dotacao: DotacaoMotor | null, aplicado: Aplicado, ctx: ContextoVerificacao): Checagem[] {
+  return conferenciasLocais({ valor, destino: dotacao, entidade: e.execucao === "INDIRETA", quantidade: aplicado.quantidade ?? null }, ctx.regras);
 }

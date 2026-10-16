@@ -5,10 +5,10 @@ import { Cartao } from "@/components/app/pagina";
 import { Selo } from "@/components/emenda/ui";
 import { Button } from "@/components/ui/button";
 import { salvarParametrosValidacao, salvarRegras } from "@/lib/actions/validacao";
-import { VERIFICACOES } from "@/lib/riep/verificacoes";
+import { REGRAS_LOCAIS, VERIFICACOES } from "@/lib/riep/verificacoes";
 import { useConfirmarImpacto } from "@/components/app/confirmar-impacto";
 
-export type RegraTela = { codigo: string; modo: "BLOQUEANTE" | "ALERTA"; ativa: boolean; fundamento: string; normaId: string | null };
+export type RegraTela = { codigo: string; modo: "BLOQUEANTE" | "ALERTA"; ativa: boolean; fundamento: string; normaId: string | null; parametros?: Record<string, number> | null };
 export type NormaTela = { id: string; rotulo: string };
 
 // Parâmetros numéricos do exercício que levam fundamento por extenso.
@@ -40,9 +40,12 @@ export function AbaValidacao({
   podeEditar: boolean;
 }) {
   const [dias, setDias] = useState(String(prazoDiligenciaDias));
-  const inicial = (codigo: string, padrao: "BLOQUEANTE" | "ALERTA"): RegraTela =>
-    regras.find((r) => r.codigo === codigo) ?? { codigo, modo: padrao, ativa: true, fundamento: "", normaId: null };
+  const inicial = (codigo: string, padrao: "BLOQUEANTE" | "ALERTA", ativa = true): RegraTela =>
+    regras.find((r) => r.codigo === codigo) ?? { codigo, modo: padrao, ativa, fundamento: "", normaId: null, parametros: null };
   const [lista, setLista] = useState<RegraTela[]>(() => VERIFICACOES.filter((v) => v.configuravel).map((v) => inicial(v.codigo, v.padrao)));
+  // Regras locais: sem registro, ficam desligadas.
+  const [locais, setLocais] = useState<RegraTela[]>(() => REGRAS_LOCAIS.map((r) => inicial(r.codigo, "BLOQUEANTE", false)));
+  const mudarLocal = (codigo: string, parcial: Partial<RegraTela>) => setLocais((l) => l.map((r) => (r.codigo === codigo ? { ...r, ...parcial } : r)));
   const [fund, setFund] = useState(fundamentos);
   const conf = useConfirmarImpacto();
   const pendente = conf.pendente;
@@ -152,12 +155,101 @@ export function AbaValidacao({
         ) : null}
       </Cartao>
 
+      <Cartao
+        guia="config.validacao.locais"
+        titulo="Regras locais"
+        ajuda="Limites próprios do município, da Lei Orgânica, do Regimento ou da LDO. Ligada, a regra aparece nas conferências do relatório da emenda; se bloqueante, impede a remessa. Desligada, não faz nada."
+      >
+        <ol className="divide-y divide-hair">
+          {REGRAS_LOCAIS.map((def) => {
+            const r = locais.find((x) => x.codigo === def.codigo)!;
+            return (
+              <li key={def.codigo} className="grid gap-2 py-4" data-codigo={def.codigo}>
+                <label className="flex items-center gap-2 text-sm font-bold">
+                  <input type="checkbox" aria-label={`Ligar: ${def.titulo}`} checked={r.ativa} disabled={!podeEditar} onChange={(ev) => mudarLocal(def.codigo, { ativa: ev.target.checked })} />
+                  {def.titulo}
+                  {r.ativa ? null : <Selo>desligada</Selo>}
+                </label>
+                <p className="text-xs text-muted-foreground">{def.descricao}</p>
+                {r.ativa ? (
+                  <div className="grid gap-2.5">
+                    {def.parametros.length ? (
+                      <div className="grid grid-cols-2 gap-2.5 max-md:grid-cols-1">
+                        {def.parametros.map((p) => (
+                          <label key={p.chave} className="grid gap-1 text-xs text-muted-foreground">
+                            {p.rotulo}
+                            <input
+                              type="number"
+                              min={0}
+                              step={p.tipo === "valor" ? "0.01" : "1"}
+                              className="campo h-10 px-2.5 text-sm text-ink"
+                              value={r.parametros?.[p.chave] ?? ""}
+                              disabled={!podeEditar}
+                              onChange={(ev) => {
+                                const v = ev.target.value === "" ? undefined : Number(ev.target.value);
+                                const prox = { ...(r.parametros ?? {}) };
+                                if (v === undefined || Number.isNaN(v)) delete prox[p.chave];
+                                else prox[p.chave] = v;
+                                mudarLocal(def.codigo, { parametros: prox });
+                              }}
+                            />
+                          </label>
+                        ))}
+                      </div>
+                    ) : null}
+                    <div className="grid grid-cols-[180px_minmax(0,1fr)_minmax(0,260px)] items-start gap-2.5 max-lg:grid-cols-1">
+                      <label className="grid gap-1 text-xs text-muted-foreground" htmlFor={`modo-${def.codigo}`}>
+                        Modo
+                        <select
+                          id={`modo-${def.codigo}`}
+                          className="campo h-10 px-2.5 text-sm text-ink"
+                          value={r.modo}
+                          disabled={!podeEditar}
+                          onChange={(ev) => mudarLocal(def.codigo, { modo: ev.target.value as RegraTela["modo"] })}
+                        >
+                          <option value="BLOQUEANTE">Bloqueante</option>
+                          <option value="ALERTA">Só alerta</option>
+                        </select>
+                      </label>
+                      <label className="grid gap-1 text-xs text-muted-foreground">
+                        Fundamento por extenso
+                        <input className="campo h-10 px-2.5 text-sm text-ink" value={r.fundamento} placeholder="Ex.: Lei Orgânica, art. …" disabled={!podeEditar} onChange={(ev) => mudarLocal(def.codigo, { fundamento: ev.target.value })} />
+                      </label>
+                      <label className="grid gap-1 text-xs text-muted-foreground" htmlFor={`norma-${def.codigo}`}>
+                        Norma citada
+                        {seletorNorma(`norma-${def.codigo}`, r.normaId, (x) => mudarLocal(def.codigo, { normaId: x }))}
+                      </label>
+                    </div>
+                  </div>
+                ) : null}
+              </li>
+            );
+          })}
+        </ol>
+        {podeEditar ? (
+          <div className="mt-5">
+            <Button
+              disabled={pendente}
+              onClick={() =>
+                conf.pedir({
+                  titulo: `Salvar as regras locais de ${ano}`,
+                  impacto: { tipo: "regras", exercicioId, regras: locais },
+                  rotulo: "Salvar regras locais",
+                  acao: (ciente) => salvarRegras(exercicioId, locais, ciente),
+                })
+              }
+            >
+              Salvar regras locais
+            </Button>
+          </div>
+        ) : null}
+      </Cartao>
       <Cartao guia="config.validacao.parametros" titulo="Parâmetros da validação e da tramitação" ajuda="Cada parâmetro do exercício (os demais valores ficam na aba Exercício) leva o fundamento por extenso e, se houver, a norma citada. Parâmetro definido sem fundamento não é aceito.">
         <div className="grid grid-cols-2 gap-3.5 max-md:grid-cols-1">
           <label className="grid gap-1 text-sm font-semibold text-label">
             Prazo padrão da diligência (dias)
             <input id="prazo-diligencia" type="number" min={1} max={30} className="campo h-11 px-3" value={dias} disabled={!podeEditar} onChange={(ev) => setDias(ev.target.value)} />
-            <span className="text-xs font-medium text-muted-foreground">O Regimento Interno (art. 210-C, § 2º) prevê até 5 dias.</span>
+            <span className="text-xs font-medium text-muted-foreground">Prazo para o autor atender o pedido de ajuste da Comissão. O fundamento vai abaixo.</span>
           </label>
         </div>
         <h3 data-guia="config.validacao.fundamentos" className="mt-6 mb-2 text-sm font-bold">Fundamento de cada parâmetro</h3>
@@ -170,7 +262,7 @@ export function AbaValidacao({
                 className="campo h-10 px-2.5 text-sm"
                 value={fund[chave]?.texto ?? ""}
                 disabled={!podeEditar}
-                placeholder="Ex.: Lei Orgânica, art. 140"
+                placeholder="Ex.: Lei Orgânica, art. …"
                 onChange={(ev) => setFund((f) => ({ ...f, [chave]: { texto: ev.target.value, normaId: f[chave]?.normaId ?? null } }))}
               />
               {seletorNorma(`fund-norma-${chave}`, fund[chave]?.normaId ?? null, (x) => setFund((f) => ({ ...f, [chave]: { texto: f[chave]?.texto ?? "", normaId: x } })))}

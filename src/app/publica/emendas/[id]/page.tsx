@@ -127,7 +127,7 @@ export default async function EmendaPublicaPage({ params }: { params: Promise<{ 
                 {e.parecerTramitacao}
               </>
             ) : (
-              "aguardando decisão da Comissão de Finanças e Orçamento"
+              "aguardando decisão da Comissão de Finanças"
             )}
           </dd>
           <dt className="text-muted-foreground">Execução</dt>

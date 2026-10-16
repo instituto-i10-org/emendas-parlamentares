@@ -21,6 +21,14 @@ const pct = (parte: number, todo: number) => (todo ? PCT((parte / todo) * 100) :
 
 // Espelho da fiscalização das emendas impositivas (TCE-SP): cada item é
 // conferido nos dados, não declarado.
+// Fundamento da cota e da parcela da saúde: o que está cadastrado em
+// Configurações › Validação para cada parâmetro (texto ou norma citada).
+function fundamentoCota(fundamentos: unknown): string {
+  const f = (fundamentos ?? {}) as Record<string, { texto?: string } | undefined>;
+  const textos = [f.cotaIndividual?.texto, f.percentualSaude?.texto].map((x) => x?.trim()).filter((x): x is string => !!x);
+  return [...new Set(textos)].join("; ") || "Fundamento não informado (Configurações › Validação)";
+}
+
 export default async function ConformidadePage() {
   await getCurrentUser();
   const ano = await getAnoAtivo();
@@ -85,7 +93,7 @@ export default async function ConformidadePage() {
       detalhe: problemas.length
         ? `${problemas.length} vereador(es) com cota excedida ou reserva invadida: ${problemas.map((a) => `${a.nome} (${situacaoCota(a, c).rotulo})`).join("; ")}.`
         : "Todos os vereadores dentro da cota e da reserva mínima em saúde.",
-      fundamento: "LOM art. 140 §§ 6º e 8º; LDO",
+      fundamento: fundamentoCota(cfg?.fundamentos),
     });
   }
 

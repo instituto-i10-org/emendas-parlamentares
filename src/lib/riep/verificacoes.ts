@@ -74,7 +74,39 @@ export type Verificacao = {
   modo: ModoRegra | "FIXO";
 };
 
-export type RegraEfetiva = { modo: ModoRegra; ativa: boolean; fundamento: string | null };
+// Regras locais, além das treze: limites próprios do município (Lei Orgânica,
+// LDO, Regimento). Desligadas por padrão; quando ligadas, entram nas
+// conferências complementares e, se bloqueantes, impedem a remessa.
+export type RegraLocal = { codigo: string; titulo: string; descricao: string; parametros: { chave: string; rotulo: string; tipo: "valor" | "quantidade" }[] };
+export const REGRAS_LOCAIS: RegraLocal[] = [
+  {
+    codigo: "VALOR_MINIMO",
+    titulo: "Valor mínimo por emenda",
+    descricao: "Abaixo do mínimo a emenda não passa. A execução indireta (entidade sem fins lucrativos) pode ter mínimo próprio.",
+    parametros: [
+      { chave: "geral", rotulo: "Mínimo geral (R$)", tipo: "valor" },
+      { chave: "entidade", rotulo: "Mínimo para entidade sem fins lucrativos (R$)", tipo: "valor" },
+    ],
+  },
+  {
+    codigo: "QUANTIDADE_MAXIMA",
+    titulo: "Quantidade máxima de emendas por vereador",
+    descricao: "Conta as emendas que o vereador já apresentou no exercício, em cada parcela.",
+    parametros: [
+      { chave: "demais", rotulo: "Destinação livre", tipo: "quantidade" },
+      { chave: "saude", rotulo: "Saúde", tipo: "quantidade" },
+    ],
+  },
+  {
+    codigo: "SEM_PESSOAL_DIVIDA",
+    titulo: "Vedação de pessoal, encargos e dívida em qualquer área",
+    descricao: "A emenda não paga pessoal e encargos sociais (grupo 1) nem a dívida (grupos 2 e 6), seja qual for a área.",
+    parametros: [],
+  },
+];
+export const CODIGOS_REGRAS_LOCAIS = new Set(REGRAS_LOCAIS.map((r) => r.codigo));
+
+export type RegraEfetiva = { modo: ModoRegra; ativa: boolean; fundamento: string | null; parametros?: Record<string, unknown> | null };
 export type Regras = Partial<Record<string, RegraEfetiva>>;
 
 export type EntradaVerificacao = {
@@ -293,6 +325,56 @@ function pendenciasPlano(checks: Checagem[]): string[] {
     ["Cronograma não confere", "cronograma igual ao valor"],
   ];
   return mapa.filter(([titulo]) => checks.some((c) => c.titulo === titulo && c.nivel === "bad")).map(([, falta]) => falta);
+}
+
+// Conferências das regras locais ligadas. `quantidade` é o que o autor já
+// apresentou no exercício, por parcela (sem a emenda em edição).
+export function conferenciasLocais(
+  e: { valor: number; destino: Pick<DotacaoBase, "gnd" | "funcao" | "subf"> | null; entidade: boolean; quantidade?: { saude: number; demais: number } | null },
+  regras: Regras
+): Checagem[] {
+  const out: Checagem[] = [];
+  const nivel = (modo: ModoRegra): Checagem["nivel"] => (modo === "ALERTA" ? "warn" : "bad");
+  const fund = (r: RegraEfetiva) => (r.fundamento ? ` (${r.fundamento})` : "");
+  const num = (v: unknown) => (typeof v === "number" && v > 0 ? v : null);
+  const vm = regras.VALOR_MINIMO;
+  if (vm?.ativa) {
+    const p = vm.parametros ?? {};
+    const minimo = (e.entidade ? num(p.entidade) : null) ?? num(p.geral);
+    if (minimo && e.valor > 0) {
+      out.push(
+        centavos(e.valor) >= centavos(minimo)
+          ? { nivel: "ok", titulo: "Valor mínimo da emenda", detalhe: `${BRL(e.valor)}, não abaixo do mínimo de ${BRL(minimo)}${fund(vm)}.` }
+          : { nivel: nivel(vm.modo), titulo: "Abaixo do valor mínimo", detalhe: `O mínimo por emenda${e.entidade && num(p.entidade) ? " para entidade sem fins lucrativos" : ""} é ${BRL(minimo)}${fund(vm)}.` }
+      );
+    }
+  }
+  const vd = regras.SEM_PESSOAL_DIVIDA;
+  if (vd?.ativa && e.destino) {
+    const g = e.destino.gnd;
+    const vedado = g === "1" ? "pessoal e encargos sociais" : g === "2" || g === "6" ? "dívida" : null;
+    out.push(
+      vedado
+        ? { nivel: nivel(vd.modo), titulo: "Despesa vedada à emenda", detalhe: `A dotação é de ${vedado} (grupo ${g}), vedada às emendas individuais${fund(vd)}.` }
+        : { nivel: "ok", titulo: "Fora de pessoal e dívida", detalhe: "A dotação não é de pessoal, encargos sociais ou dívida." }
+    );
+  }
+  const qm = regras.QUANTIDADE_MAXIMA;
+  if (qm?.ativa && e.quantidade && e.destino) {
+    const p = qm.parametros ?? {};
+    const saude = parcelaDaDotacao(e.destino) === "SAUDE";
+    const max = num(saude ? p.saude : p.demais);
+    const ja = saude ? e.quantidade.saude : e.quantidade.demais;
+    const nome = saude ? "de saúde" : "de destinação livre";
+    if (max) {
+      out.push(
+        ja + 1 <= max
+          ? { nivel: "ok", titulo: "Quantidade de emendas", detalhe: `Esta é a ${ja + 1}ª de até ${max} emendas ${nome}.` }
+          : { nivel: nivel(qm.modo), titulo: "Quantidade máxima de emendas", detalhe: `O vereador já apresentou ${ja} das ${max} emendas ${nome} permitidas${fund(qm)}.` }
+      );
+    }
+  }
+  return out;
 }
 
 export const falhasDe = (v: Verificacao[]) => v.filter((x) => x.estado === "falha").length;

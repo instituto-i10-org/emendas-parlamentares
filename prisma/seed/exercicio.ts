@@ -41,12 +41,14 @@ export type ExercicioJson = {
   // quando a pasta do município o traz com procedência.
   parameterBasis?: Record<string, string>;
   // Regras das treze verificações (modo e fundamento), quando o município as fixa.
-  validationRules?: { code: string; mode: "BLOQUEANTE" | "ALERTA"; active?: boolean; basis: string }[];
+  validationRules?: { code: string; mode: "BLOQUEANTE" | "ALERTA"; active?: boolean; basis: string; params?: Record<string, number> }[];
   // Custo de referência do m² de construção (obras), com procedência.
   m2Reference?: { value: number; period: string; source: string; url: string };
   // Documento da emenda: ficha da dotação anulada no Art. 2º e fundamento legal.
   reserveFicha?: string;
   documentBasis?: string[];
+  // Prazo da diligência em dias, quando a norma do município o fixa (padrão: 5).
+  diligenceDays?: number;
 };
 
 // Exercícios com dados na pasta do município (exercicio-<ano>.json,
@@ -59,6 +61,7 @@ function tipoNorma(titulo: string): TipoNorma {
   if (/lei orgânica/i.test(titulo) && !/proposta/i.test(titulo)) return "LOM";
   if (/regimento interno/i.test(titulo)) return "REGIMENTO_INTERNO";
   if (/^lei n/i.test(titulo)) return "LEI";
+  if (/^resolução n/i.test(titulo)) return "RESOLUCAO";
   return "OUTRO";
 }
 
@@ -119,6 +122,7 @@ export async function semearExercicio(prisma: PrismaClient, ano: number) {
       : {}),
     ...(ex.reserveFicha ? { fichaReserva: ex.reserveFicha } : {}),
     ...(ex.documentBasis ? { fundamentoDocumento: ex.documentBasis.join("\n") } : {}),
+    ...(ex.diligenceDays ? { prazoDiligenciaDias: ex.diligenceDays } : {}),
   };
   // Fundamentos só quando a pasta os traz: os escritos pela tela ficam.
   const fundamentos = ex.parameterBasis ? Object.fromEntries(Object.entries(ex.parameterBasis).map(([k, texto]) => [k, { texto, normaId: null }])) : undefined;
@@ -154,7 +158,7 @@ export async function semearExercicio(prisma: PrismaClient, ano: number) {
 export async function semearRegras(prisma: PrismaClient, exercicioId: string, ano: number) {
   const ex = lerExercicio(ano);
   for (const r of ex.validationRules ?? []) {
-    const dados = { modo: r.mode, ativa: r.active ?? true, fundamento: r.basis };
+    const dados = { modo: r.mode, ativa: r.active ?? true, fundamento: r.basis, ...(r.params ? { parametros: r.params } : {}) };
     const existente = await prisma.regraValidacao.findFirst({ where: { codigo: r.code, exercicioId } });
     if (existente) await prisma.regraValidacao.update({ where: { id: existente.id }, data: dados });
     else await prisma.regraValidacao.create({ data: { ...dados, codigo: r.code, exercicioId } });

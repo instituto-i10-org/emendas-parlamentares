@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { diaBrasilia, hojeBrasilia, lerRegras, projetoBase } from "@/lib/emendas/contexto";
 import { ROTULO_STATUS_INSTRUMENTO, situacaoEmendamento } from "@/lib/emendas/emendamento";
 import { areaDaUnidade } from "@/lib/riep/classificar";
-import { regraDe, VERIFICACOES } from "@/lib/riep/verificacoes";
+import { REGRAS_LOCAIS, regraDe, VERIFICACOES } from "@/lib/riep/verificacoes";
 import { conferirCiencia, contar, diferencas, impactoVazio, plural, SEM_EMENDAS, type CampoRotulado, type ContagemEmendas, type Impacto, type Mudanca } from "./tipos";
 
 // ============================================================================
@@ -215,14 +215,29 @@ async function impactoStatusInstrumento(id: string, status: string): Promise<Imp
 
 // --- regras de validação ----------------------------------------------------
 
-async function impactoRegras(exercicioId: string, regras: { codigo: string; modo: string; ativa: boolean; fundamento: string; normaId: string | null }[]): Promise<Impacto> {
+async function impactoRegras(exercicioId: string, regras: { codigo: string; modo: string; ativa: boolean; fundamento: string; normaId: string | null; parametros?: Record<string, number> | null }[]): Promise<Impacto> {
   const ex = await prisma.exercicio.findUnique({ where: { id: exercicioId } });
   if (!ex) return impactoVazio({ bloqueio: "Exercício não encontrado." });
   const atuais = await lerRegras(exercicioId);
   const doExercicio = await prisma.regraValidacao.findMany({ where: { exercicioId } });
   const mudancas: Mudanca[] = [];
   const mudaResultado: string[] = [];
+  let locais = false;
   for (const r of regras) {
+    const local = REGRAS_LOCAIS.find((x) => x.codigo === r.codigo);
+    if (local) {
+      const atual = atuais[r.codigo];
+      const estado = (ativa: boolean, m: string, p: Record<string, unknown> | null | undefined) =>
+        !ativa ? "desligada" : `${m === "ALERTA" ? "só alerta" : "bloqueia"}${local.parametros.length ? ` · ${local.parametros.map((x) => `${x.rotulo}: ${p?.[x.chave] ?? "—"}`).join(" · ")}` : ""}`;
+      const de = estado(!!atual?.ativa, atual?.modo ?? "BLOQUEANTE", atual?.parametros);
+      const para = estado(r.ativa, r.modo, r.parametros);
+      if (de !== para) {
+        mudancas.push({ campo: local.titulo, antes: de, depois: para });
+        locais = true;
+      }
+      if ((atual?.fundamento ?? "") !== (r.fundamento ?? "") && (atual || r.fundamento)) mudancas.push({ campo: `${local.titulo}: fundamento`, antes: atual?.fundamento || "—", depois: r.fundamento || "—" });
+      continue;
+    }
     const def = VERIFICACOES.find((v) => v.codigo === r.codigo);
     if (!def?.configuravel) continue;
     const atual = regraDe(def, atuais);
@@ -242,7 +257,11 @@ async function impactoRegras(exercicioId: string, regras: { codigo: string; modo
   if (!mudancas.length) return impactoVazio();
   const fechado = await fechadoParaAlteracao(ex);
   if (fechado) return impactoVazio({ mudancas, bloqueio: fechado });
-  if (!mudaResultado.length) return impactoVazio({ mudancas, avisos: ["Só o fundamento muda: o resultado das validações continua o mesmo."] });
+  if (!mudaResultado.length)
+    return impactoVazio({
+      mudancas,
+      avisos: [locais ? "As regras locais valem a partir da próxima validação de cada emenda. As emendas já enviadas não são revalidadas por esta mudança." : "Só o fundamento muda: o resultado das validações continua o mesmo."],
+    });
 
   // Emendas enviadas cuja última validação acusou alguma das verificações que
   // mudam de modo: o resultado delas muda na próxima validação.
