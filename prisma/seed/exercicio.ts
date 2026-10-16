@@ -59,9 +59,10 @@ export const lerExercicio = (ano: number) => lerDados<ExercicioJson>(`exercicio-
 
 function tipoNorma(titulo: string): TipoNorma {
   if (/lei orgânica/i.test(titulo) && !/proposta/i.test(titulo)) return "LOM";
+  // Resolução que altera o Regimento é resolução, não o Regimento.
+  if (/^resolução n/i.test(titulo)) return "RESOLUCAO";
   if (/regimento interno/i.test(titulo)) return "REGIMENTO_INTERNO";
   if (/^lei n/i.test(titulo)) return "LEI";
-  if (/^resolução n/i.test(titulo)) return "RESOLUCAO";
   return "OUTRO";
 }
 
