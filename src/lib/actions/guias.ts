@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { GUIAS } from "@/config/guias";
+import { GUIAS, VIDEO_TUTORIAL } from "@/config/guias";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 
@@ -13,12 +13,13 @@ const registroSchema = z.object({
 });
 
 // Guias de ajuda: registra que a pessoa concluiu ou pulou o guia na versão
-// atual, para ele não abrir sozinho de novo. Só grava guias que existem.
+// atual, para ele não abrir sozinho de novo. Só grava guias que existem (o
+// vídeo-tutorial conta como um deles).
 export async function registrarGuia(entrada: z.input<typeof registroSchema>): Promise<Resultado> {
   const user = await getCurrentUser();
   const p = registroSchema.safeParse(entrada);
   if (!p.success) return { ok: false, erro: "Guia inválido." };
-  const guia = GUIAS[p.data.guia];
+  const guia = GUIAS[p.data.guia] ?? (p.data.guia === VIDEO_TUTORIAL.id ? VIDEO_TUTORIAL : undefined);
   if (!guia) return { ok: false, erro: "Guia inválido." };
   const agora = new Date();
   const marca = p.data.como === "CONCLUIDO" ? { concluidoEm: agora, puladoEm: null } : { puladoEm: agora, concluidoEm: null };

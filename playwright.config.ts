@@ -39,6 +39,8 @@ const envServidor = {
   GUIAS_AUTOMATICOS: "false",
   // Sem internet nos testes: o "Ver referência" mostra o aviso de indisponível.
   BANCO_PRECOS_URL: "",
+  // Vídeo-tutorial do vereador: um endereço qualquer basta para a janela existir.
+  VIDEO_TUTORIAL_VEREADOR: "/tutorial-vereador-e2e.mp4",
 };
 
 export default defineConfig({

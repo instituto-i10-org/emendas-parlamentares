@@ -22,14 +22,19 @@ export default async function LayoutApp({ children }: { children: ReactNode }) {
   // Guias abrem sozinhos na primeira visita. Nos testes automáticos ficam
   // desligados (GUIAS_AUTOMATICOS=false), salvo o teste que liga pelo cookie.
   const automaticos = process.env.GUIAS_AUTOMATICOS !== "false" || jar.get("guias-automaticos")?.value === "1";
+  const apresenta = apresentaEmendas(user, !!autor);
+  // Vídeo-tutorial: só para quem apresenta emendas e só com o endereço configurado.
+  const urlVideo = process.env.VIDEO_TUTORIAL_VEREADOR;
+  const video = apresenta && urlVideo ? { url: urlVideo, poster: process.env.VIDEO_TUTORIAL_VEREADOR_POSTER || null } : null;
   return (
     <GuiasProvider
       vistos={Object.fromEntries(guiasVistos.map((g) => [g.guia, g.versao]))}
       automaticos={automaticos}
       bloqueado={!!conta?.primeiroAcesso}
+      video={video}
     >
       <AppShell
-        grupos={navegacaoVisivel(user, { apresenta: apresentaEmendas(user, !!autor) })}
+        grupos={navegacaoVisivel(user, { apresenta })}
         usuario={{ nome: user.nome, perfil: user.perfil?.nome ?? "", email: user.email ?? null }}
         exercicio={exercicio}
       >

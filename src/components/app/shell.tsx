@@ -22,6 +22,8 @@ import {
   ClipboardCheck,
   ShieldCheck,
   CircleHelp,
+  CirclePlay,
+  MessageSquareText,
 } from "lucide-react";
 import type { GrupoNav, Icone } from "@/config/navegacao";
 import { useGuias } from "@/components/app/guias";
@@ -69,6 +71,8 @@ export function AppShell({
   const pathname = usePathname();
   const [recolhido, setRecolhido] = useState(false);
   const [gaveta, setGaveta] = useState(false);
+  // "Ver ajuda" com vídeo: mostra as duas opções (guia da tela ou vídeo).
+  const [ajudaAberta, setAjudaAberta] = useState(false);
   const guias = useGuias();
 
   useEffect(() => {
@@ -98,6 +102,28 @@ export function AppShell({
       return !r;
     });
   }
+
+  // Trocou de tela: as opções da ajuda se recolhem.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setAjudaAberta(false);
+  }, [pathname]);
+
+  const classeItem = cn(
+    "mx-2.5 flex items-center gap-2.5 rounded-md px-3 py-[9px] text-left text-sm font-semibold text-[#DCE6F6] transition-colors hover:bg-white/7 hover:text-white focus-visible:outline-2 focus-visible:outline-cyan",
+    recolhido && "md:justify-center md:px-0 md:py-2.5"
+  );
+  const abrirGuia = () => {
+    setGaveta(false);
+    setAjudaAberta(false);
+    // Com a gaveta do celular fechando, o guia mede a tela já sem ela.
+    window.setTimeout(guias.abrir, 250);
+  };
+  const abrirVideo = () => {
+    setGaveta(false);
+    setAjudaAberta(false);
+    window.setTimeout(guias.abrirVideo, 250);
+  };
 
   // O item mais específico que casa com o caminho fica ativo.
   const ativo = grupos
@@ -233,30 +259,38 @@ export function AppShell({
           <div className="mt-auto" />
         )}
 
-        <button
-          type="button"
-          data-guia="menu.ajuda"
-          title="Ver ajuda desta tela"
-          onClick={() => {
-            setGaveta(false);
-            // Com a gaveta do celular fechando, o guia mede a tela já sem ela.
-            window.setTimeout(guias.abrir, 250);
-          }}
-          className={cn(
-            "mx-2.5 mb-3 flex items-center gap-2.5 rounded-md px-3 py-[9px] text-left text-sm font-semibold text-[#DCE6F6] transition-colors hover:bg-white/7 hover:text-white focus-visible:outline-2 focus-visible:outline-cyan",
-            recolhido && "md:justify-center md:px-0 md:py-2.5"
-          )}
-        >
-          <CircleHelp className="size-[18px] shrink-0" strokeWidth={1.8} />
-          <span className={cn("truncate", recolhido && "md:hidden")}>Ver ajuda</span>
-        </button>
+        <div className="mb-3 flex flex-col gap-0.5">
+          <button
+            type="button"
+            data-guia="menu.ajuda"
+            title={guias.temVideo ? "Ver ajuda: guia desta tela ou vídeo" : "Ver ajuda desta tela"}
+            aria-expanded={guias.temVideo ? ajudaAberta : undefined}
+            onClick={() => (guias.temVideo ? setAjudaAberta((a) => !a) : abrirGuia())}
+            className={classeItem}
+          >
+            <CircleHelp className="size-[18px] shrink-0" strokeWidth={1.8} />
+            <span className={cn("truncate", recolhido && "md:hidden")}>Ver ajuda</span>
+          </button>
+          {guias.temVideo && ajudaAberta ? (
+            <div className="flex flex-col gap-0.5" role="group" aria-label="Opções de ajuda">
+              <button type="button" title="Guia desta tela" onClick={abrirGuia} className={cn(classeItem, "text-[13px]", !recolhido && "md:pl-8")}>
+                <MessageSquareText className="size-4 shrink-0" strokeWidth={1.8} />
+                <span className={cn("truncate", recolhido && "md:hidden")}>Guia desta tela</span>
+              </button>
+              <button type="button" data-guia="menu.video" title="Vídeo: como usar o sistema" onClick={abrirVideo} className={cn(classeItem, "text-[13px]", !recolhido && "md:pl-8")}>
+                <CirclePlay className="size-4 shrink-0" strokeWidth={1.8} />
+                <span className={cn("truncate", recolhido && "md:hidden")}>Vídeo: como usar</span>
+              </button>
+            </div>
+          ) : null}
+        </div>
 
         <div data-guia="menu.conta" className={cn("flex items-center gap-2.5 border-t border-white/10 px-[18px] py-4", recolhido && "md:flex-col md:px-0")}>
           <span className="grid size-[26px] shrink-0 place-items-center rounded-full bg-ok text-xs font-extrabold text-navy-deep">
             {iniciais(usuario.nome)}
           </span>
           <span className={cn("min-w-0 flex-1", recolhido && "md:hidden")}>
-            <JanelaConta nome={usuario.nome} email={usuario.email}>
+            <JanelaConta nome={usuario.nome} email={usuario.email} abrirVideo={guias.temVideo ? guias.abrirVideo : null}>
               {(abrir) => (
                 <button type="button" onClick={abrir} className="block max-w-full cursor-pointer truncate text-left text-xs leading-tight font-bold hover:underline" title="Minha conta e senha">
                   {usuario.nome}

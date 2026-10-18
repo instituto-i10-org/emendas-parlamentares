@@ -7,7 +7,18 @@ import { TrocarSenha } from "./trocar-senha";
 
 // "Minha conta" numa janela, aberta pelo nome no menu: trocar a senha e rever
 // os guias de ajuda. O endereço antigo (/conta) chega aqui com ?conta=1.
-export function JanelaConta({ nome, email, children }: { nome: string; email?: string | null; children: (abrir: () => void) => React.ReactNode }) {
+export function JanelaConta({
+  nome,
+  email,
+  abrirVideo,
+  children,
+}: {
+  nome: string;
+  email?: string | null;
+  // Vídeo-tutorial do perfil, quando existe: a janela fecha e o vídeo abre.
+  abrirVideo?: (() => void) | null;
+  children: (abrir: () => void) => React.ReactNode;
+}) {
   const [aberta, setAberta] = useState(false);
 
   useEffect(() => {
@@ -36,7 +47,16 @@ export function JanelaConta({ nome, email, children }: { nome: string; email?: s
               </section>
               <section data-guia="conta.guias" className="grid gap-3 border-t border-hair pt-5">
                 <h3 className="text-sm font-bold">Guias de ajuda</h3>
-                <ReverGuias />
+                <ReverGuias
+                  assistirVideo={
+                    abrirVideo
+                      ? () => {
+                          setAberta(false);
+                          window.setTimeout(abrirVideo, 250);
+                        }
+                      : null
+                  }
+                />
               </section>
             </div>
           </DialogContent>

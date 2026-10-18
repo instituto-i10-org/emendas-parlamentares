@@ -132,6 +132,60 @@ test.describe("C2 — guias de ajuda", () => {
     await expect(balao(page)).toBeVisible();
   });
 
+  test("T-G-9 vídeo-tutorial: abre sozinho na primeira entrada do vereador, antes do guia; fechar grava e não reabre", async ({ page }) => {
+    await entrar(page, "vereador");
+    await ligarAutomaticos(page);
+    await page.goto("/inicio");
+    const janela = page.getByRole("dialog", { name: "Como usar o Emendas360 como vereador" });
+    await expect(janela).toBeVisible();
+    await expect(janela.locator("video")).toHaveAttribute("src", /tutorial-vereador-e2e\.mp4/);
+    // Enquanto o vídeo está aberto, nenhum balão por cima.
+    await expect(balao(page)).toBeHidden();
+    await janela.getByRole("button", { name: "Começar a usar" }).click();
+    await expect(janela).toBeHidden();
+    await expect.poll(async () => (await vistos("vereador")).find((v) => v.guia === "video.vereador")?.concluidoEm).not.toBeFalsy();
+    // Fechado o vídeo, o guia da tela abre em seguida.
+    await expect(balao(page)).toBeVisible();
+    await expect(balao(page)).toContainText("Bem-vindo ao Emendas360");
+    await balao(page).getByRole("button", { name: "Pular este guia" }).click();
+    await page.reload();
+    await page.waitForTimeout(1500);
+    await expect(janela).toBeHidden();
+    await expect(balao(page)).toBeHidden();
+  });
+
+  test("T-G-10 Ver ajuda do vereador oferece guia ou vídeo; Minha conta tem Assistir ao vídeo; quem não apresenta emendas não vê", async ({ page }) => {
+    await entrar(page, "vereador");
+    await page.goto("/inicio");
+    await page.waitForTimeout(1500);
+    const janela = page.getByRole("dialog", { name: "Como usar o Emendas360 como vereador" });
+    await expect(janela).toBeHidden();
+    await page.getByRole("button", { name: "Ver ajuda" }).click();
+    await expect(page.getByRole("button", { name: "Guia desta tela" })).toBeVisible();
+    await page.getByRole("button", { name: "Vídeo: como usar" }).click();
+    await expect(janela).toBeVisible();
+    await janela.getByRole("button", { name: "Fechar" }).click();
+    await expect(janela).toBeHidden();
+    // Guia desta tela abre os balões.
+    await page.getByRole("button", { name: "Ver ajuda" }).click();
+    await page.getByRole("button", { name: "Guia desta tela" }).click();
+    await expect(balao(page)).toContainText("Bem-vindo ao Emendas360");
+    await balao(page).getByRole("button", { name: "Fechar o guia" }).click();
+    // Minha conta.
+    await abrirMinhaConta(page);
+    await page.getByRole("button", { name: "Assistir ao vídeo" }).click();
+    await expect(janela).toBeVisible();
+    await janela.getByRole("button", { name: "Começar a usar" }).click();
+    // Administrador: nem vídeo, nem opções em Ver ajuda.
+    await entrar(page, "admin");
+    await page.goto("/inicio");
+    await page.waitForTimeout(1500);
+    await expect(janela).toBeHidden();
+    await page.getByRole("button", { name: "Ver ajuda" }).click();
+    await expect(balao(page)).toBeVisible();
+    await expect(page.getByRole("button", { name: "Vídeo: como usar" })).toHaveCount(0);
+  });
+
   test("T-G-6 primeira configuração: oito passos conferidos nos dados, só para quem administra", async ({ page }) => {
     await entrar(page, "admin");
     await page.goto("/inicio");

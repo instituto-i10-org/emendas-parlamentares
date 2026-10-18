@@ -5,8 +5,9 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { driver, type Driver, type DriveStep } from "driver.js";
 import "driver.js/dist/driver.css";
 import { toast } from "sonner";
-import { deveAbrirSozinho, guiaDaRota, GUIAS, type Guia } from "@/config/guias";
+import { deveAbrirSozinho, guiaDaRota, GUIAS, VIDEO_TUTORIAL, type Guia } from "@/config/guias";
 import { pularTodosGuias, registrarGuia } from "@/lib/actions/guias";
+import { VideoTutorial, type VideoTutorialDados } from "@/components/app/video-tutorial";
 
 // ============================================================================
 // Guias de ajuda: balões sobre a tela, com o fundo escurecido de leve.
@@ -19,16 +20,19 @@ import { pularTodosGuias, registrarGuia } from "@/lib/actions/guias";
 // - A tela pode declarar o próprio guia com data-guia-tela="<id>": a página
 //   da emenda (visão ou editor no mesmo endereço) e as etapas da nova emenda,
 //   que trocam sem mudar o endereço.
+// - Quem apresenta emendas tem também o vídeo-tutorial: abre sozinho na
+//   primeira entrada (antes do guia da tela, que vem em seguida) e volta por
+//   "Ver ajuda › Vídeo" ou por Minha conta.
 // ============================================================================
 
-type Contexto = { abrir: () => void };
+type Contexto = { abrir: () => void; abrirVideo: () => void; temVideo: boolean };
 
 // Guia declarado pela própria tela, se houver.
 const guiaDeclarado = (): Guia | null => {
   const id = document.querySelector("[data-guia-tela]")?.getAttribute("data-guia-tela");
   return id && GUIAS[id] ? GUIAS[id] : null;
 };
-const GuiasContexto = createContext<Contexto>({ abrir: () => {} });
+const GuiasContexto = createContext<Contexto>({ abrir: () => {}, abrirVideo: () => {}, temVideo: false });
 export const useGuias = () => useContext(GuiasContexto);
 
 const visivel = (el: Element | null): el is HTMLElement => {
@@ -71,12 +75,15 @@ export function GuiasProvider({
   vistos,
   automaticos,
   bloqueado,
+  video = null,
   children,
 }: {
   vistos: Record<string, number>;
   automaticos: boolean;
   // Primeiro acesso pendente: nada de guia por cima do modal obrigatório.
   bloqueado: boolean;
+  // Vídeo-tutorial do perfil, quando existe (só quem apresenta emendas).
+  video?: VideoTutorialDados | null;
   children: ReactNode;
 }) {
   const router = useRouter();
@@ -84,6 +91,7 @@ export function GuiasProvider({
   const idAtivo = useRef<string | null>(null);
   // Vistos nesta sessão do navegador, para não reabrir antes do servidor saber.
   const [vistosAqui, setVistosAqui] = useState<Record<string, number>>({});
+  const [videoAberto, setVideoAberto] = useState(false);
 
   const iniciar = useCallback((guia: Guia) => {
     if (ativo.current?.isActive()) {
@@ -181,6 +189,18 @@ export function GuiasProvider({
     if (guia) iniciar(guia);
   }, [iniciar]);
 
+  // O vídeo fecha o guia em balões, se houver; fechar o vídeo conta como visto.
+  const abrirVideo = useCallback(() => {
+    if (!video) return;
+    if (ativo.current?.isActive()) ativo.current.destroy();
+    setVideoAberto(true);
+  }, [video]);
+  const fecharVideo = useCallback(() => {
+    setVideoAberto(false);
+    setVistosAqui((v) => ({ ...v, [VIDEO_TUTORIAL.id]: VIDEO_TUTORIAL.versao }));
+    void registrarGuia({ guia: VIDEO_TUTORIAL.id, como: "CONCLUIDO" });
+  }, []);
+
   // Trocou de tela com um guia aberto: fecha sem registrar.
   const pathname = usePathname();
   useEffect(() => {
@@ -188,13 +208,20 @@ export function GuiasProvider({
   }, [pathname]);
   useEffect(() => () => ativo.current?.destroy(), []);
 
+  const todosVistos = { ...vistos, ...vistosAqui };
+  // O vídeo ainda não visto abre antes de qualquer guia; o guia da tela vem depois.
+  const videoPendente = !!video && deveAbrirSozinho(VIDEO_TUTORIAL, todosVistos);
+
   return (
-    <GuiasContexto.Provider value={{ abrir }}>
+    <GuiasContexto.Provider value={{ abrir, abrirVideo, temVideo: !!video }}>
       {children}
+      {video ? <VideoTutorial video={video} aberto={videoAberto} aoFechar={fecharVideo} /> : null}
       <Suspense fallback={null}>
         <AberturaAutomatica
-          vistos={{ ...vistos, ...vistosAqui }}
+          vistos={todosVistos}
           automaticos={automaticos && !bloqueado}
+          videoPendente={videoPendente}
+          abrirVideo={abrirVideo}
           iniciar={iniciar}
           limparParametro={(url) => router.replace(url, { scroll: false })}
         />
@@ -207,11 +234,15 @@ export function GuiasProvider({
 function AberturaAutomatica({
   vistos,
   automaticos,
+  videoPendente,
+  abrirVideo,
   iniciar,
   limparParametro,
 }: {
   vistos: Record<string, number>;
   automaticos: boolean;
+  videoPendente: boolean;
+  abrirVideo: () => void;
   iniciar: (g: Guia) => void;
   limparParametro: (url: string) => void;
 }) {
@@ -240,6 +271,11 @@ function AberturaAutomatica({
     if (pedido && GUIAS[pedido]) {
       guia = GUIAS[pedido];
       forcado = true;
+    } else if (automaticos && videoPendente) {
+      // Primeira entrada de quem apresenta emendas: o vídeo primeiro. Ao
+      // fechá-lo, o registro muda e este efeito roda de novo para o guia da tela.
+      const t = window.setTimeout(abrirVideo, 700);
+      return () => window.clearTimeout(t);
     } else if (automaticos) {
       const g = (tela && GUIAS[tela]) || guiaDaRota(pathname, aba);
       if (g && deveAbrirSozinho(g, vistosRef.current)) guia = g;
@@ -256,9 +292,9 @@ function AberturaAutomatica({
       }
     }, 700);
     return () => window.clearTimeout(t);
-    // Só reage à troca de tela ou a um pedido explícito.
+    // Só reage à troca de tela, a um pedido explícito ou ao vídeo fechando.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname, aba, pedido, automaticos, tela]);
+  }, [pathname, aba, pedido, automaticos, tela, videoPendente]);
 
   return null;
 }

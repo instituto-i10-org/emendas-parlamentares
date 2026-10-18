@@ -471,7 +471,14 @@ export function guiaDaRota(pathname: string, aba?: string | null): Guia | null {
 }
 
 // O guia deve abrir sozinho? Só se a pessoa nunca o viu nesta versão.
-export function deveAbrirSozinho(guia: Guia, vistos: Record<string, number>): boolean {
+export function deveAbrirSozinho(guia: Pick<Guia, "id" | "versao">, vistos: Record<string, number>): boolean {
   const visto = vistos[guia.id];
   return visto === undefined || visto < guia.versao;
 }
+
+// Vídeo-tutorial de quem apresenta emendas: abre numa janela na primeira
+// entrada e fica em "Ver ajuda › Vídeo" e em Minha conta. O endereço do vídeo
+// vem de VIDEO_TUTORIAL_VEREADOR (sem ele, nada aparece). Registrado em
+// GuiaVisto como os guias; regravou o vídeo, suba a versão para ele abrir de
+// novo uma vez.
+export const VIDEO_TUTORIAL = { id: "video.vereador", titulo: "Como usar o Emendas360 como vereador", versao: 1 } as const;
