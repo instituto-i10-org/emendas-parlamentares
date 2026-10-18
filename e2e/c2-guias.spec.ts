@@ -148,6 +148,7 @@ test.describe("C2 — guias de ajuda", () => {
     await expect(balao(page)).toBeVisible();
     await expect(balao(page)).toContainText("Bem-vindo ao Emendas360");
     await balao(page).getByRole("button", { name: "Pular este guia" }).click();
+    await expect.poll(async () => (await vistos("vereador")).find((v) => v.guia === "inicio")?.puladoEm).not.toBeFalsy();
     await page.reload();
     await page.waitForTimeout(1500);
     await expect(janela).toBeHidden();
