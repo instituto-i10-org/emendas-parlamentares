@@ -244,3 +244,31 @@ test.describe("Grupo 15 — redação", () => {
     await sql(`delete from "Emenda" where id = $1`, [id]);
   });
 });
+
+test("campo de autor do novo usuário: lista no visual do sistema, filtra ao digitar e escolhe pelo teclado", async ({ page }) => {
+  await entrar(page, "admin");
+  await page.goto("/config?aba=usuarios");
+  await page.getByRole("button", { name: "Novo usuário" }).click();
+  const perfil = await page.locator("#u-perfil option", { hasText: /^Vereador/ }).getAttribute("value");
+  await page.locator("#u-perfil").selectOption(perfil!);
+  const campo = page.locator("#u-autor");
+  await expect(campo).toHaveAttribute("role", "combobox");
+  // Ao focar, a lista completa aparece (como lista do sistema, não do navegador).
+  await campo.click();
+  const lista = page.getByRole("listbox");
+  await expect(lista).toBeVisible();
+  const total = await lista.getByRole("option").count();
+  expect(total).toBeGreaterThan(1);
+  // Digitar filtra; a seta e o Enter escolhem.
+  await campo.fill("alexandro");
+  await expect(lista.getByRole("option")).toHaveCount(1);
+  await expect(lista.getByRole("option").first()).toContainText("Alexandro");
+  await campo.press("ArrowDown");
+  await campo.press("Enter");
+  await expect(campo).toHaveValue(/Alexandro/);
+  await expect(lista).toBeHidden();
+  // Nome fora da lista continua valendo (cadastro de autor novo).
+  await campo.fill("Vereador Inexistente t10");
+  await expect(page.getByRole("listbox")).toBeHidden();
+  await expect(campo).toHaveValue("Vereador Inexistente t10");
+});

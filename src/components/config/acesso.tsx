@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Cartao, TabelaDados } from "@/components/app/pagina";
 import { Campo, Pilulas, Selo } from "@/components/emenda/ui";
 import { Button } from "@/components/ui/button";
+import { ComboboxTexto } from "@/components/ui/combobox-texto";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { alternarUsuarioAtivo, criarUsuario, definirSenha, excluirPerfil, reatribuirPerfil, salvarPerfil, vincularAutor } from "@/lib/actions/config";
 import { PERMISSOES, type Permissao } from "@/lib/authz";
@@ -175,12 +176,7 @@ function NovoUsuario({ aberto, aoFechar, perfis, autores }: { aberto: boolean; a
           </Campo>
           {perfil?.permissoes.includes("apresentarEmendas") ? (
             <Campo rotulo="Autor (vereador)" htmlFor="u-autor" dica="Escolha um vereador já cadastrado ou digite um nome novo.">
-              <input id="u-autor" list="autores" className="campo h-12 px-3.5" value={f.autorNome} onChange={(e) => setF({ ...f, autorNome: e.target.value })} />
-              <datalist id="autores">
-                {autores.map((a) => (
-                  <option key={a} value={a} />
-                ))}
-              </datalist>
+              <ComboboxTexto id="u-autor" value={f.autorNome} onChange={(v) => setF({ ...f, autorNome: v })} opcoes={autores} />
             </Campo>
           ) : null}
           <Campo rotulo="Senha inicial" obrigatorio htmlFor="u-senha" dica="Ao menos 10 caracteres. Entregue por canal seguro.">
@@ -241,12 +237,7 @@ function VincularAutor({ usuario, autores, aoFechar }: { usuario: UsuarioTela | 
           }
         >
           <Campo rotulo="Vereador" htmlFor="v-autor">
-            <input id="v-autor" list="autores-v" className="campo h-12 px-3.5" value={nome} placeholder={usuario.autor ?? ""} onChange={(e) => setNome(e.target.value)} />
-            <datalist id="autores-v">
-              {autores.map((a) => (
-                <option key={a} value={a} />
-              ))}
-            </datalist>
+            <ComboboxTexto id="v-autor" value={nome} placeholder={usuario.autor ?? ""} onChange={setNome} opcoes={autores} />
           </Campo>
         </DialogContent>
       ) : null}
