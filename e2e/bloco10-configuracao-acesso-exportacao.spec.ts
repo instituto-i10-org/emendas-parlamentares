@@ -245,30 +245,27 @@ test.describe("Grupo 15 — redação", () => {
   });
 });
 
-test("campo de autor do novo usuário: lista no visual do sistema, filtra ao digitar e escolhe pelo teclado", async ({ page }) => {
+test("campo de autor do novo usuário: o mesmo select dos demais campos, com opção de cadastrar vereador novo", async ({ page }) => {
   await entrar(page, "admin");
   await page.goto("/config?aba=usuarios");
   await page.getByRole("button", { name: "Novo usuário" }).click();
   const perfil = await page.locator("#u-perfil option", { hasText: /^Vereador/ }).getAttribute("value");
   await page.locator("#u-perfil").selectOption(perfil!);
-  const campo = page.locator("#u-autor");
-  await expect(campo).toHaveAttribute("role", "combobox");
-  // Ao focar, a lista completa aparece (como lista do sistema, não do navegador).
-  await campo.click();
-  const lista = page.getByRole("listbox");
-  await expect(lista).toBeVisible();
-  const total = await lista.getByRole("option").count();
-  expect(total).toBeGreaterThan(1);
-  // Digitar filtra; a seta e o Enter escolhem.
-  await campo.fill("alexandro");
-  await expect(lista.getByRole("option")).toHaveCount(1);
-  await expect(lista.getByRole("option").first()).toContainText("Alexandro");
-  await campo.press("ArrowDown");
-  await campo.press("Enter");
+  const campo = page.locator("select#u-autor");
+  await expect(campo).toBeVisible();
+  expect(await campo.locator("option").count()).toBeGreaterThan(3);
+  const alexandro = (await campo.locator("option", { hasText: "Alexandro" }).getAttribute("value"))!;
+  // Vereador já cadastrado: escolhe na lista, sem campo de texto.
+  await campo.selectOption(alexandro);
   await expect(campo).toHaveValue(/Alexandro/);
-  await expect(lista).toBeHidden();
-  // Nome fora da lista continua valendo (cadastro de autor novo).
-  await campo.fill("Vereador Inexistente t10");
-  await expect(page.getByRole("listbox")).toBeHidden();
-  await expect(campo).toHaveValue("Vereador Inexistente t10");
+  await expect(page.locator("#u-autor-novo")).toBeHidden();
+  // Vereador novo: a última opção abre o campo de texto.
+  await campo.selectOption("__novo__");
+  const novo = page.locator("#u-autor-novo");
+  await expect(novo).toBeVisible();
+  await novo.fill("Vereador Inexistente t10");
+  await expect(campo).toHaveValue("__novo__");
+  // Voltar a um da lista esconde o texto.
+  await campo.selectOption(alexandro);
+  await expect(novo).toBeHidden();
 });

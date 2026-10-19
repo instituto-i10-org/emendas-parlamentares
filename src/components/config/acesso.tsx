@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Cartao, TabelaDados } from "@/components/app/pagina";
 import { Campo, Pilulas, Selo } from "@/components/emenda/ui";
 import { Button } from "@/components/ui/button";
-import { ComboboxTexto } from "@/components/ui/combobox-texto";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { alternarUsuarioAtivo, criarUsuario, definirSenha, excluirPerfil, reatribuirPerfil, salvarPerfil, vincularAutor } from "@/lib/actions/config";
 import { PERMISSOES, type Permissao } from "@/lib/authz";
@@ -127,6 +126,40 @@ function SeletorPerfil({ usuario, perfis }: { usuario: UsuarioTela; perfis: Perf
   );
 }
 
+const NOVO_AUTOR = "__novo__";
+
+// Vereador da conta: o mesmo <select> dos demais campos, com a opção de
+// cadastrar um nome que ainda não existe (aí aparece o campo de texto).
+function SelecaoAutor({ id, valor, aoMudar, autores }: { id: string; valor: string; aoMudar: (v: string) => void; autores: string[] }) {
+  const [novo, setNovo] = useState(false);
+  const selecionado = novo || (valor && !autores.includes(valor)) ? NOVO_AUTOR : valor;
+  return (
+    <div className="grid gap-2">
+      <select
+        id={id}
+        className="campo campo-select h-12 pr-9 pl-3.5"
+        value={selecionado}
+        onChange={(e) => {
+          const escolhido = e.target.value === NOVO_AUTOR;
+          setNovo(escolhido);
+          aoMudar(escolhido ? "" : e.target.value);
+        }}
+      >
+        <option value="">Selecione…</option>
+        {autores.map((a) => (
+          <option key={a} value={a}>
+            {a}
+          </option>
+        ))}
+        <option value={NOVO_AUTOR}>Outro vereador (cadastrar novo)…</option>
+      </select>
+      {selecionado === NOVO_AUTOR ? (
+        <input id={`${id}-novo`} className="campo h-12 px-3.5" placeholder="Nome completo do vereador" value={valor} onChange={(e) => aoMudar(e.target.value)} autoFocus />
+      ) : null}
+    </div>
+  );
+}
+
 function NovoUsuario({ aberto, aoFechar, perfis, autores }: { aberto: boolean; aoFechar: () => void; perfis: PerfilTela[]; autores: string[] }) {
   const [f, setF] = useState({ nome: "", email: "", perfilId: "", senha: "", autorNome: "" });
   const { pendente, executar } = useAcao();
@@ -175,8 +208,8 @@ function NovoUsuario({ aberto, aoFechar, perfis, autores }: { aberto: boolean; a
             </select>
           </Campo>
           {perfil?.permissoes.includes("apresentarEmendas") ? (
-            <Campo rotulo="Autor (vereador)" htmlFor="u-autor" dica="Escolha um vereador já cadastrado ou digite um nome novo.">
-              <ComboboxTexto id="u-autor" value={f.autorNome} onChange={(v) => setF({ ...f, autorNome: v })} opcoes={autores} />
+            <Campo rotulo="Autor (vereador)" htmlFor="u-autor" dica="Escolha um vereador já cadastrado ou cadastre um novo.">
+              <SelecaoAutor id="u-autor" valor={f.autorNome} aoMudar={(v) => setF({ ...f, autorNome: v })} autores={autores} />
             </Campo>
           ) : null}
           <Campo rotulo="Senha inicial" obrigatorio htmlFor="u-senha" dica="Ao menos 10 caracteres. Entregue por canal seguro.">
@@ -237,7 +270,7 @@ function VincularAutor({ usuario, autores, aoFechar }: { usuario: UsuarioTela | 
           }
         >
           <Campo rotulo="Vereador" htmlFor="v-autor">
-            <ComboboxTexto id="v-autor" value={nome} placeholder={usuario.autor ?? ""} onChange={setNome} opcoes={autores} />
+            <SelecaoAutor id="v-autor" valor={nome} aoMudar={setNome} autores={autores} />
           </Campo>
         </DialogContent>
       ) : null}
